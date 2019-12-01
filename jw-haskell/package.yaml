@@ -1,0 +1,20 @@
+name:                jw-haskell
+version:             0.1.0.0
+github:              "jw120/mal"
+license:             BSD3
+author:              "Joe Watson"
+maintainer:          "joe_watson@mail.com"
+copyright:           "2019 Joe Watson"
+
+extra-source-files:
+- README.md
+
+description:         Please see the README on GitHub at <https://github.com/githubuser/jw-haskell#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- readline
+
+executables:
+  step0_repl:
+    main:                step0_repl.hs

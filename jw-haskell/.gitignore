@@ -1,0 +1,4 @@
+.stack-work/
+jw-haskell.cabal
+*~
+bin/

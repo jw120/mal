@@ -1,0 +1,3 @@
+#!/bin/bash
+# Run the appropriate binary
+exec $(dirname $0)/bin/${STEP:-stepA_mal} "${@}"
