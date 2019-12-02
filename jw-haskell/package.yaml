@@ -1,4 +1,4 @@
-name:                jw-haskell
+name:                mal
 version:             0.1.0.0
 github:              "jw120/mal"
 license:             BSD3
@@ -13,8 +13,29 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
+- megaparsec
 - readline
+- text
+
+library:
+  source-dirs: src
 
 executables:
   step0_repl:
     main:                step0_repl.hs
+    source-dirs:         app
+    dependencies:
+    - mal
+  step1_read_print:
+    main:                step1_read_print.hs
+    source-dirs:         app
+    dependencies:
+    - mal
+
+tests:
+  mal-specs:
+    main:                Spec.hs
+    source-dirs:         test
+    dependencies:
+    - mal
+    - hspec

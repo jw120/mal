@@ -1,3 +1,13 @@
 # Create all our binaries and copy into the bin directory
-bin/step0_repl:	step0_repl.hs
+bin/step0_repl:	app/step0_repl.hs src/*.hs
 	stack build --local-bin-path bin --copy-bins
+
+bin/step1_repl:	app/step1_repl.hs src/*.hs
+	stack build --local-bin-path bin --copy-bins
+
+
+format:
+	brittany --write-mode=inplace app/*.hs src/*.hs
+
+lint:
+	hlint app/*.hs src/*.hs

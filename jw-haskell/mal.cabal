@@ -1,0 +1,86 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 3a4ffb238ee8d22812cc38aedc8e8a8a1c964eb503ae2766871218883bebcf79
+
+name:           mal
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/jw-haskell#readme>
+homepage:       https://github.com/jw120/mal#readme
+bug-reports:    https://github.com/jw120/mal/issues
+author:         Joe Watson
+maintainer:     joe_watson@mail.com
+copyright:      2019 Joe Watson
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/jw120/mal
+
+library
+  exposed-modules:
+      Printer
+      Reader
+      Utilities
+  other-modules:
+      Paths_mal
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.7 && <5
+    , megaparsec
+    , readline
+    , text
+  default-language: Haskell2010
+
+executable step0_repl
+  main-is: step0_repl.hs
+  other-modules:
+      Paths_mal
+  hs-source-dirs:
+      app
+  build-depends:
+      base >=4.7 && <5
+    , mal
+    , megaparsec
+    , readline
+    , text
+  default-language: Haskell2010
+
+executable step1_read_print
+  main-is: step1_read_print.hs
+  other-modules:
+      Paths_mal
+  hs-source-dirs:
+      app
+  build-depends:
+      base >=4.7 && <5
+    , mal
+    , megaparsec
+    , readline
+    , text
+  default-language: Haskell2010
+
+test-suite mal-specs
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      ReaderSpec
+      Paths_mal
+  hs-source-dirs:
+      test
+  build-depends:
+      base >=4.7 && <5
+    , hspec
+    , mal
+    , megaparsec
+    , readline
+    , text
+  default-language: Haskell2010

@@ -2,10 +2,15 @@ resolver: lts-14.16
 
 packages:
 
+ghc-options:
+    "$locals": -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates
+        -Wcompat -Widentities -Wredundant-constraints -Wmissing-export-lists
+        -Wpartial-fields -fhide-source-paths -freverse-errors
+
+
 # Contortions to get brew-installed GNU readline to work on mac
 extra-deps:
 - readline-1.0.3.0@sha256:db011062b90fbfbbc8b02666d835742c1d4de1f990a89fc056ef8082f3e3cba0,912
-
 extra-include-dirs:
 - /usr/local/opt/readline/include
 extra-lib-dirs:
