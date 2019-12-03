@@ -21,7 +21,7 @@ module Reader
   )
 where
 
--- import           Control.Applicative            ( (<|>) )
+import           Control.Applicative            ( (<|>) )
 import           Data.Bifunctor                 ( first )
 import           Data.Char                      ( isSpace )
 import           Data.Text                      ( Text )
@@ -56,6 +56,7 @@ pExpr = spaceConsumer *> M.choice
   , pStringLiteral
   , pSpecialSymbol
   , pNormalSymbol
+  , pList
   ]
 
 -- | Parse an integer literal
@@ -93,9 +94,15 @@ pNormalSymbol :: Parser AST
 pNormalSymbol = ASTSymbol . T.pack <$> lexeme (M.some (M.satisfy isNormal))
   where isNormal c = not (isSpace c) && c `notElem` ("[]{}()'`~^@" :: String)
 
--- | Helper parser - space consumer that eats spaces and comments
+-- | Parse a list
+pList :: Parser AST
+pList = ASTList <$> parens (M.many pExpr)
+  where parens = M.between (symbol "(") (symbol ")")
+
+-- | Helper parser - space consumer that eats spaces, commas and comments
 spaceConsumer :: Parser ()
-spaceConsumer = ML.space MC.space1 (ML.skipLineComment ";") M.empty
+spaceConsumer = ML.space spaceOrComma1 (ML.skipLineComment ";") M.empty
+  where spaceOrComma1 = M.skipSome (MC.spaceChar <|> MC.char ',')
 
 -- | Helper parser - wrapper for lexemes so they consume trailing spaces
 lexeme :: Parser a -> Parser a
@@ -129,8 +136,7 @@ hatSign = symbol "^"
 atSign :: Parser Text
 atSign = symbol "@"
 
---parens :: Parser
---parens = between (symbol "(") (symbol ")")
+
 
 
 

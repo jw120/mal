@@ -2,7 +2,7 @@
 bin/step0_repl:	app/step0_repl.hs src/*.hs
 	stack build --local-bin-path bin --copy-bins
 
-bin/step1_repl:	app/step1_repl.hs src/*.hs
+bin/step1_read_print:	app/step1_read_print.hs src/*.hs
 	stack build --local-bin-path bin --copy-bins
 
 
