@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3a4ffb238ee8d22812cc38aedc8e8a8a1c964eb503ae2766871218883bebcf79
+-- hash: 2bdfed84fe6bbb968880792827be6ef569a16372860d60afe7e5aa2351b9778a
 
 name:           mal
 version:        0.1.0.0
@@ -72,6 +72,7 @@ test-suite mal-specs
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      PrinterSpec
       ReaderSpec
       Paths_mal
   hs-source-dirs:
@@ -79,6 +80,7 @@ test-suite mal-specs
   build-depends:
       base >=4.7 && <5
     , hspec
+    , hspec-megaparsec
     , mal
     , megaparsec
     , readline

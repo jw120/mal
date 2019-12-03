@@ -39,3 +39,4 @@ tests:
     dependencies:
     - mal
     - hspec
+    - hspec-megaparsec
