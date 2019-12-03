@@ -18,6 +18,7 @@ https://markkarpov.com/tutorial/megaparsec.html#lexing
 module Reader
   ( malRead
   , AST(..)
+  , MalSpecialLit(..)
   )
 where
 
@@ -31,11 +32,15 @@ import qualified Text.Megaparsec               as M
 import qualified Text.Megaparsec.Char          as MC
 import qualified Text.Megaparsec.Char.Lexer    as ML
 
+data MalSpecialLit = MalNil | MalTrue | MalFalse deriving (Show, Eq)
+
 data AST
   = ASTSymbol Text
-  | ASTInt Int
-  | ASTString Text
+  | ASTIntLit Int
+  | ASTStringLit Text
+  | ASTSpecialLit MalSpecialLit
   | ASTList [AST]
+  | ASTEmpty -- used for when we parse an empty input
   deriving (Eq, Show)
 
 -- | type for our parsers (void for custom errors, text for the input type)
@@ -53,24 +58,34 @@ pExpr :: Parser AST
 pExpr = spaceConsumer *> M.choice
   [ pIntLiteral
   , M.try pNegIntLiteral  -- try to backtrack if we match the '-'
+  , M.try pSpecialLit
   , pStringLiteral
   , pSpecialSymbol
   , pNormalSymbol
   , pList
+  , pEmpty
   ]
 
 -- | Parse an integer literal
 pIntLiteral :: Parser AST
-pIntLiteral = ASTInt <$> lexeme ML.decimal -- (ML.signed spaceConsumer ML.decimal)
+pIntLiteral = ASTIntLit <$> lexeme ML.decimal -- (ML.signed spaceConsumer ML.decimal)
 
 -- | Parse a negative integer literal (a minus sign followed without spaces by a decimal)
 pNegIntLiteral :: Parser AST
-pNegIntLiteral = ASTInt . (\x -> -x) <$> lexeme (MC.char '-' *> ML.decimal)
+pNegIntLiteral = ASTIntLit . (\x -> -x) <$> lexeme (MC.char '-' *> ML.decimal)
+
+-- | Parse a special literial (nil, true or false)
+pSpecialLit :: Parser AST
+pSpecialLit = M.choice
+  [ ASTSpecialLit MalNil <$ symbol "nil"
+  , ASTSpecialLit MalTrue <$ symbol "true"
+  , ASTSpecialLit MalFalse <$ symbol "false"
+  ]
 
 -- | Parse a string literal
 pStringLiteral :: Parser AST
 pStringLiteral =
-  ASTString
+  ASTStringLit
     .   T.pack
     <$> (MC.char '\"' *> M.manyTill ML.charLiteral (MC.char '\"'))
 
@@ -98,6 +113,10 @@ pNormalSymbol = ASTSymbol . T.pack <$> lexeme (M.some (M.satisfy isNormal))
 pList :: Parser AST
 pList = ASTList <$> parens (M.many pExpr)
   where parens = M.between (symbol "(") (symbol ")")
+
+-- | Parser to match an empty input
+pEmpty :: Parser AST
+pEmpty = ASTEmpty <$ M.eof
 
 -- | Helper parser - space consumer that eats spaces, commas and comments
 spaceConsumer :: Parser ()

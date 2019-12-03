@@ -11,7 +11,9 @@ import           Data.Text                      ( Text )
 import qualified Data.Text                     as T
 import qualified Data.Text.IO                  as TIO
 
-import           Reader                         ( AST(..) )
+import           Reader                         ( AST(..)
+                                                , MalSpecialLit(..)
+                                                )
 
 -- | Print our AST
 malPrint :: Either Text AST -> IO ()
@@ -22,10 +24,15 @@ malFormat (Left  msg) = "Error: " <> msg
 malFormat (Right ast) = addSpaces $ go [] ast
  where
   go :: [Text] -> AST -> [Text]
-  go acc (ASTSymbol t ) = acc ++ [t]
-  go acc (ASTInt    i ) = acc ++ [T.pack (show i)]
-  go acc (ASTString t ) = acc ++ ["\"" <> t <> "\""]
-  go acc (ASTList   xs) = acc ++ ["("] ++ contents ++ [")"]
+  go acc (ASTSymbol     t       ) = acc ++ [t]
+  go acc (ASTIntLit     i       ) = acc ++ [T.pack (show i)]
+  go acc (ASTStringLit  t       ) = acc ++ ["\"" <> t <> "\""]
+  go acc (ASTSpecialLit MalNil  ) = acc ++ ["nil"]
+  go acc (ASTSpecialLit MalTrue ) = acc ++ ["true"]
+  go acc (ASTSpecialLit MalFalse) = acc ++ ["false"]
+  go []  ASTEmpty                 = []
+  go _ ASTEmpty = error "Unexpected empty AST not at top-level"
+  go acc (ASTList xs)             = acc ++ ["("] ++ contents ++ [")"]
     where contents = concatMap (go []) xs
 
 -- | Helper function to join a list of texts, adding spaces except after ( or before )
