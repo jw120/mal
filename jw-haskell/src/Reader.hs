@@ -1,15 +1,29 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+{-|
+Module      : Reader
+Description : Short description
+Copyright   : (c) Joe Watson, 2019
+License     : GPL-3
+Maintainer  : joe_watson@mail.com
+
+Defines our AST data representation and provides the @malRead@ function which lexes and parses
+our input text.
+
+Built using megaparsec following the tutorial
+
+https://markkarpov.com/tutorial/megaparsec.html#lexing
+
+-}
 module Reader
   ( malRead
   , AST(..)
-  , ast
-  , Parser
   )
 where
 
-import           Control.Applicative            ( (<|>) )
+-- import           Control.Applicative            ( (<|>) )
 import           Data.Bifunctor                 ( first )
+import           Data.Char                      ( isSpace )
 import           Data.Text                      ( Text )
 import           Data.Void                      ( Void )
 import qualified Data.Text                     as T
@@ -32,50 +46,93 @@ malRead :: Text -> Either Text AST
 malRead = first formatError . runParser
  where
   formatError = T.pack . M.errorBundlePretty
-  runParser   = M.runParser ast "source"
+  runParser   = M.runParser pExpr "source"
 
 -- | top level-parser for our AST
-ast :: Parser AST
-ast = spaceConsumer *> (intLiteral <|> stringLiteral)
+pExpr :: Parser AST
+pExpr = spaceConsumer *> M.choice
+  [ pIntLiteral
+  , M.try pNegIntLiteral  -- try to backtrack if we match the '-'
+  , pStringLiteral
+  , pSpecialSymbol
+  , pNormalSymbol
+  ]
 
--- | space consuming parser that eats spaces and comments
+-- | Parse an integer literal
+pIntLiteral :: Parser AST
+pIntLiteral = ASTInt <$> lexeme ML.decimal -- (ML.signed spaceConsumer ML.decimal)
+
+-- | Parse a negative integer literal (a minus sign followed without spaces by a decimal)
+pNegIntLiteral :: Parser AST
+pNegIntLiteral = ASTInt . (\x -> -x) <$> lexeme (MC.char '-' *> ML.decimal)
+
+-- | Parse a string literal
+pStringLiteral :: Parser AST
+pStringLiteral =
+  ASTString
+    .   T.pack
+    <$> (MC.char '\"' *> M.manyTill ML.charLiteral (MC.char '\"'))
+
+-- | Parse a special symbol (as a single character)
+pSpecialSymbol :: Parser AST
+pSpecialSymbol = ASTSymbol <$> M.choice
+  [ tildeAt
+  , openSquare
+  , closeSquare
+  , openCurly
+  , closeCurly
+  , singleQuote
+  , backQuote
+  , tilde
+  , hatSign
+  , atSign
+  ]
+
+-- | Parse a normal symbol (a series of non-special characters)
+pNormalSymbol :: Parser AST
+pNormalSymbol = ASTSymbol . T.pack <$> lexeme (M.some (M.satisfy isNormal))
+  where isNormal c = not (isSpace c) && c `notElem` ("[]{}()'`~^@" :: String)
+
+-- | Helper parser - space consumer that eats spaces and comments
 spaceConsumer :: Parser ()
 spaceConsumer = ML.space MC.space1 (ML.skipLineComment ";") M.empty
 
--- | Wrapper for lexemes so they consume trailing spaces
+-- | Helper parser - wrapper for lexemes so they consume trailing spaces
 lexeme :: Parser a -> Parser a
 lexeme = ML.lexeme spaceConsumer
 
--- | Wrapper for symbols (i.e., verbatim strings) so they consume trailing spaces
+-- | Helper parser - wrapper for symbols (i.e., verbatim strings) so they consume trailing spaces
 symbol :: Text -> Parser Text
 symbol = ML.symbol spaceConsumer
 -- semicolon = symbol ";"
 -- comma     = symbol ","
 -- colon     = symbol ":"
 -- dot       = symbol "."
+tildeAt :: Parser Text
 tildeAt = symbol "~@"
+openSquare :: Parser Text
 openSquare = symbol "["
+closeSquare :: Parser Text
 closeSquare = symbol "]"
+openCurly :: Parser Text
 openCurly = symbol "{"
+closeCurly :: Parser Text
 closeCurly = symbol "}"
+singleQuote :: Parser Text
 singleQuote = symbol "'"
+backQuote :: Parser Text
 backQuote = symbol "`"
+tilde :: Parser Text
 tilde = symbol "~"
+hatSign :: Parser Text
 hatSign = symbol "^"
+atSign :: Parser Text
 atSign = symbol "@"
-
 
 --parens :: Parser
 --parens = between (symbol "(") (symbol ")")
 
-intLiteral :: Parser AST
-intLiteral = ASTInt <$> lexeme ML.decimal
 
-stringLiteral :: Parser AST
-stringLiteral =
-  ASTString
-    .   T.pack
-    <$> (MC.char '\"' *> M.manyTill ML.charLiteral (MC.char '\"'))
 
 
 -- [\s,]*: Matches any number of whitespaces or commas. This is not captured so it will be ignored and not tokenized.
