@@ -26,7 +26,7 @@ malFormat (Right ast) = addSpaces $ go [] ast
   go :: [Text] -> AST -> [Text]
   go acc (ASTSymbol     t       ) = acc ++ [t]
   go acc (ASTIntLit     i       ) = acc ++ [T.pack (show i)]
-  go acc (ASTStringLit  t       ) = acc ++ ["\"" <> t <> "\""]
+  go acc (ASTStringLit  t       ) = acc ++ ["\"" <> T.concatMap escape t <> "\""]
   go acc (ASTSpecialLit MalNil  ) = acc ++ ["nil"]
   go acc (ASTSpecialLit MalTrue ) = acc ++ ["true"]
   go acc (ASTSpecialLit MalFalse) = acc ++ ["false"]
@@ -34,6 +34,11 @@ malFormat (Right ast) = addSpaces $ go [] ast
   go _ ASTEmpty = error "Unexpected empty AST not at top-level"
   go acc (ASTList xs)             = acc ++ ["("] ++ contents ++ [")"]
     where contents = concatMap (go []) xs
+  escape :: Char -> Text
+  escape '\n' = "\\n"
+  escape '\\' = "\\\\"
+  escape '\"' = "\\\""
+  escape c = T.singleton c
 
 -- | Helper function to join a list of texts, adding spaces except after ( or before )
 addSpaces :: [Text] -> Text

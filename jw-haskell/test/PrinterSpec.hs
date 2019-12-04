@@ -20,7 +20,10 @@ spec = do
       malFormat (Right (ASTIntLit (-123))) `shouldBe` "-123"
     it "formats a string" $ do
       malFormat (Right (ASTStringLit "abc")) `shouldBe` "\"abc\""
+    it "formats a string with escape sequences" $ do
+      malFormat (Right (ASTStringLit "a\\b\"c\nd")) `shouldBe` "\"a\\\\b\\\"c\\nd\""
     it "formats a list" $ do
       malFormat (Right (ASTList [ASTIntLit 1, ASTIntLit 2])) `shouldBe` "(1 2)"
     it "formats an empty AST" $ do
       malFormat (Right ASTEmpty) `shouldBe` ""
+
