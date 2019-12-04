@@ -17,6 +17,8 @@ testNothing t = malRead t `shouldBe` Right Nothing
 isErrorMatching :: Text -> Either Text (Maybe AST) -> Bool
 isErrorMatching x (Left t) = x `isInfixOf` t
 isErrorMatching _ (Right _) = False
+keyword :: Text -> AST
+keyword t = ASTStringLit (keywordPrefix <> t)
 
 spec :: Spec
 spec = do
@@ -87,8 +89,48 @@ spec = do
        testNothing "  ;; whole line comment (not an exception)"
        test " 1 ; comment after expression" $ ASTIntLit 1
        test "1; comment after expression" $ ASTIntLit 1
-
-
+    it "Testing read of quoting" $ do
+      test "'1" $ ASTList [ASTSymbol "quote", ASTIntLit 1]
+      test "'(1 2 3)" $ ASTList [ASTSymbol "quote", ASTList [ASTIntLit 1, ASTIntLit 2, ASTIntLit 3]]
+      test "`1" $ ASTList [ASTSymbol "quasiquote", ASTIntLit 1]
+      test "`(1 2 3)" $ ASTList [ASTSymbol "quasiquote", ASTList [ASTIntLit 1, ASTIntLit 2, ASTIntLit 3]]
+      test "~1" $ ASTList [ASTSymbol "unquote", ASTIntLit 1]
+      test "~(1 2 3)" $ ASTList [ASTSymbol "unquote", ASTList [ASTIntLit 1, ASTIntLit 2, ASTIntLit 3]]
+      test "~@(1 2 3)" $ ASTList [ASTSymbol "splice-unquote", ASTList [ASTIntLit 1, ASTIntLit 2, ASTIntLit 3]]
+    it "Testing keywords" $ do
+      test ":kw" $ keyword "kw"
+      test "(:kw1 :kw2 :kw3)" $
+        ASTList [keyword "kw1", keyword "kw2", keyword "kw3"]
+    it "Testing read of vectors" $ do
+      test "[+ 1 2]" $ ASTVector [ASTSymbol "+", ASTIntLit 1, ASTIntLit 2]
+      test "[]" $ ASTVector []
+      test "[ ]" $ ASTVector []
+      test "[[3 4]]" $ ASTVector [ASTVector [ASTIntLit 3, ASTIntLit 4]]
+      test "[+ 1 [+ 2 3]]" $
+        ASTVector [ASTSymbol "+", ASTIntLit 1, ASTVector [ASTSymbol "+", ASTIntLit 2, ASTIntLit 3]]
+      test "  [ +   1   [+   2 3   ]   ]" $
+        ASTVector [ASTSymbol "+", ASTIntLit 1, ASTVector [ASTSymbol "+", ASTIntLit 2, ASTIntLit 3]]
+      test "([])" $ ASTList [ASTVector []]
+    it  "Testing read of hash maps" $ do
+      test "{}" $ ASTMap []
+      test "{ }" $ ASTMap []
+      test "{\"abc\" 1}" $ ASTMap [ASTStringLit "abc", ASTIntLit 1]
+      test "{\"a\" {\"b\" 2}}" $ ASTMap [ASTStringLit "a", ASTMap [ASTStringLit "b", ASTIntLit 2]]
+      test "{\"a\" {\"b\" {\"c\" 3}}}" $
+        ASTMap [ASTStringLit "a", ASTMap [ASTStringLit "b", ASTMap [ASTStringLit "c", ASTIntLit 3]]]
+      test "      {  \"a\"  {\"b\"   {  \"cde\"     3   }  }}" $
+        ASTMap [ASTStringLit "a", ASTMap [ASTStringLit "b", ASTMap [ASTStringLit "cde", ASTIntLit 3]]]
+      test "{\"a1\" 1 \"a2\" 2 \"a3\" 3}" $ -- This may go out of order
+        ASTMap [ASTStringLit "a1", ASTIntLit 1, ASTStringLit "a2", ASTIntLit 2, ASTStringLit "a3", ASTIntLit 3]
+      test "{  :a  {:b   {  :cde     3   }  }}" $
+        ASTMap [keyword "a", ASTMap [keyword "b", ASTMap [keyword "cde", ASTIntLit 3]]]
+      test "{\"1\" 1}" $ ASTMap [ASTStringLit "1", ASTIntLit 1]
+      test "({})" $ ASTList [ASTMap []]
+    it "Testing read of ^/metadata" $ do
+      test "^{\"a\" 1} [2 3]" $
+        ASTList [ASTSymbol "with-meta",
+          ASTVector [ASTIntLit 2, ASTIntLit 3],
+          ASTMap [ASTStringLit "a", ASTIntLit 1]]
 
 {-
         ;>>> deferrable=True
@@ -179,70 +221,7 @@ spec = do
         (1 "abc"
         ;/.*(EOF|end of input|unbalanced).*
 
-        ;; Testing read of quoting
-        '1
-        ;=>(quote 1)
-        '(1 2 3)
-        ;=>(quote (1 2 3))
-        `1
-        ;=>(quasiquote 1)
-        `(1 2 3)
-        ;=>(quasiquote (1 2 3))
-        ~1
-        ;=>(unquote 1)
-        ~(1 2 3)
-        ;=>(unquote (1 2 3))
-        `(1 ~a 3)
-        ;=>(quasiquote (1 (unquote a) 3))
-        ~@(1 2 3)
-        ;=>(splice-unquote (1 2 3))
 
-
-        ;; Testing keywords
-        :kw
-        ;=>:kw
-        (:kw1 :kw2 :kw3)
-        ;=>(:kw1 :kw2 :kw3)
-
-        ;; Testing read of vectors
-        [+ 1 2]
-        ;=>[+ 1 2]
-        []
-        ;=>[]
-        [ ]
-        ;=>[]
-        [[3 4]]
-        ;=>[[3 4]]
-        [+ 1 [+ 2 3]]
-        ;=>[+ 1 [+ 2 3]]
-          [ +   1   [+   2 3   ]   ]
-        ;=>[+ 1 [+ 2 3]]
-        ([])
-        ;=>([])
-
-        ;; Testing read of hash maps
-        {}
-        ;=>{}
-        { }
-        ;=>{}
-        {"abc" 1}
-        ;=>{"abc" 1}
-        {"a" {"b" 2}}
-        ;=>{"a" {"b" 2}}
-        {"a" {"b" {"c" 3}}}
-        ;=>{"a" {"b" {"c" 3}}}
-        {  "a"  {"b"   {  "cde"     3   }  }}
-        ;=>{"a" {"b" {"cde" 3}}}
-        ;;; The regexp sorcery here ensures that each key goes with the correct
-        ;;; value and that each key appears only once.
-        {"a1" 1 "a2" 2 "a3" 3}
-        ;/{"a([1-3])" \1 "a(?!\1)([1-3])" \2 "a(?!\1)(?!\2)([1-3])" \3}
-        {  :a  {:b   {  :cde     3   }  }}
-        ;=>{:a {:b {:cde 3}}}
-        {"1" 1}
-        ;=>{"1" 1}
-        ({})
-        ;=>({})
 
 
 

@@ -19,6 +19,7 @@ module Reader
   ( malRead
   , AST(..)
   , MalSpecialLit(..)
+  , keywordPrefix
   )
 where
 
@@ -34,12 +35,18 @@ import qualified Text.Megaparsec.Char.Lexer    as ML
 
 data MalSpecialLit = MalNil | MalTrue | MalFalse deriving (Show, Eq)
 
+-- We hold keywords as Strings with a magic prefix
+keywordPrefix :: Text
+keywordPrefix = "\x29e" -- Unicode 'ʞ'
+
 data AST
   = ASTSymbol Text
   | ASTIntLit Int
   | ASTStringLit Text
   | ASTSpecialLit MalSpecialLit
   | ASTList [AST]
+  | ASTVector [AST]
+  | ASTMap [AST] -- maybe should be something like [(Text, AST)]
   deriving (Eq, Show)
 
 -- | type for our parsers (void for custom errors, text for the input type)
@@ -69,10 +76,13 @@ pExpr = spaceConsumer *> M.choice
   , M.try pNegIntLiteral  -- try to backtrack if we match the '-'
   , M.try pSpecialLit
   , pStringLiteral
+  , pReaderMacro
   , pSpecialSymbol
+  , pKeyword
   , pNormalSymbol
   , pList
---  , pEmpty
+  , pVector
+  , pMap
   ]
 
 -- | Parse an integer literal
@@ -101,16 +111,27 @@ pStringLiteral =
 -- | Parse a special symbol (as a single character)
 pSpecialSymbol :: Parser AST
 pSpecialSymbol = ASTSymbol <$> M.choice
-  [ tildeAt
-  , openSquare
-  , closeSquare
-  , openCurly
-  , closeCurly
-  , singleQuote
-  , backQuote
-  , tilde
-  , hatSign
-  , atSign
+  [
+--  , openSquare
+--  , closeSquare
+--   openCurly
+--  , closeCurly
+--  , tildeAt
+--  , singleQuote
+--  , backQuote
+--  , tilde
+--  , hatSign
+   atSign
+  ]
+
+pReaderMacro :: Parser AST
+pReaderMacro = M.choice
+  [ (\e -> ASTList [ASTSymbol "quote", e]) <$> (singleQuote *> pExpr)
+  , (\e -> ASTList [ASTSymbol "quasiquote", e]) <$> (backQuote *> pExpr)
+  , (\e -> ASTList [ASTSymbol "quasiquote", e]) <$> (backQuote *> pExpr)
+  , (\e -> ASTList [ASTSymbol "splice-unquote", e]) <$> (tildeAt *> pExpr)
+  , (\e -> ASTList [ASTSymbol "unquote", e]) <$> (tilde *> pExpr)
+  , (\e1 e2 -> ASTList [ASTSymbol "with-meta", e2, e1]) <$> (hatSign *> pExpr) <*> pExpr
   ]
 
 -- | Parse a normal symbol (a series of non-special characters)
@@ -118,12 +139,32 @@ pNormalSymbol :: Parser AST
 pNormalSymbol = ASTSymbol . T.pack <$> lexeme (M.some (M.satisfy isNormal))
   where isNormal c = not (isSpace c) && c `notElem` ("[]{}()'`~^@" :: String)
 
--- | Parse a list
+-- | Parse a keyword (a colon followed by a series of non-special characters)
+pKeyword :: Parser AST
+pKeyword = toASTString <$> (MC.char ':' *> lexeme (M.some (M.satisfy isNormal)))
+  where
+    toASTString :: String -> AST
+    toASTString = ASTStringLit . (keywordPrefix <>) . T.pack
+    isNormal c = not (isSpace c) && c `notElem` ("[]{}()'`~^@" :: String)
+
+  -- | Parse a list
 pList :: Parser AST
 pList = ASTList <$> parens (M.many pExpr)
   where parens = M.between (symbol "(") (symbol ")")
 
+-- | Parse a vector
+pVector :: Parser AST
+pVector = ASTVector <$> parens (M.many pExpr)
+  where parens = M.between (symbol "[") (symbol "]")
 
+-- | Parse a map
+pMap :: Parser AST
+pMap = ASTMap <$> parens (M.many pExpr)
+  where parens = M.between (symbol "{") (symbol "}")
+    -- collectPairs :: x -> [x] -> [(x, x)]
+    -- collectPairs _ [] = []
+    -- collectPairs missingValue [x] = [(x, missingValue)]
+    -- collectPairs _ (x : y : rest) = (x, y) : collectPairs rest
 
 -- | Helper parser - space consumer that eats spaces, commas and comments
 spaceConsumer :: Parser ()
@@ -143,14 +184,14 @@ symbol = ML.symbol spaceConsumer
 -- dot       = symbol "."
 tildeAt :: Parser Text
 tildeAt = symbol "~@"
-openSquare :: Parser Text
-openSquare = symbol "["
-closeSquare :: Parser Text
-closeSquare = symbol "]"
-openCurly :: Parser Text
-openCurly = symbol "{"
-closeCurly :: Parser Text
-closeCurly = symbol "}"
+-- openSquare :: Parser Text
+-- openSquare = symbol "["
+-- closeSquare :: Parser Text
+-- closeSquare = symbol "]"
+-- openCurly :: Parser Text
+-- openCurly = symbol "{"
+-- closeCurly :: Parser Text
+-- closeCurly = symbol "}"
 singleQuote :: Parser Text
 singleQuote = symbol "'"
 backQuote :: Parser Text
@@ -178,3 +219,25 @@ atSign = symbol "@"
 -- ;.*: Captures any sequence of characters starting with ; (tokenized).
 
 -- [^\s\[\]{}('"`,;)]*: Captures a sequence of zero or more non special characters (e.g. symbols, numbers, "true", "false", and "nil") and is sort of the inverse of the one above that captures special characters (tokenized).
+
+{-
+
+;; Testing read of quoting
+'1
+;=>(quote 1)
+'(1 2 3)
+;=>(quote (1 2 3))
+`1
+;=>(quasiquote 1)
+`(1 2 3)
+;=>(quasiquote (1 2 3))
+~1
+;=>(unquote 1)
+~(1 2 3)
+;=>(unquote (1 2 3))
+`(1 ~a 3)
+;=>(quasiquote (1 (unquote a) 3))
+~@(1 2 3)
+;=>(splice-unquote (1 2 3))
+
+-}

@@ -24,6 +24,8 @@ spec = do
       malFormat (Right (Just (ASTStringLit "a\\b\"c\nd"))) `shouldBe` "\"a\\\\b\\\"c\\nd\""
     it "formats a list" $ do
       malFormat (Right (Just (ASTList [ASTIntLit 1, ASTIntLit 2]))) `shouldBe` "(1 2)"
+    it "formats a vector" $ do
+       malFormat (Right (Just (ASTVector [ASTIntLit 7, ASTIntLit 8]))) `shouldBe` "[7 8]"
     it "formats an empty AST" $ do
       malFormat (Right Nothing) `shouldBe` ""
 

@@ -31,19 +31,26 @@ malFormat (Right (Just ast)) = addSpaces $ go [] ast
   go acc (ASTSpecialLit MalNil  ) = acc ++ ["nil"]
   go acc (ASTSpecialLit MalTrue ) = acc ++ ["true"]
   go acc (ASTSpecialLit MalFalse) = acc ++ ["false"]
-  go acc (ASTList xs)             = acc ++ ["("] ++ contents ++ [")"]
-    where contents = concatMap (go []) xs
+  go acc (ASTList xs)             = acc ++ ["("] ++ concatMap (go []) xs ++ [")"]
+  go acc (ASTVector xs)           = acc ++ ["["] ++ concatMap (go []) xs ++ ["]"]
+  go acc (ASTMap xs)              = acc ++ ["{"] ++ concatMap (go []) xs ++ ["}"]
   escape :: Char -> Text
   escape '\n' = "\\n"
   escape '\\' = "\\\\"
   escape '\"' = "\\\""
   escape c = T.singleton c
 
--- | Helper function to join a list of texts, adding spaces except after ( or before )
+-- | Helper function to join a list of texts with spaces
+--
+-- Space added between each text except not following a ( or [ and not before a ) or ]
 addSpaces :: [Text] -> Text
-addSpaces xs = snd $ foldl' f ("(", T.empty) xs
+addSpaces xs = snd $ foldl' f (True, T.empty) xs
  where
-  f :: (Text, Text) -> Text -> (Text, Text)
-  f (prev, acc) next | prev == "(" = (next, acc <> next)
-                     | next == ")" = (next, acc <> next)
-                     | otherwise   = (next, acc <> " " <> next)
+  f :: (Bool, Text) -> Text -> (Bool, Text)
+  f (suppressSpace, acc) next
+    | suppressSpace || isCloser next = (isOpener next, acc <> next)
+    | otherwise = (isOpener next, acc <> " " <> next)
+  isOpener :: Text -> Bool
+  isOpener t = t == "(" || t == "[" || t == "{"
+  isCloser :: Text -> Bool
+  isCloser t = t == ")" || t == "]" || t == "}"
