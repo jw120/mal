@@ -40,20 +40,29 @@ data AST
   | ASTStringLit Text
   | ASTSpecialLit MalSpecialLit
   | ASTList [AST]
-  | ASTEmpty -- used for when we parse an empty input
   deriving (Eq, Show)
 
 -- | type for our parsers (void for custom errors, text for the input type)
 type Parser = M.Parsec Void Text
 
--- | Reader function to convert input into an AST (or to provide a parsing error)
-malRead :: Text -> Either Text AST
+-- | Reader function to convert input into an AST
+--
+-- Returns Left for a parsing failure, Nothing if there is no input (after removing comments/spaces etc)
+-- otherwise Right Just the AST
+malRead :: Text -> Either Text (Maybe AST)
 malRead = first formatError . runParser
  where
   formatError = T.pack . M.errorBundlePretty
-  runParser   = M.runParser pExpr "source"
+  runParser   = M.runParser pTopLevel "source"
 
--- | top level-parser for our AST
+-- | top-level parser, catches an empty input (after stripping spaces/comments/commas)
+pTopLevel :: Parser (Maybe AST)
+pTopLevel = spaceConsumer *> M.choice
+  [ Nothing <$ M.eof
+  , Just <$> pExpr
+  ]
+
+-- | main parser for our AST
 pExpr :: Parser AST
 pExpr = spaceConsumer *> M.choice
   [ pIntLiteral
@@ -63,7 +72,7 @@ pExpr = spaceConsumer *> M.choice
   , pSpecialSymbol
   , pNormalSymbol
   , pList
-  , pEmpty
+--  , pEmpty
   ]
 
 -- | Parse an integer literal
@@ -114,9 +123,7 @@ pList :: Parser AST
 pList = ASTList <$> parens (M.many pExpr)
   where parens = M.between (symbol "(") (symbol ")")
 
--- | Parser to match an empty input
-pEmpty :: Parser AST
-pEmpty = ASTEmpty <$ M.eof
+
 
 -- | Helper parser - space consumer that eats spaces, commas and comments
 spaceConsumer :: Parser ()

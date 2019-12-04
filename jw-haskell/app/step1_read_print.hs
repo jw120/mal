@@ -12,7 +12,7 @@ import           Reader                         ( malRead
                                                 )
 import           Utilities                      ( readlineLoop )
 
-malEval :: Either Text AST -> Either Text AST
+malEval :: Either Text (Maybe AST) -> Either Text (Maybe AST)
 malEval = id
 
 main :: IO ()

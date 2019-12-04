@@ -3,7 +3,7 @@
 
 module ReaderSpec (spec) where
 
-import Data.Text (Text)
+import Data.Text (isInfixOf, Text)
 
 import Test.Hspec
 
@@ -11,30 +11,38 @@ import Reader
 
 -- Helper function to shorten tests
 test :: Text -> AST -> Expectation
-test t u = malRead t `shouldBe` Right u
+test t u = malRead t `shouldBe` Right (Just u)
+testNothing :: Text -> Expectation
+testNothing t = malRead t `shouldBe` Right Nothing
+isErrorMatching :: Text -> Either Text (Maybe AST) -> Bool
+isErrorMatching x (Left t) = x `isInfixOf` t
+isErrorMatching _ (Right _) = False
 
 spec :: Spec
 spec = do
   describe "Reader function" $ do
     it "parses an integer" $ do
-      malRead "123" `shouldBe` Right (ASTIntLit 123)
+      malRead "123" `shouldBe` Right (Just (ASTIntLit 123))
     it "parses a signed integer" $ do
-      malRead "-1234" `shouldBe` Right (ASTIntLit (-1234))
+      malRead "-1234" `shouldBe` Right (Just (ASTIntLit (-1234)))
     it "parses an integer with leading space" $ do
-      malRead "   123" `shouldBe` Right (ASTIntLit 123)
+      malRead "   123" `shouldBe` Right (Just (ASTIntLit 123))
     it "parses an integer with trailing space" $ do
-      malRead "123 " `shouldBe` Right (ASTIntLit 123)
+      malRead "123 " `shouldBe` Right (Just (ASTIntLit 123))
     it "parses a string literal" $ do
-      malRead "\"xyz\"" `shouldBe` Right (ASTStringLit "xyz")
+      malRead "\"xyz\"" `shouldBe` Right (Just (ASTStringLit "xyz"))
     it "parses a string literal with an escaped quote" $ do
-      malRead "\"x\\\"yz\"" `shouldBe` Right (ASTStringLit "x\"yz")
+      malRead "\"x\\\"yz\"" `shouldBe` Right (Just (ASTStringLit "x\"yz"))
     it "parses a normal alphabetic atom" $ do
-      malRead "abc" `shouldBe` Right (ASTSymbol "abc")
+      malRead "abc" `shouldBe` Right (Just (ASTSymbol "abc"))
     it "handles comments" $ do
-      malRead "(+ ; comment\n3)" `shouldBe` Right (ASTList [ASTSymbol "+", ASTIntLit 3])
+      malRead "(+ ; comment\n3)" `shouldBe` Right (Just (ASTList [ASTSymbol "+", ASTIntLit 3]))
     it "handles empty input" $ do
-      malRead "" `shouldBe` Right ASTEmpty
-  describe "step1 tests" $ do
+      malRead "" `shouldBe` Right Nothing
+    it "detects mismatched parens" $ do
+      malRead "(+ 1 2" `shouldSatisfy` isErrorMatching "end of input"
+
+  describe "standard step1 tests" $ do
     it "Testing read of numbers" $ do
       test "1" $ ASTIntLit 1
       test "   7   " $ ASTIntLit 7
@@ -76,7 +84,7 @@ spec = do
       test "true" $ ASTSpecialLit MalTrue
       test "false" $ ASTSpecialLit MalFalse
     it "Testing read of comments" $ do
-       test "  ;; whole line comment (not an exception)" $ ASTEmpty
+       testNothing "  ;; whole line comment (not an exception)"
        test " 1 ; comment after expression" $ ASTIntLit 1
        test "1; comment after expression" $ ASTIntLit 1
 

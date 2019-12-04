@@ -16,12 +16,13 @@ import           Reader                         ( AST(..)
                                                 )
 
 -- | Print our AST
-malPrint :: Either Text AST -> IO ()
+malPrint :: Either Text (Maybe AST) -> IO ()
 malPrint = TIO.putStrLn . malFormat
 
-malFormat :: Either Text AST -> Text
+malFormat :: Either Text (Maybe AST) -> Text
 malFormat (Left  msg) = "Error: " <> msg
-malFormat (Right ast) = addSpaces $ go [] ast
+malFormat (Right Nothing) = ""
+malFormat (Right (Just ast)) = addSpaces $ go [] ast
  where
   go :: [Text] -> AST -> [Text]
   go acc (ASTSymbol     t       ) = acc ++ [t]
@@ -30,8 +31,6 @@ malFormat (Right ast) = addSpaces $ go [] ast
   go acc (ASTSpecialLit MalNil  ) = acc ++ ["nil"]
   go acc (ASTSpecialLit MalTrue ) = acc ++ ["true"]
   go acc (ASTSpecialLit MalFalse) = acc ++ ["false"]
-  go []  ASTEmpty                 = []
-  go _ ASTEmpty = error "Unexpected empty AST not at top-level"
   go acc (ASTList xs)             = acc ++ ["("] ++ contents ++ [")"]
     where contents = concatMap (go []) xs
   escape :: Char -> Text
