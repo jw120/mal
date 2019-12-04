@@ -5,7 +5,6 @@ where
 
 import           Data.Text                      ( Text )
 
-
 import           Printer                        ( malPrint )
 import           Reader                         ( malRead
                                                 , AST

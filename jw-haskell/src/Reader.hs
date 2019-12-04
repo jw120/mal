@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 {-|
 Module      : Reader
@@ -19,6 +20,7 @@ module Reader
   ( malRead
   , AST(..)
   , MalSpecialLit(..)
+  , MalFunction
   , magicKeywordPrefix
   )
 where
@@ -35,6 +37,12 @@ import qualified Text.Megaparsec.Char.Lexer    as ML
 
 data MalSpecialLit = MalNil | MalTrue | MalFalse deriving (Show, Eq)
 
+type MalFunction = [AST] -> Either Text AST
+instance Show MalFunction where
+  show _ = "#<function>"
+instance Eq MalFunction where
+  _ == _ = False
+
 -- We hold keywords as Strings with a magic prefix
 magicKeywordPrefix :: Text
 magicKeywordPrefix = "\x029e" -- Unicode 'ʞ'
@@ -47,6 +55,7 @@ data AST
   | ASTList [AST]
   | ASTVector [AST]
   | ASTMap [AST] -- maybe should be something like [(Text, AST)]
+  | ASTFn MalFunction
   deriving (Eq, Show)
 
 -- | type for our parsers (void for custom errors, text for the input type)

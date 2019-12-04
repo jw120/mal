@@ -13,6 +13,7 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
+- containers
 - megaparsec
 - readline
 - text
@@ -28,6 +29,11 @@ executables:
     - mal
   step1_read_print:
     main:                step1_read_print.hs
+    source-dirs:         app
+    dependencies:
+    - mal
+  step2_eval:
+    main:                step2_eval.hs
     source-dirs:         app
     dependencies:
     - mal

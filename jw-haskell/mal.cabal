@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2bdfed84fe6bbb968880792827be6ef569a16372860d60afe7e5aa2351b9778a
+-- hash: db426e025a58ad85cd55b98d321b3c9c8840e585b828725e64c97088c27a209f
 
 name:           mal
 version:        0.1.0.0
@@ -26,6 +26,7 @@ source-repository head
 
 library
   exposed-modules:
+      EvalSimple
       Printer
       Reader
       Utilities
@@ -35,6 +36,7 @@ library
       src
   build-depends:
       base >=4.7 && <5
+    , containers
     , megaparsec
     , readline
     , text
@@ -48,6 +50,7 @@ executable step0_repl
       app
   build-depends:
       base >=4.7 && <5
+    , containers
     , mal
     , megaparsec
     , readline
@@ -62,6 +65,22 @@ executable step1_read_print
       app
   build-depends:
       base >=4.7 && <5
+    , containers
+    , mal
+    , megaparsec
+    , readline
+    , text
+  default-language: Haskell2010
+
+executable step2_eval
+  main-is: step2_eval.hs
+  other-modules:
+      Paths_mal
+  hs-source-dirs:
+      app
+  build-depends:
+      base >=4.7 && <5
+    , containers
     , mal
     , megaparsec
     , readline
@@ -72,6 +91,7 @@ test-suite mal-specs
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      EvalSimpleSpec
       PrinterSpec
       ReaderSpec
       Paths_mal
@@ -79,6 +99,7 @@ test-suite mal-specs
       test
   build-depends:
       base >=4.7 && <5
+    , containers
     , hspec
     , hspec-megaparsec
     , mal

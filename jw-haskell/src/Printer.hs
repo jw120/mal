@@ -38,12 +38,13 @@ malFormat (Right Nothing   ) = ""
 malFormat (Right (Just ast)) = addSpaces $ go [] ast
  where
   go :: [Text] -> AST -> [Text]
-  go acc (ASTSymbol t) = acc ++ [t]
-  go acc (ASTIntLit i) = acc ++ [T.pack (show i)]
-  go acc (ASTStringLit t) = acc ++ [showStringLit t]
-  go acc (ASTSpecialLit MalNil) = acc ++ ["nil"]
-  go acc (ASTSpecialLit MalTrue) = acc ++ ["true"]
+  go acc (ASTSymbol     t       ) = acc ++ [t]
+  go acc (ASTIntLit     i       ) = acc ++ [T.pack (show i)]
+  go acc (ASTStringLit  t       ) = acc ++ [showStringLit t]
+  go acc (ASTSpecialLit MalNil  ) = acc ++ ["nil"]
+  go acc (ASTSpecialLit MalTrue ) = acc ++ ["true"]
   go acc (ASTSpecialLit MalFalse) = acc ++ ["false"]
+  go acc (ASTFn         _       ) = acc ++ ["#<function>"]
   go acc (ASTList xs) = acc ++ ["("] ++ concatMap (go []) xs ++ [")"]
   go acc (ASTVector xs) = acc ++ ["["] ++ concatMap (go []) xs ++ ["]"]
   go acc (ASTMap xs) = acc ++ ["{"] ++ concatMap (go []) xs ++ ["}"]

@@ -22,3 +22,4 @@ TODO
 
 * Improve Makefile and exec
 * Phase 1 - vector and map underlying rep (mutable? what to do with odd-length map literals?)
+* Check our magic keyword string is what we think it is

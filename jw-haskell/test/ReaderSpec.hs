@@ -11,9 +11,9 @@ import Reader
 
 -- Helper function to shorten tests
 test :: Text -> AST -> Expectation
-test t u = malRead t `shouldBe` Right (Just u)
+test t u = malRead t `shouldBe` (Right (Just u))
 testNothing :: Text -> Expectation
-testNothing t = malRead t `shouldBe` Right Nothing
+testNothing t = malRead t `shouldBe` (Right Nothing)
 isErrorMatching :: Text -> Either Text (Maybe AST) -> Bool
 isErrorMatching x (Left t) = x `isInfixOf` t
 isErrorMatching _ (Right _) = False

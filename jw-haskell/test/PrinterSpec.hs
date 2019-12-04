@@ -6,8 +6,10 @@ module PrinterSpec (spec) where
 import Test.Hspec
 
 import Printer
-import Reader (AST(..), magicKeywordPrefix)
+import Reader (AST(..), magicKeywordPrefix, MalFunction)
 
+dummyFn :: MalFunction
+dummyFn _ = Right (ASTIntLit 3)
 
 spec :: Spec
 spec = do
@@ -32,4 +34,6 @@ spec = do
         malFormat (Right (Just (ASTMap [ASTStringLit "a", ASTIntLit 3]))) `shouldBe` "{\"a\" 3}"
     it "formats an empty AST" $ do
       malFormat (Right Nothing) `shouldBe` ""
+    it "formats a function" $ do
+      malFormat (Right (Just (ASTFn dummyFn))) `shouldBe` "#<function>"
 
