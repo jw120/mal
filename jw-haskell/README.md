@@ -11,7 +11,7 @@ Design choices:
 Tools used
 
 * stack
-  + use stack test --fast
+  + use stack test --fast or stack test --fast --file-watch
 * hlint
 * brittany
   + install with: stack install brittany
@@ -20,8 +20,5 @@ Tools used
 
 TODO
 
-Phase 1:
-* Fix magicPrefix
-* Printer for keywords
-* Implement @
-* Vector and map underlying rep (mutable? what to do with odd-length map literals?)
+* Improve Makefile and exec
+* Phase 1 - vector and map underlying rep (mutable? what to do with odd-length map literals?)

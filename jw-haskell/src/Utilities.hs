@@ -1,3 +1,14 @@
+{-|
+Module      : Utilities
+Description : Utility functions
+Copyright   : (c) Joe Watson, 2019
+License     : GPL-3
+Maintainer  : joe_watson@mail.com
+
+Supporting functions
+
+-}
+
 module Utilities
   ( readlineLoop
   )

@@ -2,7 +2,7 @@
 
 {-|
 Module      : Reader
-Description : Short description
+Description : Convert text to AST
 Copyright   : (c) Joe Watson, 2019
 License     : GPL-3
 Maintainer  : joe_watson@mail.com
@@ -19,7 +19,7 @@ module Reader
   ( malRead
   , AST(..)
   , MalSpecialLit(..)
-  , keywordPrefix
+  , magicKeywordPrefix
   )
 where
 
@@ -36,8 +36,8 @@ import qualified Text.Megaparsec.Char.Lexer    as ML
 data MalSpecialLit = MalNil | MalTrue | MalFalse deriving (Show, Eq)
 
 -- We hold keywords as Strings with a magic prefix
-keywordPrefix :: Text
-keywordPrefix = "\x29e" -- Unicode 'ʞ'
+magicKeywordPrefix :: Text
+magicKeywordPrefix = "\x029e" -- Unicode 'ʞ'
 
 data AST
   = ASTSymbol Text
@@ -64,10 +64,7 @@ malRead = first formatError . runParser
 
 -- | top-level parser, catches an empty input (after stripping spaces/comments/commas)
 pTopLevel :: Parser (Maybe AST)
-pTopLevel = spaceConsumer *> M.choice
-  [ Nothing <$ M.eof
-  , Just <$> pExpr
-  ]
+pTopLevel = spaceConsumer *> M.choice [Nothing <$ M.eof, Just <$> pExpr]
 
 -- | main parser for our AST
 pExpr :: Parser AST
@@ -77,7 +74,6 @@ pExpr = spaceConsumer *> M.choice
   , M.try pSpecialLit
   , pStringLiteral
   , pReaderMacro
-  , pSpecialSymbol
   , pKeyword
   , pNormalSymbol
   , pList
@@ -108,22 +104,6 @@ pStringLiteral =
     .   T.pack
     <$> (MC.char '\"' *> M.manyTill ML.charLiteral (MC.char '\"'))
 
--- | Parse a special symbol (as a single character)
-pSpecialSymbol :: Parser AST
-pSpecialSymbol = ASTSymbol <$> M.choice
-  [
---  , openSquare
---  , closeSquare
---   openCurly
---  , closeCurly
---  , tildeAt
---  , singleQuote
---  , backQuote
---  , tilde
---  , hatSign
-   atSign
-  ]
-
 pReaderMacro :: Parser AST
 pReaderMacro = M.choice
   [ (\e -> ASTList [ASTSymbol "quote", e]) <$> (singleQuote *> pExpr)
@@ -131,7 +111,10 @@ pReaderMacro = M.choice
   , (\e -> ASTList [ASTSymbol "quasiquote", e]) <$> (backQuote *> pExpr)
   , (\e -> ASTList [ASTSymbol "splice-unquote", e]) <$> (tildeAt *> pExpr)
   , (\e -> ASTList [ASTSymbol "unquote", e]) <$> (tilde *> pExpr)
-  , (\e1 e2 -> ASTList [ASTSymbol "with-meta", e2, e1]) <$> (hatSign *> pExpr) <*> pExpr
+  , (\e -> ASTList [ASTSymbol "deref", e]) <$> (atSign *> pExpr)
+  , (\e1 e2 -> ASTList [ASTSymbol "with-meta", e2, e1])
+  <$> (hatSign *> pExpr)
+  <*> pExpr
   ]
 
 -- | Parse a normal symbol (a series of non-special characters)
@@ -141,11 +124,12 @@ pNormalSymbol = ASTSymbol . T.pack <$> lexeme (M.some (M.satisfy isNormal))
 
 -- | Parse a keyword (a colon followed by a series of non-special characters)
 pKeyword :: Parser AST
-pKeyword = toASTString <$> (MC.char ':' *> lexeme (M.some (M.satisfy isNormal)))
-  where
-    toASTString :: String -> AST
-    toASTString = ASTStringLit . (keywordPrefix <>) . T.pack
-    isNormal c = not (isSpace c) && c `notElem` ("[]{}()'`~^@" :: String)
+pKeyword =
+  toASTString <$> (MC.char ':' *> lexeme (M.some (M.satisfy isNormal)))
+ where
+  toASTString :: String -> AST
+  toASTString = ASTStringLit . (magicKeywordPrefix <>) . T.pack
+  isNormal c = not (isSpace c) && c `notElem` ("[]{}()'`~^@" :: String)
 
   -- | Parse a list
 pList :: Parser AST

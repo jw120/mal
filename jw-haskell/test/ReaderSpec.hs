@@ -18,27 +18,35 @@ isErrorMatching :: Text -> Either Text (Maybe AST) -> Bool
 isErrorMatching x (Left t) = x `isInfixOf` t
 isErrorMatching _ (Right _) = False
 keyword :: Text -> AST
-keyword t = ASTStringLit (keywordPrefix <> t)
+keyword t = s (magicKeywordPrefix <> t)
+i :: Int -> AST
+i = ASTIntLit
+s :: Text -> AST
+s = ASTStringLit
+list :: [AST] -> AST
+list = ASTList
+sym :: Text -> AST
+sym = ASTSymbol
 
 spec :: Spec
 spec = do
   describe "Reader function" $ do
     it "parses an integer" $ do
-      malRead "123" `shouldBe` Right (Just (ASTIntLit 123))
+      malRead "123" `shouldBe` Right (Just (i 123))
     it "parses a signed integer" $ do
-      malRead "-1234" `shouldBe` Right (Just (ASTIntLit (-1234)))
+      malRead "-1234" `shouldBe` Right (Just (i (-1234)))
     it "parses an integer with leading space" $ do
-      malRead "   123" `shouldBe` Right (Just (ASTIntLit 123))
+      malRead "   123" `shouldBe` Right (Just (i 123))
     it "parses an integer with trailing space" $ do
-      malRead "123 " `shouldBe` Right (Just (ASTIntLit 123))
+      malRead "123 " `shouldBe` Right (Just (i 123))
     it "parses a string literal" $ do
-      malRead "\"xyz\"" `shouldBe` Right (Just (ASTStringLit "xyz"))
+      malRead "\"xyz\"" `shouldBe` Right (Just (s "xyz"))
     it "parses a string literal with an escaped quote" $ do
-      malRead "\"x\\\"yz\"" `shouldBe` Right (Just (ASTStringLit "x\"yz"))
+      malRead "\"x\\\"yz\"" `shouldBe` Right (Just (s "x\"yz"))
     it "parses a normal alphabetic atom" $ do
-      malRead "abc" `shouldBe` Right (Just (ASTSymbol "abc"))
+      malRead "abc" `shouldBe` Right (Just (sym "abc"))
     it "handles comments" $ do
-      malRead "(+ ; comment\n3)" `shouldBe` Right (Just (ASTList [ASTSymbol "+", ASTIntLit 3]))
+      malRead "(+ ; comment\n3)" `shouldBe` Right (Just (list [sym "+", i 3]))
     it "handles empty input" $ do
       malRead "" `shouldBe` Right Nothing
     it "detects mismatched parens" $ do
@@ -46,243 +54,150 @@ spec = do
 
   describe "standard step1 tests" $ do
     it "Testing read of numbers" $ do
-      test "1" $ ASTIntLit 1
-      test "   7   " $ ASTIntLit 7
-      test "-123" $ ASTIntLit (-123)
+      test "1" $ i 1
+      test "   7   " $ i 7
+      test "-123" $ i (-123)
     it "Testing read of symbols" $ do
-      test "+" $ ASTSymbol "+"
-      test "abc" $ ASTSymbol "abc"
-      test "   def  " $ ASTSymbol "def"
-      test "abc5" $ ASTSymbol "abc5"
-      test "abc-def" $ ASTSymbol "abc-def"
+      test "+" $ sym "+"
+      test "abc" $ sym "abc"
+      test "   def  " $ sym "def"
+      test "abc5" $ sym "abc5"
+      test "abc-def" $ sym "abc-def"
     it "Testing non-numbers starting with a dash." $ do
-      test "-" $ ASTSymbol "-"
-      test "-abc" $ ASTSymbol "-abc"
-      test "->>" $ ASTSymbol "->>"
+      test "-" $ sym "-"
+      test "-abc" $ sym "-abc"
+      test "->>" $ sym "->>"
     it "Testing read of lists" $ do
-      test "(+ 1 2)" $ ASTList [ASTSymbol "+",ASTIntLit 1, ASTIntLit 2]
-      test "()" $ ASTList []
-      test "( )" $ ASTList []
-      test "(nil)" $ ASTList [ASTSpecialLit MalNil]
+      test "(+ 1 2)" $ list [sym "+",i 1, i 2]
+      test "()" $ list []
+      test "( )" $ list []
+      test "(nil)" $ list [ASTSpecialLit MalNil]
       test "((3 4))" $
-        ASTList [ASTList [ASTIntLit 3, ASTIntLit 4]]
+        list [list [i 3, i 4]]
       test "(+ 1 (+ 2 3))" $
-        ASTList [ASTSymbol "+", ASTIntLit 1 , ASTList [ASTSymbol "+", ASTIntLit 2, ASTIntLit 3]]
+        list [sym "+", i 1 , list [sym "+", i 2, i 3]]
       test "  ( +   1   (+   2 3   )   )  " $
-        ASTList [ASTSymbol "+", ASTIntLit 1 , ASTList [ASTSymbol "+", ASTIntLit 2, ASTIntLit 3]]
+        list [sym "+", i 1 , list [sym "+", i 2, i 3]]
       test "(* 1 2)" $
-        ASTList [ASTSymbol "*", ASTIntLit 1, ASTIntLit 2]
+        list [sym "*", i 1, i 2]
       test "(** 1 2)" $
-        ASTList [ASTSymbol "**", ASTIntLit 1, ASTIntLit 2]
+        list [sym "**", i 1, i 2]
       test "(* -3 6)" $
-        ASTList [ASTSymbol "*", ASTIntLit (-3), ASTIntLit 6]
+        list [sym "*", i (-3), i 6]
       test "(()())" $
-        ASTList [ASTList[], ASTList[]]
+        list [list[], list[]]
     it "Test commas as whitespace" $ do
       test "(1 2, 3,,,,),," $
-        ASTList [ASTIntLit 1, ASTIntLit 2, ASTIntLit 3]
+        list [i 1, i 2, i 3]
     it "Testing read of nil/true/false" $ do
       test "nil" $ ASTSpecialLit MalNil
       test "true" $ ASTSpecialLit MalTrue
       test "false" $ ASTSpecialLit MalFalse
     it "Testing read of comments" $ do
        testNothing "  ;; whole line comment (not an exception)"
-       test " 1 ; comment after expression" $ ASTIntLit 1
-       test "1; comment after expression" $ ASTIntLit 1
+       test " 1 ; comment after expression" $ i 1
+       test "1; comment after expression" $ i 1
     it "Testing read of quoting" $ do
-      test "'1" $ ASTList [ASTSymbol "quote", ASTIntLit 1]
-      test "'(1 2 3)" $ ASTList [ASTSymbol "quote", ASTList [ASTIntLit 1, ASTIntLit 2, ASTIntLit 3]]
-      test "`1" $ ASTList [ASTSymbol "quasiquote", ASTIntLit 1]
-      test "`(1 2 3)" $ ASTList [ASTSymbol "quasiquote", ASTList [ASTIntLit 1, ASTIntLit 2, ASTIntLit 3]]
-      test "~1" $ ASTList [ASTSymbol "unquote", ASTIntLit 1]
-      test "~(1 2 3)" $ ASTList [ASTSymbol "unquote", ASTList [ASTIntLit 1, ASTIntLit 2, ASTIntLit 3]]
-      test "~@(1 2 3)" $ ASTList [ASTSymbol "splice-unquote", ASTList [ASTIntLit 1, ASTIntLit 2, ASTIntLit 3]]
+      test "'1" $ list [sym "quote", i 1]
+      test "'(1 2 3)" $ list [sym "quote", list [i 1, i 2, i 3]]
+      test "`1" $ list [sym "quasiquote", i 1]
+      test "`(1 2 3)" $ list [sym "quasiquote", list [i 1, i 2, i 3]]
+      test "~1" $ list [sym "unquote", i 1]
+      test "~(1 2 3)" $ list [sym "unquote", list [i 1, i 2, i 3]]
+      test "~@(1 2 3)" $ list [sym "splice-unquote", list [i 1, i 2, i 3]]
     it "Testing keywords" $ do
       test ":kw" $ keyword "kw"
       test "(:kw1 :kw2 :kw3)" $
-        ASTList [keyword "kw1", keyword "kw2", keyword "kw3"]
+        list [keyword "kw1", keyword "kw2", keyword "kw3"]
     it "Testing read of vectors" $ do
-      test "[+ 1 2]" $ ASTVector [ASTSymbol "+", ASTIntLit 1, ASTIntLit 2]
+      test "[+ 1 2]" $ ASTVector [sym "+", i 1, i 2]
       test "[]" $ ASTVector []
       test "[ ]" $ ASTVector []
-      test "[[3 4]]" $ ASTVector [ASTVector [ASTIntLit 3, ASTIntLit 4]]
+      test "[[3 4]]" $ ASTVector [ASTVector [i 3, i 4]]
       test "[+ 1 [+ 2 3]]" $
-        ASTVector [ASTSymbol "+", ASTIntLit 1, ASTVector [ASTSymbol "+", ASTIntLit 2, ASTIntLit 3]]
+        ASTVector [sym "+", i 1, ASTVector [sym "+", i 2, i 3]]
       test "  [ +   1   [+   2 3   ]   ]" $
-        ASTVector [ASTSymbol "+", ASTIntLit 1, ASTVector [ASTSymbol "+", ASTIntLit 2, ASTIntLit 3]]
-      test "([])" $ ASTList [ASTVector []]
+        ASTVector [sym "+", i 1, ASTVector [sym "+", i 2, i 3]]
+      test "([])" $ list [ASTVector []]
     it  "Testing read of hash maps" $ do
       test "{}" $ ASTMap []
       test "{ }" $ ASTMap []
-      test "{\"abc\" 1}" $ ASTMap [ASTStringLit "abc", ASTIntLit 1]
-      test "{\"a\" {\"b\" 2}}" $ ASTMap [ASTStringLit "a", ASTMap [ASTStringLit "b", ASTIntLit 2]]
+      test "{\"abc\" 1}" $ ASTMap [s "abc", i 1]
+      test "{\"a\" {\"b\" 2}}" $ ASTMap [s "a", ASTMap [s "b", i 2]]
       test "{\"a\" {\"b\" {\"c\" 3}}}" $
-        ASTMap [ASTStringLit "a", ASTMap [ASTStringLit "b", ASTMap [ASTStringLit "c", ASTIntLit 3]]]
+        ASTMap [s "a", ASTMap [s "b", ASTMap [s "c", i 3]]]
       test "      {  \"a\"  {\"b\"   {  \"cde\"     3   }  }}" $
-        ASTMap [ASTStringLit "a", ASTMap [ASTStringLit "b", ASTMap [ASTStringLit "cde", ASTIntLit 3]]]
+        ASTMap [s "a", ASTMap [s "b", ASTMap [s "cde", i 3]]]
       test "{\"a1\" 1 \"a2\" 2 \"a3\" 3}" $ -- This may go out of order
-        ASTMap [ASTStringLit "a1", ASTIntLit 1, ASTStringLit "a2", ASTIntLit 2, ASTStringLit "a3", ASTIntLit 3]
+        ASTMap [s "a1", i 1, s "a2", i 2, s "a3", i 3]
       test "{  :a  {:b   {  :cde     3   }  }}" $
-        ASTMap [keyword "a", ASTMap [keyword "b", ASTMap [keyword "cde", ASTIntLit 3]]]
-      test "{\"1\" 1}" $ ASTMap [ASTStringLit "1", ASTIntLit 1]
-      test "({})" $ ASTList [ASTMap []]
+        ASTMap [keyword "a", ASTMap [keyword "b", ASTMap [keyword "cde", i 3]]]
+      test "{\"1\" 1}" $ ASTMap [s "1", i 1]
+      test "({})" $ list [ASTMap []]
     it "Testing read of ^/metadata" $ do
       test "^{\"a\" 1} [2 3]" $
-        ASTList [ASTSymbol "with-meta",
-          ASTVector [ASTIntLit 2, ASTIntLit 3],
-          ASTMap [ASTStringLit "a", ASTIntLit 1]]
-
-{-
-        ;>>> deferrable=True
-
-        ;;
-        ;; -------- Deferrable Functionality --------
-        ;; Testing read of strings
-        "abc"
-        ;=>"abc"
-           "abc"
-        ;=>"abc"
-        "abc (with parens)"
-        ;=>"abc (with parens)"
-        "abc\"def"
-        ;=>"abc\"def"
-        ""
-        ;=>""
-        "\\"
-        ;=>"\\"
-        "\\\\\\\\\\\\\\\\\\"
-        ;=>"\\\\\\\\\\\\\\\\\\"
-        "&"
-        ;=>"&"
-        "'"
-        ;=>"'"
-        "("
-        ;=>"("
-        ")"
-        ;=>")"
-        "*"
-        ;=>"*"
-        "+"
-        ;=>"+"
-        ","
-        ;=>","
-        "-"
-        ;=>"-"
-        "/"
-        ;=>"/"
-        ":"
-        ;=>":"
-        ";"
-        ;=>";"
-        "<"
-        ;=>"<"
-        "="
-        ;=>"="
-        ">"
-        ;=>">"
-        "?"
-        ;=>"?"
-        "@"
-        ;=>"@"
-        "["
-        ;=>"["
-        "]"
-        ;=>"]"
-        "^"
-        ;=>"^"
-        "_"
-        ;=>"_"
-        "`"
-        ;=>"`"
-        "{"
-        ;=>"{"
-        "}"
-        ;=>"}"
-        "~"
-        ;=>"~"
-
-        ;; Testing reader errors
-        (1 2
-        ;/.*(EOF|end of input|unbalanced).*
-        [1 2
-        ;/.*(EOF|end of input|unbalanced).*
-
-        ;;; These should throw some error with no return value
-        "abc
-        ;/.*(EOF|end of input|unbalanced).*
-        "
-        ;/.*(EOF|end of input|unbalanced).*
-        "\"
-        ;/.*(EOF|end of input|unbalanced).*
-        "\\\\\\\\\\\\\\\\\\\"
-        ;/.*(EOF|end of input|unbalanced).*
-        (1 "abc
-        ;/.*(EOF|end of input|unbalanced).*
-        (1 "abc"
-        ;/.*(EOF|end of input|unbalanced).*
-
-
-
-
-
-        ;; Testing read of @/deref
-        @a
-        ;=>(deref a)
-
-        ;>>> soft=True
-        ;>>> optional=True
-        ;;
-        ;; -------- Optional Functionality --------
-
-        ;; Testing read of ^/metadata
-        ^{"a" 1} [1 2 3]
-        ;=>(with-meta [1 2 3] {"a" 1})
-
-
-        ;; Non alphanumerice characters in strings
-        ;;; \t is not specified enough to be tested
-        "\n"
-        ;=>"\n"
-        "#"
-        ;=>"#"
-        "$"
-        ;=>"$"
-        "%"
-        ;=>"%"
-        "."
-        ;=>"."
-        "\\"
-        ;=>"\\"
-        "|"
-        ;=>"|"
-
-        ;; Non alphanumeric characters in comments
-        1;!
-        ;=>1
-        1;"
-        ;=>1
-        1;#
-        ;=>1
-        1;$
-        ;=>1
-        1;%
-        ;=>1
-        1;'
-        ;=>1
-        1;\
-        ;=>1
-        1;\\
-        ;=>1
-        1;\\\
-        ;=>1
-        1;`
-        ;=>1
-        ;;; Hopefully less problematic characters
-        1; &()*+,-./:;<=>?@[]^_{|}~
-
-        ;; FIXME: These tests have no reasons to be optional, but...
-        ;; fantom fails this one
-        "!"
-        ;=>"!"
--}
-
+        list [sym "with-meta",
+          ASTVector [i 2, i 3],
+          ASTMap [s "a", i 1]]
+    it "Testing read of strings" $ do
+      test "\"abc\"" $ s "abc"
+      test "    \"abc\"" $ s "abc"
+      test "\"abc (with parens)\"" $ s "abc (with parens)"
+      test "\"abc\\\"def\"" $ s "abc\"def"
+      test "\"\"" $ s ""
+      test "\"\\\\\"" $ s "\\"
+      test "\"\\\\\\\\\\\\\"" $ s "\\\\\\"
+      test "\"&\"" $ s "&"
+      test "\"'\"" $ s "'"
+      test "\"(\"" $ s "("
+      test "\")\"" $ s ")"
+      test "\"*\"" $ s "*"
+      test "\"+\"" $ s "+"
+      test "\",\"" $ s ","
+      test "\"-\"" $ s "-"
+      test "\"/\"" $ s "/"
+      test "\":\"" $ s ":"
+      test "\";\"" $ s ";"
+      test "\"<\"" $ s "<"
+      test "\">\"" $ s ">"
+      test "\"?\"" $ s "?"
+      test "\"@\"" $ s "@"
+      test "\"[\"" $ s "["
+      test "\"]\"" $ s "]"
+      test "\"^\"" $ s "^"
+      test "\"_\"" $ s "_"
+      test "\"`\"" $ s "`"
+      test "\"{\"" $ s "{"
+      test "\"}\"" $ s "}"
+      test "\"~\"" $ s "~"
+    it "Testing reader errors" $ do
+      malRead "(1 2" `shouldSatisfy` isErrorMatching "end of input"
+      malRead "[1 2" `shouldSatisfy` isErrorMatching "end of input"
+      malRead "\"ab" `shouldSatisfy` isErrorMatching "end of input"
+      malRead "\"" `shouldSatisfy` isErrorMatching "end of input"
+      malRead "\"\\" `shouldSatisfy` isErrorMatching "unexpected"
+      malRead "\"\\\\\\\\\\\"" `shouldSatisfy` isErrorMatching "end of input"
+      malRead "(1 \"abc" `shouldSatisfy` isErrorMatching "end of input"
+      malRead "(1 \"abc\"" `shouldSatisfy` isErrorMatching "end of input"
+    it "Testing read of @/deref" $ do
+      test "@a" $ list [sym "deref", sym "a"]
+    it "Non alphanumerice characters in strings" $ do
+      test "\"\\n\"" $ s "\n"
+      test "\"#\"" $ s "#"
+      test "\"$\"" $ s "$"
+      test "\"%\"" $ s "%"
+      test "\".\"" $ s "."
+      test "\"\\\\\"" $ s "\\"
+      test "\"|\"" $ s "|"
+    it "Non alphanumeric characters in comments" $ do
+      test "1;!" $ i 1
+      test "1;\"" $ i 1
+      test "1;#" $ i 1
+      test "1;$" $ i 1
+      test "1;%" $ i 1
+      test "1;'" $ i 1
+      test "1;\\" $ i 1
+      test "1;\\\\" $ i 1
+      test "1;`" $ i 1
+      test "2; &()*+,-./:;<=>?@[]^_{|}~" $ i 2
+      test "\"!\"" $ s "!"

@@ -6,7 +6,7 @@ module PrinterSpec (spec) where
 import Test.Hspec
 
 import Printer
-import Reader (AST(..))
+import Reader (AST(..), magicKeywordPrefix)
 
 
 spec :: Spec
@@ -20,12 +20,16 @@ spec = do
       malFormat (Right (Just (ASTIntLit (-123)))) `shouldBe` "-123"
     it "formats a string" $ do
       malFormat (Right (Just (ASTStringLit "abc"))) `shouldBe` "\"abc\""
+    it "formats a keyword" $ do
+        malFormat (Right (Just (ASTStringLit (magicKeywordPrefix <> "abc")))) `shouldBe` ":abc"
     it "formats a string with escape sequences" $ do
       malFormat (Right (Just (ASTStringLit "a\\b\"c\nd"))) `shouldBe` "\"a\\\\b\\\"c\\nd\""
     it "formats a list" $ do
       malFormat (Right (Just (ASTList [ASTIntLit 1, ASTIntLit 2]))) `shouldBe` "(1 2)"
     it "formats a vector" $ do
        malFormat (Right (Just (ASTVector [ASTIntLit 7, ASTIntLit 8]))) `shouldBe` "[7 8]"
+    it "formats a map" $ do
+        malFormat (Right (Just (ASTMap [ASTStringLit "a", ASTIntLit 3]))) `shouldBe` "{\"a\" 3}"
     it "formats an empty AST" $ do
       malFormat (Right Nothing) `shouldBe` ""
 
