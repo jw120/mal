@@ -20,15 +20,11 @@ import qualified Data.Map                      as M
 import           Data.Map                       ( Map )
 import           Data.Text                      ( Text )
 
-
-import           Printer                        ( malPrint )
-import           Reader                         ( malRead
-                                                , AST(..)
-                                                , MalFunction
+import           Reader                         ( AST(..)
+                                                , MalBuiltin
                                                 )
-import           Utilities                      ( readlineLoop )
 
-wrapIntBinary :: (Int -> Int -> Int) -> MalFunction
+wrapIntBinary :: (Int -> Int -> Int) -> MalBuiltin
 wrapIntBinary binFn = f
  where
   f [ASTIntLit i, ASTIntLit j] = Right (ASTIntLit (binFn i j))
@@ -37,10 +33,10 @@ wrapIntBinary binFn = f
 
 replEnv :: Map Text AST
 replEnv = M.fromList
-  [ ("+", ASTFn (wrapIntBinary (+)))
-  , ("-", ASTFn (wrapIntBinary (-)))
-  , ("*", ASTFn (wrapIntBinary (*)))
-  , ("/", ASTFn (wrapIntBinary div))
+  [ ("+", ASTBuiltin (wrapIntBinary (+)))
+  , ("-", ASTBuiltin (wrapIntBinary (-)))
+  , ("*", ASTBuiltin (wrapIntBinary (*)))
+  , ("/", ASTBuiltin (wrapIntBinary div))
   ]
 
 malEval :: Either Text (Maybe AST) -> Either Text (Maybe AST)
@@ -55,8 +51,8 @@ eval (ASTList []) = Right (ASTList [])
 eval (ASTList xs)
   | not (null lefts) = Left (head lefts)
   | otherwise = case hd of
-    ASTFn fn -> fn rest
-    _        -> Left "Not a function"
+    ASTBuiltin fn -> fn rest
+    _             -> Left "Not a function"
  where
   xs'                = map eval xs
   (lefts, hd : rest) = partitionEithers xs'

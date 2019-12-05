@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances #-} -- to allow instances for our MalBuiltin type synonym
 
 {-|
 Module      : Reader
@@ -20,7 +20,7 @@ module Reader
   ( malRead
   , AST(..)
   , MalSpecialLit(..)
-  , MalFunction
+  , MalBuiltin
   , magicKeywordPrefix
   )
 where
@@ -35,13 +35,15 @@ import qualified Text.Megaparsec               as M
 import qualified Text.Megaparsec.Char          as MC
 import qualified Text.Megaparsec.Char.Lexer    as ML
 
+-- | Type for mal functions implemented in Haskell
+type MalBuiltin = [AST] -> Either Text AST
+instance Show MalBuiltin where
+  show _ = "#<function>"
+instance Eq MalBuiltin where
+  _ == _ = False
+
 data MalSpecialLit = MalNil | MalTrue | MalFalse deriving (Show, Eq)
 
-type MalFunction = [AST] -> Either Text AST
-instance Show MalFunction where
-  show _ = "#<function>"
-instance Eq MalFunction where
-  _ == _ = False
 
 -- We hold keywords as Strings with a magic prefix
 magicKeywordPrefix :: Text
@@ -55,7 +57,7 @@ data AST
   | ASTList [AST]
   | ASTVector [AST]
   | ASTMap [AST] -- maybe should be something like [(Text, AST)]
-  | ASTFn MalFunction
+  | ASTBuiltin MalBuiltin
   deriving (Eq, Show)
 
 -- | type for our parsers (void for custom errors, text for the input type)

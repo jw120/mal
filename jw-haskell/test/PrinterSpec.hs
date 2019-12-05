@@ -6,9 +6,9 @@ module PrinterSpec (spec) where
 import Test.Hspec
 
 import Printer
-import Reader (AST(..), magicKeywordPrefix, MalFunction)
+import Reader (AST(..), magicKeywordPrefix, MalBuiltin)
 
-dummyFn :: MalFunction
+dummyFn :: MalBuiltin
 dummyFn _ = Right (ASTIntLit 3)
 
 spec :: Spec
@@ -35,5 +35,5 @@ spec = do
     it "formats an empty AST" $ do
       malFormat (Right Nothing) `shouldBe` ""
     it "formats a function" $ do
-      malFormat (Right (Just (ASTFn dummyFn))) `shouldBe` "#<function>"
+      malFormat (Right (Just (ASTBuiltin dummyFn))) `shouldBe` "#<builtin-function>"
 
