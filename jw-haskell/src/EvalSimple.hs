@@ -20,25 +20,19 @@ import qualified Data.Map                      as M
 import           Data.Map                       ( Map )
 import           Data.Text                      ( Text )
 
-import           Reader                         ( AST(..)
-                                                , MalBuiltin
-                                                )
+import qualified Builtin
+import           Reader                         ( AST(..) )
 
-wrapIntBinary :: (Int -> Int -> Int) -> MalBuiltin
-wrapIntBinary binFn = f
- where
-  f [ASTIntLit i, ASTIntLit j] = Right (ASTIntLit (binFn i j))
-  f [_          , _          ] = Left "Expected integer arguments"
-  f _                          = Left "Expected two arguments"
-
-replEnv :: Map Text AST
-replEnv = M.fromList
-  [ ("+", ASTBuiltin (wrapIntBinary (+)))
-  , ("-", ASTBuiltin (wrapIntBinary (-)))
-  , ("*", ASTBuiltin (wrapIntBinary (*)))
-  , ("/", ASTBuiltin (wrapIntBinary div))
+-- | Fixed environment for the simple evaulator
+simpleEnv :: Map Text AST
+simpleEnv = M.fromList
+  [ ("+", ASTBuiltin Builtin.addition)
+  , ("-", ASTBuiltin Builtin.subtraction)
+  , ("*", ASTBuiltin Builtin.multiplication)
+  , ("/", ASTBuiltin Builtin.division)
   ]
 
+--
 malEval :: Either Text (Maybe AST) -> Either Text (Maybe AST)
 malEval (Left  err       ) = Left err
 malEval (Right Nothing   ) = Right Nothing
@@ -62,7 +56,7 @@ eval (ASTVector xs) | null lefts = Right (ASTVector rights)
   xs'             = map eval xs
   (lefts, rights) = partitionEithers xs'
 -- eval (ASTMap ) TBD
-eval (ASTSymbol s) = case M.lookup s replEnv of
+eval (ASTSymbol s) = case M.lookup s simpleEnv of
   Just v  -> Right v
   Nothing -> Left "Look up failed"
 eval other = Right other
