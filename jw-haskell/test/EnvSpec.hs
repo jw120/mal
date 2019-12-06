@@ -12,12 +12,18 @@ Hspec tests for Env module
 
 -}
 
-module EnvSpec (spec) where
+module EnvSpec
+  ( spec
+  )
+where
 
-import Test.Hspec
+import           Test.Hspec
 
-import Env
-import TestHelpers (i, isErrorMatching, s)
+import           Env
+import           TestHelpers                    ( i
+                                                , isErrorMatching
+                                                , s
+                                                )
 
 parent :: Env
 parent = set "A" (i 23) $ set "B" (i 12) emptyWithoutOuter

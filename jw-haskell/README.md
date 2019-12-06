@@ -8,6 +8,7 @@ Design choices:
 * megaparsec (using its lex helpers)
 * Either for parsing errors and for eval errors
 
+*** How do we make persistent? Either have a mutable state or force tests to run in a chain?
 
 Tools used
 

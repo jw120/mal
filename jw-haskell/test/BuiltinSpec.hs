@@ -12,12 +12,19 @@ Hspec tests for Builtin module
 
 -}
 
-module BuiltinSpec (spec) where
+module BuiltinSpec
+  ( spec
+  )
+where
 
-import Test.Hspec
+import           Test.Hspec
 
-import Builtin
-import TestHelpers (i, isErrorMatching, s, sym)
+import           Builtin
+import           TestHelpers                    ( i
+                                                , isErrorMatching
+                                                , s
+                                                , sym
+                                                )
 
 spec :: Spec
 spec = do
@@ -40,7 +47,7 @@ spec = do
     it "works with two arguments" $ do
       subtraction [i 8, i 9] `shouldBe` Right (i (-1))
     it "works with many arguments" $ do
-      subtraction [i 10, i 2, i 4, i 30] `shouldBe` Right (i (10-2-4-30))
+      subtraction [i 10, i 2, i 4, i 30] `shouldBe` Right (i (10 - 2 - 4 - 30))
     it "fails with non-integers" $ do
       subtraction [i 10, sym "Q"] `shouldSatisfy` isErrorMatching "type"
   describe "multiplication" $ do
@@ -51,7 +58,8 @@ spec = do
     it "works with two arguments" $ do
       multiplication [i 8, i 9] `shouldBe` Right (i 72)
     it "works with many arguments" $ do
-      multiplication [i 10, i 2, i 4, i 30] `shouldBe` Right (i (10 * 2 * 4 * 30))
+      multiplication [i 10, i 2, i 4, i 30]
+        `shouldBe` Right (i (10 * 2 * 4 * 30))
     it "fails with non-integers" $ do
       multiplication [sym "Q", i 22] `shouldSatisfy` isErrorMatching "type"
   describe "division" $ do
@@ -62,7 +70,7 @@ spec = do
     it "works with two arguments" $ do
       division [i 10, i 2] `shouldBe` Right (i 5)
     it "traps divide by zero" $ do
-      division [i 11, i 0] `shouldSatisfy` (isErrorMatching "zero")
+      division [i 11, i 0] `shouldSatisfy` isErrorMatching "zero"
     it "works with many arguments" $ do
       division [i 120, i 2, i 4, i 3] `shouldBe` Right (i 5)
     it "fails with non-integers" $ do

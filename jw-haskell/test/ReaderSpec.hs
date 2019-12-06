@@ -12,27 +12,40 @@ Hspec tests for Reader module
 
 -}
 
-module ReaderSpec (spec) where
+module ReaderSpec
+  ( spec
+  )
+where
 
-import Data.List (sort)
-import qualified Data.Map as M
-import Data.Text (Text)
-import Test.Hspec
+import           Data.List                      ( sort )
+import qualified Data.Map                      as M
+import           Data.Text                      ( Text )
+import           Test.Hspec
 
-import Reader
-import TestHelpers (i, isErrorMatching, kw, kwText, list, m, s, sym, vec)
+import           Reader
+import           TestHelpers                    ( i
+                                                , isErrorMatching
+                                                , kw
+                                                , kwText
+                                                , list
+                                                , m
+                                                , s
+                                                , sym
+                                                , vec
+                                                )
 
 -- Helper function to shorten tests
 test :: Text -> AST -> Expectation
-test t u = malRead t `shouldBe` (Right (Just u))
+test t u = malRead t `shouldBe` Right (Just u)
 testNothing :: Text -> Expectation
-testNothing t = malRead t `shouldBe` (Right Nothing)
+testNothing t = malRead t `shouldBe` Right Nothing
 testMap :: Text -> [(Text, AST)] -> Expectation
 testMap t u = deorder (malRead t) `shouldBe` deorder (Right (Just (m u)))
-  where
-    deorder :: Either Text (Maybe AST) -> [(Text, String)]
-    deorder (Right (Just (ASTMap mp))) = sort . map (\(k, v) -> (k, show v)) $ M.toList mp
-    deorder _ = error "Failed deorder"
+ where
+  deorder :: Either Text (Maybe AST) -> [(Text, String)]
+  deorder (Right (Just (ASTMap mp))) =
+    sort . map (\(k, v) -> (k, show v)) $ M.toList mp
+  deorder _ = error "Failed deorder"
 
 spec :: Spec
 spec = do
@@ -76,35 +89,28 @@ spec = do
       test "-abc" $ sym "-abc"
       test "->>" $ sym "->>"
     it "Testing read of lists" $ do
-      test "(+ 1 2)" $ list [sym "+",i 1, i 2]
+      test "(+ 1 2)" $ list [sym "+", i 1, i 2]
       test "()" $ list []
       test "( )" $ list []
       test "(nil)" $ list [ASTSpecialLit MalNil]
-      test "((3 4))" $
-        list [list [i 3, i 4]]
-      test "(+ 1 (+ 2 3))" $
-        list [sym "+", i 1 , list [sym "+", i 2, i 3]]
-      test "  ( +   1   (+   2 3   )   )  " $
-        list [sym "+", i 1 , list [sym "+", i 2, i 3]]
-      test "(* 1 2)" $
-        list [sym "*", i 1, i 2]
-      test "(** 1 2)" $
-        list [sym "**", i 1, i 2]
-      test "(* -3 6)" $
-        list [sym "*", i (-3), i 6]
-      test "(()())" $
-        list [list [], list []]
+      test "((3 4))" $ list [list [i 3, i 4]]
+      test "(+ 1 (+ 2 3))" $ list [sym "+", i 1, list [sym "+", i 2, i 3]]
+      test "  ( +   1   (+   2 3   )   )  "
+        $ list [sym "+", i 1, list [sym "+", i 2, i 3]]
+      test "(* 1 2)" $ list [sym "*", i 1, i 2]
+      test "(** 1 2)" $ list [sym "**", i 1, i 2]
+      test "(* -3 6)" $ list [sym "*", i (-3), i 6]
+      test "(()())" $ list [list [], list []]
     it "Test commas as whitespace" $ do
-      test "(1 2, 3,,,,),," $
-        list [i 1, i 2, i 3]
+      test "(1 2, 3,,,,),," $ list [i 1, i 2, i 3]
     it "Testing read of nil/true/false" $ do
       test "nil" $ ASTSpecialLit MalNil
       test "true" $ ASTSpecialLit MalTrue
       test "false" $ ASTSpecialLit MalFalse
     it "Testing read of comments" $ do
-       testNothing "  ;; whole line comment (not an exception)"
-       test " 1 ; comment after expression" $ i 1
-       test "1; comment after expression" $ i 1
+      testNothing "  ;; whole line comment (not an exception)"
+      test " 1 ; comment after expression" $ i 1
+      test "1; comment after expression" $ i 1
     it "Testing read of quoting" $ do
       test "'1" $ list [sym "quote", i 1]
       test "'(1 2 3)" $ list [sym "quote", list [i 1, i 2, i 3]]
@@ -115,39 +121,33 @@ spec = do
       test "~@(1 2 3)" $ list [sym "splice-unquote", list [i 1, i 2, i 3]]
     it "Testing keywords" $ do
       test ":kw" $ kw "kw"
-      test "(:kw1 :kw2 :kw3)" $
-        list [kw "kw1", kw "kw2", kw "kw3"]
+      test "(:kw1 :kw2 :kw3)" $ list [kw "kw1", kw "kw2", kw "kw3"]
     it "Testing read of vectors" $ do
       test "[+ 1 2]" $ vec [sym "+", i 1, i 2]
       test "[]" $ vec []
       test "[ ]" $ vec []
       test "[[3 4]]" $ vec [vec [i 3, i 4]]
-      test "[+ 1 [+ 2 3]]" $
-        vec [sym "+", i 1, vec [sym "+", i 2, i 3]]
-      test "  [ +   1   [+   2 3   ]   ]" $
-        vec [sym "+", i 1, vec [sym "+", i 2, i 3]]
+      test "[+ 1 [+ 2 3]]" $ vec [sym "+", i 1, vec [sym "+", i 2, i 3]]
+      test "  [ +   1   [+   2 3   ]   ]"
+        $ vec [sym "+", i 1, vec [sym "+", i 2, i 3]]
       test "([])" $ list [vec []]
-    it  "Testing read of hash maps" $ do
+    it "Testing read of hash maps" $ do
       test "{}" $ m []
       test "{ }" $ m []
       test "{\"abc\" 1}" $ m [("abc", i 1)]
-      test "{\"a\" {\"b\" 2}}" $
-        m [("a", m [("b", i 2)])]
-      test "{\"a\" {\"b\" {\"c\" 3}}}" $
-        m [("a", m [("b", m [("c", i 3)])])]
-      test "      {  \"a\"  {\"b\"   {  \"cde\"     3   }  }}" $
-        m [("a", m [("b", m [("cde", i 3)])])]
-      testMap "{\"a1\" 1 \"a2\" 2 \"a3\" 3}" $
-        [("a1", i 1), ("a2", i 2), ("a3", i 3)]
-      test "{  :a  {:b   {  :cde     3   }  }}" $
-        m [(kwText "a", m [(kwText "b", m [(kwText "cde", i 3)])])]
+      test "{\"a\" {\"b\" 2}}" $ m [("a", m [("b", i 2)])]
+      test "{\"a\" {\"b\" {\"c\" 3}}}" $ m [("a", m [("b", m [("c", i 3)])])]
+      test "      {  \"a\"  {\"b\"   {  \"cde\"     3   }  }}"
+        $ m [("a", m [("b", m [("cde", i 3)])])]
+      testMap "{\"a1\" 1 \"a2\" 2 \"a3\" 3}"
+              [("a1", i 1), ("a2", i 2), ("a3", i 3)]
+      test "{  :a  {:b   {  :cde     3   }  }}"
+        $ m [(kwText "a", m [(kwText "b", m [(kwText "cde", i 3)])])]
       test "{\"1\" 1}" $ m [("1", i 1)]
       test "({})" $ list [m []]
     it "Testing read of ^/metadata" $ do
-      test "^{\"a\" 1} [2 3]" $
-        list [sym "with-meta",
-          vec [i 2, i 3],
-          m [("a", i 1)]]
+      test "^{\"a\" 1} [2 3]"
+        $ list [sym "with-meta", vec [i 2, i 3], m [("a", i 1)]]
     it "Testing read of strings" $ do
       test "\"abc\"" $ s "abc"
       test "    \"abc\"" $ s "abc"

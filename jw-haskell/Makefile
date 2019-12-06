@@ -14,7 +14,7 @@ bin/step3_env:	app/step3_env.hs src/*.hs
 	stack build --local-bin-path bin --copy-bins
 
 format:
-	brittany --write-mode=inplace app/*.hs src/*.hs
+	brittany --write-mode=inplace app/*.hs src/*.hs test/*.hs
 
 lint:
-	hlint app/*.hs src/*.hs
+	hlint app/*.hs src/*.hs test/*.hs

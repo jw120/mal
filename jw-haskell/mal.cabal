@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 030bf6c997bafd8ef0a249a8c1f7cf8e5da86d6c334cf8d314b93ea2d7937db8
+-- hash: 07df256f01388937bb985cdc3d648429f9bbc2d28d75428446ae0e6e42e8d51a
 
 name:           mal
 version:        0.1.0.0
@@ -28,6 +28,7 @@ library
   exposed-modules:
       Builtin
       Env
+      Eval
       EvalSimple
       Printer
       Reader
@@ -112,6 +113,7 @@ test-suite mal-specs
       BuiltinSpec
       EnvSpec
       EvalSimpleSpec
+      EvalSpec
       PrinterSpec
       ReaderSpec
       Paths_mal
