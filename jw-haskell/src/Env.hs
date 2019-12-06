@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 {-|
 Module      : Env
 Description : Environment
@@ -12,8 +14,9 @@ which act on it
 
 module Env
   ( Env -- opaque export
+  , emptyWithoutOuter
+  , emptyWithOuter
   , get
-  , new
   , set
   )
 where
@@ -30,22 +33,26 @@ data Env = Env
   }
 
 -- | Takes a symbol key and an AST and adds to the data structure
-set :: Env -> (Text, AST) -> Env
-set = undefined
+set :: Text -> AST -> Env -> Env
+set sym val e = e { envTable = M.insert sym val (envTable e) }
 
 -- | takes a symbol key and uses the find method to locate the environment with the key,
 -- then returns the matching value. If no key is found up the outer chain, then throws/raises a "not found" error.
-get :: Env -> Text -> Either Text AST
-get = undefined
+get :: Text -> Env -> Either Text AST
+get sym e = case (M.lookup sym (envTable e), envOuter e) of
+  (Just a , _         ) -> Right a
+  (Nothing, Just outer) -> get sym outer
+  (Nothing, Nothing   ) -> Left "Symbol not found in environment"
 
--- | return a new empty environment with the given parent
-new :: Maybe Env -> Env
-new outer = Env { envTable = M.empty, envOuter = outer }
+-- | return a new empty environment with the given outer environment
+emptyWithOuter :: Env -> Env
+emptyWithOuter outer = Env { envTable = M.empty, envOuter = Just outer }
 
-  -- | Takes a symbol key and if the current environment contains that key then return the environment.
--- If no key is found and outer is not nil then call find (recurse) on the outer environment.
---find :: Env -> AST -> Maybe Env
---find = undefined
+-- | Empty environment without an outer envirornment
+emptyWithoutOuter :: Env
+emptyWithoutOuter = Env { envTable = M.empty, envOuter = Nothing }
+
+
 
 
 

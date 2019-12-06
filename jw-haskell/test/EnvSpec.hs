@@ -16,41 +16,41 @@ module EnvSpec (spec) where
 
 import Test.Hspec
 
-import Env (Env, new, set , get)
+import Env
 import TestHelpers (i, isErrorMatching, s)
 
 parent :: Env
-parent = new Nothing `set` ("A", i 23) `set` ("B", i 12)
+parent = set "A" (i 23) $ set "B" (i 12) emptyWithoutOuter
 
 child :: Env
-child = new (Just parent) `set` ("C", i 7)
+child = set "C" (i 7) $ emptyWithOuter parent
 
 grandChild :: Env
-grandChild = new (Just child) `set` ("D", s "QQ")
+grandChild = set "D" (s "QQ") $ emptyWithOuter child
 
 spec :: Spec
 spec = do
   describe "get in parent" $ do
     it "works with valid key" $ do
-      parent `get` "A" `shouldBe` Right (i 23)
-      parent `get` "B" `shouldBe` Right (i 12)
-    it "works with missing key" $ do
-      parent `get` "C" `shouldSatisfy` isErrorMatching "missing"
-      parent `get` "D" `shouldSatisfy` isErrorMatching "missing"
-      parent `get` "E" `shouldSatisfy` isErrorMatching "missing"
+      ("A" `get` parent) `shouldBe` Right (i 23)
+      ("B" `get` parent) `shouldBe` Right (i 12)
+    it "works with not found key" $ do
+      ("C" `get` parent) `shouldSatisfy` isErrorMatching "not found"
+      ("D" `get` parent) `shouldSatisfy` isErrorMatching "not found"
+      ("E" `get` parent) `shouldSatisfy` isErrorMatching "not found"
   describe "get in child" $ do
     it "works with valid key" $ do
-      child `get` "A" `shouldBe` Right (i 23)
-      child `get` "B" `shouldBe` Right (i 12)
-      child `get` "C" `shouldBe` Right (i 7)
-    it "works with missing key" $ do
-      child `get` "D" `shouldSatisfy` isErrorMatching "missing"
-      child `get` "E" `shouldSatisfy` isErrorMatching "missing"
+      "A" `get` child `shouldBe` Right (i 23)
+      "B" `get` child `shouldBe` Right (i 12)
+      "C" `get` child `shouldBe` Right (i 7)
+    it "works with not found key" $ do
+      "D" `get` child `shouldSatisfy` isErrorMatching "not found"
+      "E" `get` child `shouldSatisfy` isErrorMatching "not found"
   describe "get in grandchild" $ do
     it "works with valid key" $ do
-      grandChild `get` "A" `shouldBe` Right (i 23)
-      grandChild `get` "B" `shouldBe` Right (i 12)
-      grandChild `get` "C" `shouldBe` Right (i 7)
-      grandChild `get` "D" `shouldBe` Right (s "QQ")
-    it "works with missing key" $ do
-      child `get` "E" `shouldSatisfy` isErrorMatching "missing"
+      "A" `get` grandChild `shouldBe` Right (i 23)
+      "B" `get` grandChild `shouldBe` Right (i 12)
+      "C" `get` grandChild `shouldBe` Right (i 7)
+      "D" `get` grandChild `shouldBe` Right (s "QQ")
+    it "works with not found key" $ do
+      "E" `get` grandChild `shouldSatisfy` isErrorMatching "not found"
