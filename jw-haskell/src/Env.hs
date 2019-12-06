@@ -42,7 +42,8 @@ get :: Text -> Env -> Either Text AST
 get sym e = case (M.lookup sym (envTable e), envOuter e) of
   (Just a , _         ) -> Right a
   (Nothing, Just outer) -> get sym outer
-  (Nothing, Nothing   ) -> Left "Symbol not found in environment"
+  (Nothing, Nothing) ->
+    Left $ "Symbol '" <> sym <> "' not found in environment"
 
 -- | return a new empty environment with the given outer environment
 emptyWithOuter :: Env -> Env

@@ -52,6 +52,29 @@ type Eval a = ExceptT Text (State Env) a
 -- | Main evaluation function
 eval :: AST -> Eval AST
 
+-- | Evaluation for lists that start with a special atom
+eval (ASTList [ASTSym "def!", ASTSym var, val]) = do
+  val' <- eval val
+  modify (E.set var val')
+  return val'
+eval (ASTList [ASTSym "let*", ASTList bindings, val]) = do
+  outerEnv <- get
+  modify E.emptyWithOuter
+  addBindings bindings
+  val' <- eval val
+  put outerEnv
+  return val'
+ where
+  addBindings :: [AST] -> Eval ()
+  addBindings (ASTSym s : v : rest) = do
+    v' <- eval v
+    modify (E.set s v')
+    addBindings rest
+  addBindings [] = return ()
+  addBindings _  = throwError "Unexpected value in let* bindings"
+eval (ASTList [ASTSym "let*", ASTVector bindings, val]) =
+  eval (ASTList [ASTSym "let*", ASTList bindings, val])
+
 -- Evaluation for a non-empty list
 eval (ASTList (func : args)) = do
   func' <- eval func

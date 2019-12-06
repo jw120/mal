@@ -102,10 +102,9 @@ spec = do
       test "(let* (p (+ 2 3) q (+ 2 p)) (+ p q))" $ i 12
       testSeq ["(def! y (let* (z 7) z))", "y"] $ i 7
     it "Testing outer environment" $ do
-      test "(def! a 4)" $ i 4
-      test "(let* (q 9) q)" $ i 9
-      test "(let* (q 9) a)" $ i 4
-      test "(let* (z 2) (let* (q 9) a))" $ i 4
+      testSeq ["(def! a 4)", "(let* (q 9) q)"] $ i 9
+      testSeq ["(def! a 4)", "(let* (q 9) a)"] $ i 4
+      testSeq ["(def! a 4)", "(let* (z 2) (let* (q 9) a))"] $ i 4
     it "Testing let* with vector bindings" $ do
       test "(let* [z 9] z)" $ i 9
       test "(let* [p (+ 2 3) q (+ 2 p)] (+ p q))" $ i 12
