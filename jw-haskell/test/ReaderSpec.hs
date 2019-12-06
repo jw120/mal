@@ -16,11 +16,11 @@ module ReaderSpec (spec) where
 
 import Data.List (sort)
 import qualified Data.Map as M
-import Data.Text (isInfixOf, Text)
-
+import Data.Text (Text)
 import Test.Hspec
 
 import Reader
+import TestHelpers (i, isErrorMatching, kw, kwText, list, m, s, sym, vec)
 
 -- Helper function to shorten tests
 test :: Text -> AST -> Expectation
@@ -28,26 +28,11 @@ test t u = malRead t `shouldBe` (Right (Just u))
 testNothing :: Text -> Expectation
 testNothing t = malRead t `shouldBe` (Right Nothing)
 testMap :: Text -> [(Text, AST)] -> Expectation
-testMap t u = deorder (malRead t) `shouldBe` deorder (Right (Just (ASTMap (M.fromList u))))
+testMap t u = deorder (malRead t) `shouldBe` deorder (Right (Just (m u)))
   where
     deorder :: Either Text (Maybe AST) -> [(Text, String)]
-    deorder (Right (Just (ASTMap m))) = sort . map (\(k, v) -> (k, show v)) $ M.toList m
+    deorder (Right (Just (ASTMap mp))) = sort . map (\(k, v) -> (k, show v)) $ M.toList mp
     deorder _ = error "Failed deorder"
-isErrorMatching :: Text -> Either Text (Maybe AST) -> Bool
-isErrorMatching x (Left t) = x `isInfixOf` t
-isErrorMatching _ (Right _) = False
-keyword :: Text -> AST
-keyword t = s (magicKeywordPrefix <> t)
-keywordStr :: Text -> Text
-keywordStr t = magicKeywordPrefix <> t
-i :: Int -> AST
-i = ASTInt
-s :: Text -> AST
-s = ASTStr
-list :: [AST] -> AST
-list = ASTList
-sym :: Text -> AST
-sym = ASTSym
 
 spec :: Spec
 spec = do
@@ -108,7 +93,7 @@ spec = do
       test "(* -3 6)" $
         list [sym "*", i (-3), i 6]
       test "(()())" $
-        list [list[], list[]]
+        list [list [], list []]
     it "Test commas as whitespace" $ do
       test "(1 2, 3,,,,),," $
         list [i 1, i 2, i 3]
@@ -129,40 +114,40 @@ spec = do
       test "~(1 2 3)" $ list [sym "unquote", list [i 1, i 2, i 3]]
       test "~@(1 2 3)" $ list [sym "splice-unquote", list [i 1, i 2, i 3]]
     it "Testing keywords" $ do
-      test ":kw" $ keyword "kw"
+      test ":kw" $ kw "kw"
       test "(:kw1 :kw2 :kw3)" $
-        list [keyword "kw1", keyword "kw2", keyword "kw3"]
+        list [kw "kw1", kw "kw2", kw "kw3"]
     it "Testing read of vectors" $ do
-      test "[+ 1 2]" $ ASTVector [sym "+", i 1, i 2]
-      test "[]" $ ASTVector []
-      test "[ ]" $ ASTVector []
-      test "[[3 4]]" $ ASTVector [ASTVector [i 3, i 4]]
+      test "[+ 1 2]" $ vec [sym "+", i 1, i 2]
+      test "[]" $ vec []
+      test "[ ]" $ vec []
+      test "[[3 4]]" $ vec [vec [i 3, i 4]]
       test "[+ 1 [+ 2 3]]" $
-        ASTVector [sym "+", i 1, ASTVector [sym "+", i 2, i 3]]
+        vec [sym "+", i 1, vec [sym "+", i 2, i 3]]
       test "  [ +   1   [+   2 3   ]   ]" $
-        ASTVector [sym "+", i 1, ASTVector [sym "+", i 2, i 3]]
-      test "([])" $ list [ASTVector []]
+        vec [sym "+", i 1, vec [sym "+", i 2, i 3]]
+      test "([])" $ list [vec []]
     it  "Testing read of hash maps" $ do
-      test "{}" $ ASTMap M.empty
-      test "{ }" $ ASTMap M.empty
-      test "{\"abc\" 1}" $ ASTMap (M.fromList [("abc", i 1)])
+      test "{}" $ m []
+      test "{ }" $ m []
+      test "{\"abc\" 1}" $ m [("abc", i 1)]
       test "{\"a\" {\"b\" 2}}" $
-        ASTMap (M.fromList [("a", ASTMap (M.fromList [("b", i 2)]))])
+        m [("a", m [("b", i 2)])]
       test "{\"a\" {\"b\" {\"c\" 3}}}" $
-        ASTMap (M.fromList [("a", ASTMap (M.fromList [("b", ASTMap (M.fromList [("c", i 3)]))]))])
+        m [("a", m [("b", m [("c", i 3)])])]
       test "      {  \"a\"  {\"b\"   {  \"cde\"     3   }  }}" $
-        ASTMap (M.fromList [("a", ASTMap (M.fromList [("b", ASTMap (M.fromList [("cde", i 3)]))]))])
+        m [("a", m [("b", m [("cde", i 3)])])]
       testMap "{\"a1\" 1 \"a2\" 2 \"a3\" 3}" $
         [("a1", i 1), ("a2", i 2), ("a3", i 3)]
       test "{  :a  {:b   {  :cde     3   }  }}" $
-        ASTMap (M.fromList [(keywordStr "a", ASTMap (M.fromList [(keywordStr "b", ASTMap (M.fromList [(keywordStr "cde", i 3)]))]))])
-      test "{\"1\" 1}" $ ASTMap (M.fromList [("1", i 1)])
-      test "({})" $ list [ASTMap M.empty]
+        m [(kwText "a", m [(kwText "b", m [(kwText "cde", i 3)])])]
+      test "{\"1\" 1}" $ m [("1", i 1)]
+      test "({})" $ list [m []]
     it "Testing read of ^/metadata" $ do
       test "^{\"a\" 1} [2 3]" $
         list [sym "with-meta",
-          ASTVector [i 2, i 3],
-          ASTMap (M.fromList [("a", i 1)])]
+          vec [i 2, i 3],
+          m [("a", i 1)]]
     it "Testing read of strings" $ do
       test "\"abc\"" $ s "abc"
       test "    \"abc\"" $ s "abc"

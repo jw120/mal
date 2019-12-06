@@ -36,20 +36,19 @@ malPrint = TIO.putStrLn . malFormat
 malFormat :: Either Text (Maybe AST) -> Text
 malFormat (Left  msg       ) = "Error: " <> msg
 malFormat (Right Nothing   ) = ""
-malFormat (Right (Just ast)) = addSpaces $ go [] ast
+malFormat (Right (Just ast)) = addSpaces $ concatMap fmt [ast]
  where
-  go :: [Text] -> AST -> [Text]
-  go acc (ASTSym        t       ) = acc ++ [t]
-  go acc (ASTInt        i       ) = acc ++ [T.pack (show i)]
-  go acc (ASTStr        t       ) = acc ++ [showStringLit t]
-  go acc (ASTSpecialLit MalNil  ) = acc ++ ["nil"]
-  go acc (ASTSpecialLit MalTrue ) = acc ++ ["true"]
-  go acc (ASTSpecialLit MalFalse) = acc ++ ["false"]
-  go acc (ASTBuiltin    _       ) = acc ++ ["#<builtin-function>"]
-  go acc (ASTList xs) = acc ++ ["("] ++ concatMap (go []) xs ++ [")"]
-  go acc (ASTVector xs) = acc ++ ["["] ++ concatMap (go []) xs ++ ["]"]
-  go acc (ASTMap m) =
-    acc ++ ["{"] ++ concatMap (go []) (unwrapPairs (M.toList m)) ++ ["}"]
+  fmt :: AST -> [Text]
+  fmt (ASTSym        t       ) = [t]
+  fmt (ASTInt        i       ) = [T.pack (show i)]
+  fmt (ASTStr        t       ) = [showStringLit t]
+  fmt (ASTSpecialLit MalNil  ) = ["nil"]
+  fmt (ASTSpecialLit MalTrue ) = ["true"]
+  fmt (ASTSpecialLit MalFalse) = ["false"]
+  fmt (ASTBuiltin    _       ) = ["#<builtin-function>"]
+  fmt (ASTList       xs      ) = ["("] ++ concatMap fmt xs ++ [")"]
+  fmt (ASTVector     xs      ) = ["["] ++ concatMap fmt xs ++ ["]"]
+  fmt (ASTMap m) = ["{"] ++ concatMap fmt (unwrapPairs (M.toList m)) ++ ["}"]
    where
     unwrapPairs :: [(Text, AST)] -> [AST]
     unwrapPairs ((a, b) : rest) = ASTStr a : b : unwrapPairs rest

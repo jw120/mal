@@ -17,8 +17,7 @@ module BuiltinSpec (spec) where
 import Test.Hspec
 
 import Builtin
-import Reader (AST(..))
-import TestHelpers (i, isErrorMatching)
+import TestHelpers (i, isErrorMatching, s, sym)
 
 spec :: Spec
 spec = do
@@ -32,7 +31,7 @@ spec = do
     it "works with many arguments" $ do
       addition [i 10, i 2, i 4, i 30] `shouldBe` Right (i 46)
     it "fails with non-integers" $ do
-      addition [i 10, ASTStr "Q"] `shouldSatisfy` isErrorMatching "type"
+      addition [i 10, s "Q"] `shouldSatisfy` isErrorMatching "type"
   describe "subtraction" $ do
     it "works with no arguments" $ do
       subtraction [] `shouldSatisfy` isErrorMatching "argument"
@@ -43,7 +42,7 @@ spec = do
     it "works with many arguments" $ do
       subtraction [i 10, i 2, i 4, i 30] `shouldBe` Right (i (10-2-4-30))
     it "fails with non-integers" $ do
-      subtraction [i 10, ASTSym "Q"] `shouldSatisfy` isErrorMatching "type"
+      subtraction [i 10, sym "Q"] `shouldSatisfy` isErrorMatching "type"
   describe "multiplication" $ do
     it "works with no arguments" $ do
       multiplication [] `shouldBe` Right (i 1)
@@ -54,7 +53,7 @@ spec = do
     it "works with many arguments" $ do
       multiplication [i 10, i 2, i 4, i 30] `shouldBe` Right (i (10 * 2 * 4 * 30))
     it "fails with non-integers" $ do
-      multiplication [ASTSym "Q", i 22] `shouldSatisfy` isErrorMatching "type"
+      multiplication [sym "Q", i 22] `shouldSatisfy` isErrorMatching "type"
   describe "division" $ do
     it "works with no arguments" $ do
       division [] `shouldSatisfy` isErrorMatching "argument"
@@ -67,5 +66,5 @@ spec = do
     it "works with many arguments" $ do
       division [i 120, i 2, i 4, i 3] `shouldBe` Right (i 5)
     it "fails with non-integers" $ do
-      division [ASTStr "Q", i 22] `shouldSatisfy` isErrorMatching "type"
+      division [s "Q", i 22] `shouldSatisfy` isErrorMatching "type"
 

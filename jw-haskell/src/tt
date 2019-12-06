@@ -52,7 +52,7 @@ eval (ASTList (func : args)) = do
     ASTBuiltin b -> b args'
     _            -> Left "Not a function"
 eval (ASTVector xs) = ASTVector <$> mapM eval xs
-eval (ASTMap    m ) = do
+eval (ASTMap m) = do
   elems' <- mapM eval $ M.elems m
   return . ASTMap . M.fromList $ zip (M.keys m) elems'
 eval (ASTSym s) = case M.lookup s simpleEnv of

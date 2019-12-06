@@ -47,7 +47,6 @@ instance Eq MalBuiltin where
 
 data MalSpecialLit = MalNil | MalTrue | MalFalse deriving (Show, Eq)
 
-
 -- We hold keywords as Strings with a magic prefix
 magicKeywordPrefix :: Text
 magicKeywordPrefix = "\x029e" -- Unicode 'ʞ'
@@ -83,16 +82,16 @@ pTopLevel = spaceConsumer *> M.choice [Nothing <$ M.eof, Just <$> pExpr]
 -- | main parser for our AST
 pExpr :: Parser AST
 pExpr = spaceConsumer *> M.choice
-  [ pIntLiteral
-  , M.try pNegIntLiteral  -- try to backtrack if we match the '-'
-  , M.try pSpecialLit
-  , pStringLiteral
-  , pReaderMacro
-  , pKeyword
-  , pNormalSymbol
-  , pList
-  , pVector
-  , pMap
+  [ pIntLiteral -- begins with a digit
+  , M.try pNegIntLiteral  -- use try as need to backtrack if we match the '-'
+  , M.try pSpecialLit -- use try as need to backtrack if we match 'n' etc
+  , pStringLiteral -- begins with a double-quote
+  , pReaderMacro -- begins with a special character
+  , pKeyword -- begins with a colon
+  , pNormalSymbol -- begins with a non-special character
+  , pList -- begins with a paren
+  , pVector -- begings with a square bracket
+  , pMap -- begings with a curly bracket
   ]
 
 -- | Parse an integer literal
@@ -120,14 +119,13 @@ pStringLiteral' =
 
 pReaderMacro :: Parser AST
 pReaderMacro = M.choice
-  [ (\e -> ASTList [ASTSym "quote", e]) <$> (singleQuote *> pExpr)
-  , (\e -> ASTList [ASTSym "quasiquote", e]) <$> (backQuote *> pExpr)
-  , (\e -> ASTList [ASTSym "quasiquote", e]) <$> (backQuote *> pExpr)
-  , (\e -> ASTList [ASTSym "splice-unquote", e]) <$> (tildeAt *> pExpr)
-  , (\e -> ASTList [ASTSym "unquote", e]) <$> (tilde *> pExpr)
-  , (\e -> ASTList [ASTSym "deref", e]) <$> (atSign *> pExpr)
+  [ (\e -> ASTList [ASTSym "quote", e]) <$> (symbol "'" *> pExpr)
+  , (\e -> ASTList [ASTSym "quasiquote", e]) <$> (symbol "`" *> pExpr)
+  , (\e -> ASTList [ASTSym "splice-unquote", e]) <$> (symbol "~@" *> pExpr)
+  , (\e -> ASTList [ASTSym "unquote", e]) <$> (symbol "~" *> pExpr)
+  , (\e -> ASTList [ASTSym "deref", e]) <$> (symbol "@" *> pExpr)
   , (\e1 e2 -> ASTList [ASTSym "with-meta", e2, e1])
-  <$> (hatSign *> pExpr)
+  <$> (symbol "^" *> pExpr)
   <*> pExpr
   ]
 
@@ -164,28 +162,6 @@ pMap = ASTMap . Data.Map.fromList <$> parens (M.many pMapPair)
   pMapPair :: Parser (Text, AST)
   pMapPair = (,) <$> (pStringLiteral' <|> pKeyword') <*> pExpr
 
--- -- | Parse a map
--- pMap :: Parser AST
--- pMap = ASTMap . Data.Map.fromList . collectPairs <$> parens (M.many pExpr)
---   where
---     parens = M.between (symbol "{") (symbol "}")
---     collectPairs :: [AST] -> [(Text, AST)]
---     collectPairs [] = []
---     collectPairs [ASTStringLit s] = [(s, ASTSpecialLit MalNil)]
---     collectPairs (ASTStringLit s : y : rest) = (s, y) : collectPairs rest
---     collectPairs _ = error "wrong type for map key"
-
--- -- | Version of the many combinator that works with a pair of parsers
--- manyPair :: MonadPlus m => m a -> m a -> m [a]
--- manyPair p q = go id
---   where
---     go f = do
---       r <- optional p
---       s <- optional q
---       case (r, s) of
---         (Just x, Just y) -> go (f . (\z -> x:y:z))
---         Nothing -> return (f [])
-
 -- | Helper parser - space consumer that eats spaces, commas and comments
 spaceConsumer :: Parser ()
 spaceConsumer = ML.space spaceOrComma1 (ML.skipLineComment ";") M.empty
@@ -198,66 +174,3 @@ lexeme = ML.lexeme spaceConsumer
 -- | Helper parser - wrapper for symbols (i.e., verbatim strings) so they consume trailing spaces
 symbol :: Text -> Parser Text
 symbol = ML.symbol spaceConsumer
--- semicolon = symbol ";"
--- comma     = symbol ","
--- colon     = symbol ":"
--- dot       = symbol "."
-tildeAt :: Parser Text
-tildeAt = symbol "~@"
--- openSquare :: Parser Text
--- openSquare = symbol "["
--- closeSquare :: Parser Text
--- closeSquare = symbol "]"
--- openCurly :: Parser Text
--- openCurly = symbol "{"
--- closeCurly :: Parser Text
--- closeCurly = symbol "}"
-singleQuote :: Parser Text
-singleQuote = symbol "'"
-backQuote :: Parser Text
-backQuote = symbol "`"
-tilde :: Parser Text
-tilde = symbol "~"
-hatSign :: Parser Text
-hatSign = symbol "^"
-atSign :: Parser Text
-atSign = symbol "@"
-
-
-
-
-
-
--- [\s,]*: Matches any number of whitespaces or commas. This is not captured so it will be ignored and not tokenized.
-
--- ~@: Captures the special two-characters ~@ (tokenized).
-
--- [\[\]{}()'`~^@]: Captures any special single character, one of []{}()'`~^@ (tokenized).
-
--- "(?:\\.|[^\\"])*"?: Starts capturing at a double-quote and stops at the next double-quote unless it was preceded by a backslash in which case it includes it until the next double-quote (tokenized). It will also match unbalanced strings (no ending double-quote) which should be reported as an error.
-
--- ;.*: Captures any sequence of characters starting with ; (tokenized).
-
--- [^\s\[\]{}('"`,;)]*: Captures a sequence of zero or more non special characters (e.g. symbols, numbers, "true", "false", and "nil") and is sort of the inverse of the one above that captures special characters (tokenized).
-
-{-
-
-;; Testing read of quoting
-'1
-;=>(quote 1)
-'(1 2 3)
-;=>(quote (1 2 3))
-`1
-;=>(quasiquote 1)
-`(1 2 3)
-;=>(quasiquote (1 2 3))
-~1
-;=>(unquote 1)
-~(1 2 3)
-;=>(unquote (1 2 3))
-`(1 ~a 3)
-;=>(quasiquote (1 (unquote a) 3))
-~@(1 2 3)
-;=>(splice-unquote (1 2 3))
-
--}

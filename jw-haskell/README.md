@@ -6,8 +6,7 @@ Design choices:
 
 * Text used internally throughout
 * megaparsec (using its lex helpers)
-* Either for parsing errors
-* ?? for eval errors
+* Either for parsing errors and for eval errors
 
 
 Tools used
@@ -22,10 +21,7 @@ Tools used
 
 TODO
 
-* Map parsing
-* Tidy
 * Improve Makefile and exec
-* AST is not Lits
 * Phase 1 - better errors for parsing
-* Phase 1 - vector and map underlying rep (mutable? what to do with odd-length map literals?)
+* Phase 1 - vector underlying rep
 * Check our magic keyword string is what we think it is

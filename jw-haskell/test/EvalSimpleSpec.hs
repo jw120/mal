@@ -19,7 +19,7 @@ import Test.Hspec
 
 import EvalSimple (malEval)
 import Reader (AST(..), malRead)
-import TestHelpers (i, isErrorMatching)
+import TestHelpers (i, isErrorMatching, kwText, list, m, vec)
 
 -- Local helper functions
 test :: Text -> AST -> Expectation
@@ -43,23 +43,8 @@ spec = do
       testError "(/ 5)" $ "argument"
       testError "(/ 5 0)" $ "zero"
     it "Testing empty list" $ do
-      test "()" $ ASTList []
-    it "works" $ do
-      "NYI" `shouldBe` "Finished"
-
-{-
-
-;>>> deferrable=True
-;;
-;; -------- Deferrable Functionality --------
-
-;; Testing evaluation within collection literals
-[1 2 (+ 1 2)]
-;=>[1 2 3]
-
-{"a" (+ 7 8)}
-;=>{"a" 15}
-
-{:a (+ 7 8)}
-;=>{:a 15}
--}
+      test "()" $ list []
+    it "Test evaluation within collection literals" $ do
+      test "[1 2 (+ 1 2)]" $ vec [i 1, i 2, i 3]
+      test "{\"a\" (+ 7 8)}" $ m [("a", i 15)]
+      test "{:a (+ 7 10)}" $ m [(kwText "a", i 17)]
