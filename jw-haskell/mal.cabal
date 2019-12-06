@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 07df256f01388937bb985cdc3d648429f9bbc2d28d75428446ae0e6e42e8d51a
+-- hash: 6b4180c272bc43cdfaadbd049d1f9ff848073a369bd876b8c5331006c1404abd
 
 name:           mal
 version:        0.1.0.0
@@ -42,6 +42,22 @@ library
       base >=4.7 && <5
     , containers
     , megaparsec
+    , mtl
+    , readline
+    , text
+  default-language: Haskell2010
+
+executable monad_warmup
+  main-is: monad_warmup.hs
+  other-modules:
+      Paths_mal
+  hs-source-dirs:
+      app
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , megaparsec
+    , mtl
     , readline
     , text
   default-language: Haskell2010
@@ -57,6 +73,7 @@ executable step0_repl
     , containers
     , mal
     , megaparsec
+    , mtl
     , readline
     , text
   default-language: Haskell2010
@@ -72,6 +89,7 @@ executable step1_read_print
     , containers
     , mal
     , megaparsec
+    , mtl
     , readline
     , text
   default-language: Haskell2010
@@ -87,6 +105,7 @@ executable step2_eval
     , containers
     , mal
     , megaparsec
+    , mtl
     , readline
     , text
   default-language: Haskell2010
@@ -102,6 +121,7 @@ executable step3_env
     , containers
     , mal
     , megaparsec
+    , mtl
     , readline
     , text
   default-language: Haskell2010
@@ -126,6 +146,7 @@ test-suite mal-specs
     , hspec-megaparsec
     , mal
     , megaparsec
+    , mtl
     , readline
     , text
   default-language: Haskell2010

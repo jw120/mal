@@ -11,6 +11,7 @@ Supporting functions
 
 module Utilities
   ( readlineLoop
+  , readlineLoopWithState
   )
 where
 
@@ -30,3 +31,15 @@ readlineLoop rep = do
       addHistory line
       rep $ T.pack line
       readlineLoop rep
+
+-- | Provide readline interface with state
+readlineLoopWithState :: s -> (s -> Text -> IO s) -> IO s
+readlineLoopWithState state rep = do
+  x <- readline "mal> "
+  case x of
+    Nothing   -> return state
+    Just line -> do
+      addHistory line
+      state' <- rep state (T.pack line)
+      readlineLoopWithState state' rep
+

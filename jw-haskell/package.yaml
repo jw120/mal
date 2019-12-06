@@ -15,6 +15,7 @@ dependencies:
 - base >= 4.7 && < 5
 - containers
 - megaparsec
+- mtl
 - readline
 - text
 
@@ -42,6 +43,9 @@ executables:
     source-dirs:         app
     dependencies:
     - mal
+  monad_warmup:
+    main:                monad_warmup.hs
+    source-dirs:         app
 
 tests:
   mal-specs:
