@@ -43,6 +43,11 @@ executables:
     source-dirs:         app
     dependencies:
     - mal
+  step4_if_fn_do:
+    main:                step4_if_fn_do.hs
+    source-dirs:         app
+    dependencies:
+    - mal
   monad_warmup:
     main:                monad_warmup.hs
     source-dirs:         app

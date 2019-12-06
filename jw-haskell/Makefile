@@ -13,6 +13,9 @@ bin/step2_eval:	app/step2_eval.hs src/*.hs
 bin/step3_env:	app/step3_env.hs src/*.hs
 	stack build --local-bin-path bin --copy-bins
 
+bin/step4_if_fn_do:	app/step4_if_fn_do.hs src/*.hs
+	stack build --local-bin-path bin --copy-bins
+
 format:
 	brittany --write-mode=inplace app/*.hs src/*.hs test/*.hs
 
