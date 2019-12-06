@@ -37,6 +37,11 @@ executables:
     source-dirs:         app
     dependencies:
     - mal
+  step3_env:
+    main:                step3_env.hs
+    source-dirs:         app
+    dependencies:
+    - mal
 
 tests:
   mal-specs:

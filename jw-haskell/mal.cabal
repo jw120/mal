@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1e48dcbce63f5cae8ccfdd50737e06be719c3d79456cd16efd123df5684ea5d4
+-- hash: a38ef40c75b4e13d587f67e83a113be93e00e8a46c43c06a5251fdf3da6e3cda
 
 name:           mal
 version:        0.1.0.0
@@ -76,6 +76,21 @@ executable step1_read_print
 
 executable step2_eval
   main-is: step2_eval.hs
+  other-modules:
+      Paths_mal
+  hs-source-dirs:
+      app
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , mal
+    , megaparsec
+    , readline
+    , text
+  default-language: Haskell2010
+
+executable step3_env
+  main-is: step3_env.hs
   other-modules:
       Paths_mal
   hs-source-dirs:
