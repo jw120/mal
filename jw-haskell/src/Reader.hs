@@ -16,6 +16,7 @@ Built using megaparsec following the tutorial
 https://markkarpov.com/tutorial/megaparsec.html#lexing
 
 -}
+
 module Reader
   ( malRead
   , AST(..)
@@ -28,6 +29,8 @@ where
 import           Control.Applicative            ( (<|>) )
 import           Data.Bifunctor                 ( first )
 import           Data.Char                      ( isSpace )
+import           Data.Map                       ( Map )
+import qualified Data.Map
 import           Data.Text                      ( Text )
 import           Data.Void                      ( Void )
 import qualified Data.Text                     as T
@@ -50,13 +53,13 @@ magicKeywordPrefix :: Text
 magicKeywordPrefix = "\x029e" -- Unicode 'ʞ'
 
 data AST
-  = ASTSymbol Text
-  | ASTIntLit Int
-  | ASTStringLit Text
+  = ASTSym Text
+  | ASTInt Int
+  | ASTStr Text
   | ASTSpecialLit MalSpecialLit
   | ASTList [AST]
   | ASTVector [AST]
-  | ASTMap [AST] -- maybe should be something like [(Text, AST)]
+  | ASTMap (Map Text AST)
   | ASTBuiltin MalBuiltin
   deriving (Eq, Show)
 
@@ -94,11 +97,11 @@ pExpr = spaceConsumer *> M.choice
 
 -- | Parse an integer literal
 pIntLiteral :: Parser AST
-pIntLiteral = ASTIntLit <$> lexeme ML.decimal -- (ML.signed spaceConsumer ML.decimal)
+pIntLiteral = ASTInt <$> lexeme ML.decimal -- (ML.signed spaceConsumer ML.decimal)
 
 -- | Parse a negative integer literal (a minus sign followed without spaces by a decimal)
 pNegIntLiteral :: Parser AST
-pNegIntLiteral = ASTIntLit . (\x -> -x) <$> lexeme (MC.char '-' *> ML.decimal)
+pNegIntLiteral = ASTInt . (\x -> -x) <$> lexeme (MC.char '-' *> ML.decimal)
 
 -- | Parse a special literial (nil, true or false)
 pSpecialLit :: Parser AST
@@ -110,36 +113,37 @@ pSpecialLit = M.choice
 
 -- | Parse a string literal
 pStringLiteral :: Parser AST
-pStringLiteral =
-  ASTStringLit
-    .   T.pack
-    <$> (MC.char '\"' *> M.manyTill ML.charLiteral (MC.char '\"'))
+pStringLiteral = ASTStr <$> pStringLiteral'
+pStringLiteral' :: Parser Text
+pStringLiteral' =
+  T.pack <$> (MC.char '\"' *> M.manyTill ML.charLiteral (MC.char '\"'))
 
 pReaderMacro :: Parser AST
 pReaderMacro = M.choice
-  [ (\e -> ASTList [ASTSymbol "quote", e]) <$> (singleQuote *> pExpr)
-  , (\e -> ASTList [ASTSymbol "quasiquote", e]) <$> (backQuote *> pExpr)
-  , (\e -> ASTList [ASTSymbol "quasiquote", e]) <$> (backQuote *> pExpr)
-  , (\e -> ASTList [ASTSymbol "splice-unquote", e]) <$> (tildeAt *> pExpr)
-  , (\e -> ASTList [ASTSymbol "unquote", e]) <$> (tilde *> pExpr)
-  , (\e -> ASTList [ASTSymbol "deref", e]) <$> (atSign *> pExpr)
-  , (\e1 e2 -> ASTList [ASTSymbol "with-meta", e2, e1])
+  [ (\e -> ASTList [ASTSym "quote", e]) <$> (singleQuote *> pExpr)
+  , (\e -> ASTList [ASTSym "quasiquote", e]) <$> (backQuote *> pExpr)
+  , (\e -> ASTList [ASTSym "quasiquote", e]) <$> (backQuote *> pExpr)
+  , (\e -> ASTList [ASTSym "splice-unquote", e]) <$> (tildeAt *> pExpr)
+  , (\e -> ASTList [ASTSym "unquote", e]) <$> (tilde *> pExpr)
+  , (\e -> ASTList [ASTSym "deref", e]) <$> (atSign *> pExpr)
+  , (\e1 e2 -> ASTList [ASTSym "with-meta", e2, e1])
   <$> (hatSign *> pExpr)
   <*> pExpr
   ]
 
 -- | Parse a normal symbol (a series of non-special characters)
 pNormalSymbol :: Parser AST
-pNormalSymbol = ASTSymbol . T.pack <$> lexeme (M.some (M.satisfy isNormal))
+pNormalSymbol = ASTSym . T.pack <$> lexeme (M.some (M.satisfy isNormal))
   where isNormal c = not (isSpace c) && c `notElem` ("[]{}()'`~^@" :: String)
 
 -- | Parse a keyword (a colon followed by a series of non-special characters)
 pKeyword :: Parser AST
-pKeyword =
-  toASTString <$> (MC.char ':' *> lexeme (M.some (M.satisfy isNormal)))
+pKeyword = ASTStr <$> pKeyword'
+pKeyword' :: Parser Text
+pKeyword' = toText <$> (MC.char ':' *> lexeme (M.some (M.satisfy isNormal)))
  where
-  toASTString :: String -> AST
-  toASTString = ASTStringLit . (magicKeywordPrefix <>) . T.pack
+  toText :: String -> Text
+  toText = (magicKeywordPrefix <>) . T.pack
   isNormal c = not (isSpace c) && c `notElem` ("[]{}()'`~^@" :: String)
 
   -- | Parse a list
@@ -154,12 +158,33 @@ pVector = ASTVector <$> parens (M.many pExpr)
 
 -- | Parse a map
 pMap :: Parser AST
-pMap = ASTMap <$> parens (M.many pExpr)
-  where parens = M.between (symbol "{") (symbol "}")
-    -- collectPairs :: x -> [x] -> [(x, x)]
-    -- collectPairs _ [] = []
-    -- collectPairs missingValue [x] = [(x, missingValue)]
-    -- collectPairs _ (x : y : rest) = (x, y) : collectPairs rest
+pMap = ASTMap . Data.Map.fromList <$> parens (M.many pMapPair)
+ where
+  parens = M.between (symbol "{") (symbol "}")
+  pMapPair :: Parser (Text, AST)
+  pMapPair = (,) <$> (pStringLiteral' <|> pKeyword') <*> pExpr
+
+-- -- | Parse a map
+-- pMap :: Parser AST
+-- pMap = ASTMap . Data.Map.fromList . collectPairs <$> parens (M.many pExpr)
+--   where
+--     parens = M.between (symbol "{") (symbol "}")
+--     collectPairs :: [AST] -> [(Text, AST)]
+--     collectPairs [] = []
+--     collectPairs [ASTStringLit s] = [(s, ASTSpecialLit MalNil)]
+--     collectPairs (ASTStringLit s : y : rest) = (s, y) : collectPairs rest
+--     collectPairs _ = error "wrong type for map key"
+
+-- -- | Version of the many combinator that works with a pair of parsers
+-- manyPair :: MonadPlus m => m a -> m a -> m [a]
+-- manyPair p q = go id
+--   where
+--     go f = do
+--       r <- optional p
+--       s <- optional q
+--       case (r, s) of
+--         (Just x, Just y) -> go (f . (\z -> x:y:z))
+--         Nothing -> return (f [])
 
 -- | Helper parser - space consumer that eats spaces, commas and comments
 spaceConsumer :: Parser ()

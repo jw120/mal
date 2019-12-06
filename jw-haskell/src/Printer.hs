@@ -18,6 +18,7 @@ module Printer
 where
 
 import           Data.List                      ( foldl' )
+import qualified Data.Map                      as M
 import           Data.Text                      ( Text )
 import qualified Data.Text                     as T
 import qualified Data.Text.IO                  as TIO
@@ -38,16 +39,21 @@ malFormat (Right Nothing   ) = ""
 malFormat (Right (Just ast)) = addSpaces $ go [] ast
  where
   go :: [Text] -> AST -> [Text]
-  go acc (ASTSymbol     t       ) = acc ++ [t]
-  go acc (ASTIntLit     i       ) = acc ++ [T.pack (show i)]
-  go acc (ASTStringLit  t       ) = acc ++ [showStringLit t]
+  go acc (ASTSym        t       ) = acc ++ [t]
+  go acc (ASTInt        i       ) = acc ++ [T.pack (show i)]
+  go acc (ASTStr        t       ) = acc ++ [showStringLit t]
   go acc (ASTSpecialLit MalNil  ) = acc ++ ["nil"]
   go acc (ASTSpecialLit MalTrue ) = acc ++ ["true"]
   go acc (ASTSpecialLit MalFalse) = acc ++ ["false"]
   go acc (ASTBuiltin    _       ) = acc ++ ["#<builtin-function>"]
   go acc (ASTList xs) = acc ++ ["("] ++ concatMap (go []) xs ++ [")"]
   go acc (ASTVector xs) = acc ++ ["["] ++ concatMap (go []) xs ++ ["]"]
-  go acc (ASTMap xs) = acc ++ ["{"] ++ concatMap (go []) xs ++ ["}"]
+  go acc (ASTMap m) =
+    acc ++ ["{"] ++ concatMap (go []) (unwrapPairs (M.toList m)) ++ ["}"]
+   where
+    unwrapPairs :: [(Text, AST)] -> [AST]
+    unwrapPairs ((a, b) : rest) = ASTStr a : b : unwrapPairs rest
+    unwrapPairs []              = []
 
 -- | Helper function to join a list of texts with spaces
 --

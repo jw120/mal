@@ -1,8 +1,21 @@
 {-# LANGUAGE OverloadedStrings #-}
 {- HLINT ignore "Redundant do" -}
 
+{-|
+Module      : ReaderSpec
+Description : Hspec tests for Reader module
+Copyright   : (c) Joe Watson, 2019
+License     : GPL-3
+Maintainer  : joe_watson@mail.com
+
+Hspec tests for Reader module
+
+-}
+
 module ReaderSpec (spec) where
 
+import Data.List (sort)
+import qualified Data.Map as M
 import Data.Text (isInfixOf, Text)
 
 import Test.Hspec
@@ -14,19 +27,27 @@ test :: Text -> AST -> Expectation
 test t u = malRead t `shouldBe` (Right (Just u))
 testNothing :: Text -> Expectation
 testNothing t = malRead t `shouldBe` (Right Nothing)
+testMap :: Text -> [(Text, AST)] -> Expectation
+testMap t u = deorder (malRead t) `shouldBe` deorder (Right (Just (ASTMap (M.fromList u))))
+  where
+    deorder :: Either Text (Maybe AST) -> [(Text, String)]
+    deorder (Right (Just (ASTMap m))) = sort . map (\(k, v) -> (k, show v)) $ M.toList m
+    deorder _ = error "Failed deorder"
 isErrorMatching :: Text -> Either Text (Maybe AST) -> Bool
 isErrorMatching x (Left t) = x `isInfixOf` t
 isErrorMatching _ (Right _) = False
 keyword :: Text -> AST
 keyword t = s (magicKeywordPrefix <> t)
+keywordStr :: Text -> Text
+keywordStr t = magicKeywordPrefix <> t
 i :: Int -> AST
-i = ASTIntLit
+i = ASTInt
 s :: Text -> AST
-s = ASTStringLit
+s = ASTStr
 list :: [AST] -> AST
 list = ASTList
 sym :: Text -> AST
-sym = ASTSymbol
+sym = ASTSym
 
 spec :: Spec
 spec = do
@@ -51,6 +72,8 @@ spec = do
       malRead "" `shouldBe` Right Nothing
     it "detects mismatched parens" $ do
       malRead "(+ 1 2" `shouldSatisfy` isErrorMatching "end of input"
+    it "detects wrong key types in a map" $ do
+      malRead "{:a 1 2 3}" `shouldSatisfy` isErrorMatching "expecting"
 
   describe "standard step1 tests" $ do
     it "Testing read of numbers" $ do
@@ -120,25 +143,26 @@ spec = do
         ASTVector [sym "+", i 1, ASTVector [sym "+", i 2, i 3]]
       test "([])" $ list [ASTVector []]
     it  "Testing read of hash maps" $ do
-      test "{}" $ ASTMap []
-      test "{ }" $ ASTMap []
-      test "{\"abc\" 1}" $ ASTMap [s "abc", i 1]
-      test "{\"a\" {\"b\" 2}}" $ ASTMap [s "a", ASTMap [s "b", i 2]]
+      test "{}" $ ASTMap M.empty
+      test "{ }" $ ASTMap M.empty
+      test "{\"abc\" 1}" $ ASTMap (M.fromList [("abc", i 1)])
+      test "{\"a\" {\"b\" 2}}" $
+        ASTMap (M.fromList [("a", ASTMap (M.fromList [("b", i 2)]))])
       test "{\"a\" {\"b\" {\"c\" 3}}}" $
-        ASTMap [s "a", ASTMap [s "b", ASTMap [s "c", i 3]]]
+        ASTMap (M.fromList [("a", ASTMap (M.fromList [("b", ASTMap (M.fromList [("c", i 3)]))]))])
       test "      {  \"a\"  {\"b\"   {  \"cde\"     3   }  }}" $
-        ASTMap [s "a", ASTMap [s "b", ASTMap [s "cde", i 3]]]
-      test "{\"a1\" 1 \"a2\" 2 \"a3\" 3}" $ -- This may go out of order
-        ASTMap [s "a1", i 1, s "a2", i 2, s "a3", i 3]
+        ASTMap (M.fromList [("a", ASTMap (M.fromList [("b", ASTMap (M.fromList [("cde", i 3)]))]))])
+      testMap "{\"a1\" 1 \"a2\" 2 \"a3\" 3}" $
+        [("a1", i 1), ("a2", i 2), ("a3", i 3)]
       test "{  :a  {:b   {  :cde     3   }  }}" $
-        ASTMap [keyword "a", ASTMap [keyword "b", ASTMap [keyword "cde", i 3]]]
-      test "{\"1\" 1}" $ ASTMap [s "1", i 1]
-      test "({})" $ list [ASTMap []]
+        ASTMap (M.fromList [(keywordStr "a", ASTMap (M.fromList [(keywordStr "b", ASTMap (M.fromList [(keywordStr "cde", i 3)]))]))])
+      test "{\"1\" 1}" $ ASTMap (M.fromList [("1", i 1)])
+      test "({})" $ list [ASTMap M.empty]
     it "Testing read of ^/metadata" $ do
       test "^{\"a\" 1} [2 3]" $
         list [sym "with-meta",
           ASTVector [i 2, i 3],
-          ASTMap [s "a", i 1]]
+          ASTMap (M.fromList [("a", i 1)])]
     it "Testing read of strings" $ do
       test "\"abc\"" $ s "abc"
       test "    \"abc\"" $ s "abc"

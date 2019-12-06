@@ -22,6 +22,8 @@ Tools used
 
 TODO
 
+* Map parsing
+* Tidy
 * Improve Makefile and exec
 * AST is not Lits
 * Phase 1 - better errors for parsing
