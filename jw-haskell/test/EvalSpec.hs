@@ -13,22 +13,22 @@ Hspec tests for Eval module
 -}
 
 module EvalSpec
-( spec
+  ( spec
   )
 where
 
-import           Data.Text                    ( Text )
+import           Data.Text                      ( Text )
 import           Test.Hspec
 
-import           Env                          ( Env )
-import           Eval                         ( malEval
+import           Env                            ( Env )
+import           Eval                           ( malEval
                                                 , malInitialEnv
                                                 )
-import           Reader                       ( AST(..)
+import           Reader                         ( AST(..)
                                                 , MalSpecialLit(..)
                                                 , malRead
                                                 )
-import           TestHelpers                  ( i
+import           TestHelpers                    ( i
                                                 , isErrorMatching
                                                 , kwText
                                                 , list
@@ -206,57 +206,62 @@ spec = do
     it "Testing closures" $ do
       test "( ( (fn* (a) (fn* (b) (+ a b))) 5) 7)" $ i 12
       testSeq
-        [ "(def! gen-plus5 (fn* () (fn* (b) (+ 5 b))))"
-        , "(def! plus5 (gen-plus5))"
-        , "(plus5 7)"
-        ] $ i 12
+          [ "(def! gen-plus5 (fn* () (fn* (b) (+ 5 b))))"
+          , "(def! plus5 (gen-plus5))"
+          , "(plus5 7)"
+          ]
+        $ i 12
       testSeq
-        [ "(def! gen-plusX (fn* (x) (fn* (b) (+ x b))))"
-        , "(def! plus7 (gen-plusX 7))"
-        , "(plus7 8)"
-        ] $ i 15
-      testSeq
-        [ "(do (def! a 6) 7 (+ a 8))"
-        , "a"
-        ] $ i 6
+          [ "(def! gen-plusX (fn* (x) (fn* (b) (+ x b))))"
+          , "(def! plus7 (gen-plusX 7))"
+          , "(plus7 8)"
+          ]
+        $ i 15
+      testSeq ["(do (def! a 6) 7 (+ a 8))", "a"] $ i 6
 
     it "Testing special form case-sensitivity" $ do
-      testSeq
-        [ "(def! DO (fn* (a) 7))"
-        , "(DO 3)"
-        ] $ i 7
+      testSeq ["(def! DO (fn* (a) 7))", "(DO 3)"] $ i 7
 
     it "Testing recursive sumdown function" $ do
       testSeq
-        [ "(def! sumdown (fn* (N) (if (> N 0) (+ N (sumdowntest (- N 1))) 0)))"
-        , "(sumdown 1)"
-        ] $ i 1
+          [ "(def! sumdown (fn* (N) (if (> N 0) (+ N (sumdowntest (- N 1))) 0)))"
+          , "(sumdown 1)"
+          ]
+        $ i 1
       testSeq
-        [ "(def! sumdown (fn* (N) (if (> N 0) (+ N (sumdowntest (- N 1))) 0)))"
-        , "(sumdown 2)"
-        ] $ i 3
+          [ "(def! sumdown (fn* (N) (if (> N 0) (+ N (sumdowntest (- N 1))) 0)))"
+          , "(sumdown 2)"
+          ]
+        $ i 3
       testSeq
-        [ "(def! sumdown (fn* (N) (if (> N 0) (+ N (sumdowntest (- N 1))) 0)))"
-        , "(sumdown 6)"
-        ] $ i 21
+          [ "(def! sumdown (fn* (N) (if (> N 0) (+ N (sumdowntest (- N 1))) 0)))"
+          , "(sumdown 6)"
+          ]
+        $ i 21
 
     it "Testing recursive fibonacci function" $ do
       testSeq
-        [ "(def! fib (fn* (N) (if (= N 0) 1 (if (= N 1) 1 (+ (fib (- N 1)) (fib (- N 2)))))))"
-        , "(fib 1)"
-        ] $ i 1
+          [ "(def! fib (fn* (N) (if (= N 0) 1 (if (= N 1) 1 (+ (fib (- N 1)) (fib (- N 2)))))))"
+          , "(fib 1)"
+          ]
+        $ i 1
       testSeq
-        [ "(def! fib (fn* (N) (if (= N 0) 1 (if (= N 1) 1 (+ (fib (- N 1)) (fib (- N 2)))))))"
-        , "(fib 2)"
-        ] $ i 2
+          [ "(def! fib (fn* (N) (if (= N 0) 1 (if (= N 1) 1 (+ (fib (- N 1)) (fib (- N 2)))))))"
+          , "(fib 2)"
+          ]
+        $ i 2
       testSeq
-        [ "(def! fib (fn* (N) (if (= N 0) 1 (if (= N 1) 1 (+ (fib (- N 1)) (fib (- N 2)))))))"
-        , "(fib 4)"
-        ] $ i 5
+          [ "(def! fib (fn* (N) (if (= N 0) 1 (if (= N 1) 1 (+ (fib (- N 1)) (fib (- N 2)))))))"
+          , "(fib 4)"
+          ]
+        $ i 5
 
     it "Testing recursive function in environment." $ do
-      test "(let* (cst (fn* (n) (if (= n 0) nil (cst (- n 1))))) (cst 1))" $ ASTSpecialLit MalNil
-      test "(let* (f (fn* (n) (if (= n 0) 0 (g (- n 1)))) g (fn* (n) (f n))) (f 2))" $ i 0
+      test "(let* (cst (fn* (n) (if (= n 0) nil (cst (- n 1))))) (cst 1))"
+        $ ASTSpecialLit MalNil
+      test
+          "(let* (f (fn* (n) (if (= n 0) 0 (g (- n 1)))) g (fn* (n) (f n))) (f 2))"
+        $ i 0
 
     it "Testing if on strings" $ do
       test "(if \"\" 7 8)" $ i 7
@@ -333,7 +338,8 @@ spec = do
 
     it "Nested vector/list equality" $ do
       test "(= [(list)] (list []))" $ ASTSpecialLit MalTrue
-      test "(= [1 2 (list 3 4 [5 6])] (list 1 2 [3 4 (list 5 6)]))" $ ASTSpecialLit MalTrue
+      test "(= [1 2 (list 3 4 [5 6])] (list 1 2 [3 4 (list 5 6)]))"
+        $ ASTSpecialLit MalTrue
 
 
 

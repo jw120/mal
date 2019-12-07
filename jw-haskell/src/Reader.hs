@@ -29,7 +29,6 @@ where
 import           Control.Applicative            ( (<|>) )
 import           Data.Bifunctor                 ( first )
 import           Data.Char                      ( isSpace )
-import           Data.Map                       ( Map )
 import qualified Data.Map
 import           Data.Text                      ( Text )
 import           Data.Void                      ( Void )
@@ -38,29 +37,11 @@ import qualified Text.Megaparsec               as M
 import qualified Text.Megaparsec.Char          as MC
 import qualified Text.Megaparsec.Char.Lexer    as ML
 
--- | Type for mal functions implemented in Haskell
-type MalBuiltin = [AST] -> Either Text AST
-instance Show MalBuiltin where
-  show _ = "#<function>"
-instance Eq MalBuiltin where
-  _ == _ = False
-
-data MalSpecialLit = MalNil | MalTrue | MalFalse deriving (Show, Eq)
-
--- We hold keywords as Strings with a magic prefix
-magicKeywordPrefix :: Text
-magicKeywordPrefix = "\x029e" -- Unicode 'ʞ'
-
-data AST
-  = ASTSym Text
-  | ASTInt Int
-  | ASTStr Text
-  | ASTSpecialLit MalSpecialLit
-  | ASTList [AST]
-  | ASTVector [AST]
-  | ASTMap (Map Text AST)
-  | ASTBuiltin MalBuiltin
-  deriving (Eq, Show)
+import           Mal                            ( AST(..)
+                                                , MalBuiltin
+                                                , magicKeywordPrefix
+                                                , MalSpecialLit(..)
+                                                )
 
 -- | type for our parsers (void for custom errors, text for the input type)
 type Parser = M.Parsec Void Text

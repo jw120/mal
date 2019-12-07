@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7c26ab8fe4e9c6a8e7aae9e1ca53dc29322aefd98f9961c954d3ef4cb1b0976e
+-- hash: d0cc3f737831678a52a26e6ebc748747ab58201834bd5f30c63f21f0998c579f
 
 name:           mal
 version:        0.1.0.0
@@ -30,6 +30,7 @@ library
       Env
       Eval
       EvalSimple
+      Mal
       Printer
       Reader
       TestHelpers

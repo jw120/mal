@@ -21,7 +21,7 @@ import           Data.Map                       ( Map )
 import           Data.Text                      ( Text )
 
 import qualified Builtin
-import           Reader                         ( AST(..) )
+import           Mal                            ( AST(..) )
 
 -- | Fixed environment for the simple evaulator
 simpleEnv :: Map Text AST

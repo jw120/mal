@@ -23,7 +23,7 @@ import           Data.Text                      ( Text )
 import qualified Data.Text                     as T
 import qualified Data.Text.IO                  as TIO
 
-import           Reader                         ( AST(..)
+import           Mal                            ( AST(..)
                                                 , MalSpecialLit(..)
                                                 , magicKeywordPrefix
                                                 )
@@ -46,8 +46,9 @@ malFormat (Right (Just ast)) = addSpaces $ concatMap fmt [ast]
   fmt (ASTSpecialLit MalTrue ) = ["true"]
   fmt (ASTSpecialLit MalFalse) = ["false"]
   fmt (ASTBuiltin    _       ) = ["#<builtin-function>"]
-  fmt (ASTList       xs      ) = ["("] ++ concatMap fmt xs ++ [")"]
-  fmt (ASTVector     xs      ) = ["["] ++ concatMap fmt xs ++ ["]"]
+  fmt (ASTClosure _ _ _      ) = ["#<closure>"]
+  fmt (ASTList   xs          ) = ["("] ++ concatMap fmt xs ++ [")"]
+  fmt (ASTVector xs          ) = ["["] ++ concatMap fmt xs ++ ["]"]
   fmt (ASTMap m) = ["{"] ++ concatMap fmt (unwrapPairs (M.toList m)) ++ ["}"]
    where
     unwrapPairs :: [(Text, AST)] -> [AST]

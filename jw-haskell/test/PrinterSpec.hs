@@ -20,10 +20,11 @@ where
 import           Data.Text                      ( Text )
 import           Test.Hspec
 
-import           Printer
+import           Env                            ( emptyWithoutOuter )
 import           Reader                         ( AST(..)
                                                 , MalBuiltin
                                                 )
+import           Printer
 import           TestHelpers                    ( i
                                                 , kw
                                                 , list
@@ -35,6 +36,9 @@ import           TestHelpers                    ( i
 
 dummyFn :: MalBuiltin
 dummyFn _ = Right (i 3)
+
+dummyClosure :: AST
+dummyClosure = ASTClosure emptyWithoutOuter [] (i 0)
 
 malFormat' :: AST -> Text
 malFormat' = malFormat . Right . Just
@@ -64,4 +68,6 @@ spec = do
       malFormat (Right Nothing) `shouldBe` ""
     it "formats a function" $ do
       malFormat' (ASTBuiltin dummyFn) `shouldBe` "#<builtin-function>"
+    it "formats a closure" $ do
+      malFormat' dummyClosure `shouldBe` "#<closure>"
 

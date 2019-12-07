@@ -21,16 +21,12 @@ module Env
   )
 where
 
-import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
 import           Data.Text                      ( Text )
 
+import           Mal                            ( Env(..) )
 import           Reader                         ( AST(..) )
 
-data Env = Env
-  { envTable :: Map Text AST -- ^ Symbol table
-  , envOuter :: Maybe Env    -- ^ Outer environment for lookup when not in our table
-  }
 
 -- | Takes a symbol key and an AST and adds to the data structure
 set :: Text -> AST -> Env -> Env

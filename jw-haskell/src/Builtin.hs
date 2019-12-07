@@ -20,7 +20,7 @@ module Builtin
 where
 
 import           Data.Text                      ( Text )
-import           Reader                         ( AST(..) )
+import           Mal                            ( AST(..) )
 
 addition :: [AST] -> Either Text AST
 addition asts = do
