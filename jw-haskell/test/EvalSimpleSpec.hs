@@ -21,9 +21,8 @@ import           Data.Text                      ( Text )
 import           Test.Hspec
 
 import           EvalSimple                     ( malEval )
-import           Reader                         ( AST(..)
-                                                , malRead
-                                                )
+import           Mal                            ( AST(..) )
+import           Reader                         ( malRead )
 import           TestHelpers                    ( i
                                                 , isErrorMatching
                                                 , kwText

@@ -19,10 +19,6 @@ https://markkarpov.com/tutorial/megaparsec.html#lexing
 
 module Reader
   ( malRead
-  , AST(..)
-  , MalSpecialLit(..)
-  , MalBuiltin
-  , magicKeywordPrefix
   )
 where
 
@@ -38,9 +34,7 @@ import qualified Text.Megaparsec.Char          as MC
 import qualified Text.Megaparsec.Char.Lexer    as ML
 
 import           Mal                            ( AST(..)
-                                                , MalBuiltin
                                                 , magicKeywordPrefix
-                                                , MalSpecialLit(..)
                                                 )
 
 -- | type for our parsers (void for custom errors, text for the input type)
@@ -86,10 +80,7 @@ pNegIntLiteral = ASTInt . (\x -> -x) <$> lexeme (MC.char '-' *> ML.decimal)
 -- | Parse a special literial (nil, true or false)
 pSpecialLit :: Parser AST
 pSpecialLit = M.choice
-  [ ASTSpecialLit MalNil <$ symbol "nil"
-  , ASTSpecialLit MalTrue <$ symbol "true"
-  , ASTSpecialLit MalFalse <$ symbol "false"
-  ]
+  [ASTNil <$ symbol "nil", ASTTrue <$ symbol "true", ASTFalse <$ symbol "false"]
 
 -- | Parse a string literal
 pStringLiteral :: Parser AST

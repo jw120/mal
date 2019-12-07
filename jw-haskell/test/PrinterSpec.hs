@@ -21,7 +21,7 @@ import           Data.Text                      ( Text )
 import           Test.Hspec
 
 import           Env                            ( emptyWithoutOuter )
-import           Reader                         ( AST(..)
+import           Mal                            ( AST(..)
                                                 , MalBuiltin
                                                 )
 import           Printer

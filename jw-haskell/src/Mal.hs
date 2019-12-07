@@ -15,7 +15,6 @@ Defines basic internal data types
 module Mal
   ( AST(..)
   , Env(..)
-  , MalSpecialLit(..)
   , MalBuiltin
   , magicKeywordPrefix
   , Text
@@ -34,18 +33,18 @@ instance Eq MalBuiltin where
 
 -- | Type for our Mal abstract syntax tree
 data AST
-  = ASTSym Text
+  = ASTNil
+  | ASTTrue
+  | ASTFalse
+  | ASTSym Text
   | ASTInt Int
   | ASTStr Text
-  | ASTSpecialLit MalSpecialLit
   | ASTList [AST]
   | ASTVector [AST]
   | ASTMap (Map Text AST)
   | ASTBuiltin MalBuiltin
   | ASTClosure Env [AST] AST
   deriving (Eq, Show)
-
-data MalSpecialLit = MalNil | MalTrue | MalFalse deriving (Show, Eq)
 
 data Env = Env
   { envTable :: Map Text AST -- ^ Symbol table

@@ -27,16 +27,21 @@ import qualified Builtin
 import qualified Env                           as E
 import           Mal                            ( AST(..)
                                                 , Env
-                                                , MalSpecialLit(..)
                                                 )
 
-malInitialEnv :: Env
-malInitialEnv =
+addBuiltIns :: Env -> Env
+addBuiltIns =
   E.set "+" (ASTBuiltin Builtin.addition)
     . E.set "-" (ASTBuiltin Builtin.subtraction)
     . E.set "*" (ASTBuiltin Builtin.multiplication)
-    $ E.set "/" (ASTBuiltin Builtin.division) E.emptyWithoutOuter
+    . E.set "/" (ASTBuiltin Builtin.division)
+    . E.set "list" (ASTBuiltin Builtin.list)
+    . E.set "count" (ASTBuiltin Builtin.count)
+    . E.set "empty?" (ASTBuiltin Builtin.emptyTest)
+    . E.set "list?" (ASTBuiltin Builtin.listTest)
 
+malInitialEnv :: Env
+malInitialEnv = addBuiltIns E.emptyWithoutOuter
 
 -- | Top-level evaluator
 --
@@ -64,11 +69,11 @@ eval (ASTList (ASTSym "do" : args)) = do
 eval (ASTList [ASTSym "if", condArg, thenArg, elseArg]) = do
   condVal <- eval condArg
   case condVal of
-    ASTSpecialLit MalNil   -> eval elseArg
-    ASTSpecialLit MalFalse -> eval elseArg
-    _                      -> eval thenArg
+    ASTNil   -> eval elseArg
+    ASTFalse -> eval elseArg
+    _        -> eval thenArg
 eval (ASTList [ASTSym "if", condArg, thenArg]) =
-  eval (ASTList [ASTSym "if", condArg, thenArg, ASTSpecialLit MalNil])
+  eval (ASTList [ASTSym "if", condArg, thenArg, ASTNil])
 eval (ASTList (ASTSym "if" : _)) = throwError "Bad syntax in if special form"
 
 -- Special form: def!
@@ -94,7 +99,7 @@ eval (ASTList (ASTSym "let*" : _)) =
 
 -- Special form: fn*
 eval (ASTList [ASTSym "fn*", ASTList binds, body]) = do
-  env       <- get
+  env <- get
   throwIfNotAllSymbols binds
   return $ ASTClosure env binds body
 eval (ASTList (ASTSym "fn*" : _)) = throwError "Bad syntax in fn* special form"
@@ -148,5 +153,5 @@ addBindings _  _  = throwError "Unexpected value in add Bindings"
 -- Helper function to throw an error if any element of the list is not an ASTSym
 throwIfNotAllSymbols :: [AST] -> Eval ()
 throwIfNotAllSymbols (ASTSym _ : rest) = throwIfNotAllSymbols rest
-throwIfNotAllSymbols [] = return ()
-throwIfNotAllSymbols _ = throwError "Expected a symbol"
+throwIfNotAllSymbols []                = return ()
+throwIfNotAllSymbols _                 = throwError "Expected a symbol"

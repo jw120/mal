@@ -24,10 +24,8 @@ import           Env                            ( Env )
 import           Eval                           ( malEval
                                                 , malInitialEnv
                                                 )
-import           Reader                         ( AST(..)
-                                                , MalSpecialLit(..)
-                                                , malRead
-                                                )
+import           Mal                            ( AST(..) )
+import           Reader                         ( malRead )
 import           TestHelpers                    ( i
                                                 , isErrorMatching
                                                 , kwText
@@ -133,9 +131,9 @@ spec = do
 
     it "Testing list functions" $ do
       test "(list)" $ ASTList []
-      test "(list? (list))" $ ASTSpecialLit MalTrue
-      test "(empty? (list))" $ ASTSpecialLit MalTrue
-      test "(empty? (list 1))" $ ASTSpecialLit MalFalse
+      test "(list? (list))"    ASTTrue
+      test "(empty? (list))"   ASTTrue
+      test "(empty? (list 1))" ASTFalse
       test "(list 1 2 3)" $ ASTList [i 1, i 2, i 3]
       test "(count (list 1 2 3))" $ i 3
       test "(count (list))" $ i 0
@@ -146,56 +144,56 @@ spec = do
     it "Testing if form" $ do
       test "(if true 7 8)" $ i 7
       test "(if false 7 8)" $ i 8
-      test "(if false 7 false)" $ ASTSpecialLit MalFalse
+      test "(if false 7 false)" ASTFalse
       test "(if true (+ 1 7) (+ 1 8))" $ i 8
       test "(if false (+ 1 7) (+ 1 8))" $ i 9
       test "(if nil 7 8)" $ i 8
       test "(if 0 7 8)" $ i 7
       test "(if (list) 7 8)" $ i 7
       test "(if (list 1 2 3) 7 8)" $ i 7
-      test "(= (list) nil)" $ ASTSpecialLit MalFalse
+      test "(= (list) nil)" ASTFalse
 
     it "Testing 1-way if form" $ do
-      test "(if false (+ 1 7))" $ ASTSpecialLit MalNil
-      test "(if nil 8)" $ ASTSpecialLit MalNil
+      test "(if false (+ 1 7))" ASTNil
+      test "(if nil 8)"         ASTNil
       test "(if nil 8 7)" $ i 7
       test "(if true (+ 1 7))" $ i 8
 
     it "Testing basic conditionals" $ do
-      test "(= 2 1)" $ ASTSpecialLit MalFalse
-      test "(= 1 1)" $ ASTSpecialLit MalTrue
-      test "(= 1 2)" $ ASTSpecialLit MalFalse
-      test "(= 1 (+ 1 1))" $ ASTSpecialLit MalFalse
-      test "(= 2 (+ 1 1))" $ ASTSpecialLit MalTrue
-      test "(= nil 1)" $ ASTSpecialLit MalFalse
-      test "(= nil nil)" $ ASTSpecialLit MalTrue
-      test "(> 2 1)" $ ASTSpecialLit MalTrue
-      test "(> 1 1)" $ ASTSpecialLit MalFalse
-      test "(> 1 2)" $ ASTSpecialLit MalFalse
-      test "(>= 2 1)" $ ASTSpecialLit MalTrue
-      test "(>= 1 1)" $ ASTSpecialLit MalTrue
-      test "(>= 1 2)" $ ASTSpecialLit MalFalse
-      test "(< 2 1)" $ ASTSpecialLit MalFalse
-      test "(< 1 1)" $ ASTSpecialLit MalFalse
-      test "(< 1 2)" $ ASTSpecialLit MalTrue
-      test "(<= 2 1)" $ ASTSpecialLit MalFalse
-      test "(<= 1 1)" $ ASTSpecialLit MalTrue
-      test "(<= 1 2)" $ ASTSpecialLit MalTrue
+      test "(= 2 1)"       ASTFalse
+      test "(= 1 1)"       ASTTrue
+      test "(= 1 2)"       ASTFalse
+      test "(= 1 (+ 1 1))" ASTFalse
+      test "(= 2 (+ 1 1))" ASTTrue
+      test "(= nil 1)"     ASTFalse
+      test "(= nil nil)"   ASTTrue
+      test "(> 2 1)"       ASTTrue
+      test "(> 1 1)"       ASTFalse
+      test "(> 1 2)"       ASTFalse
+      test "(>= 2 1)"      ASTTrue
+      test "(>= 1 1)"      ASTTrue
+      test "(>= 1 2)"      ASTFalse
+      test "(< 2 1)"       ASTFalse
+      test "(< 1 1)"       ASTFalse
+      test "(< 1 2)"       ASTTrue
+      test "(<= 2 1)"      ASTFalse
+      test "(<= 1 1)"      ASTTrue
+      test "(<= 1 2)"      ASTTrue
 
     it "Testing equality" $ do
-      test "(= 1 1)" $ ASTSpecialLit MalTrue
-      test "(= 0 0)" $ ASTSpecialLit MalTrue
-      test "(= 1 0)" $ ASTSpecialLit MalFalse
-      test "(= true true)" $ ASTSpecialLit MalTrue
-      test "(= false false)" $ ASTSpecialLit MalTrue
-      test "(= nil nil)" $ ASTSpecialLit MalTrue
-      test "(= (list) (list))" $ ASTSpecialLit MalTrue
-      test "(= (list 1 2) (list 1 2))" $ ASTSpecialLit MalTrue
-      test "(= (list 1) (list))" $ ASTSpecialLit MalFalse
-      test "(= (list) (list 1))" $ ASTSpecialLit MalFalse
-      test "(= 0 (list))" $ ASTSpecialLit MalFalse
-      test "(= (list) 0)" $ ASTSpecialLit MalFalse
-      test "(= (list nil) (list))" $ ASTSpecialLit MalFalse
+      test "(= 1 1)"                   ASTTrue
+      test "(= 0 0)"                   ASTTrue
+      test "(= 1 0)"                   ASTFalse
+      test "(= true true)"             ASTTrue
+      test "(= false false)"           ASTTrue
+      test "(= nil nil)"               ASTTrue
+      test "(= (list) (list))"         ASTTrue
+      test "(= (list 1 2) (list 1 2))" ASTTrue
+      test "(= (list 1) (list))"       ASTFalse
+      test "(= (list) (list 1))"       ASTFalse
+      test "(= 0 (list))"              ASTFalse
+      test "(= (list) 0)"              ASTFalse
+      test "(= (list nil) (list))"     ASTFalse
 
     it "Testing builtin and user defined functions" $ do
       test "(+ 1 2)" $ i 3
@@ -258,7 +256,7 @@ spec = do
 
     it "Testing recursive function in environment." $ do
       test "(let* (cst (fn* (n) (if (= n 0) nil (cst (- n 1))))) (cst 1))"
-        $ ASTSpecialLit MalNil
+           ASTNil
       test
           "(let* (f (fn* (n) (if (= n 0) 0 (g (- n 1)))) g (fn* (n) (f n))) (f 2))"
         $ i 0
@@ -267,31 +265,31 @@ spec = do
       test "(if \"\" 7 8)" $ i 7
 
     it "Testing string equality" $ do
-      test "(= \"\" \"\")" $ ASTSpecialLit MalTrue
-      test "(= \"abc\" \"abc\")" $ ASTSpecialLit MalTrue
-      test "(= \"abc\" \"\")" $ ASTSpecialLit MalFalse
-      test "(= \"\" \"abc\")" $ ASTSpecialLit MalFalse
-      test "(= \"abc\" \"def\")" $ ASTSpecialLit MalFalse
-      test "(= \"abc\" \"ABC\")" $ ASTSpecialLit MalFalse
-      test "(= (list) \"\")" $ ASTSpecialLit MalFalse
-      test "(= \"\" (list))" $ ASTSpecialLit MalFalse
+      test "(= \"\" \"\")"       ASTTrue
+      test "(= \"abc\" \"abc\")" ASTTrue
+      test "(= \"abc\" \"\")"    ASTFalse
+      test "(= \"\" \"abc\")"    ASTFalse
+      test "(= \"abc\" \"def\")" ASTFalse
+      test "(= \"abc\" \"ABC\")" ASTFalse
+      test "(= (list) \"\")"     ASTFalse
+      test "(= \"\" (list))"     ASTFalse
 
     it "Testing variable length arguments" $ do
       test "( (fn* (& more) (count more)) 1 2 3)" $ i 3
-      test "( (fn* (& more) (list? more)) 1 2 3)" $ ASTSpecialLit MalTrue
+      test "( (fn* (& more) (list? more)) 1 2 3)" ASTTrue
       test "( (fn* (& more) (count more)) 1)" $ i 1
       test "( (fn* (& more) (count more)) )" $ i 0
-      test "( (fn* (& more) (list? more)) )" $ ASTSpecialLit MalTrue
+      test "( (fn* (& more) (list? more)) )" ASTTrue
       test "( (fn* (a & more) (count more)) 1 2 3)" $ i 2
       test "( (fn* (a & more) (count more)) 1)" $ i 0
-      test "( (fn* (a & more) (list? more)) 1)" $ ASTSpecialLit MalTrue
+      test "( (fn* (a & more) (list? more)) 1)" ASTTrue
 
     it "Testing language defined not function" $ do
-      test "(not false)" $ ASTSpecialLit MalTrue
-      test "(not nil)" $ ASTSpecialLit MalTrue
-      test "(not true)" $ ASTSpecialLit MalFalse
-      test "(not \"a\")" $ ASTSpecialLit MalFalse
-      test "(not 0)" $ ASTSpecialLit MalFalse
+      test "(not false)" ASTTrue
+      test "(not nil)"   ASTTrue
+      test "(not true)"  ASTFalse
+      test "(not \"a\")" ASTFalse
+      test "(not 0)"     ASTFalse
 
     it "Testing str" $ do
       test "(str)" $ s ""
@@ -306,40 +304,39 @@ spec = do
       test "(str (list))" $ s "()"
 
     it "Testing keywords" $ do
-      test "(= :abc :abc)" $ ASTSpecialLit MalTrue
-      test "(= :abc :def)" $ ASTSpecialLit MalFalse
-      test "(= :abc \":abc\")" $ ASTSpecialLit MalFalse
-      test "(= (list :abc) (list :abc))" $ ASTSpecialLit MalTrue
+      test "(= :abc :abc)"               ASTTrue
+      test "(= :abc :def)"               ASTFalse
+      test "(= :abc \":abc\")"           ASTFalse
+      test "(= (list :abc) (list :abc))" ASTTrue
 
     it "Testing vector truthiness" $ do
       test "(if [] 7 8)" $ i 7
 
     it "Testing vector functions" $ do
       test "(count [1 2 3])" $ i 3
-      test "(empty? [1 2 3])" $ ASTSpecialLit MalFalse
-      test "(empty? [])" $ ASTSpecialLit MalTrue
-      test "(list? [4 5 6])" $ ASTSpecialLit MalFalse
+      test "(empty? [1 2 3])" ASTFalse
+      test "(empty? [])"      ASTTrue
+      test "(list? [4 5 6])"  ASTFalse
 
     it "Testing vector equality" $ do
-      test "(= [] (list))" $ ASTSpecialLit MalTrue
-      test "(= [7 8] [7 8])" $ ASTSpecialLit MalTrue
-      test "(= [:abc] [:abc])" $ ASTSpecialLit MalTrue
-      test "(= (list 1 2) [1 2])" $ ASTSpecialLit MalTrue
-      test "(= (list 1) [])" $ ASTSpecialLit MalFalse
-      test "(= [] [1])" $ ASTSpecialLit MalFalse
-      test "(= 0 [])" $ ASTSpecialLit MalFalse
-      test "(= [] 0)" $ ASTSpecialLit MalFalse
-      test "(= [] \"\")" $ ASTSpecialLit MalFalse
-      test "(= \"\" [])" $ ASTSpecialLit MalFalse
+      test "(= [] (list))"        ASTTrue
+      test "(= [7 8] [7 8])"      ASTTrue
+      test "(= [:abc] [:abc])"    ASTTrue
+      test "(= (list 1 2) [1 2])" ASTTrue
+      test "(= (list 1) [])"      ASTFalse
+      test "(= [] [1])"           ASTFalse
+      test "(= 0 [])"             ASTFalse
+      test "(= [] 0)"             ASTFalse
+      test "(= [] \"\")"          ASTFalse
+      test "(= \"\" [])"          ASTFalse
 
     it "Testing vector parameter lists" $ do
       test "( (fn* [] 4) )" $ i 4
       test "( (fn* [f x] (f x)) (fn* [a] (+ 1 a)) 7)" $ i 8
 
     it "Nested vector/list equality" $ do
-      test "(= [(list)] (list []))" $ ASTSpecialLit MalTrue
-      test "(= [1 2 (list 3 4 [5 6])] (list 1 2 [3 4 (list 5 6)]))"
-        $ ASTSpecialLit MalTrue
+      test "(= [(list)] (list []))" ASTTrue
+      test "(= [1 2 (list 3 4 [5 6])] (list 1 2 [3 4 (list 5 6)]))" ASTTrue
 
 
 

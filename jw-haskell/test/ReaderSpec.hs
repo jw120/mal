@@ -22,6 +22,7 @@ import qualified Data.Map                      as M
 import           Data.Text                      ( Text )
 import           Test.Hspec
 
+import           Mal                            ( AST(..) )
 import           Reader
 import           TestHelpers                    ( i
                                                 , isErrorMatching
@@ -92,7 +93,7 @@ spec = do
       test "(+ 1 2)" $ list [sym "+", i 1, i 2]
       test "()" $ list []
       test "( )" $ list []
-      test "(nil)" $ list [ASTSpecialLit MalNil]
+      test "(nil)" $ list [ASTNil]
       test "((3 4))" $ list [list [i 3, i 4]]
       test "(+ 1 (+ 2 3))" $ list [sym "+", i 1, list [sym "+", i 2, i 3]]
       test "  ( +   1   (+   2 3   )   )  "
@@ -104,9 +105,9 @@ spec = do
     it "Test commas as whitespace" $ do
       test "(1 2, 3,,,,),," $ list [i 1, i 2, i 3]
     it "Testing read of nil/true/false" $ do
-      test "nil" $ ASTSpecialLit MalNil
-      test "true" $ ASTSpecialLit MalTrue
-      test "false" $ ASTSpecialLit MalFalse
+      test "nil"   ASTNil
+      test "true"  ASTTrue
+      test "false" ASTFalse
     it "Testing read of comments" $ do
       testNothing "  ;; whole line comment (not an exception)"
       test " 1 ; comment after expression" $ i 1

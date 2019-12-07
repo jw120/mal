@@ -24,8 +24,9 @@ where
 import qualified Data.Map                      as M
 import           Data.Text                      ( Text )
 
-import           Mal                            ( Env(..) )
-import           Reader                         ( AST(..) )
+import           Mal                            ( AST()
+                                                , Env(..)
+                                                )
 
 
 -- | Takes a symbol key and an AST and adds to the data structure

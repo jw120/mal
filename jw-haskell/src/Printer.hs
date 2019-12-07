@@ -24,7 +24,6 @@ import qualified Data.Text                     as T
 import qualified Data.Text.IO                  as TIO
 
 import           Mal                            ( AST(..)
-                                                , MalSpecialLit(..)
                                                 , magicKeywordPrefix
                                                 )
 
@@ -39,16 +38,16 @@ malFormat (Right Nothing   ) = ""
 malFormat (Right (Just ast)) = addSpaces $ concatMap fmt [ast]
  where
   fmt :: AST -> [Text]
-  fmt (ASTSym        t       ) = [t]
-  fmt (ASTInt        i       ) = [T.pack (show i)]
-  fmt (ASTStr        t       ) = [showStringLit t]
-  fmt (ASTSpecialLit MalNil  ) = ["nil"]
-  fmt (ASTSpecialLit MalTrue ) = ["true"]
-  fmt (ASTSpecialLit MalFalse) = ["false"]
-  fmt (ASTBuiltin    _       ) = ["#<builtin-function>"]
-  fmt (ASTClosure _ _ _      ) = ["#<closure>"]
-  fmt (ASTList   xs          ) = ["("] ++ concatMap fmt xs ++ [")"]
-  fmt (ASTVector xs          ) = ["["] ++ concatMap fmt xs ++ ["]"]
+  fmt (ASTSym t)     = [t]
+  fmt (ASTInt i)     = [T.pack (show i)]
+  fmt (ASTStr t)     = [showStringLit t]
+  fmt ASTNil         = ["nil"]
+  fmt ASTTrue        = ["true"]
+  fmt ASTFalse       = ["false"]
+  fmt (ASTBuiltin _) = ["#<builtin-function>"]
+  fmt ASTClosure{}   = ["#<closure>"]
+  fmt (ASTList   xs) = ["("] ++ concatMap fmt xs ++ [")"]
+  fmt (ASTVector xs) = ["["] ++ concatMap fmt xs ++ ["]"]
   fmt (ASTMap m) = ["{"] ++ concatMap fmt (unwrapPairs (M.toList m)) ++ ["}"]
    where
     unwrapPairs :: [(Text, AST)] -> [AST]

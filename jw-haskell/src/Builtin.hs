@@ -16,6 +16,10 @@ module Builtin
   , subtraction
   , multiplication
   , division
+  , list
+  , listTest
+  , count
+  , emptyTest
   )
 where
 
@@ -54,6 +58,22 @@ division (hd : rest) = do
 safeDiv :: Int -> Int -> Either Text Int
 safeDiv _ 0 = Left "Division by zero error"
 safeDiv i j = Right $ i `div` j
+
+list :: [AST] -> Either Text AST
+list = Right . ASTList
+
+listTest :: [AST] -> Either Text AST
+listTest (ASTList _ : _) = Right ASTTrue
+listTest _               = Right ASTFalse
+
+count :: [AST] -> Either Text AST
+count (ASTList xs : _) = Right (ASTInt (length xs))
+count _                = Right (ASTInt 0)
+
+emptyTest :: [AST] -> Either Text AST
+emptyTest (ASTList [] : _) = Right ASTTrue
+emptyTest (ASTList _  : _) = Right ASTFalse
+emptyTest _                = Left "Expected a list"
 
 -- Helper function to convert a list of IntLits to Int (or return Nothing if a type error)
 extractIntLit :: AST -> Either Text Int

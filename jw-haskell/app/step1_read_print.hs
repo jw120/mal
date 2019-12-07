@@ -5,10 +5,9 @@ where
 
 import           Data.Text                      ( Text )
 
+import           Mal                            ( AST )
 import           Printer                        ( malPrint )
-import           Reader                         ( malRead
-                                                , AST
-                                                )
+import           Reader                         ( malRead )
 import           Utilities                      ( readlineLoop )
 
 malEval :: Either Text (Maybe AST) -> Either Text (Maybe AST)
