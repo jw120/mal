@@ -52,7 +52,12 @@ type Eval a = ExceptT Text (State Env) a
 -- | Main evaluation function
 eval :: AST -> Eval AST
 
--- | Evaluation for lists that start with a special atom
+-- | Evaluation for lists that start with a special form
+eval (ASTList (ASTSym "do" : args))
+  | null args = throwError "No arguments for do special form"
+  | otherwise = do
+      args' <- mapM eval args
+      return $ last args'
 eval (ASTList [ASTSym "def!", ASTSym var, val]) = do
   val' <- eval val
   modify (E.set var val')
