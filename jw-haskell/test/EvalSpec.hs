@@ -222,17 +222,17 @@ spec = do
 
     it "Testing recursive sumdown function" $ do
       testSeq
-          [ "(def! sumdown (fn* (N) (if (> N 0) (+ N (sumdowntest (- N 1))) 0)))"
+          [ "(def! sumdown (fn* (N) (if (> N 0) (+ N (sumdown (- N 1))) 0)))"
           , "(sumdown 1)"
           ]
         $ i 1
       testSeq
-          [ "(def! sumdown (fn* (N) (if (> N 0) (+ N (sumdowntest (- N 1))) 0)))"
+          [ "(def! sumdown (fn* (N) (if (> N 0) (+ N (sumdown (- N 1))) 0)))"
           , "(sumdown 2)"
           ]
         $ i 3
       testSeq
-          [ "(def! sumdown (fn* (N) (if (> N 0) (+ N (sumdowntest (- N 1))) 0)))"
+          [ "(def! sumdown (fn* (N) (if (> N 0) (+ N (sumdown (- N 1))) 0)))"
           , "(sumdown 6)"
           ]
         $ i 21

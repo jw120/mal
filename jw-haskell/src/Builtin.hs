@@ -21,10 +21,10 @@ module Builtin
   )
 where
 
-import           Data.Text                      ( Text )
 import qualified Env                            ( set )
 import           Mal                            ( AST(..)
                                                 , Env
+                                                , Text
                                                 )
 
 addBuiltIns :: Env -> Env
@@ -37,6 +37,11 @@ addBuiltIns =
     . Env.set "count" (ASTBuiltin count)
     . Env.set "empty?" (ASTBuiltin emptyTest)
     . Env.set "list?" (ASTBuiltin listTest)
+    . Env.set "=" (ASTBuiltin equality)
+    . Env.set ">" (ASTBuiltin (binaryIntOp (>)))
+    . Env.set ">=" (ASTBuiltin (binaryIntOp (>=)))
+    . Env.set "<" (ASTBuiltin (binaryIntOp (<)))
+    . Env.set "<=" (ASTBuiltin (binaryIntOp (<=)))
 
 addition :: [AST] -> Either Text AST
 addition asts = do
@@ -84,8 +89,22 @@ count _                = Right (ASTInt 0)
 
 emptyTest :: [AST] -> Either Text AST
 emptyTest (ASTList [] : _) = Right ASTTrue
-emptyTest (ASTList _  : _) = Right ASTFalse
-emptyTest _                = Left "Expected a list"
+emptyTest _ = Right ASTFalse
+
+equality :: [AST] -> Either Text AST
+equality [] = Left "Expecting two arguments for equality testing"
+equality [_] = Left "Expecting two arguments for equality testing"
+equality (a : b : _)
+  | a == b = Right ASTTrue
+  | otherwise = Right ASTFalse
+
+binaryIntOp :: (Int -> Int -> Bool) -> [AST] -> Either Text AST
+binaryIntOp _ [] = Left "Expecting two arguments"
+binaryIntOp _ [_] = Left "Expecting two arguments"
+binaryIntOp op ((ASTInt a) : (ASTInt b) : _)
+  | a `op` b = Right ASTTrue
+  | otherwise = Right ASTFalse
+binaryIntOp _ _ = Right ASTFalse
 
 -- Helper function to convert a list of IntLits to Int (or return Nothing if a type error)
 extractIntLit :: AST -> Either Text Int

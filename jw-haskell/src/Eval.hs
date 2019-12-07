@@ -98,11 +98,12 @@ eval (ASTList (ASTSym "fn*" : _)) = throwError "Bad syntax in fn* special form"
 -- Evaluation for a non-empty list
 eval (ASTList (func : args)) = do
   func' <- eval func
-  args' <- mapM eval args
   case func' of
-    ASTBuiltin b              -> liftEither $ b args'
+    ASTBuiltin b              -> do
+      args' <- mapM eval args
+      liftEither $ b args'
     ASTClosure env binds body -> do
-      put env
+      -- put env
       addBindings binds args
       eval body
     _ -> throwError "Not a function"
