@@ -23,22 +23,13 @@ import           Control.Monad.State
 import qualified Data.Map                      as M
 import           Data.Text                      ( Text )
 
-import qualified Builtin
+import Builtin (addBuiltIns)
 import qualified Env                           as E
 import           Mal                            ( AST(..)
                                                 , Env
                                                 )
 
-addBuiltIns :: Env -> Env
-addBuiltIns =
-  E.set "+" (ASTBuiltin Builtin.addition)
-    . E.set "-" (ASTBuiltin Builtin.subtraction)
-    . E.set "*" (ASTBuiltin Builtin.multiplication)
-    . E.set "/" (ASTBuiltin Builtin.division)
-    . E.set "list" (ASTBuiltin Builtin.list)
-    . E.set "count" (ASTBuiltin Builtin.count)
-    . E.set "empty?" (ASTBuiltin Builtin.emptyTest)
-    . E.set "list?" (ASTBuiltin Builtin.listTest)
+
 
 malInitialEnv :: Env
 malInitialEnv = addBuiltIns E.emptyWithoutOuter

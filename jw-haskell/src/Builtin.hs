@@ -12,19 +12,31 @@ Haskell implementations of builtins
 -}
 
 module Builtin
-  ( addition
+  ( addBuiltIns
+  -- We export the four arithmetic functions for use in EvalSimple
+  , addition
   , subtraction
   , multiplication
   , division
-  , list
-  , listTest
-  , count
-  , emptyTest
   )
 where
 
 import           Data.Text                      ( Text )
-import           Mal                            ( AST(..) )
+import qualified Env                            ( set )
+import           Mal                            ( AST(..)
+                                                , Env
+                                                )
+
+addBuiltIns :: Env -> Env
+addBuiltIns =
+  Env.set "+" (ASTBuiltin addition)
+    . Env.set "-" (ASTBuiltin subtraction)
+    . Env.set "*" (ASTBuiltin multiplication)
+    . Env.set "/" (ASTBuiltin division)
+    . Env.set "list" (ASTBuiltin list)
+    . Env.set "count" (ASTBuiltin count)
+    . Env.set "empty?" (ASTBuiltin emptyTest)
+    . Env.set "list?" (ASTBuiltin listTest)
 
 addition :: [AST] -> Either Text AST
 addition asts = do
