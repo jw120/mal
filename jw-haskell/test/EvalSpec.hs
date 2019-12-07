@@ -156,7 +156,6 @@ spec = do
       test "(= (list) nil)" $ ASTSpecialLit MalFalse
 
     it "Testing 1-way if form" $ do
-
       test "(if false (+ 1 7))" $ ASTSpecialLit MalNil
       test "(if nil 8)" $ ASTSpecialLit MalNil
       test "(if nil 8 7)" $ i 7
@@ -206,19 +205,16 @@ spec = do
 
     it "Testing closures" $ do
       test "( ( (fn* (a) (fn* (b) (+ a b))) 5) 7)" $ i 12
-
       testSeq
         [ "(def! gen-plus5 (fn* () (fn* (b) (+ 5 b))))"
         , "(def! plus5 (gen-plus5))"
         , "(plus5 7)"
         ] $ i 12
-
       testSeq
         [ "(def! gen-plusX (fn* (x) (fn* (b) (+ x b))))"
         , "(def! plus7 (gen-plusX 7))"
         , "(plus7 8)"
         ] $ i 15
-
       testSeq
         [ "(do (def! a 6) 7 (+ a 8))"
         , "a"

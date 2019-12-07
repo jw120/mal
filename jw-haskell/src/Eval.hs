@@ -26,7 +26,7 @@ import           Data.Text                      ( Text )
 import qualified Builtin
 import           Env                            ( Env )
 import qualified Env                           as E
-import           Reader                         ( AST(..) )
+import           Reader                         ( AST(..) , MalSpecialLit(..))
 
 malInitialEnv :: Env
 malInitialEnv =
@@ -52,16 +52,31 @@ type Eval a = ExceptT Text (State Env) a
 -- | Main evaluation function
 eval :: AST -> Eval AST
 
--- | Evaluation for lists that start with a special form
-eval (ASTList (ASTSym "do" : args))
-  | null args = throwError "No arguments for do special form"
-  | otherwise = do
-      args' <- mapM eval args
-      return $ last args'
+-- Special form: do
+eval (ASTList [ASTSym "do"]) = throwError "No arguments for do special form"
+eval (ASTList (ASTSym "do" : args)) = do
+  args' <- mapM eval args
+  return $ last args'
+
+-- Special form: if
+eval (ASTList [ASTSym "if", condArg, thenArg, elseArg]) = do
+  condVal <- eval condArg
+  case condVal of
+    ASTSpecialLit MalNil -> eval elseArg
+    ASTSpecialLit MalFalse -> eval elseArg
+    _ -> eval thenArg
+eval (ASTList [ASTSym "if", condArg, thenArg]) =
+  eval (ASTList [ASTSym "if", condArg, thenArg, ASTSpecialLit MalNil])
+eval (ASTList (ASTSym "if" : _)) = throwError "Bad syntax in if special form"
+
+-- Special form: def!
 eval (ASTList [ASTSym "def!", ASTSym var, val]) = do
   val' <- eval val
   modify (E.set var val')
   return val'
+eval (ASTList (ASTSym "def!" : _ )) = throwError "Bad syntax in def! special form"
+
+-- Special form: let*
 eval (ASTList [ASTSym "let*", ASTList bindings, val]) = do
   outerEnv <- get
   modify E.emptyWithOuter
@@ -79,6 +94,7 @@ eval (ASTList [ASTSym "let*", ASTList bindings, val]) = do
   addBindings _  = throwError "Unexpected value in let* bindings"
 eval (ASTList [ASTSym "let*", ASTVector bindings, val]) =
   eval (ASTList [ASTSym "let*", ASTList bindings, val])
+eval (ASTList (ASTSym "let*" : _ )) = throwError "Bad syntax in let* special form"
 
 -- Evaluation for a non-empty list
 eval (ASTList (func : args)) = do
