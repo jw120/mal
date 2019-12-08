@@ -20,9 +20,7 @@ where
 import           Data.Text                      ( Text )
 import           Test.Hspec
 
-import           Mal                            ( AST(..)
-                                                , MalBuiltin
-                                                )
+import           Mal                            ( AST(..) )
 import           Printer
 import           TestHelpers                    ( i
                                                 , kw
@@ -33,14 +31,9 @@ import           TestHelpers                    ( i
                                                 , vec
                                                 )
 
-dummyFn :: MalBuiltin
-dummyFn _ = Right (i 3)
-
-dummyClosure :: AST
-dummyClosure = ASTClosure $ const (return ASTNil)
 
 malFormat' :: AST -> Text
-malFormat' = malFormat . Right . Just
+malFormat' = malFormat True
 
 spec :: Spec
 spec = do
@@ -63,10 +56,6 @@ spec = do
       malFormat' (vec [i 7, i 8]) `shouldBe` "[7 8]"
     it "formats a map" $ do
       malFormat' (m [("a", i 3)]) `shouldBe` "{\"a\" 3}"
-    it "formats an empty AST" $ do
-      malFormat (Right Nothing) `shouldBe` ""
-    it "formats a function" $ do
-      malFormat' (ASTBuiltin dummyFn) `shouldBe` "#<builtin-function>"
-    it "formats a closure" $ do
-      malFormat' dummyClosure `shouldBe` "#<closure>"
+
+
 

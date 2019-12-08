@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d0cc3f737831678a52a26e6ebc748747ab58201834bd5f30c63f21f0998c579f
+-- hash: 940a65e44e6bcd96ac9ccde2cfb857ae1e2b670a3239adeb60ea26d75005b5c4
 
 name:           mal
 version:        0.1.0.0
@@ -26,10 +26,9 @@ source-repository head
 
 library
   exposed-modules:
-      Builtin
+      Core
       Env
       Eval
-      EvalSimple
       Mal
       Printer
       Reader
@@ -63,70 +62,6 @@ executable monad_warmup
     , text
   default-language: Haskell2010
 
-executable step0_repl
-  main-is: step0_repl.hs
-  other-modules:
-      Paths_mal
-  hs-source-dirs:
-      app
-  build-depends:
-      base >=4.7 && <5
-    , containers
-    , mal
-    , megaparsec
-    , mtl
-    , readline
-    , text
-  default-language: Haskell2010
-
-executable step1_read_print
-  main-is: step1_read_print.hs
-  other-modules:
-      Paths_mal
-  hs-source-dirs:
-      app
-  build-depends:
-      base >=4.7 && <5
-    , containers
-    , mal
-    , megaparsec
-    , mtl
-    , readline
-    , text
-  default-language: Haskell2010
-
-executable step2_eval
-  main-is: step2_eval.hs
-  other-modules:
-      Paths_mal
-  hs-source-dirs:
-      app
-  build-depends:
-      base >=4.7 && <5
-    , containers
-    , mal
-    , megaparsec
-    , mtl
-    , readline
-    , text
-  default-language: Haskell2010
-
-executable step3_env
-  main-is: step3_env.hs
-  other-modules:
-      Paths_mal
-  hs-source-dirs:
-      app
-  build-depends:
-      base >=4.7 && <5
-    , containers
-    , mal
-    , megaparsec
-    , mtl
-    , readline
-    , text
-  default-language: Haskell2010
-
 executable step4_if_fn_do
   main-is: step4_if_fn_do.hs
   other-modules:
@@ -147,10 +82,7 @@ test-suite mal-specs
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      BuiltinSpec
       EnvSpec
-      EvalSimpleSpec
-      EvalSpec
       PrinterSpec
       ReaderSpec
       Paths_mal

@@ -1,9 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-} -- to allow instances for our MalBuiltin type synonym
+{-# LANGUAGE GeneralizedNewtypeDeriving #-} -- to simplify use of our monad stack
 
 {-|
 Module      : Mal
-Description : Convert text to AST
+Description : Data type definitions
 Copyright   : (c) Joe Watson, 2019
 License     : GPL-3
 Maintainer  : joe_watson@mail.com
@@ -15,30 +16,26 @@ Defines basic internal data types
 module Mal
   ( AST(..)
   , Env(..)
-  , Eval
-  , MalBuiltin
+  , Mal(..)
+  , MalFunc
   , magicKeywordPrefix
   , Text
+  , astEquality
   )
 where
 
+import           Control.Monad.Trans
 import           Control.Monad.Except
 import           Control.Monad.State
 import           Data.Map                       ( Map )
-import qualified Data.Map as M
+import qualified Data.Map                      as M
 import           Data.Text                      ( Text )
 
--- | Type for mal functions implemented in Haskell
-type MalBuiltin = [AST] -> Either Text AST
-instance Show MalBuiltin where
+-- | Type for mal functions
+type MalFunc = [AST] -> Mal AST
+instance Show MalFunc where
   show _ = "#<function>"
-instance Eq MalBuiltin where
-  _ == _ = False
-
-type MalClosure = [AST] -> Eval AST
-instance Show MalClosure where
-  show _ = "#<closure>"
-instance Eq MalClosure where
+instance Eq MalFunc where
   _ == _ = False
 
 -- | Type for our Mal abstract syntax tree
@@ -52,25 +49,41 @@ data AST
   | ASTList [AST]
   | ASTVector [AST]
   | ASTMap (Map Text AST)
-  | ASTBuiltin MalBuiltin
-  | ASTClosure MalClosure
+  | ASTFunc MalFunc
   deriving (Eq, Show)
+
+-- Version of equality that treats lists and vectors as the same
+astEquality :: AST -> AST -> Bool
+astEquality (ASTList   a) (ASTList   b) = astEqualityList a b
+astEquality (ASTList   a) (ASTVector b) = astEqualityList a b
+astEquality (ASTVector a) (ASTList   b) = astEqualityList a b
+astEquality (ASTVector a) (ASTVector b) = astEqualityList a b
+astEquality (ASTMap    a) (ASTMap    b) = M.keys a == M.keys b && astEquality
+  (ASTList (M.elems a))
+  (ASTList (M.elems b))
+astEquality x y = x == y
+astEqualityList :: [AST] -> [AST] -> Bool
+astEqualityList (a : as) (b : bs) =
+  a `astEquality` b && as `astEqualityList` bs
+astEqualityList [] [] = True
+astEqualityList _  _  = False
 
 data Env = Env
   { envTable :: Map Text AST -- ^ Symbol table
   , envOuter :: Maybe Env    -- ^ Outer environment for lookup when not in our table
-  } deriving (Eq)
-instance Show Env where
-  show (Env t outer) = show (M.toList (M.filter notBuiltin t)) ++ showOuter outer
-    where
-      showOuter Nothing = " (no outer)"
-      showOuter (Just o) = ", outer: " ++ show o
-      notBuiltin (ASTBuiltin _) = False
-      notBuiltin _ = True
+  } deriving (Show, Eq)
+-- instance Show Env where
+--   show (Env t outer) = show (M.toList (M.filter notBuiltin t))
+--     ++ showOuter outer
+--    where
+--     showOuter Nothing  = " (no outer)"
+--     showOuter (Just o) = ", outer: " ++ show o
+--     notBuiltin (ASTFunc _) = False
+--     notBuiltin _              = True
 
 -- We hold keywords as Strings with a magic prefix
 magicKeywordPrefix :: Text
 magicKeywordPrefix = "\x029e" -- Unicode 'ʞ'
 
--- We use a combined state (for the environment) and error monad
-type Eval a = ExceptT Text (State Env) a
+newtype Mal a = Mal { unMal :: ExceptT Text (StateT Env IO) a }
+    deriving (Functor, Applicative, Monad, MonadError Text, MonadState Env, MonadIO)

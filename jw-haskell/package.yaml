@@ -23,26 +23,26 @@ library:
   source-dirs: src
 
 executables:
-  step0_repl:
-    main:                step0_repl.hs
-    source-dirs:         app
-    dependencies:
-    - mal
-  step1_read_print:
-    main:                step1_read_print.hs
-    source-dirs:         app
-    dependencies:
-    - mal
-  step2_eval:
-    main:                step2_eval.hs
-    source-dirs:         app
-    dependencies:
-    - mal
-  step3_env:
-    main:                step3_env.hs
-    source-dirs:         app
-    dependencies:
-    - mal
+  # step0_repl:
+  #   main:                step0_repl.hs
+  #   source-dirs:         app
+  #   dependencies:
+  #   - mal
+  # step1_read_print:
+  #   main:                step1_read_print.hs
+  #   source-dirs:         app
+  #   dependencies:
+  #   - mal
+  # step2_eval:
+  #   main:                step2_eval.hs
+  #   source-dirs:         app
+  #   dependencies:
+  #   - mal
+  # step3_env:
+  #   main:                step3_env.hs
+  #   source-dirs:         app
+  #   dependencies:
+  #   - mal
   step4_if_fn_do:
     main:                step4_if_fn_do.hs
     source-dirs:         app

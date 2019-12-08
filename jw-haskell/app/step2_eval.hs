@@ -3,7 +3,7 @@ module Main
   )
 where
 
-import           EvalSimple                     ( malEval )
+import           Eval                           ( malEval )
 import           Printer                        ( malPrint )
 import           Reader                         ( malRead )
 import           Utilities                      ( readlineLoop )

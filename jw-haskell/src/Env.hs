@@ -19,9 +19,11 @@ module Env
   , get
   , set
   , add
+  , new
   )
 where
 
+import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
 import           Data.Text                      ( Text )
 
@@ -29,6 +31,9 @@ import           Mal                            ( AST()
                                                 , Env(..)
                                                 )
 
+-- | Create a new environment
+new :: Map Text AST -> Env
+new m = Env { envTable = m, envOuter = Nothing }
 
 -- | Takes a symbol key and an AST and adds to the data structure
 set :: Text -> AST -> Env -> Env
@@ -53,5 +58,5 @@ emptyWithoutOuter = Env { envTable = M.empty, envOuter = Nothing }
 
 -- | Set given environment current environment keeping current environemt in outer chain
 add :: Env -> Env -> Env
-add (Env t Nothing) current = Env t (Just current)
+add (Env t Nothing ) current = Env t (Just current)
 add (Env t (Just o)) current = Env t (Just (add o current))

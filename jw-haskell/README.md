@@ -22,6 +22,10 @@ Tools used
 
 TODO
 
+* CHANGE MONAD TO INCLUDE IO and make persistent
+* tests for malformat with and without readable
+* test for IO?
+* Stop EvalSimple depending on core
 * Improve Makefile and exec
 * Phase 1 - better errors for parsing
 * Phase 1 - vector underlying rep

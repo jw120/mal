@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 {-|
-Module      : Builtin
+Module      : Core
 Description : Builtin functions for our intpreter
 Copyright   : (c) Joe Watson, 2019
 License     : GPL-3
@@ -11,102 +11,141 @@ Haskell implementations of builtins
 
 -}
 
-module Builtin
-  ( addBuiltIns
-  -- We export the four arithmetic functions for use in EvalSimple
-  , addition
-  , subtraction
-  , multiplication
-  , division
+module Core
+  ( nameSpace
+  , prelude
   )
 where
 
-import qualified Env                            ( set )
+import           Control.Monad.Except
+
+import           Data.Map                       ( Map )
+import qualified Data.Text                     as T
+import qualified Data.Text.IO                  as TIO
+import qualified Data.Map                      as M
+
 import           Mal                            ( AST(..)
-                                                , Env
+                                                , Mal
                                                 , Text
+                                                , astEquality
                                                 )
+import           Printer                        ( malFormat )
 
-addBuiltIns :: Env -> Env
-addBuiltIns =
-  Env.set "+" (ASTBuiltin addition)
-    . Env.set "-" (ASTBuiltin subtraction)
-    . Env.set "*" (ASTBuiltin multiplication)
-    . Env.set "/" (ASTBuiltin division)
-    . Env.set "list" (ASTBuiltin list)
-    . Env.set "count" (ASTBuiltin count)
-    . Env.set "empty?" (ASTBuiltin emptyTest)
-    . Env.set "list?" (ASTBuiltin listTest)
-    . Env.set "=" (ASTBuiltin equality)
-    . Env.set ">" (ASTBuiltin (binaryIntOp (>)))
-    . Env.set ">=" (ASTBuiltin (binaryIntOp (>=)))
-    . Env.set "<" (ASTBuiltin (binaryIntOp (<)))
-    . Env.set "<=" (ASTBuiltin (binaryIntOp (<=)))
+-- | Definitions read into Mal before execution of user program starts
+prelude :: [Text]
+prelude = ["(def! not (fn* (a) (if a false true)))"]
 
-addition :: [AST] -> Either Text AST
+-- | Core name space which holds all of our built-ins
+nameSpace :: Map Text AST
+nameSpace = M.fromList
+  [ ("+"      , ASTFunc addition)
+  , ("-"      , ASTFunc subtraction)
+  , ("*"      , ASTFunc multiplication)
+  , ("/"      , ASTFunc division)
+  , ("list"   , ASTFunc list)
+  , ("count"  , ASTFunc count)
+  , ("empty?" , ASTFunc emptyTest)
+  , ("list?"  , ASTFunc listTest)
+  , ("="      , ASTFunc equality)
+  , (">"      , ASTFunc (binaryIntOp (>)))
+  , (">="     , ASTFunc (binaryIntOp (>=)))
+  , ("<"      , ASTFunc (binaryIntOp (<)))
+  , ("<="     , ASTFunc (binaryIntOp (<=)))
+  , ("pr-str" , ASTFunc prStr)
+  , ("str"    , ASTFunc str)
+  , ("prn"    , ASTFunc prn)
+  , ("println", ASTFunc println)
+  ]
+
+addition :: [AST] -> Mal AST
 addition asts = do
   xs <- mapM extractIntLit asts
   return $ ASTInt (sum xs)
 
-subtraction :: [AST] -> Either Text AST
-subtraction []          = Left "Arugment error: at least one argument required"
-subtraction [ASTInt i ] = Right (ASTInt (-i))
-subtraction [_        ] = Left "Type error: integer expected"
+subtraction :: [AST] -> Mal AST
+subtraction [] = throwError "Arugment error: at least one argument required"
+subtraction [ASTInt i ] = return (ASTInt (-i))
+subtraction [_        ] = throwError "Type error: integer expected"
 subtraction (hd : rest) = do
   hd'   <- extractIntLit hd
   rest' <- mapM extractIntLit rest
   return . ASTInt $ hd' - sum rest'
 
-multiplication :: [AST] -> Either Text AST
+multiplication :: [AST] -> Mal AST
 multiplication asts = do
   xs <- mapM extractIntLit asts
   return $ ASTInt (product xs)
 
-division :: [AST] -> Either Text AST
-division []          = Left "Arugment error: at least one argument required"
-division [ASTInt _ ] = Left "Arugment error: at least one argument required"
-division [_        ] = Left "Type error: integer expected"
+division :: [AST] -> Mal AST
+division [] = throwError "Arugment error: at least one argument required"
+division [ASTInt _] =
+  throwError "Arugment error: at least one argument required"
+division [_        ] = throwError "Type error: integer expected"
 division (hd : rest) = do
-  hd'    <- extractIntLit hd
-  rest'  <- mapM extractIntLit rest
-  result <- hd' `safeDiv` product rest'
-  return $ ASTInt result
+  hd'   <- extractIntLit hd
+  rest' <- mapM extractIntLit rest
+  hd' `safeDiv` product rest'
 
-safeDiv :: Int -> Int -> Either Text Int
-safeDiv _ 0 = Left "Division by zero error"
-safeDiv i j = Right $ i `div` j
+safeDiv :: Int -> Int -> Mal AST
+safeDiv _ 0 = throwError "Division by zero error"
+safeDiv i j = return . ASTInt $ i `div` j
 
-list :: [AST] -> Either Text AST
-list = Right . ASTList
+list :: [AST] -> Mal AST
+list = return . ASTList
 
-listTest :: [AST] -> Either Text AST
-listTest (ASTList _ : _) = Right ASTTrue
-listTest _               = Right ASTFalse
+listTest :: [AST] -> Mal AST
+listTest (ASTList _ : _) = return ASTTrue
+listTest _               = return ASTFalse
 
-count :: [AST] -> Either Text AST
-count (ASTList xs : _) = Right (ASTInt (length xs))
-count _                = Right (ASTInt 0)
+count :: [AST] -> Mal AST
+count (ASTList   xs : _) = return (ASTInt (length xs))
+count (ASTVector xs : _) = return (ASTInt (length xs))
+count _                  = return (ASTInt 0)
 
-emptyTest :: [AST] -> Either Text AST
-emptyTest (ASTList [] : _) = Right ASTTrue
-emptyTest _ = Right ASTFalse
+emptyTest :: [AST] -> Mal AST
+emptyTest (ASTList   [] : _) = return ASTTrue
+emptyTest (ASTVector [] : _) = return ASTTrue
+emptyTest _                  = return ASTFalse
 
-equality :: [AST] -> Either Text AST
-equality [] = Left "Expecting two arguments for equality testing"
-equality [_] = Left "Expecting two arguments for equality testing"
-equality (a : b : _)
-  | a == b = Right ASTTrue
-  | otherwise = Right ASTFalse
+equality :: [AST] -> Mal AST
+equality []  = throwError "Expecting two arguments for equality testing"
+equality [_] = throwError "Expecting two arguments for equality testing"
+equality (a : b : _) | a `astEquality` b = return ASTTrue
+                     | otherwise         = return ASTFalse
 
-binaryIntOp :: (Int -> Int -> Bool) -> [AST] -> Either Text AST
-binaryIntOp _ [] = Left "Expecting two arguments"
-binaryIntOp _ [_] = Left "Expecting two arguments"
-binaryIntOp op ((ASTInt a) : (ASTInt b) : _)
-  | a `op` b = Right ASTTrue
-  | otherwise = Right ASTFalse
-binaryIntOp _ _ = Right ASTFalse
+-- Helper function to convert <, > etc into the correct format
+binaryIntOp :: (Int -> Int -> Bool) -> [AST] -> Mal AST
+binaryIntOp _ []  = throwError "Expecting two arguments"
+binaryIntOp _ [_] = throwError "Expecting two arguments"
+binaryIntOp op (ASTInt a : ASTInt b : _) | a `op` b  = return ASTTrue
+                                         | otherwise = return ASTFalse
+binaryIntOp _ _ = return ASTFalse
+
+prStr :: [AST] -> Mal AST
+prStr = return . ASTStr . combine True " "
+
+str :: [AST] -> Mal AST
+str = return . ASTStr . combine False ""
+
+prn :: [AST] -> Mal AST
+prn xs = do
+  let s = combine True " " xs
+  liftIO $ TIO.putStrLn s
+  return ASTNil
+
+println :: [AST] -> Mal AST
+println xs = do
+  let s = combine False " " xs
+  liftIO $ TIO.putStrLn s
+  return ASTNil
+
+-- Helper function to combine arguments as a string
+combine :: Bool -> Text -> [AST] -> Text
+combine readable sep = T.intercalate sep . map (malFormat True)
 
 -- Helper function to convert a list of IntLits to Int (or return Nothing if a type error)
-extractIntLit :: AST -> Either Text Int
-extractIntLit (ASTInt i) = Right i
-extractIntLit _          = Left "Type error: integer expected"
+extractIntLit :: AST -> Mal Int
+extractIntLit (ASTInt i) = return i
+extractIntLit _          = throwError "Type error: integer expected"
+
+

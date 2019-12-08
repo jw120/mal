@@ -1,22 +1,51 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main
   ( main
   )
 where
 
-import           Control.Monad                  ( void )
-import           Data.Text                      ( Text )
+import           Control.Monad.Except
+import           Control.Monad.State
+import qualified Data.Text                     as T
+import qualified Data.Text.IO as TIO
+import           System.Console.Readline        ( readline
+                                                , addHistory
+                                                )
 
-import           Env                            ( Env )
-import           Eval                           ( malEval
-                                                , malInitialEnv
+import qualified Core
+import qualified Env
+import           Eval                           ( eval )
+import           Mal                            ( Mal(..)
+                                                , AST(..)
+                                                , Text
                                                 )
 import           Printer                        ( malPrint )
 import           Reader                         ( malRead )
-import           Utilities                      ( readlineLoopWithState )
 
 main :: IO ()
-main = void $ readlineLoopWithState malInitialEnv rep
- where
-  rep :: Env -> Text -> IO Env
-  rep env input = malPrint value >> return env'
-    where (value, env') = malEval env (malRead input)
+main = void . runStateT (runExceptT (unMal malMain)) $ Env.new Core.nameSpace
+
+malMain :: Mal ()
+malMain = do
+  mapM_ (malRep True) Core.prelude
+  malRepl
+
+malRep :: Bool -> Text -> Mal ()
+malRep quiet src = case malRead src of
+    Left  readError -> liftIO $ TIO.putStrLn ("Read error: " <> readError)
+    Right Nothing -> return ()
+    Right (Just ast) -> do
+        val <- eval ast `catchError` (\e -> return (ASTStr ("Error: " <> e)))
+        if quiet then return () else malPrint val
+
+malRepl :: Mal ()
+malRepl = do
+  x <- liftIO $ readline "mal> "
+  case x of
+    Nothing   -> return ()
+    Just line -> do
+      liftIO $ addHistory line
+      malRep False $ T.pack line
+      malRepl
+

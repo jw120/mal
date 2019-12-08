@@ -12,8 +12,7 @@ AST evaluator for steps 3 and beyond
 -}
 
 module Eval
-  ( malEval
-  , malInitialEnv
+  ( eval
   )
 where
 
@@ -23,30 +22,18 @@ import           Control.Monad.State
 import qualified Data.Map                      as M
 import           Data.Text                      ( Text )
 
-import Debug.Trace
+-- import Debug.Trace
 
-import Builtin (addBuiltIns)
+import qualified Core
 import qualified Env                           as E
 import           Mal                            ( AST(..)
                                                 , Env
-                                                , Eval
+                                                , Mal
                                                 )
 
-malInitialEnv :: Env
-malInitialEnv = addBuiltIns E.emptyWithoutOuter
-
--- | Top-level evaluator
---
--- Intercepts parsing errors (Left) or a missing (Nothing) and hands over to eval
-malEval :: Env -> Either Text (Maybe AST) -> (Either Text (Maybe AST), Env)
-malEval env (Left  err       ) = (Left err, env)
-malEval env (Right Nothing   ) = (Right Nothing, env)
-malEval env (Right (Just ast)) = case runState (runExceptT (eval ast)) env of
-  (Left  err, env') -> (Left err, env')
-  (Right x  , env') -> (Right (Just x), env')
 
 -- | Main evaluation function
-eval :: AST -> Eval AST
+eval :: AST -> Mal AST
 
 -- Special form: do
 eval (ASTList [ASTSym "do"]) = throwError "No arguments for do special form"
@@ -90,21 +77,20 @@ eval (ASTList (ASTSym "let*" : _)) =
 eval (ASTList [ASTSym "fn*", ASTList binds, body]) = do
   env <- get
   throwIfNotAllSymbols binds
-  return . ASTClosure $ closure env binds body
+  return . ASTFunc $ closure env binds body
+eval (ASTList [ASTSym "fn*", ASTVector binds, body]) =
+  eval (ASTList [ASTSym "fn*", ASTList binds, body])
 eval (ASTList (ASTSym "fn*" : _)) = throwError "Bad syntax in fn* special form"
 
 -- Evaluation for a non-empty list
 eval (ASTList (func : args)) = do
-  env <- get
+--   env <- get
 --  traceM ("eval list, " ++ show func ++ " : " ++ show args ++ " env: " ++ show env)
   func' <- eval func
   case func' of
-    ASTBuiltin b              -> do
+    ASTFunc f -> do
       args' <- mapM eval args
-      liftEither $ b args'
-    ASTClosure c -> do
-      args' <- mapM eval args
-      c args'
+      f args'
     _ -> throwError "Not a function"
 
 -- Evaluation for a vector: map eval over the vector
@@ -124,39 +110,39 @@ eval (ASTSym s) = do
 eval other = return other
 
 -- Helper function to set new environment with bindings as an alternating list (a 2 b 3)
-addBindingPairs :: [AST] -> Eval ()
+addBindingPairs :: [AST] -> Mal ()
 addBindingPairs bindings = do
   modify E.emptyWithOuter
   go bindings
-  where
-    go (ASTSym s : v : rest) = do
-      v' <- eval v
-      modify (E.set s v')
-      go rest
-    go [] = return ()
-    go _  = throwError "Unexpected value in addBindingPairs"
+ where
+  go (ASTSym s : v : rest) = do
+    v' <- eval v
+    modify (E.set s v')
+    go rest
+  go [] = return ()
+  go _  = throwError "Unexpected value in addBindingPairs"
 
 -- Helper function to set new environment with bindings as two lists (a b) (2 3)
-addBindings :: [AST] -> [AST] -> Eval ()
+addBindings :: [AST] -> [AST] -> Mal ()
 addBindings syms vals = do
   modify E.emptyWithOuter
   go syms vals
-  where
-    go (ASTSym sym : symRest) (val : valRest) = do
-      val' <- eval val
-      modify (E.set sym val')
-      go symRest valRest
-    go [] [] = return ()
-    go _  _  = throwError "Unexpected value in add Bindings"
+ where
+  go (ASTSym sym : symRest) (val : valRest) = do
+    val' <- eval val
+    modify (E.set sym val')
+    go symRest valRest
+  go [] [] = return ()
+  go _  _  = throwError "Unexpected value in add Bindings"
 
 -- Helper function to throw an error if any element of the list is not an ASTSym
-throwIfNotAllSymbols :: [AST] -> Eval ()
+throwIfNotAllSymbols :: [AST] -> Mal ()
 throwIfNotAllSymbols (ASTSym _ : rest) = throwIfNotAllSymbols rest
 throwIfNotAllSymbols []                = return ()
 throwIfNotAllSymbols _                 = throwError "Expected a symbol"
 
 
-closure :: Env -> [AST] -> AST -> [AST] -> Eval AST
+closure :: Env -> [AST] -> AST -> [AST] -> Mal AST
 closure savedEnv binds body args = do
   prevEnv <- get
   modify (E.add savedEnv)

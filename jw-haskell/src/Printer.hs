@@ -17,6 +17,8 @@ module Printer
   )
 where
 
+import           Control.Monad.Trans
+
 import           Data.List                      ( foldl' )
 import qualified Data.Map                      as M
 import           Data.Text                      ( Text )
@@ -25,27 +27,25 @@ import qualified Data.Text.IO                  as TIO
 
 import           Mal                            ( AST(..)
                                                 , magicKeywordPrefix
+                                                , Mal
                                                 )
 
 -- | Print our AST or error message to IO
-malPrint :: Either Text (Maybe AST) -> IO ()
-malPrint = TIO.putStrLn . malFormat
+malPrint :: AST -> Mal ()
+malPrint = liftIO . TIO.putStrLn . malFormat True
 
 -- | Convert our AST or error message to text
-malFormat :: Either Text (Maybe AST) -> Text
-malFormat (Left  msg       ) = "Error: " <> msg
-malFormat (Right Nothing   ) = ""
-malFormat (Right (Just ast)) = addSpaces $ concatMap fmt [ast]
+malFormat :: Bool -> AST -> Text
+malFormat readable ast = addSpaces $ concatMap fmt [ast]
  where
   fmt :: AST -> [Text]
   fmt (ASTSym t)     = [t]
   fmt (ASTInt i)     = [T.pack (show i)]
-  fmt (ASTStr t)     = [showStringLit t]
+  fmt (ASTStr t)     = [showStringLit readable t]
   fmt ASTNil         = ["nil"]
   fmt ASTTrue        = ["true"]
   fmt ASTFalse       = ["false"]
-  fmt (ASTBuiltin _) = ["#<builtin-function>"]
-  fmt ASTClosure{}   = ["#<closure>"]
+  fmt (ASTFunc   _ ) = ["#<function>"]
   fmt (ASTList   xs) = ["("] ++ concatMap fmt xs ++ [")"]
   fmt (ASTVector xs) = ["["] ++ concatMap fmt xs ++ ["]"]
   fmt (ASTMap m) = ["{"] ++ concatMap fmt (unwrapPairs (M.toList m)) ++ ["}"]
@@ -71,10 +71,12 @@ addSpaces xs = snd $ foldl' f (True, T.empty) xs
 
 -- | Helper function to escape a stringlit and de-magic keywords
 --
-showStringLit :: Text -> Text
-showStringLit t = case T.stripPrefix magicKeywordPrefix t of
-  Just kw -> ":" <> kw
-  Nothing -> "\"" <> T.concatMap escape t <> "\""
+showStringLit :: Bool -> Text -> Text
+showStringLit readable t =
+  case (T.stripPrefix magicKeywordPrefix t, readable) of
+    (Just kw, _    ) -> ":" <> kw
+    (Nothing, False) -> t
+    (Nothing, True ) -> "\"" <> T.concatMap escape t <> "\""
  where
   escape :: Char -> Text
   escape '\n' = "\\n"
