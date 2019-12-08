@@ -23,13 +23,14 @@ import           Control.Monad.State
 import qualified Data.Map                      as M
 import           Data.Text                      ( Text )
 
+import Debug.Trace
+
 import Builtin (addBuiltIns)
 import qualified Env                           as E
 import           Mal                            ( AST(..)
                                                 , Env
+                                                , Eval
                                                 )
-
-
 
 malInitialEnv :: Env
 malInitialEnv = addBuiltIns E.emptyWithoutOuter
@@ -43,9 +44,6 @@ malEval env (Right Nothing   ) = (Right Nothing, env)
 malEval env (Right (Just ast)) = case runState (runExceptT (eval ast)) env of
   (Left  err, env') -> (Left err, env')
   (Right x  , env') -> (Right (Just x), env')
-
--- We use a combined state (for the environment) and error monad
-type Eval a = ExceptT Text (State Env) a
 
 -- | Main evaluation function
 eval :: AST -> Eval AST
@@ -92,20 +90,21 @@ eval (ASTList (ASTSym "let*" : _)) =
 eval (ASTList [ASTSym "fn*", ASTList binds, body]) = do
   env <- get
   throwIfNotAllSymbols binds
-  return $ ASTClosure env binds body
+  return . ASTClosure $ closure env binds body
 eval (ASTList (ASTSym "fn*" : _)) = throwError "Bad syntax in fn* special form"
 
 -- Evaluation for a non-empty list
 eval (ASTList (func : args)) = do
+  env <- get
+--  traceM ("eval list, " ++ show func ++ " : " ++ show args ++ " env: " ++ show env)
   func' <- eval func
   case func' of
     ASTBuiltin b              -> do
       args' <- mapM eval args
       liftEither $ b args'
-    ASTClosure env binds body -> do
-      -- put env
-      addBindings binds args
-      eval body
+    ASTClosure c -> do
+      args' <- mapM eval args
+      c args'
     _ -> throwError "Not a function"
 
 -- Evaluation for a vector: map eval over the vector
@@ -124,26 +123,44 @@ eval (ASTSym s) = do
 -- Evaluation for anything else: pass through unchanged
 eval other = return other
 
--- Helper function to add bindings as an alternating list (a 2 b 3)
+-- Helper function to set new environment with bindings as an alternating list (a 2 b 3)
 addBindingPairs :: [AST] -> Eval ()
-addBindingPairs (ASTSym s : v : rest) = do
-  v' <- eval v
-  modify (E.set s v')
-  addBindingPairs rest
-addBindingPairs [] = return ()
-addBindingPairs _  = throwError "Unexpected value in addBindingPairs"
+addBindingPairs bindings = do
+  modify E.emptyWithOuter
+  go bindings
+  where
+    go (ASTSym s : v : rest) = do
+      v' <- eval v
+      modify (E.set s v')
+      go rest
+    go [] = return ()
+    go _  = throwError "Unexpected value in addBindingPairs"
 
--- Helper function to add bindings as two lists (a b) (2 3)
+-- Helper function to set new environment with bindings as two lists (a b) (2 3)
 addBindings :: [AST] -> [AST] -> Eval ()
-addBindings (ASTSym sym : symRest) (val : valRest) = do
-  val' <- eval val
-  modify (E.set sym val')
-  addBindings symRest valRest
-addBindings [] [] = return ()
-addBindings _  _  = throwError "Unexpected value in add Bindings"
+addBindings syms vals = do
+  modify E.emptyWithOuter
+  go syms vals
+  where
+    go (ASTSym sym : symRest) (val : valRest) = do
+      val' <- eval val
+      modify (E.set sym val')
+      go symRest valRest
+    go [] [] = return ()
+    go _  _  = throwError "Unexpected value in add Bindings"
 
 -- Helper function to throw an error if any element of the list is not an ASTSym
 throwIfNotAllSymbols :: [AST] -> Eval ()
 throwIfNotAllSymbols (ASTSym _ : rest) = throwIfNotAllSymbols rest
 throwIfNotAllSymbols []                = return ()
 throwIfNotAllSymbols _                 = throwError "Expected a symbol"
+
+
+closure :: Env -> [AST] -> AST -> [AST] -> Eval AST
+closure savedEnv binds body args = do
+  prevEnv <- get
+  modify (E.add savedEnv)
+  addBindings binds args
+  retVal <- eval body
+  put prevEnv
+  return retVal

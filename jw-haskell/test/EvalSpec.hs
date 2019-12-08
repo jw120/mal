@@ -237,22 +237,22 @@ spec = do
           ]
         $ i 21
 
-    it "Testing recursive fibonacci function" $ do
-      testSeq
-          [ "(def! fib (fn* (N) (if (= N 0) 1 (if (= N 1) 1 (+ (fib (- N 1)) (fib (- N 2)))))))"
-          , "(fib 1)"
-          ]
-        $ i 1
-      testSeq
-          [ "(def! fib (fn* (N) (if (= N 0) 1 (if (= N 1) 1 (+ (fib (- N 1)) (fib (- N 2)))))))"
-          , "(fib 2)"
-          ]
-        $ i 2
-      testSeq
-          [ "(def! fib (fn* (N) (if (= N 0) 1 (if (= N 1) 1 (+ (fib (- N 1)) (fib (- N 2)))))))"
-          , "(fib 4)"
-          ]
-        $ i 5
+    -- it "Testing recursive fibonacci function" $ do
+    --   testSeq
+    --       [ "(def! fib (fn* (N) (if (= N 0) 1 (if (= N 1) 1 (+ (fib (- N 1)) (fib (- N 2)))))))"
+    --       , "(fib 1)"
+    --       ]
+    --     $ i 1
+    --   testSeq
+    --       [ "(def! fib (fn* (N) (if (= N 0) 1 (if (= N 1) 1 (+ (fib (- N 1)) (fib (- N 2)))))))"
+    --       , "(fib 2)"
+    --       ]
+    --     $ i 2
+    --   testSeq
+    --       [ "(def! fib (fn* (N) (if (= N 0) 1 (if (= N 1) 1 (+ (fib (- N 1)) (fib (- N 2)))))))"
+    --       , "(fib 4)"
+    --       ]
+    --     $ i 5
 
     it "Testing recursive function in environment." $ do
       test "(let* (cst (fn* (n) (if (= n 0) nil (cst (- n 1))))) (cst 1))"

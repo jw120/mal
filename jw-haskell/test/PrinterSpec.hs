@@ -20,7 +20,6 @@ where
 import           Data.Text                      ( Text )
 import           Test.Hspec
 
-import           Env                            ( emptyWithoutOuter )
 import           Mal                            ( AST(..)
                                                 , MalBuiltin
                                                 )
@@ -38,7 +37,7 @@ dummyFn :: MalBuiltin
 dummyFn _ = Right (i 3)
 
 dummyClosure :: AST
-dummyClosure = ASTClosure emptyWithoutOuter [] (i 0)
+dummyClosure = ASTClosure $ const (return ASTNil)
 
 malFormat' :: AST -> Text
 malFormat' = malFormat . Right . Just

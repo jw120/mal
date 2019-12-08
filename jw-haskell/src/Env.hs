@@ -18,6 +18,7 @@ module Env
   , emptyWithOuter
   , get
   , set
+  , add
   )
 where
 
@@ -50,7 +51,7 @@ emptyWithOuter outer = Env { envTable = M.empty, envOuter = Just outer }
 emptyWithoutOuter :: Env
 emptyWithoutOuter = Env { envTable = M.empty, envOuter = Nothing }
 
-
-
-
-
+-- | Set given environment current environment keeping current environemt in outer chain
+add :: Env -> Env -> Env
+add (Env t Nothing) current = Env t (Just current)
+add (Env t (Just o)) current = Env t (Just (add o current))
