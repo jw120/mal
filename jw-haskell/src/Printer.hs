@@ -25,7 +25,7 @@ import           Data.Text                      ( Text )
 import qualified Data.Text                     as T
 import qualified Data.Text.IO                  as TIO
 
-import           Mal                            ( AST(..)
+import           Types                          ( AST(..)
                                                 , magicKeywordPrefix
                                                 , Mal
                                                 )
@@ -39,11 +39,11 @@ malFormat :: Bool -> AST -> Text
 malFormat readable ast = addSpaces $ concatMap fmt [ast]
  where
   fmt :: AST -> [Text]
-  fmt (ASTSym t)     = [t]
-  fmt (ASTInt i)     = [T.pack (show i)]
-  fmt (ASTStr t)     = case (T.stripPrefix magicKeywordPrefix t, readable) of
-    (Just kw, _) -> [":" <> kw]
-    (Nothing, True) -> ["\"" <> makeReadable t <> "\""]
+  fmt (ASTSym t) = [t]
+  fmt (ASTInt i) = [T.pack (show i)]
+  fmt (ASTStr t) = case (T.stripPrefix magicKeywordPrefix t, readable) of
+    (Just kw, _    ) -> [":" <> kw]
+    (Nothing, True ) -> ["\"" <> makeReadable t <> "\""]
     (Nothing, False) -> [t]
   fmt ASTNil         = ["nil"]
   fmt ASTTrue        = ["true"]
@@ -74,10 +74,10 @@ addSpaces xs = snd $ foldl' f (True, T.empty) xs
 
 -- | Convert a text to readable form
 makeReadable :: Text -> Text
-makeReadable  = T.concatMap escape
-  where
-    escape :: Char -> Text
-    escape '\n' = "\\n"
-    escape '\\' = "\\\\"
-    escape '\"' = "\\\""
-    escape c    = T.singleton c
+makeReadable = T.concatMap escape
+ where
+  escape :: Char -> Text
+  escape '\n' = "\\n"
+  escape '\\' = "\\\\"
+  escape '\"' = "\\\""
+  escape c    = T.singleton c

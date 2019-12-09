@@ -24,7 +24,7 @@ import qualified Data.Text                     as T
 import qualified Data.Text.IO                  as TIO
 import qualified Data.Map                      as M
 
-import           Mal                            ( AST(..)
+import           Types                          ( AST(..)
                                                 , Mal
                                                 , Text
                                                 , astEquality

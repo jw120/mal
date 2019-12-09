@@ -20,7 +20,7 @@ where
 import           Data.Text                      ( Text )
 import           Test.Hspec
 
-import           Mal                            ( AST(..) )
+import           Types                          ( AST(..) )
 import           Printer
 import           TestHelpers                    ( i
                                                 , kw

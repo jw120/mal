@@ -4,7 +4,7 @@ My Haskell implementation of make-a-list
 
 Design choices:
 
-* Text used internally throughout
+* Text used internally throughout - GIVING UP ON THIS?
 * megaparsec (using its lex helpers)
 * Either for parsing errors and for eval errors
 

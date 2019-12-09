@@ -3,19 +3,16 @@ module Main
   )
 where
 
-import           Data.Text                      ( Text )
-import qualified Data.Text.IO                  as TIO
-
-import           Utilities                      ( readlineLoop )
-
-dummyRead :: Text -> Text
-dummyRead = id
-
-dummyEval :: Text -> Text
-dummyEval = id
-
-dummyPrint :: Text -> IO ()
-dummyPrint = TIO.putStrLn
+import           System.Console.Readline        ( readline
+                                                , addHistory
+                                                )
 
 main :: IO ()
-main = readlineLoop (dummyPrint . dummyEval . dummyRead)
+main = do
+  x <- readline "mal> "
+  case x of
+    Nothing   -> return ()
+    Just line -> do
+      addHistory line
+      putStrLn line
+      main

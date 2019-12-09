@@ -33,7 +33,7 @@ import qualified Text.Megaparsec               as M
 import qualified Text.Megaparsec.Char          as MC
 import qualified Text.Megaparsec.Char.Lexer    as ML
 
-import           Mal                            ( AST(..)
+import           Types                          ( AST(..)
                                                 , magicKeywordPrefix
                                                 )
 

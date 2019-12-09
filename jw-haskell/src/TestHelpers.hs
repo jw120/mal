@@ -28,7 +28,7 @@ import           Data.Text                      ( Text
                                                 , toLower
                                                 )
 
-import           Mal                            ( AST(..)
+import           Types                          ( AST(..)
                                                 , magicKeywordPrefix
                                                 )
 

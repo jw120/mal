@@ -24,7 +24,7 @@ import qualified Data.Map                      as M
 -- import Debug.Trace
 
 import qualified Env                           as E
-import           Mal                            ( AST(..)
+import           Types                          ( AST(..)
                                                 , Env
                                                 , Mal
                                                 )
@@ -127,7 +127,7 @@ addBindings syms vals = do
   modify E.emptyWithOuter
   go syms vals
  where
-  go [ASTSym "&", ASTSym symVariadic] valVariadic= do
+  go [ASTSym "&", ASTSym symVariadic] valVariadic = do
     valVariadic' <- mapM eval valVariadic
     modify (E.set symVariadic (ASTList valVariadic'))
     return ()

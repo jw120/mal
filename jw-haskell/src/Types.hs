@@ -13,7 +13,7 @@ Defines basic internal data types
 
 -}
 
-module Mal
+module Types
   ( AST(..)
   , Env(..)
   , Mal(..)

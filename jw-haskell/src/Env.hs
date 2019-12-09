@@ -27,7 +27,7 @@ import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
 import           Data.Text                      ( Text )
 
-import           Mal                            ( AST()
+import           Types                          ( AST()
                                                 , Env(..)
                                                 )
 

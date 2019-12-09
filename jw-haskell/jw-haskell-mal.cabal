@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 940a65e44e6bcd96ac9ccde2cfb857ae1e2b670a3239adeb60ea26d75005b5c4
+-- hash: 2b90d698f226c1caf11f02a13b5b8c7ab0c66146b39071be9144a10475488f08
 
-name:           mal
-version:        0.1.0.0
+name:           jw-haskell-mal
+version:        0.2.0.0
 description:    Please see the README on GitHub at <https://github.com/githubuser/jw-haskell#readme>
 homepage:       https://github.com/jw120/mal#readme
 bug-reports:    https://github.com/jw120/mal/issues
@@ -29,13 +29,12 @@ library
       Core
       Env
       Eval
-      Mal
       Printer
       Reader
       TestHelpers
-      Utilities
+      Types
   other-modules:
-      Paths_mal
+      Paths_jw_haskell_mal
   hs-source-dirs:
       src
   build-depends:
@@ -47,31 +46,48 @@ library
     , text
   default-language: Haskell2010
 
-executable monad_warmup
-  main-is: monad_warmup.hs
+executable mal
+  main-is: mal.hs
   other-modules:
-      Paths_mal
+      Paths_jw_haskell_mal
   hs-source-dirs:
       app
   build-depends:
       base >=4.7 && <5
     , containers
+    , jw-haskell-mal
     , megaparsec
     , mtl
     , readline
     , text
   default-language: Haskell2010
 
-executable step4_if_fn_do
-  main-is: step4_if_fn_do.hs
+executable step0_repl
+  main-is: step0_repl.hs
   other-modules:
-      Paths_mal
+      Paths_jw_haskell_mal
   hs-source-dirs:
       app
   build-depends:
       base >=4.7 && <5
     , containers
-    , mal
+    , jw-haskell-mal
+    , megaparsec
+    , mtl
+    , readline
+    , text
+  default-language: Haskell2010
+
+executable step1_read_print
+  main-is: step1_read_print.hs
+  other-modules:
+      Paths_jw_haskell_mal
+  hs-source-dirs:
+      app
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , jw-haskell-mal
     , megaparsec
     , mtl
     , readline
@@ -85,7 +101,7 @@ test-suite mal-specs
       EnvSpec
       PrinterSpec
       ReaderSpec
-      Paths_mal
+      Paths_jw_haskell_mal
   hs-source-dirs:
       test
   build-depends:
@@ -93,7 +109,7 @@ test-suite mal-specs
     , containers
     , hspec
     , hspec-megaparsec
-    , mal
+    , jw-haskell-mal
     , megaparsec
     , mtl
     , readline

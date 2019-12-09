@@ -1,3 +1,16 @@
 #!/bin/bash
-# Run the appropriate binary
-exec $(dirname $0)/bin/${STEP:-stepA_mal} "${@}"
+
+# We use speci
+
+cd $(dirname $0)
+
+case ${STEP:-stepA_mal} in
+    step0_repl)
+        stack exec step0_repl "${@}"
+        ;;
+    step1_read_print)
+        stack exec step1_read_print "${@}"
+        ;;
+    *)
+        stack exec mal "${@}"
+esac

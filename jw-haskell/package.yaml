@@ -1,5 +1,5 @@
-name:                mal
-version:             0.1.0.0
+name:                jw-haskell-mal
+version:             0.2.0.0
 github:              "jw120/mal"
 license:             BSD3
 author:              "Joe Watson"
@@ -23,40 +23,27 @@ library:
   source-dirs: src
 
 executables:
-  # step0_repl:
-  #   main:                step0_repl.hs
-  #   source-dirs:         app
-  #   dependencies:
-  #   - mal
-  # step1_read_print:
-  #   main:                step1_read_print.hs
-  #   source-dirs:         app
-  #   dependencies:
-  #   - mal
-  # step2_eval:
-  #   main:                step2_eval.hs
-  #   source-dirs:         app
-  #   dependencies:
-  #   - mal
-  # step3_env:
-  #   main:                step3_env.hs
-  #   source-dirs:         app
-  #   dependencies:
-  #   - mal
-  step4_if_fn_do:
-    main:                step4_if_fn_do.hs
+  mal:
+    main:                mal.hs
     source-dirs:         app
     dependencies:
-    - mal
-  monad_warmup:
-    main:                monad_warmup.hs
+    - jw-haskell-mal
+  step0_repl:
+    main:                step0_repl.hs
     source-dirs:         app
+    dependencies:
+    - jw-haskell-mal
+  step1_read_print:
+    main:                step1_read_print.hs
+    source-dirs:         app
+    dependencies:
+    - jw-haskell-mal
 
 tests:
   mal-specs:
     main:                Spec.hs
     source-dirs:         test
     dependencies:
-    - mal
+    - jw-haskell-mal
     - hspec
     - hspec-megaparsec

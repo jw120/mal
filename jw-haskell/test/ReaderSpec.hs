@@ -22,7 +22,7 @@ import qualified Data.Map                      as M
 import           Data.Text                      ( Text )
 import           Test.Hspec
 
-import           Mal                            ( AST(..) )
+import           Types                          ( AST(..) )
 import           Reader
 import           TestHelpers                    ( i
                                                 , isErrorMatching

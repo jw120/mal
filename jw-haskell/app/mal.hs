@@ -8,7 +8,7 @@ where
 import           Control.Monad.Except
 import           Control.Monad.State
 import qualified Data.Text                     as T
-import qualified Data.Text.IO as TIO
+import qualified Data.Text.IO                  as TIO
 import           System.Console.Readline        ( readline
                                                 , addHistory
                                                 )
@@ -16,7 +16,7 @@ import           System.Console.Readline        ( readline
 import qualified Core
 import qualified Env
 import           Eval                           ( eval )
-import           Mal                            ( Mal(..)
+import           Types                          ( Mal(..)
                                                 , AST(..)
                                                 , Text
                                                 )
@@ -33,11 +33,11 @@ malMain = do
 
 malRep :: Bool -> Text -> Mal ()
 malRep quiet src = case malRead src of
-    Left  readError -> liftIO $ TIO.putStrLn ("Read error: " <> readError)
-    Right Nothing -> return ()
-    Right (Just ast) -> do
-        val <- eval ast `catchError` (\e -> return (ASTStr ("Error: " <> e)))
-        if quiet then return () else malPrint val
+  Left  readError  -> liftIO $ TIO.putStrLn ("Read error: " <> readError)
+  Right Nothing    -> return ()
+  Right (Just ast) -> do
+    val <- eval ast `catchError` (\e -> return (ASTStr ("Error: " <> e)))
+    if quiet then return () else malPrint val
 
 malRepl :: Mal ()
 malRepl = do
