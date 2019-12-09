@@ -20,19 +20,20 @@ where
 import           Test.Hspec
 
 import           Env
+import           Types                          ( Env )
 import           TestHelpers                    ( i
                                                 , isErrorMatching
                                                 , s
                                                 )
 
 parent :: Env
-parent = set "A" (i 23) $ set "B" (i 12) emptyWithoutOuter
+parent = set "A" (i 23) $ set "B" (i 12) empty
 
 child :: Env
-child = set "C" (i 7) $ emptyWithOuter parent
+child = set "C" (i 7) $ push empty parent
 
 grandChild :: Env
-grandChild = set "D" (s "QQ") $ emptyWithOuter child
+grandChild = set "D" (s "QQ") $ push empty child
 
 spec :: Spec
 spec = do

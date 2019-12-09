@@ -1,5 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+{-|
+Module      : mal
+Description : Main program module for mal interpreter
+Copyright   : (c) Joe Watson, 2019
+License     : GPL-3
+Maintainer  : joe_watson@mail.com
+
+Main module and drivers of repl.
+
+-}
+
 module Main
   ( main
   )
@@ -28,24 +39,26 @@ main = void . runStateT (runExceptT (unMal malMain)) $ Env.new Core.nameSpace
 
 malMain :: Mal ()
 malMain = do
-  mapM_ (malRep True) Core.prelude
-  malRepl
+  mapM_ (rep True) Core.prelude
+  repl
 
-malRep :: Bool -> Text -> Mal ()
-malRep quiet src = case malRead src of
+-- Read-evaluate-print
+rep :: Bool -> Text -> Mal ()
+rep quiet src = case malRead src of
   Left  readError  -> liftIO $ TIO.putStrLn ("Read error: " <> readError)
   Right Nothing    -> return ()
   Right (Just ast) -> do
     val <- eval ast `catchError` (\e -> return (ASTStr ("Error: " <> e)))
     if quiet then return () else malPrint val
 
-malRepl :: Mal ()
-malRepl = do
+-- repl - iterate rep repeatedly
+repl :: Mal ()
+repl = do
   x <- liftIO $ readline "mal> "
   case x of
     Nothing   -> return ()
     Just line -> do
       liftIO $ addHistory line
-      malRep False $ T.pack line
-      malRepl
+      rep False $ T.pack line
+      repl
 

@@ -21,6 +21,8 @@ module Types
   , magicKeywordPrefix
   , Text
   , astEquality
+  , extractInt
+  , extractSym
   )
 where
 
@@ -87,3 +89,13 @@ magicKeywordPrefix = "\x029e" -- Unicode 'ʞ'
 
 newtype Mal a = Mal { unMal :: ExceptT Text (StateT Env IO) a }
     deriving (Functor, Applicative, Monad, MonadError Text, MonadState Env, MonadIO)
+
+-- Convert an ASTInt to Int (or return an error if not an ASTInt)
+extractInt :: AST -> Mal Int
+extractInt (ASTInt i) = return i
+extractInt _          = throwError "Type error: integer expected"
+
+-- | Convert an ASTSymbol to Text (or return an error if not an ASTSym)
+extractSym :: AST -> Mal Text
+extractSym (ASTSym s) = return s
+extractSym _          = throwError "Type error: symbol expected"

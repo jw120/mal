@@ -28,6 +28,7 @@ import           Types                          ( AST(..)
                                                 , Mal
                                                 , Text
                                                 , astEquality
+                                                , extractInt
                                                 )
 import           Printer                        ( malFormat )
 
@@ -59,7 +60,7 @@ nameSpace = M.fromList
 
 addition :: [AST] -> Mal AST
 addition asts = do
-  xs <- mapM extractIntLit asts
+  xs <- mapM extractInt asts
   return $ ASTInt (sum xs)
 
 subtraction :: [AST] -> Mal AST
@@ -67,13 +68,13 @@ subtraction [] = throwError "Arugment error: at least one argument required"
 subtraction [ASTInt i ] = return (ASTInt (-i))
 subtraction [_        ] = throwError "Type error: integer expected"
 subtraction (hd : rest) = do
-  hd'   <- extractIntLit hd
-  rest' <- mapM extractIntLit rest
+  hd'   <- extractInt hd
+  rest' <- mapM extractInt rest
   return . ASTInt $ hd' - sum rest'
 
 multiplication :: [AST] -> Mal AST
 multiplication asts = do
-  xs <- mapM extractIntLit asts
+  xs <- mapM extractInt asts
   return $ ASTInt (product xs)
 
 division :: [AST] -> Mal AST
@@ -82,13 +83,21 @@ division [ASTInt _] =
   throwError "Arugment error: at least one argument required"
 division [_        ] = throwError "Type error: integer expected"
 division (hd : rest) = do
-  hd'   <- extractIntLit hd
-  rest' <- mapM extractIntLit rest
+  hd'   <- extractInt hd
+  rest' <- mapM extractInt rest
   hd' `safeDiv` product rest'
 
 safeDiv :: Int -> Int -> Mal AST
 safeDiv _ 0 = throwError "Division by zero error"
 safeDiv i j = return . ASTInt $ i `div` j
+
+-- Helper function to convert <, > etc into the correct format
+binaryIntOp :: (Int -> Int -> Bool) -> [AST] -> Mal AST
+binaryIntOp _ []  = throwError "Expecting two arguments"
+binaryIntOp _ [_] = throwError "Expecting two arguments"
+binaryIntOp op (ASTInt a : ASTInt b : _) | a `op` b  = return ASTTrue
+                                         | otherwise = return ASTFalse
+binaryIntOp _ _ = return ASTFalse
 
 list :: [AST] -> Mal AST
 list = return . ASTList
@@ -113,14 +122,6 @@ equality [_] = throwError "Expecting two arguments for equality testing"
 equality (a : b : _) | a `astEquality` b = return ASTTrue
                      | otherwise         = return ASTFalse
 
--- Helper function to convert <, > etc into the correct format
-binaryIntOp :: (Int -> Int -> Bool) -> [AST] -> Mal AST
-binaryIntOp _ []  = throwError "Expecting two arguments"
-binaryIntOp _ [_] = throwError "Expecting two arguments"
-binaryIntOp op (ASTInt a : ASTInt b : _) | a `op` b  = return ASTTrue
-                                         | otherwise = return ASTFalse
-binaryIntOp _ _ = return ASTFalse
-
 prStr :: [AST] -> Mal AST
 prStr = return . ASTStr . T.intercalate " " . map (malFormat True)
 
@@ -138,10 +139,3 @@ println xs = do
   let s = T.intercalate " " $ map (malFormat False) xs
   liftIO $ TIO.putStrLn s
   return ASTNil
-
--- Helper function to convert a list of IntLits to Int (or return Nothing if a type error)
-extractIntLit :: AST -> Mal Int
-extractIntLit (ASTInt i) = return i
-extractIntLit _          = throwError "Type error: integer expected"
-
-

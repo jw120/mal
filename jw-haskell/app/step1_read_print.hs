@@ -1,5 +1,19 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+{-|
+Module      : step1_read_print
+Description : Main program module for step 1
+Copyright   : (c) Joe Watson, 2019
+License     : GPL-3
+Maintainer  : joe_watson@mail.com
+
+Simple main program to pass step 0 tests - read/print only
+
+Uses Mal monad to allow re-use of full read and print functions, does not
+use its functionality
+
+-}
+
 module Main
   ( main
   )
@@ -22,8 +36,16 @@ import           System.Console.Readline        ( readline
                                                 )
 
 main :: IO ()
-main = void . runStateT (runExceptT (unMal repl)) $ Env.emptyWithoutOuter
+main = void . runStateT (runExceptT (unMal repl)) $ Env.empty
 
+-- Read-evaluate-print
+rep :: Text -> Mal ()
+rep src = case malRead src of
+  Left  readError  -> liftIO $ TIO.putStrLn ("Read error: " <> readError)
+  Right Nothing    -> return ()
+  Right (Just ast) -> malPrint ast
+
+-- repl - iterate rep repeatedly
 repl :: Mal ()
 repl = do
   x <- liftIO $ readline "mal> "
@@ -33,12 +55,4 @@ repl = do
       liftIO $ addHistory line
       rep $ T.pack line
       repl
-
-rep :: Text -> Mal ()
-rep src = case malRead src of
-  Left  readError  -> liftIO $ TIO.putStrLn ("Read error: " <> readError)
-  Right Nothing    -> return ()
-  Right (Just ast) -> malPrint ast
-
-
 

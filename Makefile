@@ -265,7 +265,7 @@ vimscript_STEP_TO_PROG = vimscript/$($(1)).vim
 wasm_STEP_TO_PROG =    wasm/$($(1)).$(if $(filter lucet,$(wasm_MODE)),so,wasm)
 wren_STEP_TO_PROG =    wren/$($(1)).wren
 yorick_STEP_TO_PROG =  yorick/$($(1)).i
-jw-haskell_STEP_TO_PROG = jw-haskell/bin/$($(1))
+jw-haskell_STEP_TO_PROG = jw-haskell/app/$($(1)).hs
 jw-python_STEP_TO_PROG = jw-python/src/$($(1)).py
 
 

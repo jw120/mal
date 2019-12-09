@@ -4,11 +4,9 @@ My Haskell implementation of make-a-list
 
 Design choices:
 
-* Text used internally throughout - GIVING UP ON THIS?
-* megaparsec (using its lex helpers)
-* Either for parsing errors and for eval errors
-
-*** How do we make persistent? Either have a mutable state or force tests to run in a chain?
+* Megaparsec (using its lex helpers) for parsing
+* Text used internally throughout
+* Application monad using Either for errors, State for environment along with IO
 
 Tools used
 
@@ -22,11 +20,7 @@ Tools used
 
 TODO
 
-* CHANGE MONAD TO INCLUDE IO and make persistent
-* tests for malformat with and without readable
-* test for IO?
-* Stop EvalSimple depending on core
-* Improve Makefile and exec
+* DECIDE ON TESTING STRATEGY
 * Phase 1 - better errors for parsing
 * Phase 1 - vector underlying rep
 * Check our magic keyword string is what we think it is

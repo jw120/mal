@@ -13,34 +13,36 @@ which act on it
 -}
 
 module Env
-  ( Env -- opaque export
-  , emptyWithoutOuter
-  , emptyWithOuter
-  , get
+  ( new
+  , empty
   , set
-  , add
-  , new
+  , get
+  , push
   )
 where
 
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
-import           Data.Text                      ( Text )
 
-import           Types                          ( AST()
+import           Types                          ( AST(..)
                                                 , Env(..)
+                                                , Text
                                                 )
 
--- | Create a new environment
+
+-- | Create a new environment with given symbol table
 new :: Map Text AST -> Env
 new m = Env { envTable = m, envOuter = Nothing }
+
+-- | Empty environment
+empty :: Env
+empty = Env { envTable = M.empty, envOuter = Nothing }
 
 -- | Takes a symbol key and an AST and adds to the data structure
 set :: Text -> AST -> Env -> Env
 set sym val e = e { envTable = M.insert sym val (envTable e) }
 
--- | takes a symbol key and uses the find method to locate the environment with the key,
--- then returns the matching value. If no key is found up the outer chain, then throws/raises a "not found" error.
+-- | lookup sumbol ket in the given enviroment
 get :: Text -> Env -> Either Text AST
 get sym e = case (M.lookup sym (envTable e), envOuter e) of
   (Just a , _         ) -> Right a
@@ -48,15 +50,9 @@ get sym e = case (M.lookup sym (envTable e), envOuter e) of
   (Nothing, Nothing) ->
     Left $ "Symbol '" <> sym <> "' not found in environment"
 
--- | return a new empty environment with the given outer environment
-emptyWithOuter :: Env -> Env
-emptyWithOuter outer = Env { envTable = M.empty, envOuter = Just outer }
-
--- | Empty environment without an outer envirornment
-emptyWithoutOuter :: Env
-emptyWithoutOuter = Env { envTable = M.empty, envOuter = Nothing }
-
 -- | Set given environment current environment keeping current environemt in outer chain
-add :: Env -> Env -> Env
-add (Env t Nothing ) current = Env t (Just current)
-add (Env t (Just o)) current = Env t (Just (add o current))
+push :: Env -> Env -> Env
+push (Env t Nothing ) current = Env t (Just current)
+push (Env t (Just o)) current = Env t (Just (push o current))
+
+

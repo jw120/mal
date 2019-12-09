@@ -21,14 +21,13 @@ import           Control.Monad.State
 
 import qualified Data.Map                      as M
 
--- import Debug.Trace
-
-import qualified Env                           as E
+import qualified Env
 import           Types                          ( AST(..)
                                                 , Env
                                                 , Mal
+                                                , Text
+                                                , extractSym
                                                 )
-
 
 -- | Main evaluation function
 eval :: AST -> Mal AST
@@ -53,19 +52,26 @@ eval (ASTList (ASTSym "if" : _)) = throwError "Bad syntax in if special form"
 -- Special form: def!
 eval (ASTList [ASTSym "def!", ASTSym var, val]) = do
   val' <- eval val
-  modify (E.set var val')
+  modify (Env.set var val')
   return val'
 eval (ASTList (ASTSym "def!" : _)) =
   throwError "Bad syntax in def! special form"
 
 -- Special form: let*
-eval (ASTList [ASTSym "let*", ASTList bindingPairs, val]) = do
-  outerEnv <- get
-  modify E.emptyWithOuter
-  addBindingPairs bindingPairs
+eval (ASTList [ASTSym "let*", ASTList bindings, val]) = do
+  oldEnv <- get
+  addBindings bindings
   val' <- eval val
-  put outerEnv
+  put oldEnv
   return val'
+ where
+  addBindings :: [AST] -> Mal ()
+  addBindings (ASTSym s : v : rest) = do
+    v' <- eval v
+    modify (Env.set s v')
+    addBindings rest
+  addBindings [] = return ()
+  addBindings _  = throwError "Unexpected value in bindings in let*"
 eval (ASTList [ASTSym "let*", ASTVector bindings, val]) =
   eval (ASTList [ASTSym "let*", ASTList bindings, val])
 eval (ASTList (ASTSym "let*" : _)) =
@@ -73,17 +79,24 @@ eval (ASTList (ASTSym "let*" : _)) =
 
 -- Special form: fn*
 eval (ASTList [ASTSym "fn*", ASTList binds, body]) = do
-  env <- get
-  throwIfNotAllSymbols binds
-  return . ASTFunc $ closure env binds body
+  env    <- get
+  binds' <- mapM extractSym binds
+  return . ASTFunc $ closure env binds'
+ where
+  closure :: Env -> [Text] -> [AST] -> Mal AST
+  closure savedEnv binds args = do
+    oldEnv <- get
+    modify (Env.push savedEnv)
+    addBindingLists binds args
+    retVal <- eval body
+    put oldEnv
+    return retVal
 eval (ASTList [ASTSym "fn*", ASTVector binds, body]) =
   eval (ASTList [ASTSym "fn*", ASTList binds, body])
 eval (ASTList (ASTSym "fn*" : _)) = throwError "Bad syntax in fn* special form"
 
 -- Evaluation for a non-empty list
 eval (ASTList (func : args)) = do
---   env <- get
---  traceM ("eval list, " ++ show func ++ " : " ++ show args ++ " env: " ++ show env)
   func' <- eval func
   case func' of
     ASTFunc f -> do
@@ -102,54 +115,23 @@ eval (ASTMap    m ) = do
 -- Evaluation for a symbol: replace it with its looked up value
 eval (ASTSym s) = do
   env <- get
-  liftEither $ E.get s env
+  liftEither $ Env.get s env
 
 -- Evaluation for anything else: pass through unchanged
 eval other = return other
 
--- Helper function to set new environment with bindings as an alternating list (a 2 b 3)
-addBindingPairs :: [AST] -> Mal ()
-addBindingPairs bindings = do
-  modify E.emptyWithOuter
-  go bindings
- where
-  go (ASTSym s : v : rest) = do
-    v' <- eval v
-    modify (E.set s v')
-    go rest
-  go [] = return ()
-  go _  = throwError "Unexpected value in addBindingPairs"
-
--- Helper function to set new environment with bindings as two lists (a b) (2 3)
+-- Helper function to add bindings to the environment as two lists (a b) (2 3)
 -- Catches clojure-style "&" to capture all following arguments
-addBindings :: [AST] -> [AST] -> Mal ()
-addBindings syms vals = do
-  modify E.emptyWithOuter
-  go syms vals
- where
-  go [ASTSym "&", ASTSym symVariadic] valVariadic = do
-    valVariadic' <- mapM eval valVariadic
-    modify (E.set symVariadic (ASTList valVariadic'))
-    return ()
-  go (ASTSym sym : symRest) (val : valRest) = do
-    val' <- eval val
-    modify (E.set sym val')
-    go symRest valRest
-  go [] [] = return ()
-  go _  _  = throwError "Unexpected value in add Bindings"
-
--- Helper function to throw an error if any element of the list is not an ASTSym
-throwIfNotAllSymbols :: [AST] -> Mal ()
-throwIfNotAllSymbols (ASTSym _ : rest) = throwIfNotAllSymbols rest
-throwIfNotAllSymbols []                = return ()
-throwIfNotAllSymbols _                 = throwError "Expected a symbol"
+addBindingLists :: [Text] -> [AST] -> Mal ()
+addBindingLists ["&", symVariadic] valVariadic = do
+  valVariadic' <- mapM eval valVariadic
+  modify (Env.set symVariadic (ASTList valVariadic'))
+  return ()
+addBindingLists (sym : symRest) (val : valRest) = do
+  val' <- eval val
+  modify (Env.set sym val')
+  addBindingLists symRest valRest
+addBindingLists [] [] = return ()
+addBindingLists _  _  = throwError "Unexpected value in add Bindings"
 
 
-closure :: Env -> [AST] -> AST -> [AST] -> Mal AST
-closure savedEnv binds body args = do
-  prevEnv <- get
-  modify (E.add savedEnv)
-  addBindings binds args
-  retVal <- eval body
-  put prevEnv
-  return retVal
