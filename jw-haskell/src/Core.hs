@@ -122,26 +122,22 @@ binaryIntOp op (ASTInt a : ASTInt b : _) | a `op` b  = return ASTTrue
 binaryIntOp _ _ = return ASTFalse
 
 prStr :: [AST] -> Mal AST
-prStr = return . ASTStr . combine True " "
+prStr = return . ASTStr . T.intercalate " " . map (malFormat True)
 
 str :: [AST] -> Mal AST
-str = return . ASTStr . combine False ""
+str = return . ASTStr . T.concat . map (malFormat False)
 
 prn :: [AST] -> Mal AST
 prn xs = do
-  let s = combine True " " xs
+  let s = T.intercalate " " $ map (malFormat True) xs
   liftIO $ TIO.putStrLn s
   return ASTNil
 
 println :: [AST] -> Mal AST
 println xs = do
-  let s = combine False " " xs
+  let s = T.intercalate " " $ map (malFormat False) xs
   liftIO $ TIO.putStrLn s
   return ASTNil
-
--- Helper function to combine arguments as a string
-combine :: Bool -> Text -> [AST] -> Text
-combine readable sep = T.intercalate sep . map (malFormat True)
 
 -- Helper function to convert a list of IntLits to Int (or return Nothing if a type error)
 extractIntLit :: AST -> Mal Int

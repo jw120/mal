@@ -41,7 +41,10 @@ malFormat readable ast = addSpaces $ concatMap fmt [ast]
   fmt :: AST -> [Text]
   fmt (ASTSym t)     = [t]
   fmt (ASTInt i)     = [T.pack (show i)]
-  fmt (ASTStr t)     = [showStringLit readable t]
+  fmt (ASTStr t)     = case (T.stripPrefix magicKeywordPrefix t, readable) of
+    (Just kw, _) -> [":" <> kw]
+    (Nothing, True) -> ["\"" <> makeReadable t <> "\""]
+    (Nothing, False) -> [t]
   fmt ASTNil         = ["nil"]
   fmt ASTTrue        = ["true"]
   fmt ASTFalse       = ["false"]
@@ -69,17 +72,12 @@ addSpaces xs = snd $ foldl' f (True, T.empty) xs
   isCloser :: Text -> Bool
   isCloser = (`elem` [")", "]", "}"])
 
--- | Helper function to escape a stringlit and de-magic keywords
---
-showStringLit :: Bool -> Text -> Text
-showStringLit readable t =
-  case (T.stripPrefix magicKeywordPrefix t, readable) of
-    (Just kw, _    ) -> ":" <> kw
-    (Nothing, False) -> t
-    (Nothing, True ) -> "\"" <> T.concatMap escape t <> "\""
- where
-  escape :: Char -> Text
-  escape '\n' = "\\n"
-  escape '\\' = "\\\\"
-  escape '\"' = "\\\""
-  escape c    = T.singleton c
+-- | Convert a text to readable form
+makeReadable :: Text -> Text
+makeReadable  = T.concatMap escape
+  where
+    escape :: Char -> Text
+    escape '\n' = "\\n"
+    escape '\\' = "\\\\"
+    escape '\"' = "\\\""
+    escape c    = T.singleton c

@@ -20,11 +20,9 @@ import           Control.Monad.Except
 import           Control.Monad.State
 
 import qualified Data.Map                      as M
-import           Data.Text                      ( Text )
 
 -- import Debug.Trace
 
-import qualified Core
 import qualified Env                           as E
 import           Mal                            ( AST(..)
                                                 , Env
@@ -123,11 +121,16 @@ addBindingPairs bindings = do
   go _  = throwError "Unexpected value in addBindingPairs"
 
 -- Helper function to set new environment with bindings as two lists (a b) (2 3)
+-- Catches clojure-style "&" to capture all following arguments
 addBindings :: [AST] -> [AST] -> Mal ()
 addBindings syms vals = do
   modify E.emptyWithOuter
   go syms vals
  where
+  go [ASTSym "&", ASTSym symVariadic] valVariadic= do
+    valVariadic' <- mapM eval valVariadic
+    modify (E.set symVariadic (ASTList valVariadic'))
+    return ()
   go (ASTSym sym : symRest) (val : valRest) = do
     val' <- eval val
     modify (E.set sym val')
