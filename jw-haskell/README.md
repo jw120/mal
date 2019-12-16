@@ -6,7 +6,10 @@ Design choices:
 
 * Megaparsec (using its lex helpers) for parsing
 * Text used internally throughout
-* Application monad using Either for errors, State for environment along with IO
+* Application monad using Either for errors and IO to allow for
+  + Printing
+  + Modifications to environments (IORefs)
+  + Atoms (IORefs)
 
 Tools used
 

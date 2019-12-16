@@ -20,11 +20,9 @@ module Main
 where
 
 import           Control.Monad.Except
-import           Control.Monad.State
 import qualified Data.Text                     as T
 import qualified Data.Text.IO                  as TIO
 
-import qualified Env
 import           Types                          ( Mal(..)
                                                 , Text
                                                 )

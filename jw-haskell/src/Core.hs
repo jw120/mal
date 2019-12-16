@@ -19,6 +19,7 @@ where
 
 import           Control.Monad.Except
 
+import           Data.IORef
 import           Data.Map                       ( Map )
 import qualified Data.Text                     as T
 import qualified Data.Text.IO                  as TIO
@@ -41,8 +42,6 @@ prelude :: [Text]
 prelude =
   [ "(def! not (fn* (a) (if a false true)))"
   , "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\\nnil)\"))))))"
---     , "(def! load-file (fn* (f) (str \"(do \" (slurp f) \"\\nnil)\"))))"
---    , "(def! load-file (fn* (f) (eval (read-string (slurp f)))))"
   ]
 
 -- | Core name space which holds all of our built-ins, takes top-level REPL environment for eval
@@ -68,7 +67,13 @@ nameSpace envRef = M.fromList
   , ("read-string", ASTFunc readString)
   , ("slurp"      , ASTFunc slurp)
   , ("eval"       , ASTFunc (replEval envRef))
+  , ("atom"       , ASTFunc atom)
+  , ("atom?"      , ASTFunc atomTest)
+  , ("deref"      , ASTFunc deref)
+  , ("reset!"     , ASTFunc reset)
+  , ("swap!"      , ASTFunc (swap envRef))
   ]
+
 
 addition :: [AST] -> Mal AST
 addition asts = do
@@ -135,20 +140,26 @@ equality (a : b : _) | a `astEquality` b = return ASTTrue
                      | otherwise         = return ASTFalse
 
 prStr :: [AST] -> Mal AST
-prStr = return . ASTStr . T.intercalate " " . map (malFormat True)
+prStr xs = do
+    xs' <- liftIO $ mapM (malFormat True) xs
+    return . ASTStr $ T.intercalate " " xs'
 
 str :: [AST] -> Mal AST
-str = return . ASTStr . T.concat . map (malFormat False)
+str xs = do
+    xs' <- liftIO $ mapM (malFormat False) xs
+    return . ASTStr $ T.concat xs'
 
 prn :: [AST] -> Mal AST
 prn xs = do
-  let s = T.intercalate " " $ map (malFormat True) xs
-  liftIO $ TIO.putStrLn s
-  return ASTNil
+    xs' <- liftIO $ mapM (malFormat True) xs
+    let s = T.intercalate " " xs'
+    liftIO $ TIO.putStrLn s
+    return ASTNil
 
 println :: [AST] -> Mal AST
 println xs = do
-  let s = T.intercalate " " $ map (malFormat False) xs
+  xs' <- liftIO $ mapM (malFormat False) xs
+  let s = T.intercalate " " xs'
   liftIO $ TIO.putStrLn s
   return ASTNil
 
@@ -168,3 +179,32 @@ slurp _ = throwError "Bad argument type for slurp"
 replEval :: EnvRef -> [AST] -> Mal AST
 replEval replEnvRef [ast] = eval replEnvRef ast
 replEval _          _     = throwError "Bad argument for eval"
+
+atom :: [AST] -> Mal AST
+atom [ast] = do
+  ref <- liftIO $ newIORef ast
+  return $ ASTAtom ref
+atom _ = throwError "Bad arguments for atom"
+
+atomTest :: [AST] -> Mal AST
+atomTest [ASTAtom _] = return ASTTrue
+atomTest [_        ] = return ASTFalse
+atomTest _           = throwError "Bad arguments for atom?"
+
+deref :: [AST] -> Mal AST
+deref [ASTAtom ref] = liftIO $ readIORef ref
+deref _             = throwError "Bad arguments for deref"
+
+reset :: [AST] -> Mal AST
+reset [ASTAtom ref, val] = do
+  liftIO $ writeIORef ref val
+  return val
+reset _ = throwError "Bad arguments for reset"
+
+swap :: EnvRef -> [AST] -> Mal AST
+swap envRef (ASTAtom ref : ASTFunc func : args) = do
+  val  <- liftIO $ readIORef ref
+  val' <- eval envRef $ ASTList (ASTFunc func : val : args)
+  liftIO $ writeIORef ref val'
+  return val'
+swap _ _ = throwError "Bad arguments for swap"

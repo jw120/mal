@@ -22,6 +22,7 @@ import qualified Data.Text.IO                  as TIO
 import           System.Console.Readline        ( readline
                                                 , addHistory
                                                 )
+import           System.Environment             ( getArgs )
 
 import qualified Core
 import qualified Env
@@ -42,7 +43,15 @@ malMain = do
   envRef <- Env.empty
   Env.replaceTable envRef (Core.nameSpace envRef)
   mapM_ (rep envRef True) Core.prelude
-  repl envRef
+  argv <- liftIO getArgs
+  case argv of
+    [] -> do
+      Env.set envRef "*ARGV*" $ ASTList []
+      repl envRef
+    (fn : rest) -> do
+      Env.set envRef "*ARGV*" . ASTList $ map (ASTStr . T.pack) rest
+      let cmd = T.pack ("(load-file \"" ++ fn ++ "\")")
+      rep envRef False cmd
 
 -- Read-evaluate-print
 rep :: EnvRef -> Bool -> Text -> Mal ()
