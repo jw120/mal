@@ -15,8 +15,10 @@ Defines basic internal data types
 
 module Types
   ( AST(..)
+  , EnvRef
   , Env(..)
   , Mal(..)
+  , MalAtom
   , MalFunc
   , magicKeywordPrefix
   , Text
@@ -28,17 +30,11 @@ where
 
 import           Control.Monad.Trans
 import           Control.Monad.Except
-import           Control.Monad.State
+import           Data.IORef
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
 import           Data.Text                      ( Text )
 
--- | Type for mal functions
-type MalFunc = [AST] -> Mal AST
-instance Show MalFunc where
-  show _ = "#<function>"
-instance Eq MalFunc where
-  _ == _ = False
 
 -- | Type for our Mal abstract syntax tree
 data AST
@@ -50,9 +46,36 @@ data AST
   | ASTStr Text
   | ASTList [AST]
   | ASTVector [AST]
+  | ASTAtom MalAtom
   | ASTMap (Map Text AST)
   | ASTFunc MalFunc
   deriving (Eq, Show)
+
+-- | Type for mal functions
+type MalFunc = [AST] -> Mal AST
+instance Show MalFunc where
+  show _ = "#<function>"
+instance Eq MalFunc where
+  _ == _ = False
+
+-- | Type for atoms
+type MalAtom = IORef AST
+instance Show MalAtom where
+  show _ = "#<atom>"
+
+-- Convert an ASTInt to Int (or return an error if not an ASTInt)
+extractInt :: AST -> Mal Int
+extractInt (ASTInt i) = return i
+extractInt _          = throwError "Type error: integer expected"
+
+-- | Convert an ASTSymbol to Text (or return an error if not an ASTSym)
+extractSym :: AST -> Mal Text
+extractSym (ASTSym s) = return s
+extractSym _          = throwError "Type error: symbol expected"
+
+-- We hold keywords as Strings with a magic prefix
+magicKeywordPrefix :: Text
+magicKeywordPrefix = "\x029e" -- Unicode 'ʞ'
 
 -- Version of equality that treats lists and vectors as the same
 astEquality :: AST -> AST -> Bool
@@ -70,32 +93,14 @@ astEqualityList (a : as) (b : bs) =
 astEqualityList [] [] = True
 astEqualityList _  _  = False
 
+type EnvRef = IORef Env
+
 data Env = Env
   { envTable :: Map Text AST -- ^ Symbol table
   , envOuter :: Maybe Env    -- ^ Outer environment for lookup when not in our table
   } deriving (Show, Eq)
--- instance Show Env where
---   show (Env t outer) = show (M.toList (M.filter notBuiltin t))
---     ++ showOuter outer
---    where
---     showOuter Nothing  = " (no outer)"
---     showOuter (Just o) = ", outer: " ++ show o
---     notBuiltin (ASTFunc _) = False
---     notBuiltin _              = True
 
--- We hold keywords as Strings with a magic prefix
-magicKeywordPrefix :: Text
-magicKeywordPrefix = "\x029e" -- Unicode 'ʞ'
+newtype Mal a = Mal { unMal :: ExceptT Text IO a }
+    deriving (Functor, Applicative, Monad, MonadError Text, MonadIO)
 
-newtype Mal a = Mal { unMal :: ExceptT Text (StateT Env IO) a }
-    deriving (Functor, Applicative, Monad, MonadError Text, MonadState Env, MonadIO)
 
--- Convert an ASTInt to Int (or return an error if not an ASTInt)
-extractInt :: AST -> Mal Int
-extractInt (ASTInt i) = return i
-extractInt _          = throwError "Type error: integer expected"
-
--- | Convert an ASTSymbol to Text (or return an error if not an ASTSym)
-extractSym :: AST -> Mal Text
-extractSym (ASTSym s) = return s
-extractSym _          = throwError "Type error: symbol expected"

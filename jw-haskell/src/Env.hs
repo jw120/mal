@@ -13,46 +13,61 @@ which act on it
 -}
 
 module Env
-  ( new
-  , empty
+  ( empty
+  , new
+  , replaceTable
   , set
   , get
-  , push
   )
 where
 
+import           Control.Monad.Except
+import           Control.Monad.Reader
+import           Data.IORef
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
 
 import           Types                          ( AST(..)
                                                 , Env(..)
+                                                , EnvRef
+                                                , Mal(..)
                                                 , Text
                                                 )
 
 
--- | Create a new environment with given symbol table
-new :: Map Text AST -> Env
-new m = Env { envTable = m, envOuter = Nothing }
+-- | Create a brand new, initial environment reference with given symbol table
+empty :: Mal EnvRef
+empty = liftIO . newIORef $ Env { envTable = M.empty, envOuter = Nothing }
 
--- | Empty environment
-empty :: Env
-empty = Env { envTable = M.empty, envOuter = Nothing }
+-- | Replace the table in the given environment
+replaceTable :: EnvRef -> Map Text AST -> Mal ()
+replaceTable envRef table = liftIO $ modifyIORef envRef replace'
+ where
+  replace' :: Env -> Env
+  replace' e = e { envTable = table }
 
--- | Takes a symbol key and an AST and adds to the data structure
-set :: Text -> AST -> Env -> Env
-set sym val e = e { envTable = M.insert sym val (envTable e) }
+-- | Create a new environment with previous environment as its outer chain
+new :: EnvRef -> Mal EnvRef
+new envRef = do
+  oldEnv <- liftIO $ readIORef envRef
+  liftIO . newIORef $ Env { envTable = M.empty, envOuter = Just oldEnv }
 
--- | lookup sumbol ket in the given enviroment
-get :: Text -> Env -> Either Text AST
-get sym e = case (M.lookup sym (envTable e), envOuter e) of
-  (Just a , _         ) -> Right a
-  (Nothing, Just outer) -> get sym outer
-  (Nothing, Nothing) ->
-    Left $ "Symbol '" <> sym <> "' not found in environment"
+-- | Set a value in the environment state
+set :: EnvRef -> Text -> AST -> Mal ()
+set envRef sym val = liftIO $ modifyIORef envRef set'
+ where
+  set' :: Env -> Env
+  set' e = e { envTable = M.insert sym val (envTable e) }
 
--- | Set given environment current environment keeping current environemt in outer chain
-push :: Env -> Env -> Env
-push (Env t Nothing ) current = Env t (Just current)
-push (Env t (Just o)) current = Env t (Just (push o current))
-
-
+-- | lookup a in the enviroment state
+get :: EnvRef -> Text -> Mal AST
+get envRef sym = do
+  env <- liftIO $ readIORef envRef
+  get' env
+ where
+  get' :: Env -> Mal AST
+  get' e = case (M.lookup sym (envTable e), envOuter e) of
+    (Just a , _         ) -> return a
+    (Nothing, Just outer) -> get' outer
+    (Nothing, Nothing) ->
+      throwError $ "Symbol '" <> sym <> "' not found in environment"

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2b90d698f226c1caf11f02a13b5b8c7ab0c66146b39071be9144a10475488f08
+-- hash: 00f5acf3d68e4b96cb4590864bcab209e9e2a22c2001187a922464a255e9efba
 
 name:           jw-haskell-mal
 version:        0.2.0.0
@@ -98,7 +98,6 @@ test-suite mal-specs
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
-      EnvSpec
       PrinterSpec
       ReaderSpec
       Paths_jw_haskell_mal

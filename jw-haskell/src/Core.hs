@@ -25,37 +25,49 @@ import qualified Data.Text.IO                  as TIO
 import qualified Data.Map                      as M
 
 import           Types                          ( AST(..)
+                                                , EnvRef
                                                 , Mal
                                                 , Text
                                                 , astEquality
                                                 , extractInt
                                                 )
 import           Printer                        ( malFormat )
+import           Reader                         ( malRead )
+import           Eval                           ( eval )
+
 
 -- | Definitions read into Mal before execution of user program starts
 prelude :: [Text]
-prelude = ["(def! not (fn* (a) (if a false true)))"]
+prelude =
+  [ "(def! not (fn* (a) (if a false true)))"
+  , "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\\nnil)\"))))))"
+--     , "(def! load-file (fn* (f) (str \"(do \" (slurp f) \"\\nnil)\"))))"
+--    , "(def! load-file (fn* (f) (eval (read-string (slurp f)))))"
+  ]
 
--- | Core name space which holds all of our built-ins
-nameSpace :: Map Text AST
-nameSpace = M.fromList
-  [ ("+"      , ASTFunc addition)
-  , ("-"      , ASTFunc subtraction)
-  , ("*"      , ASTFunc multiplication)
-  , ("/"      , ASTFunc division)
-  , ("list"   , ASTFunc list)
-  , ("count"  , ASTFunc count)
-  , ("empty?" , ASTFunc emptyTest)
-  , ("list?"  , ASTFunc listTest)
-  , ("="      , ASTFunc equality)
-  , (">"      , ASTFunc (binaryIntOp (>)))
-  , (">="     , ASTFunc (binaryIntOp (>=)))
-  , ("<"      , ASTFunc (binaryIntOp (<)))
-  , ("<="     , ASTFunc (binaryIntOp (<=)))
-  , ("pr-str" , ASTFunc prStr)
-  , ("str"    , ASTFunc str)
-  , ("prn"    , ASTFunc prn)
-  , ("println", ASTFunc println)
+-- | Core name space which holds all of our built-ins, takes top-level REPL environment for eval
+nameSpace :: EnvRef -> Map Text AST
+nameSpace envRef = M.fromList
+  [ ("+"          , ASTFunc addition)
+  , ("-"          , ASTFunc subtraction)
+  , ("*"          , ASTFunc multiplication)
+  , ("/"          , ASTFunc division)
+  , ("list"       , ASTFunc list)
+  , ("count"      , ASTFunc count)
+  , ("empty?"     , ASTFunc emptyTest)
+  , ("list?"      , ASTFunc listTest)
+  , ("="          , ASTFunc equality)
+  , (">"          , ASTFunc (binaryIntOp (>)))
+  , (">="         , ASTFunc (binaryIntOp (>=)))
+  , ("<"          , ASTFunc (binaryIntOp (<)))
+  , ("<="         , ASTFunc (binaryIntOp (<=)))
+  , ("pr-str"     , ASTFunc prStr)
+  , ("str"        , ASTFunc str)
+  , ("prn"        , ASTFunc prn)
+  , ("println"    , ASTFunc println)
+  , ("read-string", ASTFunc readString)
+  , ("slurp"      , ASTFunc slurp)
+  , ("eval"       , ASTFunc (replEval envRef))
   ]
 
 addition :: [AST] -> Mal AST
@@ -139,3 +151,20 @@ println xs = do
   let s = T.intercalate " " $ map (malFormat False) xs
   liftIO $ TIO.putStrLn s
   return ASTNil
+
+readString :: [AST] -> Mal AST
+readString [ASTStr s] = case malRead s of
+  Left  err        -> throwError err
+  Right Nothing    -> return ASTNil
+  Right (Just ast) -> return ast
+readString _ = throwError "Bad argument type for readString"
+
+slurp :: [AST] -> Mal AST
+slurp [ASTStr fn] = do
+  s <- liftIO . TIO.readFile $ T.unpack fn
+  return $ ASTStr s
+slurp _ = throwError "Bad argument type for slurp"
+
+replEval :: EnvRef -> [AST] -> Mal AST
+replEval replEnvRef [ast] = eval replEnvRef ast
+replEval _          _     = throwError "Bad argument for eval"

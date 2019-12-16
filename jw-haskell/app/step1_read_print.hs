@@ -36,7 +36,7 @@ import           System.Console.Readline        ( readline
                                                 )
 
 main :: IO ()
-main = void . runStateT (runExceptT (unMal repl)) $ Env.empty
+main = void $ runExceptT (unMal repl)
 
 -- Read-evaluate-print
 rep :: Text -> Mal ()
