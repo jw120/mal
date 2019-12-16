@@ -101,6 +101,10 @@ eval envRef (ASTList [ASTSym "fn*", ASTVector binds, body]) =
 eval _ (ASTList (ASTSym "fn*" : _)) =
   throwError "Bad syntax in fn* special form"
 
+-- Special form: quote
+eval _ (ASTList [ASTSym "quote", val]) = return val
+eval _ (ASTList (ASTSym "quote" : _)) =throwError "Bad syntax in quote special form"
+
 -- Evaluation for a non-empty list
 eval envRef (ASTList (func : args)) = do
   func' <- eval envRef func

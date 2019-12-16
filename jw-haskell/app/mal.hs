@@ -51,7 +51,7 @@ malMain = do
     (fn : rest) -> do
       Env.set envRef "*ARGV*" . ASTList $ map (ASTStr . T.pack) rest
       let cmd = T.pack ("(load-file \"" ++ fn ++ "\")")
-      rep envRef False cmd
+      rep envRef True cmd
 
 -- Read-evaluate-print
 rep :: EnvRef -> Bool -> Text -> Mal ()

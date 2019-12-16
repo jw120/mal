@@ -22,7 +22,6 @@ module Env
 where
 
 import           Control.Monad.Except
-import           Control.Monad.Reader
 import           Data.IORef
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M

@@ -10,6 +10,7 @@ Design choices:
   + Printing
   + Modifications to environments (IORefs)
   + Atoms (IORefs)
+ * Minimal tests (just for Reader) as rely on github provided test suite in mal
 
 Tools used
 

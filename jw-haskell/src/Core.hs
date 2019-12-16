@@ -72,6 +72,8 @@ nameSpace envRef = M.fromList
   , ("deref"      , ASTFunc deref)
   , ("reset!"     , ASTFunc reset)
   , ("swap!"      , ASTFunc (swap envRef))
+  , ("cons"       , ASTFunc cons)
+  , ("concat"     , ASTFunc malConcat)
   ]
 
 
@@ -208,3 +210,13 @@ swap envRef (ASTAtom ref : ASTFunc func : args) = do
   liftIO $ writeIORef ref val'
   return val'
 swap _ _ = throwError "Bad arguments for swap"
+
+cons :: [AST] -> Mal AST
+cons [ast, ASTList xs] = return $ ASTList (ast : xs)
+cons _ = throwError "Bad arguments for cons"
+
+malConcat :: [AST] -> Mal AST
+malConcat (ASTList xs : ASTList ys : rest) = malConcat (ASTList (xs ++ ys) : rest)
+malConcat [ASTList xs] = return $ ASTList xs
+malConcat [] = return $ ASTList []
+malConcat _ = throwError "Bad arguments for concat"

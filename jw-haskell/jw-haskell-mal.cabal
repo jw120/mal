@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 269945c10ea7642adc22184c4ff7886f603afb25aa195fcc3d307f59d11729f3
+-- hash: e553338cee8a231698fe1bb18195df73d3ac8fb535bbf4fcb3ce95a9130729e2
 
 name:           jw-haskell-mal
 version:        0.2.0.0
@@ -31,7 +31,6 @@ library
       Eval
       Printer
       Reader
-      TestHelpers
       Types
   other-modules:
       Paths_jw_haskell_mal
