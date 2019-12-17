@@ -143,20 +143,20 @@ equality (a : b : _) | a `astEquality` b = return ASTTrue
 
 prStr :: [AST] -> Mal AST
 prStr xs = do
-    xs' <- liftIO $ mapM (malFormat True) xs
-    return . ASTStr $ T.intercalate " " xs'
+  xs' <- liftIO $ mapM (malFormat True) xs
+  return . ASTStr $ T.intercalate " " xs'
 
 str :: [AST] -> Mal AST
 str xs = do
-    xs' <- liftIO $ mapM (malFormat False) xs
-    return . ASTStr $ T.concat xs'
+  xs' <- liftIO $ mapM (malFormat False) xs
+  return . ASTStr $ T.concat xs'
 
 prn :: [AST] -> Mal AST
 prn xs = do
-    xs' <- liftIO $ mapM (malFormat True) xs
-    let s = T.intercalate " " xs'
-    liftIO $ TIO.putStrLn s
-    return ASTNil
+  xs' <- liftIO $ mapM (malFormat True) xs
+  let s = T.intercalate " " xs'
+  liftIO $ TIO.putStrLn s
+  return ASTNil
 
 println :: [AST] -> Mal AST
 println xs = do
@@ -213,10 +213,11 @@ swap _ _ = throwError "Bad arguments for swap"
 
 cons :: [AST] -> Mal AST
 cons [ast, ASTList xs] = return $ ASTList (ast : xs)
-cons _ = throwError "Bad arguments for cons"
+cons _                 = throwError "Bad arguments for cons"
 
 malConcat :: [AST] -> Mal AST
-malConcat (ASTList xs : ASTList ys : rest) = malConcat (ASTList (xs ++ ys) : rest)
+malConcat (ASTList xs : ASTList ys : rest) =
+  malConcat (ASTList (xs ++ ys) : rest)
 malConcat [ASTList xs] = return $ ASTList xs
-malConcat [] = return $ ASTList []
-malConcat _ = throwError "Bad arguments for concat"
+malConcat []           = return $ ASTList []
+malConcat _            = throwError "Bad arguments for concat"

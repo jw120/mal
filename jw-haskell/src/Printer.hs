@@ -19,7 +19,7 @@ where
 
 import           Control.Monad.Trans
 
-import Data.IORef
+import           Data.IORef
 import           Data.List                      ( foldl' )
 import qualified Data.Map                      as M
 import           Data.Text                      ( Text )
@@ -34,43 +34,44 @@ import           Types                          ( AST(..)
 -- | Print our AST or error message to IO
 malPrint :: AST -> Mal ()
 malPrint ast = do
-    t <- liftIO $ malFormat True ast
-    liftIO $ TIO.putStrLn t
+  t <- liftIO $ malFormat True ast
+  liftIO $ TIO.putStrLn t
 
 -- | Convert our AST or error message to text
 malFormat :: Bool -> AST -> IO Text
 malFormat readable ast = do
-    ast' <- fmt ast
-    return $ addSpaces ast'
+  ast' <- fmt ast
+  return $ addSpaces ast'
  where
   fmt :: AST -> IO [Text]
   fmt (ASTSym t) = return [t]
   fmt (ASTInt i) = return [T.pack (show i)]
-  fmt (ASTStr t) = return $ case (T.stripPrefix magicKeywordPrefix t, readable) of
-    (Just kw, _    ) -> [":" <> kw]
-    (Nothing, True ) -> ["\"" <> makeReadable t <> "\""]
-    (Nothing, False) -> [t]
-  fmt ASTNil         = return ["nil"]
-  fmt ASTTrue        = return ["true"]
-  fmt ASTFalse       = return ["false"]
-  fmt (ASTFunc   _ ) = return ["#<function>"]
-  fmt (ASTAtom   ref) = do
-    val <- readIORef ref
+  fmt (ASTStr t) =
+    return $ case (T.stripPrefix magicKeywordPrefix t, readable) of
+      (Just kw, _    ) -> [":" <> kw]
+      (Nothing, True ) -> ["\"" <> makeReadable t <> "\""]
+      (Nothing, False) -> [t]
+  fmt ASTNil        = return ["nil"]
+  fmt ASTTrue       = return ["true"]
+  fmt ASTFalse      = return ["false"]
+  fmt (ASTFunc _  ) = return ["#<function>"]
+  fmt (ASTAtom ref) = do
+    val  <- readIORef ref
     val' <- fmt val
     return $ ["(", "atom"] ++ val' ++ [")"]
-  fmt (ASTList   xs) = do
+  fmt (ASTList xs) = do
     xs' <- mapM fmt xs
     return $ ["("] ++ concat xs' ++ [")"]
-  fmt (ASTVector   xs) = do
-      xs' <- mapM fmt xs
-      return $ ["["] ++ concat xs' ++ ["]"]
+  fmt (ASTVector xs) = do
+    xs' <- mapM fmt xs
+    return $ ["["] ++ concat xs' ++ ["]"]
   fmt (ASTMap m) = do
     xs' <- mapM fmt . unwrapPairs $ M.toList m
     return $ ["{"] ++ concat xs' ++ ["}"]
-      where
-        unwrapPairs :: [(Text, AST)] -> [AST]
-        unwrapPairs ((a, b) : rest) = ASTStr a : b : unwrapPairs rest
-        unwrapPairs []              = []
+   where
+    unwrapPairs :: [(Text, AST)] -> [AST]
+    unwrapPairs ((a, b) : rest) = ASTStr a : b : unwrapPairs rest
+    unwrapPairs []              = []
 
 -- | Helper function to join a list of texts with spaces
 --
