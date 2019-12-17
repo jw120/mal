@@ -112,12 +112,14 @@ eval envRef (ASTList [ASTSym "quasiquote", ast]) = eval envRef $ quasiQuote ast
   quasiQuote :: AST -> AST
   quasiQuote (ASTList [ASTSym "unquote", x]) = x
   quasiQuote (ASTList (ASTList [ASTSym "splice-unquote", x] : ys)) =
-    ASTList [ASTSym "concat", x, quasiQuote (ASTList ys)]
-  quasiQuote (ASTList (x : ys)) =
-    ASTList [ASTSym "cons", quasiQuote x, quasiQuote (ASTList ys)]
-  -- quasiQuote (ASTList []) = do
-  --     ASTList [ASTSym "quote", ASTList []]
-  quasiQuote x = ASTList [ASTSym "quote", x]
+    concatQ x ys
+  quasiQuote (ASTList (ASTVector [ASTSym "splice-unquote", x] : ys)) =
+    concatQ x ys
+  quasiQuote (ASTList   (x : ys)) = consQQ x ys
+  quasiQuote (ASTVector (x : ys)) = consQQ x ys
+  quasiQuote x                    = ASTList [ASTSym "quote", x]
+  concatQ x ys = ASTList [ASTSym "concat", x, quasiQuote (ASTList ys)]
+  consQQ x ys = ASTList [ASTSym "cons", quasiQuote x, quasiQuote (ASTList ys)]
 eval _ (ASTList (ASTSym "quasiquote" : _)) =
   throwError "Bad syntax in quasiquote special form"
 

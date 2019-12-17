@@ -154,14 +154,17 @@ str xs = do
 prn :: [AST] -> Mal AST
 prn xs = do
   xs' <- liftIO $ mapM (malFormat True) xs
-  let s = T.intercalate " " xs'
-  liftIO $ TIO.putStrLn s
-  return ASTNil
+  printWithSpaces xs'
 
 println :: [AST] -> Mal AST
 println xs = do
   xs' <- liftIO $ mapM (malFormat False) xs
-  let s = T.intercalate " " xs'
+  printWithSpaces xs'
+
+-- Helper function
+printWithSpaces :: [Text] -> Mal AST
+printWithSpaces texts = do
+  let s = T.intercalate " " texts
   liftIO $ TIO.putStrLn s
   return ASTNil
 
@@ -212,12 +215,20 @@ swap envRef (ASTAtom ref : ASTFunc func : args) = do
 swap _ _ = throwError "Bad arguments for swap"
 
 cons :: [AST] -> Mal AST
-cons [ast, ASTList xs] = return $ ASTList (ast : xs)
-cons _                 = throwError "Bad arguments for cons"
+cons [ast, ASTList xs  ] = return $ ASTList (ast : xs)
+cons [ast, ASTVector xs] = return $ ASTList (ast : xs)
+cons _                   = throwError "Bad arguments for cons"
 
 malConcat :: [AST] -> Mal AST
 malConcat (ASTList xs : ASTList ys : rest) =
   malConcat (ASTList (xs ++ ys) : rest)
-malConcat [ASTList xs] = return $ ASTList xs
-malConcat []           = return $ ASTList []
-malConcat _            = throwError "Bad arguments for concat"
+malConcat (ASTList xs : ASTVector ys : rest) =
+  malConcat (ASTList (xs ++ ys) : rest)
+malConcat (ASTVector xs : ASTList ys : rest) =
+  malConcat (ASTList (xs ++ ys) : rest)
+malConcat (ASTVector xs : ASTVector ys : rest) =
+  malConcat (ASTList (xs ++ ys) : rest)
+malConcat [ASTList   xs] = return $ ASTList xs
+malConcat [ASTVector xs] = return $ ASTList xs
+malConcat []             = return $ ASTList []
+malConcat _              = throwError "Bad arguments for concat"
