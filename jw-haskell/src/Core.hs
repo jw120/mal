@@ -42,6 +42,7 @@ prelude :: [Text]
 prelude =
   [ "(def! not (fn* (a) (if a false true)))"
   , "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\\nnil)\"))))))"
+  , "(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) (cons 'cond (rest (rest xs)))))))"
   ]
 
 -- | Core name space which holds all of our built-ins, takes top-level REPL environment for eval
@@ -74,6 +75,9 @@ nameSpace envRef = M.fromList
   , ("swap!"      , ASTFunc False (swap envRef))
   , ("cons"       , ASTFunc False cons)
   , ("concat"     , ASTFunc False malConcat)
+  , ("nth"        , ASTFunc False nth)
+  , ("first"      , ASTFunc False first)
+  , ("rest"       , ASTFunc False rest)
   ]
 
 
@@ -84,12 +88,12 @@ addition asts = do
 
 subtraction :: [AST] -> Mal AST
 subtraction [] = throwError "Arugment error: at least one argument required"
-subtraction [ASTInt i ] = return (ASTInt (-i))
-subtraction [_        ] = throwError "Type error: integer expected"
-subtraction (hd : rest) = do
-  hd'   <- extractInt hd
-  rest' <- mapM extractInt rest
-  return . ASTInt $ hd' - sum rest'
+subtraction [ASTInt i] = return (ASTInt (-i))
+subtraction [_       ] = throwError "Type error: integer expected"
+subtraction (hd : tl ) = do
+  hd' <- extractInt hd
+  tl' <- mapM extractInt tl
+  return . ASTInt $ hd' - sum tl'
 
 multiplication :: [AST] -> Mal AST
 multiplication asts = do
@@ -100,11 +104,11 @@ division :: [AST] -> Mal AST
 division [] = throwError "Arugment error: at least one argument required"
 division [ASTInt _] =
   throwError "Arugment error: at least one argument required"
-division [_        ] = throwError "Type error: integer expected"
-division (hd : rest) = do
-  hd'   <- extractInt hd
-  rest' <- mapM extractInt rest
-  hd' `safeDiv` product rest'
+division [_      ] = throwError "Type error: integer expected"
+division (hd : tl) = do
+  hd' <- extractInt hd
+  tl' <- mapM extractInt tl
+  hd' `safeDiv` product tl'
 
 safeDiv :: Int -> Int -> Mal AST
 safeDiv _ 0 = throwError "Division by zero error"
@@ -220,15 +224,38 @@ cons [ast, ASTVector xs] = return $ ASTList (ast : xs)
 cons _                   = throwError "Bad arguments for cons"
 
 malConcat :: [AST] -> Mal AST
-malConcat (ASTList xs : ASTList ys : rest) =
-  malConcat (ASTList (xs ++ ys) : rest)
-malConcat (ASTList xs : ASTVector ys : rest) =
-  malConcat (ASTList (xs ++ ys) : rest)
-malConcat (ASTVector xs : ASTList ys : rest) =
-  malConcat (ASTList (xs ++ ys) : rest)
-malConcat (ASTVector xs : ASTVector ys : rest) =
-  malConcat (ASTList (xs ++ ys) : rest)
+malConcat (ASTList xs : ASTList ys : zs) = malConcat (ASTList (xs ++ ys) : zs)
+malConcat (ASTList xs : ASTVector ys : zs) =
+  malConcat (ASTList (xs ++ ys) : zs)
+malConcat (ASTVector xs : ASTList ys : zs) =
+  malConcat (ASTList (xs ++ ys) : zs)
+malConcat (ASTVector xs : ASTVector ys : zs) =
+  malConcat (ASTList (xs ++ ys) : zs)
 malConcat [ASTList   xs] = return $ ASTList xs
 malConcat [ASTVector xs] = return $ ASTList xs
 malConcat []             = return $ ASTList []
 malConcat _              = throwError "Bad arguments for concat"
+
+
+nth :: [AST] -> Mal AST
+nth [ASTList ys, ASTInt i] | i >= 0 && i < length ys = return $ ys !! i
+                           | otherwise = throwError "Bad argument in nth"
+nth [ASTVector ys, ASTInt i] | i >= 0 && i < length ys = return $ ys !! i
+                             | otherwise = throwError "Bad argument in nth"
+nth _ = throwError "Bad arguments for nth"
+
+first :: [AST] -> Mal AST
+first [ASTList   (x : _)] = return x
+first [ASTList   []     ] = return ASTNil
+first [ASTVector (x : _)] = return x
+first [ASTVector []     ] = return ASTNil
+first [ASTNil           ] = return ASTNil
+first _                   = throwError "Bad arguments for first"
+
+rest :: [AST] -> Mal AST
+rest [ASTList   (_ : ys)] = return $ ASTList ys
+rest [ASTList   []      ] = return $ ASTList []
+rest [ASTVector (_ : ys)] = return $ ASTList ys
+rest [ASTVector []      ] = return $ ASTList []
+rest [ASTNil            ] = return $ ASTList []
+rest _                    = throwError "Bad arguments for rest"
