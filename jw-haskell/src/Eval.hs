@@ -56,6 +56,18 @@ eval envRef (ASTList [ASTSym "def!", ASTSym sym, val]) = do
 eval _ (ASTList (ASTSym "def!" : _)) =
   throwError "Bad syntax in def! special form"
 
+-- Special form: defmacro!
+eval envRef (ASTList [ASTSym "defmacro!", ASTSym sym, fnBody]) = do
+  fn <- eval envRef fnBody
+  case fn of
+    ASTFunc _ f -> do
+      let macro = ASTFunc True f
+      Env.set envRef sym macro
+      return macro
+    _ -> throwError "Expected a function in defmacro!"
+eval _ (ASTList (ASTSym "defmacro!" : _)) =
+  throwError "Bad syntax in defmacro! special form"
+
 -- Special form: let*
 eval envRef (ASTList [ASTSym "let*", ASTList bindings, val]) = do
   subEnvRef <- Env.new envRef
@@ -77,7 +89,7 @@ eval _ (ASTList (ASTSym "let*" : _)) =
 -- Special form: fn*
 eval envRef (ASTList [ASTSym "fn*", ASTList binds, body]) = do
   binds' <- mapM extractSym binds
-  return . ASTFunc $ closure binds'
+  return . ASTFunc False $ closure binds'
  where
   closure :: [Text] -> [AST] -> Mal AST
   closure bindNames args = do
@@ -127,7 +139,7 @@ eval _ (ASTList (ASTSym "quasiquote" : _)) =
 eval envRef (ASTList (func : args)) = do
   func' <- eval envRef func
   case func' of
-    ASTFunc f -> do
+    ASTFunc _ f -> do
       args' <- mapM (eval envRef) args
       f args'
     _ -> throwError "Not a function"
@@ -147,5 +159,22 @@ eval envRef (ASTSym s) = Env.get envRef s
 eval _      other      = return other
 
 
+macroExpand :: EnvRef -> AST -> Mal AST
+macroExpand envRef ast@(ASTList (ASTSym s : otherArgs)) = do
+  val <- Env.get envRef s
+  case val of
+    ASTFunc True macroFn -> do
+      retVal <- macroFn otherArgs
+      macroExpand envRef retVal
+    _ -> return ast
+macroExpand _ ast = return ast
 
+-- -- Is the given ast the name of a macro defined in the given environment
+-- isMacroCall :: EnvRef -> AST -> Mal Bool
+-- isMacroCall envRef (ASTList (ASTSym s: _)) = do
+--     val <- Env.safeGet envRef s
+--     case val of
+--         Just (ASTFunc True _) -> return True
+--         _ -> return False
+-- isMacroCall _ _ = return False
 

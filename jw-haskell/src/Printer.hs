@@ -54,7 +54,7 @@ malFormat readable ast = do
   fmt ASTNil        = return ["nil"]
   fmt ASTTrue       = return ["true"]
   fmt ASTFalse      = return ["false"]
-  fmt (ASTFunc _  ) = return ["#<function>"]
+  fmt (ASTFunc _ _) = return ["#<function>"]
   fmt (ASTAtom ref) = do
     val  <- readIORef ref
     val' <- fmt val

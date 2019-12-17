@@ -18,6 +18,7 @@ module Env
   , replaceTable
   , set
   , get
+--   , safeGet
   )
 where
 
@@ -70,3 +71,15 @@ get envRef sym = do
     (Nothing, Just outer) -> get' outer
     (Nothing, Nothing) ->
       throwError $ "Symbol '" <> sym <> "' not found in environment"
+
+-- -- | lookup a in the enviroment state, returning a Maybe
+-- safeGet :: EnvRef -> Text -> Mal (Maybe AST)
+-- safeGet envRef sym = do
+--   env <- liftIO $ readIORef envRef
+--   return $ get' env
+--  where
+--   get' :: Env -> Maybe AST
+--   get' e = case (M.lookup sym (envTable e), envOuter e) of
+--     (Just a , _         ) -> Just a
+--     (Nothing, Just outer) -> get' outer
+--     (Nothing, Nothing) -> Nothing

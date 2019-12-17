@@ -48,7 +48,7 @@ data AST
   | ASTVector [AST]
   | ASTAtom MalAtom
   | ASTMap (Map Text AST)
-  | ASTFunc MalFunc
+  | ASTFunc Bool MalFunc
   deriving (Eq, Show)
 
 -- | Type for mal functions

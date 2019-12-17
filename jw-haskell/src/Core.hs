@@ -47,33 +47,33 @@ prelude =
 -- | Core name space which holds all of our built-ins, takes top-level REPL environment for eval
 nameSpace :: EnvRef -> Map Text AST
 nameSpace envRef = M.fromList
-  [ ("+"          , ASTFunc addition)
-  , ("-"          , ASTFunc subtraction)
-  , ("*"          , ASTFunc multiplication)
-  , ("/"          , ASTFunc division)
-  , ("list"       , ASTFunc list)
-  , ("count"      , ASTFunc count)
-  , ("empty?"     , ASTFunc emptyTest)
-  , ("list?"      , ASTFunc listTest)
-  , ("="          , ASTFunc equality)
-  , (">"          , ASTFunc (binaryIntOp (>)))
-  , (">="         , ASTFunc (binaryIntOp (>=)))
-  , ("<"          , ASTFunc (binaryIntOp (<)))
-  , ("<="         , ASTFunc (binaryIntOp (<=)))
-  , ("pr-str"     , ASTFunc prStr)
-  , ("str"        , ASTFunc str)
-  , ("prn"        , ASTFunc prn)
-  , ("println"    , ASTFunc println)
-  , ("read-string", ASTFunc readString)
-  , ("slurp"      , ASTFunc slurp)
-  , ("eval"       , ASTFunc (replEval envRef))
-  , ("atom"       , ASTFunc atom)
-  , ("atom?"      , ASTFunc atomTest)
-  , ("deref"      , ASTFunc deref)
-  , ("reset!"     , ASTFunc reset)
-  , ("swap!"      , ASTFunc (swap envRef))
-  , ("cons"       , ASTFunc cons)
-  , ("concat"     , ASTFunc malConcat)
+  [ ("+"          , ASTFunc False addition)
+  , ("-"          , ASTFunc False subtraction)
+  , ("*"          , ASTFunc False multiplication)
+  , ("/"          , ASTFunc False division)
+  , ("list"       , ASTFunc False list)
+  , ("count"      , ASTFunc False count)
+  , ("empty?"     , ASTFunc False emptyTest)
+  , ("list?"      , ASTFunc False listTest)
+  , ("="          , ASTFunc False equality)
+  , (">"          , ASTFunc False (binaryIntOp (>)))
+  , (">="         , ASTFunc False (binaryIntOp (>=)))
+  , ("<"          , ASTFunc False (binaryIntOp (<)))
+  , ("<="         , ASTFunc False (binaryIntOp (<=)))
+  , ("pr-str"     , ASTFunc False prStr)
+  , ("str"        , ASTFunc False str)
+  , ("prn"        , ASTFunc False prn)
+  , ("println"    , ASTFunc False println)
+  , ("read-string", ASTFunc False readString)
+  , ("slurp"      , ASTFunc False slurp)
+  , ("eval"       , ASTFunc False (replEval envRef))
+  , ("atom"       , ASTFunc False atom)
+  , ("atom?"      , ASTFunc False atomTest)
+  , ("deref"      , ASTFunc False deref)
+  , ("reset!"     , ASTFunc False reset)
+  , ("swap!"      , ASTFunc False (swap envRef))
+  , ("cons"       , ASTFunc False cons)
+  , ("concat"     , ASTFunc False malConcat)
   ]
 
 
@@ -207,9 +207,9 @@ reset [ASTAtom ref, val] = do
 reset _ = throwError "Bad arguments for reset"
 
 swap :: EnvRef -> [AST] -> Mal AST
-swap envRef (ASTAtom ref : ASTFunc func : args) = do
+swap envRef (ASTAtom ref : ASTFunc False func : args) = do
   val  <- liftIO $ readIORef ref
-  val' <- eval envRef $ ASTList (ASTFunc func : val : args)
+  val' <- eval envRef $ ASTList (ASTFunc False func : val : args)
   liftIO $ writeIORef ref val'
   return val'
 swap _ _ = throwError "Bad arguments for swap"
