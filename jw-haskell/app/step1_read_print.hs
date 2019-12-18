@@ -20,11 +20,13 @@ module Main
 where
 
 import           Control.Monad.Except
+import           Control.Monad.Reader
 import qualified Data.Text                     as T
 import qualified Data.Text.IO                  as TIO
 
 import           Types                          ( Mal(..)
                                                 , Text
+                                                , Config(..)
                                                 )
 import           Printer                        ( malPrint )
 import           Reader                         ( malRead )
@@ -34,7 +36,7 @@ import           System.Console.Readline        ( readline
                                                 )
 
 main :: IO ()
-main = void $ runExceptT (unMal repl)
+main = void . runReaderT (runExceptT (unMal repl)) $ Config { configDebug = False }
 
 -- Read-evaluate-print
 rep :: Text -> Mal ()

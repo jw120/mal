@@ -32,6 +32,7 @@ import           Types                          ( AST(..)
 eval :: EnvRef -> AST -> Mal AST
 eval _      (ASTList []      ) = return $ ASTList []
 eval envRef (ASTList listArgs) = do
+--  liftIO . putStrLn $ "eval: " ++ " " ++ show listArgs
   expansion <- macroExpand envRef (ASTList listArgs)
   case expansion of
     ASTList expansionListArgs -> apply envRef expansionListArgs

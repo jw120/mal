@@ -25,11 +25,12 @@ module Types
   , astEquality
   , extractInt
   , extractSym
+  , Config(..)
   )
 where
 
-import           Control.Monad.Trans
 import           Control.Monad.Except
+import           Control.Monad.Reader
 import           Data.IORef
 import           Data.Map                       ( Map )
 import qualified Data.Map                      as M
@@ -100,7 +101,10 @@ data Env = Env
   , envOuter :: Maybe Env    -- ^ Outer environment for lookup when not in our table
   } deriving (Show, Eq)
 
-newtype Mal a = Mal { unMal :: ExceptT Text IO a }
-    deriving (Functor, Applicative, Monad, MonadError Text, MonadIO)
+newtype Mal a = Mal { unMal :: ExceptT Text (ReaderT Config IO) a }
+    deriving (Functor, Applicative, Monad, MonadError Text, MonadReader Config, MonadIO)
 
-
+-- ^ Configuration for the program
+data Config = Config
+  { configDebug :: Bool -- ^ Should we show debug information
+  }
