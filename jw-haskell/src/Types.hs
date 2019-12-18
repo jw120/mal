@@ -64,7 +64,7 @@ type MalAtom = IORef AST
 instance Show MalAtom where
   show _ = "#<atom>"
 
--- Convert an ASTInt to Int (or return an error if not an ASTInt)
+-- | Convert an ASTInt to Int (or return an error if not an ASTInt)
 extractInt :: AST -> Mal Int
 extractInt (ASTInt i) = return i
 extractInt _          = throwError "Type error: integer expected"

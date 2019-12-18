@@ -62,15 +62,10 @@ set envRef sym val = liftIO $ modifyIORef envRef set'
 -- | lookup a in the enviroment state
 get :: EnvRef -> Text -> Mal AST
 get envRef sym = do
-  env <- liftIO $ readIORef envRef
-  get' env
- where
-  get' :: Env -> Mal AST
-  get' e = case (M.lookup sym (envTable e), envOuter e) of
-    (Just a , _         ) -> return a
-    (Nothing, Just outer) -> get' outer
-    (Nothing, Nothing) ->
-      throwError $ "Symbol '" <> sym <> "' not found in environment"
+  maybeVal <- safeGet envRef sym
+  case maybeVal of
+    Just a  -> return a
+    Nothing -> throwError $ "Symbol '" <> sym <> "' not found in environment"
 
 -- | lookup a in the enviroment state, returning a Maybe
 safeGet :: EnvRef -> Text -> Mal (Maybe AST)

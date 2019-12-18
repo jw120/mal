@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e6744a719fc87f53166c8fd3c0c0f6fb93cf0e49ce5cb18550d1e353dbca3947
+-- hash: a18276b4e87612874aa97e4510b1d5d064622f00f4e8b130fb18d0c80931fd83
 
 name:           jw-haskell-mal
 version:        0.2.0.0
@@ -27,6 +27,7 @@ source-repository head
 library
   exposed-modules:
       Core
+      Debug
       Env
       Eval
       Printer
