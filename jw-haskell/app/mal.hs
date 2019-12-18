@@ -18,10 +18,10 @@ where
 
 import           Control.Monad.Except
 import           Control.Monad.Reader
-import Data.Semigroup ((<>)) -- For Options.Applicative
+import           Data.Semigroup                 ( (<>) ) -- For Options.Applicative
 import qualified Data.Text                     as T
 import qualified Data.Text.IO                  as TIO
-import Options.Applicative
+import           Options.Applicative
 import           System.Console.Readline        ( readline
                                                 , addHistory
                                                 )
@@ -45,24 +45,15 @@ data Input =
 
 exprInput :: Parser Input
 exprInput = ExprInput <$> strOption
-    (  long "expr"
-    <> short 'e'
-    <> metavar "EXPR"
-    <> help "Expression to evaluate" )
+  (long "expr" <> short 'e' <> metavar "EXPR" <> help "Expression to evaluate")
 
 fileInput :: Parser Input
-fileInput = FileInput
-    <$> strArgument
-       ( metavar "FILENAME"
-       <> help "Input file" )
-    <*> some
-        ( argument str (metavar "ARGUMENTS..."
-        <> help "Arguments to pass to the interpeter"))
-
--- replInput :: Parser Input
--- replInput = flag' ReplInput
---     (  long "repl"
---     <> help "Start repl" )
+fileInput =
+  FileInput <$> strArgument (metavar "FILENAME" <> help "Input file") <*> many
+    (argument
+      str
+      (metavar "ARGUMENTS..." <> help "Arguments to pass to the interpeter")
+    )
 
 input :: Parser Input
 input = exprInput <|> fileInput
@@ -73,25 +64,27 @@ data Options = Options
     }
 
 options :: Parser Options
-options = Options
+options =
+  Options
     <$> switch
-        ( long "debug"
-        <> short 'd'
-        <> help "Enable debug information mode" )
+          (long "debug" <> short 'd' <> help "Enable debug information mode")
     <*> optional input
 
 parseOptions :: ParserInfo Options
-parseOptions = info (options <**> helper)
-           ( fullDesc
-              <> progDesc "Evaluate the expression, load the file with given arv, or start the repl"
-              <> header "mal - a make-a-lisp interpreter" )
+parseOptions = info
+  (options <**> helper)
+  (  fullDesc
+  <> progDesc
+       "Evaluate the expression, load the file with given arv, or start the repl"
+  <> header "mal - a make-a-lisp interpreter"
+  )
 
 main :: IO ()
 main = do
-    opts <- execParser parseOptions
-    let malMain' = unMal $ malMain (optInput opts)
-    let readerConfig = Config { configDebug = optDebug opts }
-    void $ runReaderT (runExceptT malMain') $ readerConfig
+  opts <- execParser parseOptions
+  let malMain'     = unMal $ malMain (optInput opts)
+  let readerConfig = Config { configDebug = optDebug opts }
+  void $ runReaderT (runExceptT malMain') readerConfig
 
 malMain :: Maybe Input -> Mal ()
 malMain inp = do
@@ -100,11 +93,11 @@ malMain inp = do
   mapM_ (rep envRef True) Core.prelude
   Env.set envRef "*ARGV*" $ ASTList []
   case inp of
-    Nothing -> repl envRef
-    Just (ExprInput e) -> rep envRef False e
+    Nothing                  -> repl envRef
+    Just (ExprInput e      ) -> rep envRef False e
     Just (FileInput fn argv) -> do
-        Env.set envRef "*ARGV*" $ ASTList (map ASTStr argv)
-        rep envRef True $ T.pack ("(load-file \"" ++ fn ++ "\")")
+      Env.set envRef "*ARGV*" $ ASTList (map ASTStr argv)
+      rep envRef True $ T.pack ("(load-file \"" ++ fn ++ "\")")
 
 -- Read-evaluate-print
 rep :: EnvRef -> Bool -> Text -> Mal ()

@@ -17,36 +17,65 @@ module Eval
 where
 
 import           Control.Monad.Except
+import           Control.Monad.Reader
 
+import Data.IORef
+import qualified Data.Text                  as T
+import qualified Data.Text.IO                  as TIO
 import qualified Data.Map                      as M
 
 import qualified Env
+import           Printer                        ( malPrint )
 import           Types                          ( AST(..)
                                                 , EnvRef
                                                 , Mal
                                                 , Text
                                                 , extractSym
+                                                , Config(..)
                                                 )
+
+
+printIfDebug :: Text -> AST -> Mal ()
+printIfDebug msg ast = do
+    debug <- asks configDebug
+    when debug $ liftIO (TIO.putStr (msg <> ": ")) >> malPrint ast
+
+printEnvIfDebug :: EnvRef -> Text -> Mal ()
+printEnvIfDebug envRef msg = do
+    debug <- asks configDebug
+    when debug $ do
+        liftIO $ TIO.putStrLn (msg <> "-env: ")
+        env <- liftIO $ readIORef envRef
+        liftIO $ print env
 
 -- | Main evaluation function
 eval :: EnvRef -> AST -> Mal AST
-eval _      (ASTList []      ) = return $ ASTList []
-eval envRef (ASTList listArgs) = do
---  liftIO . putStrLn $ "eval: " ++ " " ++ show listArgs
-  expansion <- macroExpand envRef (ASTList listArgs)
-  case expansion of
-    ASTList expansionListArgs -> apply envRef expansionListArgs
-    otherAst                  -> evalAst envRef otherAst
-eval envRef ast = evalAst envRef ast
+eval envRef ast = do
+    printEnvIfDebug envRef "eval"
+    printIfDebug "eval" ast
+    case ast of
+        ASTList [] -> return $ ASTList []
+        ASTList listArgs -> do
+            expansion <- macroExpand envRef (ASTList listArgs)
+            case expansion of
+                ASTList expansionListArgs -> do
+                    printIfDebug "apply" ast
+                    apply envRef expansionListArgs
+                otherAst                  -> evalAst envRef otherAst
+        _ -> evalAst envRef ast
 
 -- Helper function for eval for non-lists
 evalAst :: EnvRef -> AST -> Mal AST
-evalAst envRef (ASTVector xs) = ASTVector <$> mapM (eval envRef) xs
-evalAst envRef (ASTMap    m ) = do
-  elems' <- mapM (eval envRef) $ M.elems m
-  return . ASTMap . M.fromList $ zip (M.keys m) elems'
-evalAst envRef (ASTSym s) = Env.get envRef s
-evalAst _      other      = return other
+evalAst envRef ast = do
+    printEnvIfDebug envRef "evalAst"
+    printIfDebug "evalAst" ast
+    case ast of
+        ASTVector xs -> ASTVector <$> mapM (eval envRef) xs
+        ASTMap    m -> do
+            elems' <- mapM (eval envRef) $ M.elems m
+            return . ASTMap . M.fromList $ zip (M.keys m) elems'
+        ASTSym s -> Env.get envRef s
+        _ -> return ast
 
 -- | Helper function apply to handle lists (mainly special forms)
 apply :: EnvRef -> [AST] -> Mal AST
@@ -85,6 +114,8 @@ apply envRef [ASTSym "fn*", ASTList binds, body] = do
   closure bindNames args = do
     subEnvRef <- Env.new envRef
     addBindingLists subEnvRef bindNames args
+    printEnvIfDebug envRef "closure"
+    printIfDebug (T.intercalate " " ("closure" : bindNames)) (ASTList args)
     eval subEnvRef body
   -- Add bindings to the environment as two lists (a b) (2 3), catches clojure-style "&"
   addBindingLists :: EnvRef -> [Text] -> [AST] -> Mal ()
@@ -167,13 +198,14 @@ apply envRef (func : args) = do
 
 apply _ [] = throwError "Unexpected empty list in apply" -- should not happen
 
-
 macroExpand :: EnvRef -> AST -> Mal AST
 macroExpand envRef ast@(ASTList (ASTSym s : otherArgs)) = do
   val <- Env.safeGet envRef s
   case val of
     Just (ASTFunc True macroFn) -> do
+      printIfDebug "macroExpanding" ast
       retVal <- macroFn otherArgs
+      printIfDebug "macroExpanded" retVal
       macroExpand envRef retVal
     _ -> return ast
 macroExpand _ ast = return ast

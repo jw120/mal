@@ -36,7 +36,8 @@ import           System.Console.Readline        ( readline
                                                 )
 
 main :: IO ()
-main = void . runReaderT (runExceptT (unMal repl)) $ Config { configDebug = False }
+main =
+  void . runReaderT (runExceptT (unMal repl)) $ Config { configDebug = False }
 
 -- Read-evaluate-print
 rep :: Text -> Mal ()

@@ -104,7 +104,7 @@ data Env = Env
 newtype Mal a = Mal { unMal :: ExceptT Text (ReaderT Config IO) a }
     deriving (Functor, Applicative, Monad, MonadError Text, MonadReader Config, MonadIO)
 
--- ^ Configuration for the program
-data Config = Config
+-- | Configuration for the program
+newtype Config = Config
   { configDebug :: Bool -- ^ Should we show debug information
   }
