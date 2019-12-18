@@ -18,6 +18,7 @@ module Types
   , EnvRef
   , Env(..)
   , Mal(..)
+  , MalError(..)
   , MalAtom
   , MalFunc
   , magicKeywordPrefix
@@ -26,9 +27,11 @@ module Types
   , extractInt
   , extractSym
   , Config(..)
+--   , MalException(..)
   )
 where
 
+-- import Control.Exception (Exception)
 import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Data.IORef
@@ -67,12 +70,12 @@ instance Show MalAtom where
 -- | Convert an ASTInt to Int (or return an error if not an ASTInt)
 extractInt :: AST -> Mal Int
 extractInt (ASTInt i) = return i
-extractInt _          = throwError "Type error: integer expected"
+extractInt _          = throwError $ EvalError "Type error: integer expected"
 
 -- | Convert an ASTSymbol to Text (or return an error if not an ASTSym)
 extractSym :: AST -> Mal Text
 extractSym (ASTSym s) = return s
-extractSym _          = throwError "Type error: symbol expected"
+extractSym _          = throwError $ EvalError "Type error: symbol expected"
 
 -- We hold keywords as Strings with a magic prefix
 magicKeywordPrefix :: Text
@@ -101,10 +104,20 @@ data Env = Env
   , envOuter :: Maybe Env    -- ^ Outer environment for lookup when not in our table
   } deriving (Show, Eq)
 
-newtype Mal a = Mal { unMal :: ExceptT Text (ReaderT Config IO) a }
-    deriving (Functor, Applicative, Monad, MonadError Text, MonadReader Config, MonadIO)
+data MalError
+    = ReaderError Text -- ^ Error in Reader module
+    | EvalError Text   -- ^ Error in Eval or Core
+    | ThrownError AST  -- ^ From malThrow
+    deriving (Show)
+
+newtype Mal a = Mal { unMal :: ExceptT MalError (ReaderT Config IO) a }
+    deriving (Functor, Applicative, Monad, MonadError MalError, MonadReader Config, MonadIO)
 
 -- | Configuration for the program
 newtype Config = Config
   { configDebug :: Bool -- ^ Should we show debug information
   }
+
+-- -- | Exception type used by try*/catch* and throw
+-- data MalException = MalException AST deriving (Show)
+-- instance Exception MalException

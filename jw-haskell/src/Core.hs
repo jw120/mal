@@ -18,7 +18,6 @@ module Core
 where
 
 import           Control.Monad.Except
-
 import           Data.IORef
 import           Data.Map                       ( Map )
 import qualified Data.Text                     as T
@@ -31,6 +30,7 @@ import           Types                          ( AST(..)
                                                 , Text
                                                 , astEquality
                                                 , extractInt
+                                                , MalError(..)
                                                 )
 import           Printer                        ( malFormat )
 import           Reader                         ( malRead )
@@ -42,7 +42,10 @@ prelude :: [Text]
 prelude =
   [ "(def! not (fn* (a) (if a false true)))"
   , "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\\nnil)\"))))))"
-  , "(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) (cons 'cond (rest (rest xs)))))))"
+  , "(defmacro! cond (fn* (& xs) " <>
+        "(if (> (count xs) 0) " <>
+            "(list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) " <>
+            "(cons 'cond (rest (rest xs)))))))"
   ]
 
 -- | Core name space which holds all of our built-ins, takes top-level REPL environment for eval
@@ -78,6 +81,7 @@ nameSpace envRef = M.fromList
   , ("nth"        , ASTFunc False nth)
   , ("first"      , ASTFunc False first)
   , ("rest"       , ASTFunc False rest)
+  , ("throw"      , ASTFunc False malThrow)
   ]
 
 
@@ -87,9 +91,9 @@ addition asts = do
   return $ ASTInt (sum xs)
 
 subtraction :: [AST] -> Mal AST
-subtraction [] = throwError "Arugment error: at least one argument required"
+subtraction [] = throwError $ EvalError "Argument error: at least one argument required"
 subtraction [ASTInt i] = return (ASTInt (-i))
-subtraction [_       ] = throwError "Type error: integer expected"
+subtraction [_       ] = throwError $ EvalError "Type error: integer expected"
 subtraction (hd : tl ) = do
   hd' <- extractInt hd
   tl' <- mapM extractInt tl
@@ -101,23 +105,23 @@ multiplication asts = do
   return $ ASTInt (product xs)
 
 division :: [AST] -> Mal AST
-division [] = throwError "Arugment error: at least one argument required"
+division [] = throwError $ EvalError "Arugment error: at least one argument required"
 division [ASTInt _] =
-  throwError "Arugment error: at least one argument required"
-division [_      ] = throwError "Type error: integer expected"
+  throwError $ EvalError "Arugment error: at least one argument required"
+division [_      ] = throwError $ EvalError "Type error: integer expected"
 division (hd : tl) = do
   hd' <- extractInt hd
   tl' <- mapM extractInt tl
   hd' `safeDiv` product tl'
 
 safeDiv :: Int -> Int -> Mal AST
-safeDiv _ 0 = throwError "Division by zero error"
+safeDiv _ 0 = throwError $ EvalError "Division by zero error"
 safeDiv i j = return . ASTInt $ i `div` j
 
 -- Helper function to convert <, > etc into the correct format
 binaryIntOp :: (Int -> Int -> Bool) -> [AST] -> Mal AST
-binaryIntOp _ []  = throwError "Expecting two arguments"
-binaryIntOp _ [_] = throwError "Expecting two arguments"
+binaryIntOp _ []  = throwError $ EvalError "Expecting two arguments"
+binaryIntOp _ [_] = throwError $ EvalError "Expecting two arguments"
 binaryIntOp op (ASTInt a : ASTInt b : _) | a `op` b  = return ASTTrue
                                          | otherwise = return ASTFalse
 binaryIntOp _ _ = return ASTFalse
@@ -140,8 +144,8 @@ emptyTest (ASTVector [] : _) = return ASTTrue
 emptyTest _                  = return ASTFalse
 
 equality :: [AST] -> Mal AST
-equality []  = throwError "Expecting two arguments for equality testing"
-equality [_] = throwError "Expecting two arguments for equality testing"
+equality []  = throwError $ EvalError "Expecting two arguments for equality testing"
+equality [_] = throwError $ EvalError "Expecting two arguments for equality testing"
 equality (a : b : _) | a `astEquality` b = return ASTTrue
                      | otherwise         = return ASTFalse
 
@@ -174,41 +178,41 @@ printWithSpaces texts = do
 
 readString :: [AST] -> Mal AST
 readString [ASTStr s] = case malRead s of
-  Left  err        -> throwError err
+  Left  err        -> throwError $ EvalError err
   Right Nothing    -> return ASTNil
   Right (Just ast) -> return ast
-readString _ = throwError "Bad argument type for readString"
+readString _ = throwError $ EvalError "Bad argument type for readString"
 
 slurp :: [AST] -> Mal AST
 slurp [ASTStr fn] = do
   s <- liftIO . TIO.readFile $ T.unpack fn
   return $ ASTStr s
-slurp _ = throwError "Bad argument type for slurp"
+slurp _ = throwError $ EvalError "Bad argument type for slurp"
 
 replEval :: EnvRef -> [AST] -> Mal AST
 replEval replEnvRef [ast] = eval replEnvRef ast
-replEval _          _     = throwError "Bad argument for eval"
+replEval _          _     = throwError $ EvalError "Bad argument for eval"
 
 atom :: [AST] -> Mal AST
 atom [ast] = do
   ref <- liftIO $ newIORef ast
   return $ ASTAtom ref
-atom _ = throwError "Bad arguments for atom"
+atom _ = throwError $ EvalError "Bad arguments for atom"
 
 atomTest :: [AST] -> Mal AST
 atomTest [ASTAtom _] = return ASTTrue
 atomTest [_        ] = return ASTFalse
-atomTest _           = throwError "Bad arguments for atom?"
+atomTest _           = throwError $ EvalError "Bad arguments for atom?"
 
 deref :: [AST] -> Mal AST
 deref [ASTAtom ref] = liftIO $ readIORef ref
-deref _             = throwError "Bad arguments for deref"
+deref _             = throwError $ EvalError "Bad arguments for deref"
 
 reset :: [AST] -> Mal AST
 reset [ASTAtom ref, val] = do
   liftIO $ writeIORef ref val
   return val
-reset _ = throwError "Bad arguments for reset"
+reset _ = throwError $ EvalError "Bad arguments for reset"
 
 swap :: EnvRef -> [AST] -> Mal AST
 swap envRef (ASTAtom ref : ASTFunc False func : args) = do
@@ -216,12 +220,12 @@ swap envRef (ASTAtom ref : ASTFunc False func : args) = do
   val' <- eval envRef $ ASTList (ASTFunc False func : val : args)
   liftIO $ writeIORef ref val'
   return val'
-swap _ _ = throwError "Bad arguments for swap"
+swap _ _ = throwError $ EvalError "Bad arguments for swap"
 
 cons :: [AST] -> Mal AST
 cons [ast, ASTList xs  ] = return $ ASTList (ast : xs)
 cons [ast, ASTVector xs] = return $ ASTList (ast : xs)
-cons _                   = throwError "Bad arguments for cons"
+cons _                   = throwError $ EvalError "Bad arguments for cons"
 
 malConcat :: [AST] -> Mal AST
 malConcat (ASTList xs : ASTList ys : zs) = malConcat (ASTList (xs ++ ys) : zs)
@@ -234,15 +238,15 @@ malConcat (ASTVector xs : ASTVector ys : zs) =
 malConcat [ASTList   xs] = return $ ASTList xs
 malConcat [ASTVector xs] = return $ ASTList xs
 malConcat []             = return $ ASTList []
-malConcat _              = throwError "Bad arguments for concat"
+malConcat _              = throwError $ EvalError "Bad arguments for concat"
 
 
 nth :: [AST] -> Mal AST
 nth [ASTList ys, ASTInt i] | i >= 0 && i < length ys = return $ ys !! i
-                           | otherwise = throwError "Bad argument in nth"
+                           | otherwise = throwError $ EvalError "Bad argument in nth"
 nth [ASTVector ys, ASTInt i] | i >= 0 && i < length ys = return $ ys !! i
-                             | otherwise = throwError "Bad argument in nth"
-nth _ = throwError "Bad arguments for nth"
+                             | otherwise = throwError $ EvalError "Bad argument in nth"
+nth _ = throwError $ EvalError "Bad arguments for nth"
 
 first :: [AST] -> Mal AST
 first [ASTList   (x : _)] = return x
@@ -250,7 +254,7 @@ first [ASTList   []     ] = return ASTNil
 first [ASTVector (x : _)] = return x
 first [ASTVector []     ] = return ASTNil
 first [ASTNil           ] = return ASTNil
-first _                   = throwError "Bad arguments for first"
+first _                   = throwError $ EvalError "Bad arguments for first"
 
 rest :: [AST] -> Mal AST
 rest [ASTList   (_ : ys)] = return $ ASTList ys
@@ -258,4 +262,8 @@ rest [ASTList   []      ] = return $ ASTList []
 rest [ASTVector (_ : ys)] = return $ ASTList ys
 rest [ASTVector []      ] = return $ ASTList []
 rest [ASTNil            ] = return $ ASTList []
-rest _                    = throwError "Bad arguments for rest"
+rest _                    = throwError $ EvalError "Bad arguments for rest"
+
+malThrow :: [AST] -> Mal AST
+malThrow [ast] = throwError $ ThrownError ast
+malThrow _ = throwError $ EvalError "Bad arguments for throw"

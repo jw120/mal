@@ -31,6 +31,7 @@ import           Types                          ( AST(..)
                                                 , Env(..)
                                                 , EnvRef
                                                 , Mal(..)
+                                                , MalError(..)
                                                 , Text
                                                 )
 
@@ -65,7 +66,7 @@ get envRef sym = do
   maybeVal <- safeGet envRef sym
   case maybeVal of
     Just a  -> return a
-    Nothing -> throwError $ "Symbol '" <> sym <> "' not found in environment"
+    Nothing -> throwError . EvalError $ "Symbol '" <> sym <> "' not found in environment"
 
 -- | lookup a in the enviroment state, returning a Maybe
 safeGet :: EnvRef -> Text -> Mal (Maybe AST)

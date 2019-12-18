@@ -30,12 +30,13 @@ import qualified Core
 import qualified Env
 import           Eval                           ( eval )
 import           Types                          ( Mal(..)
+                                                , MalError(..)
                                                 , EnvRef
                                                 , AST(..)
                                                 , Text
                                                 , Config(..)
                                                 )
-import           Printer                        ( malPrint )
+import           Printer                        ( malFormat, malPrint )
 import           Reader                         ( malRead )
 
 
@@ -105,8 +106,15 @@ rep envRef quiet src = case malRead src of
   Left  readError  -> liftIO $ TIO.putStrLn ("Read error: " <> readError)
   Right Nothing    -> return ()
   Right (Just ast) -> do
-    val <- eval envRef ast `catchError` (\e -> return (ASTStr ("Error: " <> e)))
+    val <- eval envRef ast `catchError` handler
     if quiet then return () else malPrint val
+
+handler :: MalError -> Mal AST
+handler (ReaderError t) = return . ASTStr $ "Reader Error: " <> t
+handler (EvalError t) = return . ASTStr $ "Evaluation Error: " <> t
+handler (ThrownError e) = do
+    e' <- liftIO $ malFormat True e
+    return . ASTStr $ "Uncaught Error: " <> e'
 
 -- repl - iterate rep repeatedly
 repl :: EnvRef -> Mal ()
