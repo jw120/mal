@@ -59,11 +59,10 @@ pExpr :: Parser AST
 pExpr = spaceConsumer *> M.choice
   [ pIntLiteral -- begins with a digit
   , M.try pNegIntLiteral  -- use try as need to backtrack if we match the '-'
-  , M.try pSpecialLit -- use try as need to backtrack if we match 'n' etc
   , pStringLiteral -- begins with a double-quote
   , pReaderMacro -- begins with a special character
   , pKeyword -- begins with a colon
-  , pNormalSymbol -- begins with a non-special character
+  , pSymbolOrSpecialLit -- begins with a non-special character
   , pList -- begins with a paren
   , pVector -- begings with a square bracket
   , pMap -- begings with a curly bracket
@@ -76,11 +75,6 @@ pIntLiteral = ASTInt <$> lexeme ML.decimal -- (ML.signed spaceConsumer ML.decima
 -- | Parse a negative integer literal (a minus sign followed without spaces by a decimal)
 pNegIntLiteral :: Parser AST
 pNegIntLiteral = ASTInt . (\x -> -x) <$> lexeme (MC.char '-' *> ML.decimal)
-
--- | Parse a special literial (nil, true or false)
-pSpecialLit :: Parser AST
-pSpecialLit = M.choice
-  [ASTNil <$ symbol "nil", ASTTrue <$ symbol "true", ASTFalse <$ symbol "false"]
 
 -- | Parse a string literal
 pStringLiteral :: Parser AST
@@ -101,10 +95,15 @@ pReaderMacro = M.choice
   <*> pExpr
   ]
 
--- | Parse a normal symbol (a series of non-special characters)
-pNormalSymbol :: Parser AST
-pNormalSymbol = ASTSym . T.pack <$> lexeme (M.some (M.satisfy isNormal))
-  where isNormal c = not (isSpace c) && c `notElem` ("[]{}()'`~^@" :: String)
+-- | Parse a normal symbol (a series of non-special characters) catching special lits
+pSymbolOrSpecialLit :: Parser AST
+pSymbolOrSpecialLit = toSym <$> lexeme (M.some (M.satisfy isNormal))
+  where
+    isNormal c = not (isSpace c) && c `notElem` ("[]{}()'`~^@" :: String)
+    toSym "nil" = ASTNil
+    toSym "true" = ASTTrue
+    toSym "false" = ASTFalse
+    toSym s = ASTSym $ T.pack s
 
 -- | Parse a keyword (a colon followed by a series of non-special characters)
 pKeyword :: Parser AST
