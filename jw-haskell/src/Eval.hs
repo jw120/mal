@@ -40,9 +40,8 @@ eval envRef ast = do
     ASTList listArgs -> do
       expansion <- macroExpand envRef (ASTList listArgs)
       case expansion of
-        ASTList expansionListArgs -> do
-          apply envRef expansionListArgs
-        otherAst -> evalAst envRef otherAst
+        ASTList expansionListArgs -> apply envRef expansionListArgs
+        otherAst                  -> evalAst envRef otherAst
     _ -> evalAst envRef ast
 
 -- Helper function for eval for non-lists
@@ -60,128 +59,135 @@ evalAst envRef ast = do
 -- | Helper function apply to handle lists (mainly special forms)
 apply :: EnvRef -> [AST] -> Mal AST
 apply envRef astList = do
-    Debug.printInfo "apply" envRef $ ASTList astList
-    case astList of
+  Debug.printInfo "apply" envRef $ ASTList astList
+  case astList of
 
-        -- Special form: def!
-        [ASTSym "def!", ASTSym sym, val] -> do
-            val' <- eval envRef val
-            Env.set envRef sym val'
-            return val'
-        (ASTSym "def!" : _) -> throwString "Bad syntax in def! special form"
+      -- Special form: def!
+    [ASTSym "def!", ASTSym sym, val] -> do
+      val' <- eval envRef val
+      Env.set envRef sym val'
+      return val'
+    (ASTSym "def!" : _) -> throwString "Bad syntax in def! special form"
 
-        -- Special form: defmacro!
-        [ASTSym "defmacro!", ASTSym sym, fnBody] -> do
-            fn <- eval envRef fnBody
-            case fn of
-                ASTFunc _ f -> do
-                    let macro = ASTFunc True f
-                    Env.set envRef sym macro
-                    return macro
-                _ -> throwString "Expected a function in defmacro!"
-        (ASTSym "defmacro!" : _) -> throwString "Bad syntax in defmacro! special form"
+    -- Special form: defmacro!
+    [ASTSym "defmacro!", ASTSym sym, fnBody] -> do
+      fn <- eval envRef fnBody
+      case fn of
+        ASTFunc _ f -> do
+          let macro = ASTFunc True f
+          Env.set envRef sym macro
+          return macro
+        _ -> throwString "Expected a function in defmacro!"
+    (ASTSym "defmacro!" : _) ->
+      throwString "Bad syntax in defmacro! special form"
 
-        -- Special form: do
-        [ASTSym "do"] -> throwString "No arguments for do special form"
-        (ASTSym "do" : args) -> last <$> mapM (eval envRef) args
+    -- Special form: do
+    [ASTSym "do"] -> throwString "No arguments for do special form"
+    (ASTSym "do" : args) -> last <$> mapM (eval envRef) args
 
-        -- Special form: fn*
-        [ASTSym "fn*", ASTList binds, body] -> do
-            binds' <- mapM extractSym binds
-            return . ASTFunc False $ closure binds'
-              where
-                closure :: [Text] -> [AST] -> Mal AST
-                closure bindNames args = do
-                    subEnvRef <- Env.new envRef
-                    addBindingLists subEnvRef bindNames args
-                    Debug.printInfo "closure" subEnvRef body
-                    eval subEnvRef body
-                -- Add bindings to the environment as two lists (a b) (2 3), catches clojure-style "&"
-                addBindingLists :: EnvRef -> [Text] -> [AST] -> Mal ()
-                addBindingLists e ["&", symVariadic] valVariadic = do
-                    Env.set e symVariadic (ASTList valVariadic)
-                    return ()
-                addBindingLists e (sym : symRest) (val : valRest) = do
-                    Env.set e sym val
-                    addBindingLists e symRest valRest
-                addBindingLists _ [] [] = return ()
-                addBindingLists _ _  _  = throwString "Unexpected value in add Bindings"
-        [ASTSym "fn*", ASTVector binds, body] -> apply envRef [ASTSym "fn*", ASTList binds, body]
-        (ASTSym "fn*" : _) -> throwString "Bad syntax in fn* special form"
+    -- Special form: fn*
+    [ASTSym "fn*", ASTList binds, body] -> do
+      binds' <- mapM extractSym binds
+      return . ASTFunc False $ closure binds'
+     where
+      closure :: [Text] -> [AST] -> Mal AST
+      closure bindNames args = do
+        subEnvRef <- Env.new envRef
+        addBindingLists subEnvRef bindNames args
+        Debug.printInfo "closure" subEnvRef body
+        eval subEnvRef body
+      -- Add bindings to the environment as two lists (a b) (2 3), catches clojure-style "&"
+      addBindingLists :: EnvRef -> [Text] -> [AST] -> Mal ()
+      addBindingLists e ["&", symVariadic] valVariadic = do
+        Env.set e symVariadic (ASTList valVariadic)
+        return ()
+      addBindingLists e (sym : symRest) (val : valRest) = do
+        Env.set e sym val
+        addBindingLists e symRest valRest
+      addBindingLists _ [] [] = return ()
+      addBindingLists _ _  _  = throwString "Unexpected value in add Bindings"
+    [ASTSym "fn*", ASTVector binds, body] ->
+      apply envRef [ASTSym "fn*", ASTList binds, body]
+    (ASTSym "fn*" : _) -> throwString "Bad syntax in fn* special form"
 
-        -- Special form: if
-        [ASTSym "if", condArg, thenArg, elseArg] -> do
-            condVal <- eval envRef condArg
-            case condVal of
-                ASTNil   -> eval envRef elseArg
-                ASTFalse -> eval envRef elseArg
-                _        -> eval envRef thenArg
-        [ASTSym "if", condArg, thenArg] -> apply envRef [ASTSym "if", condArg, thenArg, ASTNil]
-        (ASTSym "if" : _) -> throwString "Bad syntax in if special form"
+    -- Special form: if
+    [ASTSym "if", condArg, thenArg, elseArg] -> do
+      condVal <- eval envRef condArg
+      case condVal of
+        ASTNil   -> eval envRef elseArg
+        ASTFalse -> eval envRef elseArg
+        _        -> eval envRef thenArg
+    [ASTSym "if", condArg, thenArg] ->
+      apply envRef [ASTSym "if", condArg, thenArg, ASTNil]
+    (ASTSym "if" : _) -> throwString "Bad syntax in if special form"
 
-        -- Special form: let*
-        [ASTSym "let*", ASTList bindings, val] -> do
-            subEnvRef <- Env.new envRef
-            addBindings subEnvRef bindings
-            eval subEnvRef val
-              where
-                addBindings :: EnvRef -> [AST] -> Mal ()
-                addBindings e (ASTSym s : v : rest) = do
-                    v' <- eval e v
-                    Env.set e s v'
-                    addBindings e rest
-                addBindings _ [] = return ()
-                addBindings _ _  = throwString "Unexpected value in bindings in let*"
-        [ASTSym "let*", ASTVector bindings, val] -> apply envRef [ASTSym "let*", ASTList bindings, val]
-        (ASTSym "let*" : _) -> throwString "Bad syntax in let* special form"
+    -- Special form: let*
+    [ASTSym "let*", ASTList bindings, val] -> do
+      subEnvRef <- Env.new envRef
+      addBindings subEnvRef bindings
+      eval subEnvRef val
+     where
+      addBindings :: EnvRef -> [AST] -> Mal ()
+      addBindings e (ASTSym s : v : rest) = do
+        v' <- eval e v
+        Env.set e s v'
+        addBindings e rest
+      addBindings _ [] = return ()
+      addBindings _ _  = throwString "Unexpected value in bindings in let*"
+    [ASTSym "let*", ASTVector bindings, val] ->
+      apply envRef [ASTSym "let*", ASTList bindings, val]
+    (ASTSym "let*" : _)         -> throwString "Bad syntax in let* special form"
 
-        -- Special form: macroexpand
-        [ASTSym "macroexpand", ast] -> macroExpand envRef ast
-        (ASTSym "macroexpand" : _) -> throwString "Bad syntax in macroexpand special form"
+    -- Special form: macroexpand
+    [ASTSym "macroexpand", ast] -> macroExpand envRef ast
+    (ASTSym "macroexpand" : _) ->
+      throwString "Bad syntax in macroexpand special form"
 
-        -- Special form: quote
-        [ASTSym "quote", val] -> return val
-        (ASTSym "quote" : _) -> throwString "Bad syntax in quote special form"
+    -- Special form: quote
+    [ASTSym "quote", val]      -> return val
+    (ASTSym "quote" : _)       -> throwString "Bad syntax in quote special form"
 
-        -- Special form: quasi-quote
-        [ASTSym "quasiquote", ast] -> eval envRef $ quasiQuote ast
-          where
-            quasiQuote :: AST -> AST
-            quasiQuote (ASTList [ASTSym "unquote", x]) = x
-            quasiQuote (ASTList (ASTList [ASTSym "splice-unquote", x] : ys)) =
-                concatQ x ys
-            quasiQuote (ASTList (ASTVector [ASTSym "splice-unquote", x] : ys)) =
-                concatQ x ys
-            quasiQuote (ASTList   (x : ys)) = consQQ x ys
-            quasiQuote (ASTVector (x : ys)) = consQQ x ys
-            quasiQuote x                    = ASTList [ASTSym "quote", x]
-            concatQ x ys = ASTList [ASTSym "concat", x, quasiQuote (ASTList ys)]
-            consQQ x ys = ASTList [ASTSym "cons", quasiQuote x, quasiQuote (ASTList ys)]
-        (ASTSym "quasiquote" : _) -> throwString "Bad syntax in quasiquote special form"
+    -- Special form: quasi-quote
+    [ASTSym "quasiquote", ast] -> eval envRef $ quasiQuote ast
+     where
+      quasiQuote :: AST -> AST
+      quasiQuote (ASTList [ASTSym "unquote", x]) = x
+      quasiQuote (ASTList (ASTList [ASTSym "splice-unquote", x] : ys)) =
+        concatQ x ys
+      quasiQuote (ASTList (ASTVector [ASTSym "splice-unquote", x] : ys)) =
+        concatQ x ys
+      quasiQuote (ASTList   (x : ys)) = consQQ x ys
+      quasiQuote (ASTVector (x : ys)) = consQQ x ys
+      quasiQuote x                    = ASTList [ASTSym "quote", x]
+      concatQ x ys = ASTList [ASTSym "concat", x, quasiQuote (ASTList ys)]
+      consQQ x ys =
+        ASTList [ASTSym "cons", quasiQuote x, quasiQuote (ASTList ys)]
+    (ASTSym "quasiquote" : _) ->
+      throwString "Bad syntax in quasiquote special form"
 
-        -- Special form: try*/catch*
-        [ASTSym "try*", ast, ASTList[ASTSym "catch*", ASTSym exceptionVar, catchVal]] -> do
-            eval envRef ast `catchError` handler
-          where
-            handler :: MalError -> Mal AST
-            handler (MalError e) = do
-                subEnvRef <- Env.new envRef
-                Env.set subEnvRef exceptionVar e
-                eval subEnvRef catchVal
-        (ASTSym "try*" : _) -> throwString "Bad try* syntax"
-        (ASTSym "catch*" : _) -> throwString "Bad catch* syntax"
+    -- Special form: try*/catch*
+    [ASTSym "try*", ast, ASTList [ASTSym "catch*", ASTSym exceptionVar, catchVal]]
+      -> eval envRef ast `catchError` handler
+     where
+      handler :: MalError -> Mal AST
+      handler (MalError e) = do
+        subEnvRef <- Env.new envRef
+        Env.set subEnvRef exceptionVar e
+        eval subEnvRef catchVal
+    (ASTSym "try*"   : _   ) -> throwString "Bad try* syntax"
+    (ASTSym "catch*" : _   ) -> throwString "Bad catch* syntax"
 
-        -- If not a special form, then apply for a non-empty list
-        (func : args) -> do
-            func' <- eval envRef func
-            case func' of
-                ASTFunc _ f -> do
-                    args' <- mapM (eval envRef) args
-                    f args'
-                _ -> throwString "Not a function"
+    -- If not a special form, then apply for a non-empty list
+    (func            : args) -> do
+      func' <- eval envRef func
+      case func' of
+        ASTFunc _ f -> do
+          args' <- mapM (eval envRef) args
+          f args'
+        _ -> throwString "Not a function"
 
-        -- Empty list should not be passed into apply, but catch just in case
-        [] -> throwString "Unexpected empty list in apply"
+    -- Empty list should not be passed into apply, but catch just in case
+    [] -> throwString "Unexpected empty list in apply"
 
 -- Helper function to macro-expand an argument
 macroExpand :: EnvRef -> AST -> Mal AST
@@ -190,7 +196,7 @@ macroExpand envRef ast@(ASTList (ASTSym s : otherArgs)) = do
   case val of
     Just (ASTFunc True macroFn) -> do
       Debug.printInfo "macroExpanding" envRef ast
-      retVal <- macroFn otherArgs
+      retVal   <- macroFn otherArgs
       expanded <- macroExpand envRef retVal
       Debug.printInfo "macroExpanded" envRef expanded
       return expanded

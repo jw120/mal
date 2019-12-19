@@ -36,7 +36,9 @@ import           Types                          ( Mal(..)
                                                 , Text
                                                 , Config(..)
                                                 )
-import           Printer                        ( malFormat, malPrint )
+import           Printer                        ( malFormat
+                                                , malPrint
+                                                )
 import           Reader                         ( malRead )
 
 
@@ -111,8 +113,8 @@ rep envRef quiet src = case malRead src of
 
 handler :: MalError -> Mal AST
 handler (MalError e) = do
-    e' <- liftIO $ malFormat True e
-    return . ASTStr $ "Uncaught Exception: " <> e'
+  e' <- liftIO $ malFormat True e
+  return . ASTStr $ "Uncaught Exception: " <> e'
 
 -- repl - iterate rep repeatedly
 repl :: EnvRef -> Mal ()

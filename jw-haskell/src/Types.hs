@@ -105,12 +105,6 @@ data Env = Env
   , envOuter :: Maybe Env    -- ^ Outer environment for lookup when not in our table
   } deriving (Show, Eq)
 
--- data MalError
---     = ReaderError Text -- ^ Error in Reader module
---     | EvalError Text   -- ^ Error in Eval or Core
---     | ThrownError AST  -- ^ From malThrow
---     deriving (Show)
-
 -- | Errors/exceptions caught in an ExceptT (=Either) monad
 newtype MalError = MalError AST
 
@@ -125,7 +119,3 @@ newtype Mal a = Mal { unMal :: ExceptT MalError (ReaderT Config IO) a }
 newtype Config = Config
   { configDebug :: Bool -- ^ Should we show debug information
   }
-
--- -- | Exception type used by try*/catch* and throw
--- data MalException = MalException AST deriving (Show)
--- instance Exception MalException

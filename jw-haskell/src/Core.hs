@@ -43,10 +43,10 @@ prelude :: [Text]
 prelude =
   [ "(def! not (fn* (a) (if a false true)))"
   , "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\\nnil)\"))))))"
-  , "(defmacro! cond (fn* (& xs) " <>
-        "(if (> (count xs) 0) " <>
-            "(list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) " <>
-            "(cons 'cond (rest (rest xs)))))))"
+  , "(defmacro! cond (fn* (& xs) "
+    <> "(if (> (count xs) 0) "
+    <> "(list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) "
+    <> "(cons 'cond (rest (rest xs)))))))"
   ]
 
 -- | Core name space which holds all of our built-ins, takes top-level REPL environment for eval
@@ -243,8 +243,9 @@ malConcat _              = throwString "Bad arguments for concat"
 
 
 nth :: [AST] -> Mal AST
-nth [ASTList ys, ASTInt i] | i >= 0 && i < length ys = return $ ys !! i
-                           | otherwise = throwString "Argument out of bounds in nth"
+nth [ASTList ys, ASTInt i]
+  | i >= 0 && i < length ys = return $ ys !! i
+  | otherwise               = throwString "Argument out of bounds in nth"
 nth [ASTVector ys, ASTInt i] | i >= 0 && i < length ys = return $ ys !! i
                              | otherwise = throwString "Bad argument in nth"
 nth _ = throwString "Bad arguments for nth"
@@ -267,4 +268,4 @@ rest _                    = throwString "Bad arguments for rest"
 
 malThrow :: [AST] -> Mal AST
 malThrow [ast] = throwError $ MalError ast
-malThrow _ = throwString "Bad arguments for throw"
+malThrow _     = throwString "Bad arguments for throw"
