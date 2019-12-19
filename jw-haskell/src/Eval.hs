@@ -174,7 +174,7 @@ apply envRef astList = do
         subEnvRef <- Env.new envRef
         Env.set subEnvRef exceptionVar e
         eval subEnvRef catchVal
-    [ASTSym "try*", ast] -> eval envRef ast -- try* without a catch just does eval
+    [ASTSym "try*", ast]     -> eval envRef ast -- try* without a catch just does eval
     (ASTSym "try*"   : _   ) -> throwString "Bad try* syntax"
     (ASTSym "catch*" : _   ) -> throwString "Bad catch* syntax"
 

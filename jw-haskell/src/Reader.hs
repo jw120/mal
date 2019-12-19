@@ -19,6 +19,12 @@ https://markkarpov.com/tutorial/megaparsec.html#lexing
 
 module Reader
   ( malRead
+  , pMap
+  , pExpr
+  , pKeyword'
+  , pStringLiteral'
+  , parseTest
+  , pack
   )
 where
 
@@ -32,6 +38,8 @@ import qualified Data.Text                     as T
 import qualified Text.Megaparsec               as M
 import qualified Text.Megaparsec.Char          as MC
 import qualified Text.Megaparsec.Char.Lexer    as ML
+import           Text.Megaparsec                ( parseTest )
+import           Data.Text                      ( pack )
 
 import           Types                          ( AST(..)
                                                 , magicKeywordPrefix
@@ -81,7 +89,10 @@ pStringLiteral :: Parser AST
 pStringLiteral = ASTStr <$> pStringLiteral'
 pStringLiteral' :: Parser Text
 pStringLiteral' =
-  T.pack <$> (MC.char '\"' *> M.manyTill ML.charLiteral (MC.char '\"'))
+  T.pack
+    <$> (  (MC.char '\"' *> M.manyTill ML.charLiteral (MC.char '\"'))
+        <* spaceConsumer
+        )
 
 pReaderMacro :: Parser AST
 pReaderMacro = M.choice
@@ -98,12 +109,12 @@ pReaderMacro = M.choice
 -- | Parse a normal symbol (a series of non-special characters) catching special lits
 pSymbolOrSpecialLit :: Parser AST
 pSymbolOrSpecialLit = toSym <$> lexeme (M.some (M.satisfy isNormal))
-  where
-    isNormal c = not (isSpace c) && c `notElem` ("[]{}()'`~^@" :: String)
-    toSym "nil" = ASTNil
-    toSym "true" = ASTTrue
-    toSym "false" = ASTFalse
-    toSym s = ASTSym $ T.pack s
+ where
+  isNormal c = not (isSpace c) && c `notElem` ("[]{}()'`~^@" :: String)
+  toSym "nil"   = ASTNil
+  toSym "true"  = ASTTrue
+  toSym "false" = ASTFalse
+  toSym s       = ASTSym $ T.pack s
 
 -- | Parse a keyword (a colon followed by a series of non-special characters)
 pKeyword :: Parser AST
@@ -131,7 +142,7 @@ pMap = ASTMap . Data.Map.fromList <$> parens (M.many pMapPair)
  where
   parens = M.between (symbol "{") (symbol "}")
   pMapPair :: Parser (Text, AST)
-  pMapPair = (,) <$> (pStringLiteral' <|> pKeyword') <*> pExpr
+  pMapPair = (,) <$> (M.try (pKeyword' <|> pStringLiteral')) <*> pExpr
 
 -- | Helper parser - space consumer that eats spaces, commas and comments
 spaceConsumer :: Parser ()

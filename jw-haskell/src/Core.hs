@@ -53,57 +53,57 @@ prelude =
 -- | Core name space which holds all of our built-ins, takes top-level REPL environment for eval
 nameSpace :: EnvRef -> Map Text AST
 nameSpace envRef = M.fromList
-  [ ("+"           , ASTFunc False addition)
-  , ("-"           , ASTFunc False subtraction)
-  , ("*"           , ASTFunc False multiplication)
-  , ("/"           , ASTFunc False division)
-  , ("list"        , ASTFunc False list)
-  , ("count"       , ASTFunc False count)
-  , ("empty?"      , ASTFunc False emptyTest)
-  , ("list?"       , ASTFunc False listTest)
-  , ("="           , ASTFunc False equality)
-  , (">"           , ASTFunc False (binaryIntOp (>)))
-  , (">="          , ASTFunc False (binaryIntOp (>=)))
-  , ("<"           , ASTFunc False (binaryIntOp (<)))
-  , ("<="          , ASTFunc False (binaryIntOp (<=)))
-  , ("pr-str"      , ASTFunc False prStr)
-  , ("str"         , ASTFunc False str)
-  , ("prn"         , ASTFunc False prn)
-  , ("println"     , ASTFunc False println)
-  , ("read-string" , ASTFunc False readString)
-  , ("slurp"       , ASTFunc False slurp)
-  , ("eval"        , ASTFunc False (replEval envRef))
-  , ("atom"        , ASTFunc False atom)
-  , ("atom?"       , ASTFunc False atomTest)
-  , ("deref"       , ASTFunc False deref)
-  , ("reset!"      , ASTFunc False reset)
-  , ("swap!"       , ASTFunc False (swap envRef))
-  , ("cons"        , ASTFunc False cons)
-  , ("concat"      , ASTFunc False malConcat)
-  , ("nth"         , ASTFunc False nth)
-  , ("first"       , ASTFunc False first)
-  , ("rest"        , ASTFunc False rest)
-  , ("throw"       , ASTFunc False malThrow)
-  , ("apply"       , ASTFunc False apply)
-  , ("map"         , ASTFunc False malMap)
-  , ("nil?"        , ASTFunc False $ malIs ASTNil)
-  , ("true?"       , ASTFunc False $ malIs ASTTrue)
-  , ("false?"      , ASTFunc False $ malIs ASTFalse)
-  , ("symbol?"     , ASTFunc False symbolTest)
-  , ("symbol"      , ASTFunc False symbol)
-  , ("keyword"     , ASTFunc False keyword)
-  , ("keyword?"    , ASTFunc False keywordTest)
-  , ("vector"      , ASTFunc False vector)
-  , ("vector?"     , ASTFunc False vectorTest)
-  , ("sequential?" , ASTFunc False sequentialTest)
-  , ("hash-map"    , ASTFunc False hashMap)
-  , ("map?"        , ASTFunc False mapTest)
-  , ("assoc"       , ASTFunc False assoc)
-  , ("dissoc"      , ASTFunc False dissoc)
-  , ("get"         , ASTFunc False get)
-  , ("contains?"   , ASTFunc False containsTest)
-  , ("keys"        , ASTFunc False keys)
-  , ("vals"        , ASTFunc False vals)
+  [ ("+"          , ASTFunc False addition)
+  , ("-"          , ASTFunc False subtraction)
+  , ("*"          , ASTFunc False multiplication)
+  , ("/"          , ASTFunc False division)
+  , ("list"       , ASTFunc False list)
+  , ("count"      , ASTFunc False count)
+  , ("empty?"     , ASTFunc False emptyTest)
+  , ("list?"      , ASTFunc False listTest)
+  , ("="          , ASTFunc False equality)
+  , (">"          , ASTFunc False (binaryIntOp (>)))
+  , (">="         , ASTFunc False (binaryIntOp (>=)))
+  , ("<"          , ASTFunc False (binaryIntOp (<)))
+  , ("<="         , ASTFunc False (binaryIntOp (<=)))
+  , ("pr-str"     , ASTFunc False prStr)
+  , ("str"        , ASTFunc False str)
+  , ("prn"        , ASTFunc False prn)
+  , ("println"    , ASTFunc False println)
+  , ("read-string", ASTFunc False readString)
+  , ("slurp"      , ASTFunc False slurp)
+  , ("eval"       , ASTFunc False (replEval envRef))
+  , ("atom"       , ASTFunc False atom)
+  , ("atom?"      , ASTFunc False atomTest)
+  , ("deref"      , ASTFunc False deref)
+  , ("reset!"     , ASTFunc False reset)
+  , ("swap!"      , ASTFunc False (swap envRef))
+  , ("cons"       , ASTFunc False cons)
+  , ("concat"     , ASTFunc False malConcat)
+  , ("nth"        , ASTFunc False nth)
+  , ("first"      , ASTFunc False first)
+  , ("rest"       , ASTFunc False rest)
+  , ("throw"      , ASTFunc False malThrow)
+  , ("apply"      , ASTFunc False apply)
+  , ("map"        , ASTFunc False malMap)
+  , ("nil?"       , ASTFunc False $ malIs ASTNil)
+  , ("true?"      , ASTFunc False $ malIs ASTTrue)
+  , ("false?"     , ASTFunc False $ malIs ASTFalse)
+  , ("symbol?"    , ASTFunc False symbolTest)
+  , ("symbol"     , ASTFunc False symbol)
+  , ("keyword"    , ASTFunc False keyword)
+  , ("keyword?"   , ASTFunc False keywordTest)
+  , ("vector"     , ASTFunc False vector)
+  , ("vector?"    , ASTFunc False vectorTest)
+  , ("sequential?", ASTFunc False sequentialTest)
+  , ("hash-map"   , ASTFunc False hashMap)
+  , ("map?"       , ASTFunc False mapTest)
+  , ("assoc"      , ASTFunc False assoc)
+  , ("dissoc"     , ASTFunc False dissoc)
+  , ("get"        , ASTFunc False get)
+  , ("contains?"  , ASTFunc False containsTest)
+  , ("keys"       , ASTFunc False keys)
+  , ("vals"       , ASTFunc False vals)
   ]
 
 
@@ -292,13 +292,13 @@ malThrow [ast] = throwError $ MalError ast
 malThrow _     = throwString "Bad arguments for throw"
 
 apply :: [AST] -> Mal AST
-apply [ASTFunc False _] = throwString "No arguments to apply"
-apply (ASTFunc False fn : args) = case last args of
-        ASTList lastList -> fn $ init args ++ lastList
-        ASTVector lastList -> fn $ init args ++ lastList
-        _ -> throwString "Expected list as final argument for apply"
+apply [ASTFunc          False _   ] = throwString "No arguments to apply"
+apply (ASTFunc False fn :     args) = case last args of
+  ASTList   lastList -> fn $ init args ++ lastList
+  ASTVector lastList -> fn $ init args ++ lastList
+  _                  -> throwString "Expected list as final argument for apply"
 apply (ASTFunc True _ : _) = throwString "Attempt to apply a macro"
-apply _ = throwString "Bad arguments for apply"
+apply _                    = throwString "Bad arguments for apply"
 
 malMap :: [AST] -> Mal AST
 malMap [ASTFunc False fn, ASTList xs] = ASTList <$> mapM (\x -> fn [x]) xs
@@ -307,96 +307,94 @@ malMap [ASTFunc True _, ASTList _] = throwString "Attempt to map a macro"
 malMap _ = throwString "Bad arguments for map"
 
 malIs :: AST -> [AST] -> Mal AST
-malIs target [ast]
-    | target == ast = return ASTTrue
-    | otherwise = return ASTFalse
+malIs target [ast] | target == ast = return ASTTrue
+                   | otherwise     = return ASTFalse
 malIs _ _ = throwString "Expected one argument"
 
 symbolTest :: [AST] -> Mal AST
 symbolTest [ASTSym _] = return ASTTrue
-symbolTest [_] = return ASTFalse
-symbolTest _ = throwString "Expected one argument for symbol?"
+symbolTest [_       ] = return ASTFalse
+symbolTest _          = throwString "Expected one argument for symbol?"
 
 symbol :: [AST] -> Mal AST
 symbol [ASTStr s] = return $ ASTSym s
-symbol _ = throwString "Expected one string for symbol"
+symbol _          = throwString "Expected one string for symbol"
 
 keyword :: [AST] -> Mal AST
-keyword [ASTStr s]
-    | T.isPrefixOf magicKeywordPrefix s = return $ ASTStr s
-    | otherwise = return . ASTStr $ magicKeywordPrefix <> s
+keyword [ASTStr s] | T.isPrefixOf magicKeywordPrefix s = return $ ASTStr s
+                   | otherwise = return . ASTStr $ magicKeywordPrefix <> s
 keyword _ = throwString "Expected one string for keyword"
 
 keywordTest :: [AST] -> Mal AST
-keywordTest [ASTStr s]
-    | T.isPrefixOf magicKeywordPrefix s = return ASTTrue
-    | otherwise = return ASTFalse
+keywordTest [ASTStr s] | T.isPrefixOf magicKeywordPrefix s = return ASTTrue
+                       | otherwise                         = return ASTFalse
 keywordTest [_] = return ASTFalse
-keywordTest _ = throwString "Expected one argument for keyword?"
+keywordTest _   = throwString "Expected one argument for keyword?"
 
 vector :: [AST] -> Mal AST
 vector = return . ASTVector
 
 vectorTest :: [AST] -> Mal AST
 vectorTest [ASTVector _] = return ASTTrue
-vectorTest [_] = return ASTFalse
-vectorTest _ = throwString "Expected one argument for vector?"
+vectorTest [_          ] = return ASTFalse
+vectorTest _             = throwString "Expected one argument for vector?"
 
 sequentialTest :: [AST] -> Mal AST
-sequentialTest [ASTList _] = return ASTTrue
+sequentialTest [ASTList   _] = return ASTTrue
 sequentialTest [ASTVector _] = return ASTTrue
-sequentialTest [_] = return ASTFalse
+sequentialTest [_          ] = return ASTFalse
 sequentialTest _ = throwString "Expected one argument for sequential?"
 
 hashMap :: [AST] -> Mal AST
 hashMap xs = do
-    xs' <- alternatingToPairs xs
-    return . ASTMap $ M.fromList xs'
-  where
+  xs' <- alternatingToPairs xs
+  return . ASTMap $ M.fromList xs'
+ where
 
 -- Helper function
 alternatingToPairs :: [AST] -> Mal [(Text, AST)]
 alternatingToPairs (ASTStr a : b : cs) = do
-    cs' <- alternatingToPairs cs
-    return $ (a, b) : cs'
-alternatingToPairs (_ : _ : _ ) = throwString "Expected string or keyword for map associations"
-alternatingToPairs [_] = throwString "Expected even number of arguments for map associatons"
+  cs' <- alternatingToPairs cs
+  return $ (a, b) : cs'
+alternatingToPairs (_ : _ : _) =
+  throwString "Expected string or keyword for map associations"
+alternatingToPairs [_] =
+  throwString "Expected even number of arguments for map associatons"
 alternatingToPairs [] = return []
 
 mapTest :: [AST] -> Mal AST
 mapTest [ASTMap _] = return ASTTrue
-mapTest [_] = return ASTFalse
-mapTest _ = throwString "Expected one argument for map?"
+mapTest [_       ] = return ASTFalse
+mapTest _          = throwString "Expected one argument for map?"
 
 assoc :: [AST] -> Mal AST
 assoc (ASTMap m : newArgs) = do
-    newPairs <- alternatingToPairs newArgs
-    let newMap = M.fromList newPairs
-    return . ASTMap $ M.union newMap m
+  newPairs <- alternatingToPairs newArgs
+  let newMap = M.fromList newPairs
+  return . ASTMap $ M.union newMap m
 assoc _ = throwString "NYI"
 
 dissoc :: [AST] -> Mal AST
-dissoc (ASTMap m : ASTStr x : ys) = dissoc (ASTMap (M.delete x m) :  ys)
-dissoc [ASTMap m] = return $ ASTMap m
-dissoc _ = throwString "Bad arguments for dissoc"
+dissoc (ASTMap m : ASTStr x : ys) = dissoc (ASTMap (M.delete x m) : ys)
+dissoc [ASTMap m                ] = return $ ASTMap m
+dissoc _                          = throwString "Bad arguments for dissoc"
 
 get :: [AST] -> Mal AST
-get [ASTNil, ASTStr _] = return ASTNil
+get [ASTNil  , ASTStr _] = return ASTNil
 get [ASTMap m, ASTStr k] = case M.lookup k m of
-    Just v -> return v
-    Nothing -> return ASTNil
+  Just v  -> return v
+  Nothing -> return ASTNil
 get _ = throwString "Bad arguments for get"
 
 containsTest :: [AST] -> Mal AST
-containsTest [ASTMap m, ASTStr k]
-    | M.member k m = return ASTTrue
-    | otherwise = return ASTFalse
+containsTest [ASTMap m, ASTStr k] | M.member k m = return ASTTrue
+                                  | otherwise    = return ASTFalse
 containsTest _ = throwString "Bad arguments for get"
 
 keys :: [AST] -> Mal AST
 keys [ASTMap m] = return . ASTList . map ASTStr $ M.keys m
-keys _ = throwString "keys expects a hash-map"
+keys _          = throwString "keys expects a hash-map"
 
 vals :: [AST] -> Mal AST
 vals [ASTMap m] = return . ASTList $ M.elems m
-vals _ = throwString "vals expects a hash-map"
+vals _          = throwString "vals expects a hash-map"

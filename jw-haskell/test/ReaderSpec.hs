@@ -94,11 +94,14 @@ spec = do
     it "parses a normal alphabetic atom that starts with a special" $ do
       malRead "true?" `shouldBe` Right (Just (sym "true?"))
     it "parses a map literal with keyword keys" $ do
-        malRead "{:a 1 :b 2}" `shouldBe` Right (Just (m [(kwText "a", i 1), (kwText "b", i 2)]))
+      malRead "{:a 1 :b 2}"
+        `shouldBe` Right (Just (m [(kwText "a", i 1), (kwText "b", i 2)]))
     it "parses a map literal with string keys" $ do
-        malRead "{\"aa\" 1 \"ab\" 2}" `shouldBe` Right (Just (m [("aa", i 1), ("ab", i 2)]))
-    it "parses a map literal with  values" $ do
-        malRead "{:aa \"QQ\" :ab \"!!\"}" `shouldBe` Right (Just (m [(kwText "aa", s "QQ"), (kwText "ab", s "!!")]))
+      malRead "{\"aa\" 1 \"ab\" 2}"
+        `shouldBe` Right (Just (m [("aa", i 1), ("ab", i 2)]))
+    it "parses a map literal with string values" $ do
+      malRead "{:aa \"QQ\" :ab \"!!\"}" `shouldBe` Right
+        (Just (m [(kwText "aa", s "QQ"), (kwText "ab", s "!!")]))
     it "handles comments" $ do
       malRead "(+ ; comment\n3)" `shouldBe` Right (Just (list [sym "+", i 3]))
     it "handles empty input" $ do
