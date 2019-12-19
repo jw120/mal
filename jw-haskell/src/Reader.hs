@@ -19,12 +19,6 @@ https://markkarpov.com/tutorial/megaparsec.html#lexing
 
 module Reader
   ( malRead
-  , pMap
-  , pExpr
-  , pKeyword'
-  , pStringLiteral'
-  , parseTest
-  , pack
   )
 where
 
@@ -32,17 +26,15 @@ import           Control.Applicative            ( (<|>) )
 import           Data.Bifunctor                 ( first )
 import           Data.Char                      ( isSpace )
 import qualified Data.Map
-import           Data.Text                      ( Text )
 import           Data.Void                      ( Void )
 import qualified Data.Text                     as T
 import qualified Text.Megaparsec               as M
 import qualified Text.Megaparsec.Char          as MC
 import qualified Text.Megaparsec.Char.Lexer    as ML
-import           Text.Megaparsec                ( parseTest )
-import           Data.Text                      ( pack )
 
 import           Types                          ( AST(..)
                                                 , magicKeywordPrefix
+                                                , Text
                                                 )
 
 -- | type for our parsers (void for custom errors, text for the input type)
@@ -142,7 +134,7 @@ pMap = ASTMap . Data.Map.fromList <$> parens (M.many pMapPair)
  where
   parens = M.between (symbol "{") (symbol "}")
   pMapPair :: Parser (Text, AST)
-  pMapPair = (,) <$> (M.try (pKeyword' <|> pStringLiteral')) <*> pExpr
+  pMapPair = (,) <$> M.try (pKeyword' <|> pStringLiteral') <*> pExpr
 
 -- | Helper parser - space consumer that eats spaces, commas and comments
 spaceConsumer :: Parser ()

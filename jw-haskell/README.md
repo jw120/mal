@@ -26,7 +26,6 @@ TODO
 
 * haddocks
 * work out how to format code more nicely
-* Combine alternating pair code?
 * Phase 1 - better errors for parsing
 * Phase 1 - vector underlying rep
 * Check our magic keyword string is what we think it is

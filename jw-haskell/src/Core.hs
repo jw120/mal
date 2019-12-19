@@ -349,7 +349,6 @@ hashMap :: [AST] -> Mal AST
 hashMap xs = do
   xs' <- alternatingToPairs xs
   return . ASTMap $ M.fromList xs'
- where
 
 -- Helper function
 alternatingToPairs :: [AST] -> Mal [(Text, AST)]
