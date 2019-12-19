@@ -14,6 +14,7 @@ Haskell implementations of builtins
 module Core
   ( nameSpace
   , prelude
+  , replPrelude
   )
 where
 
@@ -23,6 +24,8 @@ import           Data.Map                       ( Map )
 import qualified Data.Text                     as T
 import qualified Data.Text.IO                  as TIO
 import qualified Data.Map                      as M
+import           System.Console.Readline        ( readline)
+
 
 import           Types                          ( AST(..)
                                                 , EnvRef
@@ -42,13 +45,20 @@ import           Eval                           ( eval )
 -- | Definitions read into Mal before execution of user program starts
 prelude :: [Text]
 prelude =
-  [ "(def! not (fn* (a) (if a false true)))"
-  , "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\\nnil)\"))))))"
-  , "(defmacro! cond (fn* (& xs) "
-    <> "(if (> (count xs) 0) "
-    <> "(list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) "
-    <> "(cons 'cond (rest (rest xs)))))))"
-  ]
+    [ "(def! not (fn* (a) (if a false true)))"
+    , "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\\nnil)\"))))))"
+    , "(defmacro! cond (fn* (& xs) "
+        <> "(if (> (count xs) 0) "
+        <> "(list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) "
+        <> "(cons 'cond (rest (rest xs)))))))"
+    , "(def! *host-language* \"jw-haskell\")"
+    ]
+
+-- | Extra definitions read after the prelude when started in repl mode
+replPrelude :: [Text]
+replPrelude =
+    [ "(println (str \"Mal [\" *host-language* \"]\"))"
+    ]
 
 -- | Core name space which holds all of our built-ins, takes top-level REPL environment for eval
 nameSpace :: EnvRef -> Map Text AST
@@ -104,8 +114,16 @@ nameSpace envRef = M.fromList
   , ("contains?"  , ASTFunc False containsTest)
   , ("keys"       , ASTFunc False keys)
   , ("vals"       , ASTFunc False vals)
+  , ("readline"   , ASTFunc False malReadline)
+  , ("time-ms"    , ASTFunc False nyi)
+  , ("meta"       , ASTFunc False nyi)
+  , ("with-meta"  , ASTFunc False nyi)
+  , ("fn?"        , ASTFunc False nyi)
+  , ("string?"    , ASTFunc False nyi)
+  , ("number?"    , ASTFunc False nyi)
+  , ("seq"        , ASTFunc False nyi)
+  , ("conj"       , ASTFunc False nyi)
   ]
-
 
 addition :: [AST] -> Mal AST
 addition asts = do
@@ -237,9 +255,9 @@ reset [ASTAtom ref, val] = do
 reset _ = throwString "Bad arguments for reset"
 
 swap :: EnvRef -> [AST] -> Mal AST
-swap envRef (ASTAtom ref : ASTFunc False func : args) = do
+swap _ (ASTAtom ref : ASTFunc False func : args) = do
   val  <- liftIO $ readIORef ref
-  val' <- eval envRef $ ASTList (ASTFunc False func : val : args)
+  val' <-  func (val : args)
   liftIO $ writeIORef ref val'
   return val'
 swap _ _ = throwString "Bad arguments for swap"
@@ -261,7 +279,6 @@ malConcat [ASTList   xs] = return $ ASTList xs
 malConcat [ASTVector xs] = return $ ASTList xs
 malConcat []             = return $ ASTList []
 malConcat _              = throwString "Bad arguments for concat"
-
 
 nth :: [AST] -> Mal AST
 nth [ASTList ys, ASTInt i]
@@ -397,3 +414,15 @@ keys _          = throwString "keys expects a hash-map"
 vals :: [AST] -> Mal AST
 vals [ASTMap m] = return . ASTList $ M.elems m
 vals _          = throwString "vals expects a hash-map"
+
+malReadline :: [AST] -> Mal AST
+malReadline [ASTStr s] = do
+    x <- liftIO $ readline (T.unpack s)
+    case x of
+        Nothing   -> return ASTNil
+        Just inp -> return . ASTStr $ T.pack inp
+malReadline _ = throwString "readline expects a string"
+
+nyi :: [AST] -> Mal AST
+nyi _ = throwString "NYI"
+

@@ -96,7 +96,9 @@ malMain inp = do
   mapM_ (rep envRef True) Core.prelude
   Env.set envRef "*ARGV*" $ ASTList []
   case inp of
-    Nothing                  -> repl envRef
+    Nothing                  -> do
+        mapM_ (rep envRef True) Core.replPrelude
+        repl envRef
     Just (ExprInput e      ) -> rep envRef False e
     Just (FileInput fn argv) -> do
       Env.set envRef "*ARGV*" $ ASTList (map ASTStr argv)
