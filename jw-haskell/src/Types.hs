@@ -19,6 +19,7 @@ module Types
   , Env(..)
   , Mal(..)
   , MalError(..)
+  , throwString
   , MalAtom
   , MalFunc
   , magicKeywordPrefix
@@ -70,12 +71,12 @@ instance Show MalAtom where
 -- | Convert an ASTInt to Int (or return an error if not an ASTInt)
 extractInt :: AST -> Mal Int
 extractInt (ASTInt i) = return i
-extractInt _          = throwError $ EvalError "Type error: integer expected"
+extractInt _          = throwString "Type error: integer expected"
 
 -- | Convert an ASTSymbol to Text (or return an error if not an ASTSym)
 extractSym :: AST -> Mal Text
 extractSym (ASTSym s) = return s
-extractSym _          = throwError $ EvalError "Type error: symbol expected"
+extractSym _          = throwString "Type error: symbol expected"
 
 -- We hold keywords as Strings with a magic prefix
 magicKeywordPrefix :: Text
@@ -104,11 +105,18 @@ data Env = Env
   , envOuter :: Maybe Env    -- ^ Outer environment for lookup when not in our table
   } deriving (Show, Eq)
 
-data MalError
-    = ReaderError Text -- ^ Error in Reader module
-    | EvalError Text   -- ^ Error in Eval or Core
-    | ThrownError AST  -- ^ From malThrow
-    deriving (Show)
+-- data MalError
+--     = ReaderError Text -- ^ Error in Reader module
+--     | EvalError Text   -- ^ Error in Eval or Core
+--     | ThrownError AST  -- ^ From malThrow
+--     deriving (Show)
+
+-- | Errors/exceptions caught in an ExceptT (=Either) monad
+newtype MalError = MalError AST
+
+-- | Helper fundtion to throw a string
+throwString :: Text -> Mal a
+throwString = throwError . MalError . ASTStr
 
 newtype Mal a = Mal { unMal :: ExceptT MalError (ReaderT Config IO) a }
     deriving (Functor, Applicative, Monad, MonadError MalError, MonadReader Config, MonadIO)

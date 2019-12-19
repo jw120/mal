@@ -110,11 +110,9 @@ rep envRef quiet src = case malRead src of
     if quiet then return () else malPrint val
 
 handler :: MalError -> Mal AST
-handler (ReaderError t) = return . ASTStr $ "Reader Error: " <> t
-handler (EvalError t) = return . ASTStr $ "Evaluation Error: " <> t
-handler (ThrownError e) = do
+handler (MalError e) = do
     e' <- liftIO $ malFormat True e
-    return . ASTStr $ "Uncaught Error: " <> e'
+    return . ASTStr $ "Uncaught Exception: " <> e'
 
 -- repl - iterate rep repeatedly
 repl :: EnvRef -> Mal ()

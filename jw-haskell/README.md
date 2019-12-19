@@ -24,6 +24,7 @@ Tools used
 
 TODO
 
+* Use AST for error handling
 * avoid handler repetition
 * work out how to format code more nicely
 * Phase 1 - better errors for parsing

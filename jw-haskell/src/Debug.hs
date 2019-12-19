@@ -29,7 +29,7 @@ import           Types                          ( AST(..)
                                                 , EnvRef
                                                 , Env(..)
                                                 , Mal
-                                                , MalError(..)
+                                                , throwString
                                                 , Text
                                                 , Config(..)
                                                 )
@@ -44,7 +44,7 @@ printInfo msg envRef ast = do
     liftIO . TIO.putStr $ ast' <> " "
     env <- liftIO $ readIORef envRef
     case envToMap env of
-      []      -> throwError $ EvalError "Unexpected empty environment"
+      []      -> throwString "Unexpected empty environment"
       [_]     -> liftIO $ putStr "\n"
       envList -> mapM_ malPrint . init $ envList
 
