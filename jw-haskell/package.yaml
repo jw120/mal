@@ -19,6 +19,7 @@ dependencies:
 - optparse-applicative
 - readline
 - text
+- time
 
 library:
   source-dirs: src

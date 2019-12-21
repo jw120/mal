@@ -25,6 +25,7 @@ Tools used
 TODO
 
 * haddocks
+* do we need time package in package.yaml?
 * work out how to format code more nicely
 * Phase 1 - better errors for parsing
 * Phase 1 - vector underlying rep

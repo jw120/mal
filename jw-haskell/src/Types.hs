@@ -27,6 +27,7 @@ module Types
   , astEquality
   , extractInt
   , extractSym
+  , boolToAST
   , Config(..)
 --   , MalException(..)
   )
@@ -77,6 +78,11 @@ extractInt _          = throwString "Type error: integer expected"
 extractSym :: AST -> Mal Text
 extractSym (ASTSym s) = return s
 extractSym _          = throwString "Type error: symbol expected"
+
+-- Convert a Boolean to the correpsonding AST type
+boolToAST :: Bool -> AST
+boolToAST True = ASTTrue
+boolToAST False = ASTFalse
 
 -- We hold keywords as Strings with a magic prefix
 magicKeywordPrefix :: Text

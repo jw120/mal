@@ -1,4 +1,6 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+
 
 {-|
 Module      : Core
@@ -25,6 +27,7 @@ import qualified Data.Text                     as T
 import qualified Data.Text.IO                  as TIO
 import qualified Data.Map                      as M
 import           System.Console.Readline        ( readline)
+import Data.Time.Clock.POSIX (getPOSIXTime)
 
 
 import           Types                          ( AST(..)
@@ -34,6 +37,7 @@ import           Types                          ( AST(..)
                                                 , magicKeywordPrefix
                                                 , astEquality
                                                 , extractInt
+                                                , boolToAST
                                                 , MalError(..)
                                                 , throwString
                                                 )
@@ -60,70 +64,139 @@ replPrelude =
     [ "(println (str \"Mal [\" *host-language* \"]\"))"
     ]
 
+--
+-- Helper functions to shorten envRef definition
+--
+
+-- Helper for function that already operate on a list
+fn :: ([AST] -> Mal AST) -> AST
+fn = ASTFunc False
+
+-- Helper for functions that operates on one argument
+fn1 :: (AST -> Mal AST) -> AST
+fn1 f = ASTFunc False g
+  where
+    g :: [AST] -> Mal AST
+    g [x] = f x
+    g _ = throwString "Expected one argument"
+
+-- Helper for pure functions that operates on one string
+fn1s :: (Text -> AST) -> AST
+fn1s f = ASTFunc False g
+  where
+    g :: [AST] -> Mal AST
+    g [ASTStr s ] = return $ f s
+    g _ = throwString "Expected one string argument"
+
+-- Helper for functions that runs a predicate on a single argument
+fn1m :: (AST -> Bool) -> AST
+fn1m matcher = fn1 $ return . (\x -> if matcher x then ASTTrue else ASTFalse)
+
+-- Helper for pure functions that operates on two arguments
+fn2 :: (AST -> AST -> AST) -> AST
+fn2 f = ASTFunc False g
+  where
+    g :: [AST] -> Mal AST
+    g [x, y] = return $ f x y
+    g _ = throwString "Expected two arguments"
+
+-- Helper for pure functions that operate on two ints
+fn2i :: (Int -> Int -> AST) -> AST
+fn2i f = ASTFunc False g
+  where
+    g :: [AST] -> Mal AST
+    g [ASTInt a, ASTInt b] = return $ f a b
+    g [_, _] = throwString "Expected integer arguments"
+    g _ = throwString "Expected two arguments"
+
 -- | Core name space which holds all of our built-ins, takes top-level REPL environment for eval
 nameSpace :: EnvRef -> Map Text AST
 nameSpace envRef = M.fromList
-  [ ("+"          , ASTFunc False addition)
-  , ("-"          , ASTFunc False subtraction)
-  , ("*"          , ASTFunc False multiplication)
-  , ("/"          , ASTFunc False division)
-  , ("list"       , ASTFunc False list)
-  , ("count"      , ASTFunc False count)
-  , ("empty?"     , ASTFunc False emptyTest)
-  , ("list?"      , ASTFunc False listTest)
-  , ("="          , ASTFunc False equality)
-  , (">"          , ASTFunc False (binaryIntOp (>)))
-  , (">="         , ASTFunc False (binaryIntOp (>=)))
-  , ("<"          , ASTFunc False (binaryIntOp (<)))
-  , ("<="         , ASTFunc False (binaryIntOp (<=)))
-  , ("pr-str"     , ASTFunc False prStr)
-  , ("str"        , ASTFunc False str)
-  , ("prn"        , ASTFunc False prn)
-  , ("println"    , ASTFunc False println)
-  , ("read-string", ASTFunc False readString)
-  , ("slurp"      , ASTFunc False slurp)
-  , ("eval"       , ASTFunc False (replEval envRef))
-  , ("atom"       , ASTFunc False atom)
-  , ("atom?"      , ASTFunc False atomTest)
-  , ("deref"      , ASTFunc False deref)
-  , ("reset!"     , ASTFunc False reset)
-  , ("swap!"      , ASTFunc False (swap envRef))
-  , ("cons"       , ASTFunc False cons)
-  , ("concat"     , ASTFunc False malConcat)
-  , ("nth"        , ASTFunc False nth)
-  , ("first"      , ASTFunc False first)
-  , ("rest"       , ASTFunc False rest)
-  , ("throw"      , ASTFunc False malThrow)
-  , ("apply"      , ASTFunc False apply)
-  , ("map"        , ASTFunc False malMap)
-  , ("nil?"       , ASTFunc False $ malIs ASTNil)
-  , ("true?"      , ASTFunc False $ malIs ASTTrue)
-  , ("false?"     , ASTFunc False $ malIs ASTFalse)
-  , ("symbol?"    , ASTFunc False symbolTest)
-  , ("symbol"     , ASTFunc False symbol)
-  , ("keyword"    , ASTFunc False keyword)
-  , ("keyword?"   , ASTFunc False keywordTest)
-  , ("vector"     , ASTFunc False vector)
-  , ("vector?"    , ASTFunc False vectorTest)
-  , ("sequential?", ASTFunc False sequentialTest)
-  , ("hash-map"   , ASTFunc False hashMap)
-  , ("map?"       , ASTFunc False mapTest)
-  , ("assoc"      , ASTFunc False assoc)
-  , ("dissoc"     , ASTFunc False dissoc)
-  , ("get"        , ASTFunc False get)
-  , ("contains?"  , ASTFunc False containsTest)
-  , ("keys"       , ASTFunc False keys)
-  , ("vals"       , ASTFunc False vals)
-  , ("readline"   , ASTFunc False malReadline)
-  , ("time-ms"    , ASTFunc False nyi)
-  , ("meta"       , ASTFunc False nyi)
-  , ("with-meta"  , ASTFunc False nyi)
-  , ("fn?"        , ASTFunc False nyi)
-  , ("string?"    , ASTFunc False nyi)
-  , ("number?"    , ASTFunc False nyi)
-  , ("seq"        , ASTFunc False nyi)
-  , ("conj"       , ASTFunc False nyi)
+  [
+
+    -- Basic arithmetic functions
+    ("+" , fn addition)
+  , ("-" , fn subtraction)
+  , ("*" , fn multiplication)
+  , ("/" , fn division)
+
+    -- Matching functions
+  , ("list?",       fn1m (\case ASTList _   -> True; _ -> False))
+  , ("atom?",       fn1m (\case ASTAtom _   -> True; _ -> False))
+  , ("nil?",        fn1m (\case ASTNil      -> True; _ -> False))
+  , ("true?",       fn1m (\case ASTTrue     -> True; _ -> False))
+  , ("false?",      fn1m (\case ASTFalse    -> True; _ -> False))
+  , ("symbol?",     fn1m (\case ASTSym _    -> True; _ -> False))
+  , ("vector?",     fn1m (\case ASTVector _ -> True; _ -> False))
+  , ("map?",        fn1m (\case ASTMap _    -> True; _ -> False))
+  , ("number?",     fn1m (\case ASTInt _    -> True; _ -> False))
+  , ("fn?",         fn1m (\case ASTFunc False _ -> True; _ -> False))
+  , ("macro?",      fn1m (\case ASTFunc True  _ -> True; _ -> False))
+  , ("sequential?", fn1m (\case ASTList _  -> True; ASTVector _  -> True; _ -> False))
+  , ("empty?",      fn1m (\case ASTList [] -> True; ASTVector [] -> True; _ -> False))
+  , ("string?",     fn1m (\case ASTStr s -> not (T.isPrefixOf magicKeywordPrefix s) ; _ -> False))
+  , ("keyword?",    fn1m (\case ASTStr s ->      T.isPrefixOf magicKeywordPrefix s  ; _ -> False))
+
+    -- Comparison operators (work only on numbers)
+  , (">" , fn2i (\x y -> boolToAST (x >  y)))
+  , (">=", fn2i (\x y -> boolToAST (x >= y)))
+  , ("<" , fn2i (\x y -> boolToAST (x <  y)))
+  , ("<=", fn2i (\x y -> boolToAST (x <= y)))
+
+    -- Utility functions
+  , ("="         , fn2 (\x y -> boolToAST (x `astEquality` y)))
+  , ("symbol"    , fn1s ASTSym)
+  , ("keyword"   , fn1s $ ASTStr .
+        (\s -> if T.isPrefixOf magicKeywordPrefix s then s else magicKeywordPrefix <> s))
+  , ("eval"      , fn1 (eval envRef))
+  , ("apply"     , fn apply)
+  , ("throw"     , fn malThrow)
+  , ("time-ms"   , fn timeMS)
+  , ("meta"      , fn nyi)
+  , ("with-meta" , fn nyi)
+
+  -- IO functions
+  , ("pr-str"     , fn prStr)
+  , ("str"        , fn str)
+  , ("prn"        , fn prn)
+  , ("println"    , fn println)
+  , ("read-string", fn readString)
+  , ("readline"   , fn malReadline)
+  , ("slurp"      , fn slurp)
+
+    -- Sequence functions
+  , ("list"  , fn $ return . ASTList)
+  , ("vector", fn $ return . ASTVector)
+  , ("count" , fn count)
+  , ("cons"  , fn cons)
+  , ("concat", fn malConcat)
+  , ("nth"   , fn nth)
+  , ("first" , fn first)
+  , ("rest"  , fn rest)
+  , ("seq"   , fn malSeq)
+  , ("map"   , fn malMap)
+  , ("conj"  , fn conj)
+
+    -- Map functions
+  , ("hash-map"  , fn hashMap)
+  , ("assoc"     , fn assoc)
+  , ("dissoc"    , fn dissoc)
+  , ("get"       , fn get)
+  , ("contains?" , fn containsTest)
+  , ("keys"      , fn keys)
+  , ("vals"      , fn vals)
+
+    -- Atom functions
+  , ("atom"  , fn atom)
+  , ("deref" , fn deref)
+  , ("reset!", fn reset)
+  , ("swap!" , fn (swap envRef))
+
   ]
+
+--
+-- Basic arithmetic functions
+--
 
 addition :: [AST] -> Mal AST
 addition asts = do
@@ -158,36 +231,34 @@ safeDiv :: Int -> Int -> Mal AST
 safeDiv _ 0 = throwString "Division by zero error"
 safeDiv i j = return . ASTInt $ i `div` j
 
--- Helper function to convert <, > etc into the correct format
-binaryIntOp :: (Int -> Int -> Bool) -> [AST] -> Mal AST
-binaryIntOp _ []  = throwString "Expecting two arguments"
-binaryIntOp _ [_] = throwString "Expecting two arguments"
-binaryIntOp op (ASTInt a : ASTInt b : _) | a `op` b  = return ASTTrue
-                                         | otherwise = return ASTFalse
-binaryIntOp _ _ = return ASTFalse
+--
+-- Utility functions
+--
 
-list :: [AST] -> Mal AST
-list = return . ASTList
+malThrow :: [AST] -> Mal AST
+malThrow [ast] = throwError $ MalError ast
+malThrow _     = throwString "Bad arguments for throw"
 
-listTest :: [AST] -> Mal AST
-listTest (ASTList _ : _) = return ASTTrue
-listTest _               = return ASTFalse
+apply :: [AST] -> Mal AST
+apply [ASTFunc          False _   ] = throwString "No arguments to apply"
+apply (ASTFunc False f :     args) = case last args of
+  ASTList   lastList -> f $ init args ++ lastList
+  ASTVector lastList -> f $ init args ++ lastList
+  _                  -> throwString "Expected list as final argument for apply"
+apply (ASTFunc True _ : _) = throwString "Attempt to apply a macro"
+apply _                    = throwString "Bad arguments for apply"
 
-count :: [AST] -> Mal AST
-count (ASTList   xs : _) = return (ASTInt (length xs))
-count (ASTVector xs : _) = return (ASTInt (length xs))
-count _                  = return (ASTInt 0)
+timeMS :: [AST] -> Mal AST
+timeMS [] = do
+    seconds <- liftIO getPOSIXTime
+    let milliSeconds = round $ 1000 * seconds
+    return $ ASTInt milliSeconds
+timeMS _ = throwString "Expecting no arguments for time-ms"
 
-emptyTest :: [AST] -> Mal AST
-emptyTest (ASTList   [] : _) = return ASTTrue
-emptyTest (ASTVector [] : _) = return ASTTrue
-emptyTest _                  = return ASTFalse
 
-equality :: [AST] -> Mal AST
-equality []  = throwString "Expecting two arguments for equality testing"
-equality [_] = throwString "Expecting two arguments for equality testing"
-equality (a : b : _) | a `astEquality` b = return ASTTrue
-                     | otherwise         = return ASTFalse
+--
+-- IO functions
+--
 
 prStr :: [AST] -> Mal AST
 prStr xs = do
@@ -223,44 +294,28 @@ readString [ASTStr s] = case malRead s of
   Right (Just ast) -> return ast
 readString _ = throwString "Bad argument type for readString"
 
+malReadline :: [AST] -> Mal AST
+malReadline [ASTStr s] = do
+    x <- liftIO $ readline (T.unpack s)
+    case x of
+        Nothing   -> return ASTNil
+        Just inp -> return . ASTStr $ T.pack inp
+malReadline _ = throwString "readline expects a string"
+
 slurp :: [AST] -> Mal AST
-slurp [ASTStr fn] = do
-  s <- liftIO . TIO.readFile $ T.unpack fn
+slurp [ASTStr f] = do
+  s <- liftIO . TIO.readFile $ T.unpack f
   return $ ASTStr s
 slurp _ = throwString "Bad argument type for slurp"
 
-replEval :: EnvRef -> [AST] -> Mal AST
-replEval replEnvRef [ast] = eval replEnvRef ast
-replEval _          _     = throwString "Bad argument for eval"
+--
+-- Sequence functions
+--
 
-atom :: [AST] -> Mal AST
-atom [ast] = do
-  ref <- liftIO $ newIORef ast
-  return $ ASTAtom ref
-atom _ = throwString "Bad arguments for atom"
-
-atomTest :: [AST] -> Mal AST
-atomTest [ASTAtom _] = return ASTTrue
-atomTest [_        ] = return ASTFalse
-atomTest _           = throwString "Bad arguments for atom?"
-
-deref :: [AST] -> Mal AST
-deref [ASTAtom ref] = liftIO $ readIORef ref
-deref _             = throwString "Bad arguments for deref"
-
-reset :: [AST] -> Mal AST
-reset [ASTAtom ref, val] = do
-  liftIO $ writeIORef ref val
-  return val
-reset _ = throwString "Bad arguments for reset"
-
-swap :: EnvRef -> [AST] -> Mal AST
-swap _ (ASTAtom ref : ASTFunc False func : args) = do
-  val  <- liftIO $ readIORef ref
-  val' <-  func (val : args)
-  liftIO $ writeIORef ref val'
-  return val'
-swap _ _ = throwString "Bad arguments for swap"
+count :: [AST] -> Mal AST
+count (ASTList   xs : _) = return (ASTInt (length xs))
+count (ASTVector xs : _) = return (ASTInt (length xs))
+count _                  = return (ASTInt 0)
 
 cons :: [AST] -> Mal AST
 cons [ast, ASTList xs  ] = return $ ASTList (ast : xs)
@@ -304,63 +359,29 @@ rest [ASTVector []      ] = return $ ASTList []
 rest [ASTNil            ] = return $ ASTList []
 rest _                    = throwString "Bad arguments for rest"
 
-malThrow :: [AST] -> Mal AST
-malThrow [ast] = throwError $ MalError ast
-malThrow _     = throwString "Bad arguments for throw"
-
-apply :: [AST] -> Mal AST
-apply [ASTFunc          False _   ] = throwString "No arguments to apply"
-apply (ASTFunc False fn :     args) = case last args of
-  ASTList   lastList -> fn $ init args ++ lastList
-  ASTVector lastList -> fn $ init args ++ lastList
-  _                  -> throwString "Expected list as final argument for apply"
-apply (ASTFunc True _ : _) = throwString "Attempt to apply a macro"
-apply _                    = throwString "Bad arguments for apply"
+malSeq :: [AST] -> Mal AST
+malSeq [ASTList []] = return ASTNil
+malSeq [ASTList xs] = return $ ASTList xs
+malSeq [ASTVector xs] = malSeq [ASTList xs]
+malSeq [ASTStr ""] = return ASTNil
+malSeq [ASTStr s] = return . ASTList . map ASTStr $ T.chunksOf 1 s
+malSeq [ASTNil] = return ASTNil
+malSeq _ = throwString "Unexpected arguments for seq"
 
 malMap :: [AST] -> Mal AST
-malMap [ASTFunc False fn, ASTList xs] = ASTList <$> mapM (\x -> fn [x]) xs
-malMap [ASTFunc False fn, ASTVector xs] = malMap [ASTFunc False fn, ASTList xs]
+malMap [ASTFunc False f, ASTList xs] = ASTList <$> mapM (\x -> f [x]) xs
+malMap [ASTFunc False f, ASTVector xs] = malMap [ASTFunc False f, ASTList xs]
 malMap [ASTFunc True _, ASTList _] = throwString "Attempt to map a macro"
 malMap _ = throwString "Bad arguments for map"
 
-malIs :: AST -> [AST] -> Mal AST
-malIs target [ast] | target == ast = return ASTTrue
-                   | otherwise     = return ASTFalse
-malIs _ _ = throwString "Expected one argument"
+conj :: [AST] -> Mal AST
+conj (ASTList xs : args) = return . ASTList $ reverse args ++ xs
+conj (ASTVector xs : args) = return . ASTVector $ xs ++ args
+conj _ = throwString "Unexpected arguments for conj"
 
-symbolTest :: [AST] -> Mal AST
-symbolTest [ASTSym _] = return ASTTrue
-symbolTest [_       ] = return ASTFalse
-symbolTest _          = throwString "Expected one argument for symbol?"
-
-symbol :: [AST] -> Mal AST
-symbol [ASTStr s] = return $ ASTSym s
-symbol _          = throwString "Expected one string for symbol"
-
-keyword :: [AST] -> Mal AST
-keyword [ASTStr s] | T.isPrefixOf magicKeywordPrefix s = return $ ASTStr s
-                   | otherwise = return . ASTStr $ magicKeywordPrefix <> s
-keyword _ = throwString "Expected one string for keyword"
-
-keywordTest :: [AST] -> Mal AST
-keywordTest [ASTStr s] | T.isPrefixOf magicKeywordPrefix s = return ASTTrue
-                       | otherwise                         = return ASTFalse
-keywordTest [_] = return ASTFalse
-keywordTest _   = throwString "Expected one argument for keyword?"
-
-vector :: [AST] -> Mal AST
-vector = return . ASTVector
-
-vectorTest :: [AST] -> Mal AST
-vectorTest [ASTVector _] = return ASTTrue
-vectorTest [_          ] = return ASTFalse
-vectorTest _             = throwString "Expected one argument for vector?"
-
-sequentialTest :: [AST] -> Mal AST
-sequentialTest [ASTList   _] = return ASTTrue
-sequentialTest [ASTVector _] = return ASTTrue
-sequentialTest [_          ] = return ASTFalse
-sequentialTest _ = throwString "Expected one argument for sequential?"
+--
+-- Hash map functions
+--
 
 hashMap :: [AST] -> Mal AST
 hashMap xs = do
@@ -378,17 +399,12 @@ alternatingToPairs [_] =
   throwString "Expected even number of arguments for map associatons"
 alternatingToPairs [] = return []
 
-mapTest :: [AST] -> Mal AST
-mapTest [ASTMap _] = return ASTTrue
-mapTest [_       ] = return ASTFalse
-mapTest _          = throwString "Expected one argument for map?"
-
 assoc :: [AST] -> Mal AST
 assoc (ASTMap m : newArgs) = do
   newPairs <- alternatingToPairs newArgs
   let newMap = M.fromList newPairs
   return . ASTMap $ M.union newMap m
-assoc _ = throwString "NYI"
+assoc _ = throwString "Expected a map"
 
 dissoc :: [AST] -> Mal AST
 dissoc (ASTMap m : ASTStr x : ys) = dissoc (ASTMap (M.delete x m) : ys)
@@ -415,13 +431,34 @@ vals :: [AST] -> Mal AST
 vals [ASTMap m] = return . ASTList $ M.elems m
 vals _          = throwString "vals expects a hash-map"
 
-malReadline :: [AST] -> Mal AST
-malReadline [ASTStr s] = do
-    x <- liftIO $ readline (T.unpack s)
-    case x of
-        Nothing   -> return ASTNil
-        Just inp -> return . ASTStr $ T.pack inp
-malReadline _ = throwString "readline expects a string"
+
+--
+-- Atom functions
+--
+
+atom :: [AST] -> Mal AST
+atom [ast] = do
+  ref <- liftIO $ newIORef ast
+  return $ ASTAtom ref
+atom _ = throwString "Bad arguments for atom"
+
+deref :: [AST] -> Mal AST
+deref [ASTAtom ref] = liftIO $ readIORef ref
+deref _             = throwString "Bad arguments for deref"
+
+reset :: [AST] -> Mal AST
+reset [ASTAtom ref, val] = do
+  liftIO $ writeIORef ref val
+  return val
+reset _ = throwString "Bad arguments for reset"
+
+swap :: EnvRef -> [AST] -> Mal AST
+swap _ (ASTAtom ref : ASTFunc False func : args) = do
+  val  <- liftIO $ readIORef ref
+  val' <-  func (val : args)
+  liftIO $ writeIORef ref val'
+  return val'
+swap _ _ = throwString "Bad arguments for swap"
 
 nyi :: [AST] -> Mal AST
 nyi _ = throwString "NYI"
