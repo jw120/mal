@@ -70,11 +70,11 @@ replPrelude =
 
 -- Helper for function that already operate on a list
 fn :: ([AST] -> Mal AST) -> AST
-fn = ASTFunc False
+fn f = ASTFunc False f ASTNil
 
 -- Helper for functions that operates on one argument
 fn1 :: (AST -> Mal AST) -> AST
-fn1 f = ASTFunc False g
+fn1 f = ASTFunc False g ASTNil
   where
     g :: [AST] -> Mal AST
     g [x] = f x
@@ -82,7 +82,7 @@ fn1 f = ASTFunc False g
 
 -- Helper for pure functions that operates on one string
 fn1s :: (Text -> AST) -> AST
-fn1s f = ASTFunc False g
+fn1s f = ASTFunc False g ASTNil
   where
     g :: [AST] -> Mal AST
     g [ASTStr s ] = return $ f s
@@ -94,7 +94,7 @@ fn1m matcher = fn1 $ return . (\x -> if matcher x then ASTTrue else ASTFalse)
 
 -- Helper for pure functions that operates on two arguments
 fn2 :: (AST -> AST -> AST) -> AST
-fn2 f = ASTFunc False g
+fn2 f = ASTFunc False g ASTNil
   where
     g :: [AST] -> Mal AST
     g [x, y] = return $ f x y
@@ -102,7 +102,7 @@ fn2 f = ASTFunc False g
 
 -- Helper for pure functions that operate on two ints
 fn2i :: (Int -> Int -> AST) -> AST
-fn2i f = ASTFunc False g
+fn2i f = ASTFunc False g ASTNil
   where
     g :: [AST] -> Mal AST
     g [ASTInt a, ASTInt b] = return $ f a b
@@ -121,19 +121,19 @@ nameSpace envRef = M.fromList
   , ("/" , fn division)
 
     -- Matching functions
-  , ("list?",       fn1m (\case ASTList _   -> True; _ -> False))
-  , ("atom?",       fn1m (\case ASTAtom _   -> True; _ -> False))
-  , ("nil?",        fn1m (\case ASTNil      -> True; _ -> False))
-  , ("true?",       fn1m (\case ASTTrue     -> True; _ -> False))
-  , ("false?",      fn1m (\case ASTFalse    -> True; _ -> False))
-  , ("symbol?",     fn1m (\case ASTSym _    -> True; _ -> False))
-  , ("vector?",     fn1m (\case ASTVector _ -> True; _ -> False))
-  , ("map?",        fn1m (\case ASTMap _    -> True; _ -> False))
-  , ("number?",     fn1m (\case ASTInt _    -> True; _ -> False))
-  , ("fn?",         fn1m (\case ASTFunc False _ -> True; _ -> False))
-  , ("macro?",      fn1m (\case ASTFunc True  _ -> True; _ -> False))
-  , ("sequential?", fn1m (\case ASTList _  -> True; ASTVector _  -> True; _ -> False))
-  , ("empty?",      fn1m (\case ASTList [] -> True; ASTVector [] -> True; _ -> False))
+  , ("list?",       fn1m (\case ASTList _ _        -> True; _ -> False))
+  , ("atom?",       fn1m (\case ASTAtom _          -> True; _ -> False))
+  , ("nil?",        fn1m (\case ASTNil             -> True; _ -> False))
+  , ("true?",       fn1m (\case ASTTrue            -> True; _ -> False))
+  , ("false?",      fn1m (\case ASTFalse           -> True; _ -> False))
+  , ("symbol?",     fn1m (\case ASTSym _           -> True; _ -> False))
+  , ("vector?",     fn1m (\case ASTVector _ _      -> True; _ -> False))
+  , ("map?",        fn1m (\case ASTMap _ _         -> True; _ -> False))
+  , ("number?",     fn1m (\case ASTInt _           -> True; _ -> False))
+  , ("fn?",         fn1m (\case ASTFunc False _ _ -> True; _ -> False))
+  , ("macro?",      fn1m (\case ASTFunc True  _ _ -> True; _ -> False))
+  , ("sequential?", fn1m (\case ASTList _ _ -> True; ASTVector _ _  -> True; _ -> False))
+  , ("empty?",      fn1m (\case ASTList [] _ -> True; ASTVector [] _ -> True; _ -> False))
   , ("string?",     fn1m (\case ASTStr s -> not (T.isPrefixOf magicKeywordPrefix s) ; _ -> False))
   , ("keyword?",    fn1m (\case ASTStr s ->      T.isPrefixOf magicKeywordPrefix s  ; _ -> False))
 
@@ -165,8 +165,8 @@ nameSpace envRef = M.fromList
   , ("slurp"      , fn slurp)
 
     -- Sequence functions
-  , ("list"  , fn $ return . ASTList)
-  , ("vector", fn $ return . ASTVector)
+  , ("list"  , fn $ \xs -> return (ASTList xs ASTNil))
+  , ("vector", fn $ \xs -> return (ASTVector xs ASTNil))
   , ("count" , fn count)
   , ("cons"  , fn cons)
   , ("concat", fn malConcat)
@@ -240,12 +240,12 @@ malThrow [ast] = throwError $ MalError ast
 malThrow _     = throwString "Bad arguments for throw"
 
 apply :: [AST] -> Mal AST
-apply [ASTFunc          False _   ] = throwString "No arguments to apply"
-apply (ASTFunc False f :     args) = case last args of
-  ASTList   lastList -> f $ init args ++ lastList
-  ASTVector lastList -> f $ init args ++ lastList
+apply [ASTFunc          False _  _ ] = throwString "No arguments to apply"
+apply (ASTFunc False f _ :     args) = case last args of
+  ASTList   lastList _ -> f $ init args ++ lastList
+  ASTVector lastList _ -> f $ init args ++ lastList
   _                  -> throwString "Expected list as final argument for apply"
-apply (ASTFunc True _ : _) = throwString "Attempt to apply a macro"
+apply (ASTFunc True _ _ : _) = throwString "Attempt to apply a macro"
 apply _                    = throwString "Bad arguments for apply"
 
 timeMS :: [AST] -> Mal AST
@@ -313,19 +313,19 @@ slurp _ = throwString "Bad argument type for slurp"
 --
 
 count :: [AST] -> Mal AST
-count (ASTList   xs : _) = return (ASTInt (length xs))
-count (ASTVector xs : _) = return (ASTInt (length xs))
-count _                  = return (ASTInt 0)
+count (ASTList   (xs : _) _) = return (ASTInt (length xs))
+count (ASTVector (xs : _) _) = return (ASTInt (length xs))
+count _                 = return (ASTInt 0)
 
 cons :: [AST] -> Mal AST
-cons [ast, ASTList xs  ] = return $ ASTList (ast : xs)
-cons [ast, ASTVector xs] = return $ ASTList (ast : xs)
+cons [ast, ASTList xs  meta] = return $ ASTList (ast : xs) meta
+cons [ast, ASTVector xs meta] = return $ ASTList (ast : xs) meta
 cons _                   = throwString "Bad arguments for cons"
 
 malConcat :: [AST] -> Mal AST
-malConcat (ASTList xs : ASTList ys : zs) = malConcat (ASTList (xs ++ ys) : zs)
+malConcat (ASTList xs : ASTList ys : zs) = malConcat (ASTList ((xs ++ ys) : zs) ASTNil)
 malConcat (ASTList xs : ASTVector ys : zs) =
-  malConcat (ASTList (xs ++ ys) : zs)
+  malConcat (ASTList ((xs ++ ys) : zs) ASTNil)
 malConcat (ASTVector xs : ASTList ys : zs) =
   malConcat (ASTList (xs ++ ys) : zs)
 malConcat (ASTVector xs : ASTVector ys : zs) =
@@ -369,14 +369,14 @@ malSeq [ASTNil] = return ASTNil
 malSeq _ = throwString "Unexpected arguments for seq"
 
 malMap :: [AST] -> Mal AST
-malMap [ASTFunc False f, ASTList xs] = ASTList <$> mapM (\x -> f [x]) xs
-malMap [ASTFunc False f, ASTVector xs] = malMap [ASTFunc False f, ASTList xs]
-malMap [ASTFunc True _, ASTList _] = throwString "Attempt to map a macro"
+malMap [ASTFunc False f _, ASTList xs meta] = (\xs -> ASTList xs meta) <$> mapM (\x -> f [x]) xs
+malMap [ASTFunc False f _, ASTVector xs meta] = malMap [ASTFunc False f ASTNil, ASTList xs meta]
+malMap [ASTFunc True _ _, ASTList _ _] = throwString "Attempt to map a macro"
 malMap _ = throwString "Bad arguments for map"
 
 conj :: [AST] -> Mal AST
-conj (ASTList xs : args) = return . ASTList $ reverse args ++ xs
-conj (ASTVector xs : args) = return . ASTVector $ xs ++ args
+conj (ASTList xs meta: args) = return . ASTList (reverse args ++ xs) meta
+conj (ASTVector xs meta: args) = return . ASTVector (xs ++ args) meta
 conj _ = throwString "Unexpected arguments for conj"
 
 --
@@ -386,7 +386,7 @@ conj _ = throwString "Unexpected arguments for conj"
 hashMap :: [AST] -> Mal AST
 hashMap xs = do
   xs' <- alternatingToPairs xs
-  return . ASTMap $ M.fromList xs'
+  return . ASTMap (M.fromList xs') ASTNil
 
 -- Helper function
 alternatingToPairs :: [AST] -> Mal [(Text, AST)]
@@ -400,35 +400,35 @@ alternatingToPairs [_] =
 alternatingToPairs [] = return []
 
 assoc :: [AST] -> Mal AST
-assoc (ASTMap m : newArgs) = do
+assoc (ASTMap m meta : newArgs) = do
   newPairs <- alternatingToPairs newArgs
   let newMap = M.fromList newPairs
-  return . ASTMap $ M.union newMap m
+  return . ASTMap (M.union newMap m) meta
 assoc _ = throwString "Expected a map"
 
 dissoc :: [AST] -> Mal AST
-dissoc (ASTMap m : ASTStr x : ys) = dissoc (ASTMap (M.delete x m) : ys)
-dissoc [ASTMap m                ] = return $ ASTMap m
+dissoc (ASTMap m meta : ASTStr x : ys) = dissoc (ASTMap (M.delete x m) meta : ys)
+dissoc [ASTMap m meta               ] = return $ ASTMap m meta
 dissoc _                          = throwString "Bad arguments for dissoc"
 
 get :: [AST] -> Mal AST
 get [ASTNil  , ASTStr _] = return ASTNil
-get [ASTMap m, ASTStr k] = case M.lookup k m of
+get [ASTMap m _, ASTStr k] = case M.lookup k m of
   Just v  -> return v
   Nothing -> return ASTNil
 get _ = throwString "Bad arguments for get"
 
 containsTest :: [AST] -> Mal AST
-containsTest [ASTMap m, ASTStr k] | M.member k m = return ASTTrue
+containsTest [ASTMap m _, ASTStr k] | M.member k m = return ASTTrue
                                   | otherwise    = return ASTFalse
 containsTest _ = throwString "Bad arguments for get"
 
 keys :: [AST] -> Mal AST
-keys [ASTMap m] = return . ASTList . map ASTStr $ M.keys m
+keys [ASTMap m meta] = return $ ASTList (map ASTStr $ M.keys m) meta
 keys _          = throwString "keys expects a hash-map"
 
 vals :: [AST] -> Mal AST
-vals [ASTMap m] = return . ASTList $ M.elems m
+vals [ASTMap m meta] = return $ ASTList (M.elems m) meta
 vals _          = throwString "vals expects a hash-map"
 
 

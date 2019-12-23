@@ -88,12 +88,12 @@ pStringLiteral' =
 
 pReaderMacro :: Parser AST
 pReaderMacro = M.choice
-  [ (\e -> ASTList [ASTSym "quote", e]) <$> (symbol "'" *> pExpr)
-  , (\e -> ASTList [ASTSym "quasiquote", e]) <$> (symbol "`" *> pExpr)
-  , (\e -> ASTList [ASTSym "splice-unquote", e]) <$> (symbol "~@" *> pExpr)
-  , (\e -> ASTList [ASTSym "unquote", e]) <$> (symbol "~" *> pExpr)
-  , (\e -> ASTList [ASTSym "deref", e]) <$> (symbol "@" *> pExpr)
-  , (\e1 e2 -> ASTList [ASTSym "with-meta", e2, e1])
+  [ (\e -> ASTList [ASTSym "quote", e] ASTNil) <$> (symbol "'" *> pExpr)
+  , (\e -> ASTList [ASTSym "quasiquote", e] ASTNil) <$> (symbol "`" *> pExpr)
+  , (\e -> ASTList [ASTSym "splice-unquote", e]) ASTNil <$> (symbol "~@" *> pExpr)
+  , (\e -> ASTList [ASTSym "unquote", e] ASTNil) <$> (symbol "~" *> pExpr)
+  , (\e -> ASTList [ASTSym "deref", e] ASTNil) <$> (symbol "@" *> pExpr)
+  , (\e1 e2 -> ASTList [ASTSym "with-meta", e2, e1] ASTNil)
   <$> (symbol "^" *> pExpr)
   <*> pExpr
   ]
@@ -120,17 +120,17 @@ pKeyword' = toText <$> (MC.char ':' *> lexeme (M.some (M.satisfy isNormal)))
 
   -- | Parse a list
 pList :: Parser AST
-pList = ASTList <$> parens (M.many pExpr)
+pList = (\xs -> ASTList xs ASTNil) <$> parens (M.many pExpr)
   where parens = M.between (symbol "(") (symbol ")")
 
 -- | Parse a vector
 pVector :: Parser AST
-pVector = ASTVector <$> parens (M.many pExpr)
+pVector = (\xs -> ASTVector xs ASTNil) <$> parens (M.many pExpr)
   where parens = M.between (symbol "[") (symbol "]")
 
 -- | Parse a map
 pMap :: Parser AST
-pMap = ASTMap . Data.Map.fromList <$> parens (M.many pMapPair)
+pMap = (\xs -> ASTMap xs ASTNil) . Data.Map.fromList <$> parens (M.many pMapPair)
  where
   parens = M.between (symbol "{") (symbol "}")
   pMapPair :: Parser (Text, AST)

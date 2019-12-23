@@ -50,11 +50,12 @@ data AST
   | ASTSym Text
   | ASTInt Int
   | ASTStr Text
-  | ASTList [AST]
-  | ASTVector [AST]
   | ASTAtom MalAtom
-  | ASTMap (Map Text AST)
-  | ASTFunc Bool MalFunc
+    -- Composite data types and functions have a metadata attribute
+  | ASTList [AST] AST
+  | ASTVector [AST] AST
+  | ASTMap (Map Text AST) AST
+  | ASTFunc Bool MalFunc AST -- Function or (if bool is true) macro
   deriving (Eq, Show)
 
 -- | Type for mal functions
@@ -90,13 +91,13 @@ magicKeywordPrefix = "\x029e" -- Unicode 'ʞ'
 
 -- Version of equality that treats lists and vectors as the same
 astEquality :: AST -> AST -> Bool
-astEquality (ASTList   a) (ASTList   b) = astEqualityList a b
-astEquality (ASTList   a) (ASTVector b) = astEqualityList a b
-astEquality (ASTVector a) (ASTList   b) = astEqualityList a b
-astEquality (ASTVector a) (ASTVector b) = astEqualityList a b
-astEquality (ASTMap    a) (ASTMap    b) = M.keys a == M.keys b && astEquality
-  (ASTList (M.elems a))
-  (ASTList (M.elems b))
+astEquality (ASTList   a _) (ASTList   b _) = astEqualityList a b
+astEquality (ASTList   a _) (ASTVector b _) = astEqualityList a b
+astEquality (ASTVector a _) (ASTList   b _) = astEqualityList a b
+astEquality (ASTVector a _) (ASTVector b _) = astEqualityList a b
+astEquality (ASTMap    a _) (ASTMap    b _) = M.keys a == M.keys b && astEquality
+  (ASTList (M.elems a) ASTNil)
+  (ASTList (M.elems b) ASTNil)
 astEquality x y = x == y
 astEqualityList :: [AST] -> [AST] -> Bool
 astEqualityList (a : as) (b : bs) =

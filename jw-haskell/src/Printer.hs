@@ -54,18 +54,18 @@ malFormat readable ast = do
   fmt ASTNil        = return ["nil"]
   fmt ASTTrue       = return ["true"]
   fmt ASTFalse      = return ["false"]
-  fmt (ASTFunc _ _) = return ["#<function>"]
+  fmt (ASTFunc _ _ _) = return ["#<function>"]
   fmt (ASTAtom ref) = do
     val  <- readIORef ref
     val' <- fmt val
     return $ ["(", "atom"] ++ val' ++ [")"]
-  fmt (ASTList xs) = do
+  fmt (ASTList xs _) = do
     xs' <- mapM fmt xs
     return $ ["("] ++ concat xs' ++ [")"]
-  fmt (ASTVector xs) = do
+  fmt (ASTVector xs _) = do
     xs' <- mapM fmt xs
     return $ ["["] ++ concat xs' ++ ["]"]
-  fmt (ASTMap m) = do
+  fmt (ASTMap m _) = do
     xs' <- mapM fmt . unwrapPairs $ M.toList m
     return $ ["{"] ++ concat xs' ++ ["}"]
    where
