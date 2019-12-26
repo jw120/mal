@@ -15,6 +15,9 @@ Defines basic internal data types
 
 module Types
   ( AST(..)
+  , Metadata
+  , FMType(..)
+  , LVType(..)
   , EnvRef
   , Env(..)
   , Mal(..)
@@ -24,7 +27,7 @@ module Types
   , MalFunc
   , magicKeywordPrefix
   , Text
-  , astEquality
+  , collectionEquality
   , extractInt
   , extractSym
   , boolToAST
@@ -52,11 +55,14 @@ data AST
   | ASTStr Text
   | ASTAtom MalAtom
     -- Composite data types and functions have a metadata attribute
-  | ASTList [AST] AST
-  | ASTVector [AST] AST
-  | ASTMap (Map Text AST) AST
-  | ASTFunc Bool MalFunc AST -- Function or (if bool is true) macro
+  | ASTFM Metadata FMType MalFunc -- Function or Macro
+  | ASTLV Metadata LVType [AST] -- List or Vector
+  | ASTMap Metadata (Map Text AST)
   deriving (Eq, Show)
+
+type Metadata = AST
+data LVType = LVList | LVVector deriving (Eq, Show)
+data FMType = FMFunction | FMMacro deriving (Eq, Show)
 
 -- | Type for mal functions
 type MalFunc = [AST] -> Mal AST
@@ -82,7 +88,7 @@ extractSym _          = throwString "Type error: symbol expected"
 
 -- Convert a Boolean to the correpsonding AST type
 boolToAST :: Bool -> AST
-boolToAST True = ASTTrue
+boolToAST True  = ASTTrue
 boolToAST False = ASTFalse
 
 -- We hold keywords as Strings with a magic prefix
@@ -90,20 +96,17 @@ magicKeywordPrefix :: Text
 magicKeywordPrefix = "\x029e" -- Unicode 'ʞ'
 
 -- Version of equality that treats lists and vectors as the same
-astEquality :: AST -> AST -> Bool
-astEquality (ASTList   a _) (ASTList   b _) = astEqualityList a b
-astEquality (ASTList   a _) (ASTVector b _) = astEqualityList a b
-astEquality (ASTVector a _) (ASTList   b _) = astEqualityList a b
-astEquality (ASTVector a _) (ASTVector b _) = astEqualityList a b
-astEquality (ASTMap    a _) (ASTMap    b _) = M.keys a == M.keys b && astEquality
-  (ASTList (M.elems a) ASTNil)
-  (ASTList (M.elems b) ASTNil)
-astEquality x y = x == y
-astEqualityList :: [AST] -> [AST] -> Bool
-astEqualityList (a : as) (b : bs) =
-  a `astEquality` b && as `astEqualityList` bs
-astEqualityList [] [] = True
-astEqualityList _  _  = False
+collectionEquality :: AST -> AST -> Bool
+collectionEquality (ASTLV _ _ xs) (ASTLV _ _ ys) = listsEqual xs ys
+collectionEquality (ASTMap _ m1) (ASTMap _ m2) =
+  M.keys m1 == M.keys m2 && listsEqual (M.elems m1) (M.elems m2)
+collectionEquality x y = x == y
+
+-- Helper function for collectionEquality
+listsEqual :: [AST] -> [AST] -> Bool
+listsEqual (a : as) (b : bs) = a `collectionEquality` b && as `listsEqual` bs
+listsEqual []       []       = True
+listsEqual _        _        = False
 
 type EnvRef = IORef Env
 

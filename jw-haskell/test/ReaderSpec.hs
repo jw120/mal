@@ -27,6 +27,7 @@ import           Test.Hspec
 
 import           Reader
 import           Types                          ( AST(..)
+                                                , LVType(..)
                                                 , magicKeywordPrefix
                                                 )
 
@@ -42,10 +43,10 @@ kwText :: Text -> Text
 kwText = (magicKeywordPrefix <>)
 
 list :: [AST] -> AST
-list = ASTList
+list = ASTLV ASTNil LVList
 
 m :: [(Text, AST)] -> AST
-m = ASTMap . M.fromList
+m = ASTMap ASTNil . M.fromList
 
 s :: Text -> AST
 s = ASTStr
@@ -54,7 +55,7 @@ sym :: Text -> AST
 sym = ASTSym
 
 vec :: [AST] -> AST
-vec = ASTVector
+vec = ASTLV ASTNil LVVector
 
 isErrorMatching :: Text -> Either Text a -> Bool
 isErrorMatching x (Left  t) = toLower x `isInfixOf` toLower t
@@ -68,7 +69,7 @@ testMap :: Text -> [(Text, AST)] -> Expectation
 testMap t u = deorder (malRead t) `shouldBe` deorder (Right (Just (m u)))
  where
   deorder :: Either Text (Maybe AST) -> [(Text, String)]
-  deorder (Right (Just (ASTMap mp))) =
+  deorder (Right (Just (ASTMap _ mp))) =
     sort . map (\(k, v) -> (k, show v)) $ M.toList mp
   deorder _ = error "Failed deorder"
 

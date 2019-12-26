@@ -2,6 +2,9 @@
 
 My Haskell implementation of make-a-list
 
+make "test^jw-haskell^step0"
+make MAL_IMPL=jw-haskell "test^mal"
+
 Design choices:
 
 * Megaparsec (using its lex helpers) for parsing
@@ -24,7 +27,7 @@ Tools used
 
 TODO
 
-* Change types to put meta at the front so (\xs -> ASTVector xs meta) can become (ASTVector meta)
+* Shoudl we ever be preserving meta? (in Core.hs)
 * haddocks
 * should equality look at meta?
 * do we need time package in package.yaml?

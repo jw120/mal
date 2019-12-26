@@ -33,6 +33,7 @@ import           Types                          ( Mal(..)
                                                 , MalError(..)
                                                 , EnvRef
                                                 , AST(..)
+                                                , LVType(..)
                                                 , Text
                                                 , Config(..)
                                                 )
@@ -94,14 +95,14 @@ malMain inp = do
   envRef <- Env.empty
   Env.replaceTable envRef (Core.nameSpace envRef)
   mapM_ (rep envRef True) Core.prelude
-  Env.set envRef "*ARGV*" $ ASTList []
+  Env.set envRef "*ARGV*" $ ASTLV ASTNil LVList []
   case inp of
-    Nothing                  -> do
-        mapM_ (rep envRef True) Core.replPrelude
-        repl envRef
+    Nothing -> do
+      mapM_ (rep envRef True) Core.replPrelude
+      repl envRef
     Just (ExprInput e      ) -> rep envRef False e
     Just (FileInput fn argv) -> do
-      Env.set envRef "*ARGV*" $ ASTList (map ASTStr argv)
+      Env.set envRef "*ARGV*" $ ASTLV ASTNil LVList (map ASTStr argv)
       rep envRef True $ T.pack ("(load-file \"" ++ fn ++ "\")")
 
 -- Read-evaluate-print

@@ -27,6 +27,7 @@ import qualified Data.Text                     as T
 import qualified Data.Text.IO                  as TIO
 
 import           Types                          ( AST(..)
+                                                , LVType(..)
                                                 , magicKeywordPrefix
                                                 , Mal
                                                 )
@@ -54,18 +55,18 @@ malFormat readable ast = do
   fmt ASTNil        = return ["nil"]
   fmt ASTTrue       = return ["true"]
   fmt ASTFalse      = return ["false"]
-  fmt (ASTFunc _ _ _) = return ["#<function>"]
+  fmt ASTFM{}       = return ["#<function>"]
   fmt (ASTAtom ref) = do
     val  <- readIORef ref
     val' <- fmt val
     return $ ["(", "atom"] ++ val' ++ [")"]
-  fmt (ASTList xs _) = do
+  fmt (ASTLV _ LVList xs) = do
     xs' <- mapM fmt xs
     return $ ["("] ++ concat xs' ++ [")"]
-  fmt (ASTVector xs _) = do
+  fmt (ASTLV _ LVVector xs) = do
     xs' <- mapM fmt xs
     return $ ["["] ++ concat xs' ++ ["]"]
-  fmt (ASTMap m _) = do
+  fmt (ASTMap _ m) = do
     xs' <- mapM fmt . unwrapPairs $ M.toList m
     return $ ["{"] ++ concat xs' ++ ["}"]
    where

@@ -50,6 +50,6 @@ printInfo msg envRef ast = do
 
 -- Helper function to covert an Environment to a list of ASTMaps
 envToMap :: Env -> [AST]
-envToMap Env { envTable = table, envOuter = Nothing } = [ASTMap table ASTNil]
+envToMap Env { envTable = table, envOuter = Nothing } = [ASTMap ASTNil table]
 envToMap Env { envTable = table, envOuter = Just o } =
-  ASTMap table ASTNil: envToMap o
+  ASTMap ASTNil table : envToMap o
