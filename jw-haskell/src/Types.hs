@@ -15,7 +15,8 @@ Defines basic internal data types
 
 module Types
   ( AST(..)
-  , Metadata
+  , Metadata(..)
+  , noMeta
   , FMType(..)
   , LVType(..)
   , EnvRef
@@ -53,14 +54,19 @@ data AST
   | ASTSym Text
   | ASTInt Int
   | ASTStr Text
-  | ASTAtom MalAtom
     -- Composite data types and functions have a metadata attribute
   | ASTFM Metadata FMType MalFunc -- Function or Macro
   | ASTLV Metadata LVType [AST] -- List or Vector
   | ASTMap Metadata (Map Text AST)
+  | ASTAtom Metadata MalAtom
   deriving (Eq, Show)
 
-type Metadata = AST
+newtype Metadata = Metadata AST deriving (Eq, Show)
+
+-- Abbreviation
+noMeta :: Metadata
+noMeta = Metadata ASTNil
+
 data LVType = LVList | LVVector deriving (Eq, Show)
 data FMType = FMFunction | FMMacro deriving (Eq, Show)
 

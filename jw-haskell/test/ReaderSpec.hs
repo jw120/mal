@@ -28,6 +28,7 @@ import           Test.Hspec
 import           Reader
 import           Types                          ( AST(..)
                                                 , LVType(..)
+                                                , noMeta
                                                 , magicKeywordPrefix
                                                 )
 
@@ -43,10 +44,10 @@ kwText :: Text -> Text
 kwText = (magicKeywordPrefix <>)
 
 list :: [AST] -> AST
-list = ASTLV ASTNil LVList
+list = ASTLV noMeta LVList
 
 m :: [(Text, AST)] -> AST
-m = ASTMap ASTNil . M.fromList
+m = ASTMap noMeta . M.fromList
 
 s :: Text -> AST
 s = ASTStr
@@ -55,7 +56,7 @@ sym :: Text -> AST
 sym = ASTSym
 
 vec :: [AST] -> AST
-vec = ASTLV ASTNil LVVector
+vec = ASTLV noMeta LVVector
 
 isErrorMatching :: Text -> Either Text a -> Bool
 isErrorMatching x (Left  t) = toLower x `isInfixOf` toLower t

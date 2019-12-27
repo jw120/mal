@@ -33,6 +33,7 @@ import qualified Text.Megaparsec.Char          as MC
 import qualified Text.Megaparsec.Char.Lexer    as ML
 
 import           Types                          ( AST(..)
+                                                , noMeta
                                                 , LVType(..)
                                                 , magicKeywordPrefix
                                                 , Text
@@ -89,14 +90,14 @@ pStringLiteral' =
 
 pReaderMacro :: Parser AST
 pReaderMacro = M.choice
-  [ (\e -> ASTLV ASTNil LVList [ASTSym "quote", e]) <$> (symbol "'" *> pExpr)
-  , (\e -> ASTLV ASTNil LVList [ASTSym "quasiquote", e])
+  [ (\e -> ASTLV noMeta LVList [ASTSym "quote", e]) <$> (symbol "'" *> pExpr)
+  , (\e -> ASTLV noMeta LVList [ASTSym "quasiquote", e])
     <$> (symbol "`" *> pExpr)
-  , (\e -> ASTLV ASTNil LVList [ASTSym "splice-unquote", e])
+  , (\e -> ASTLV noMeta LVList [ASTSym "splice-unquote", e])
     <$> (symbol "~@" *> pExpr)
-  , (\e -> ASTLV ASTNil LVList [ASTSym "unquote", e]) <$> (symbol "~" *> pExpr)
-  , (\e -> ASTLV ASTNil LVList [ASTSym "deref", e]) <$> (symbol "@" *> pExpr)
-  , (\e1 e2 -> ASTLV ASTNil LVList [ASTSym "with-meta", e2, e1])
+  , (\e -> ASTLV noMeta LVList [ASTSym "unquote", e]) <$> (symbol "~" *> pExpr)
+  , (\e -> ASTLV noMeta LVList [ASTSym "deref", e]) <$> (symbol "@" *> pExpr)
+  , (\e1 e2 -> ASTLV noMeta LVList [ASTSym "with-meta", e2, e1])
   <$> (symbol "^" *> pExpr)
   <*> pExpr
   ]
@@ -123,17 +124,17 @@ pKeyword' = toText <$> (MC.char ':' *> lexeme (M.some (M.satisfy isNormal)))
 
   -- | Parse a list
 pList :: Parser AST
-pList = ASTLV ASTNil LVList <$> parens (M.many pExpr)
+pList = ASTLV noMeta LVList <$> parens (M.many pExpr)
   where parens = M.between (symbol "(") (symbol ")")
 
 -- | Parse a vector
 pVector :: Parser AST
-pVector = ASTLV ASTNil LVVector <$> parens (M.many pExpr)
+pVector = ASTLV noMeta LVVector <$> parens (M.many pExpr)
   where parens = M.between (symbol "[") (symbol "]")
 
 -- | Parse a map
 pMap :: Parser AST
-pMap = ASTMap ASTNil . Data.Map.fromList <$> parens (M.many pMapPair)
+pMap = ASTMap noMeta . Data.Map.fromList <$> parens (M.many pMapPair)
  where
   parens = M.between (symbol "{") (symbol "}")
   pMapPair :: Parser (Text, AST)

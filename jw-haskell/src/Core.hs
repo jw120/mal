@@ -31,6 +31,8 @@ import           Data.Time.Clock.POSIX          ( getPOSIXTime )
 
 
 import           Types                          ( AST(..)
+                                                , Metadata(..)
+                                                , noMeta
                                                 , FMType(..)
                                                 , LVType(..)
                                                 , EnvRef
@@ -70,11 +72,11 @@ replPrelude = ["(println (str \"Mal [\" *host-language* \"]\"))"]
 
 -- Helper for function that already operate on a list
 fn :: ([AST] -> Mal AST) -> AST
-fn = ASTFM ASTNil FMFunction
+fn = ASTFM noMeta FMFunction
 
 -- Helper for functions that operates on one argument
 fn1 :: (AST -> Mal AST) -> AST
-fn1 f = ASTFM ASTNil FMFunction g
+fn1 f = ASTFM noMeta FMFunction g
  where
   g :: [AST] -> Mal AST
   g [x] = f x
@@ -82,7 +84,7 @@ fn1 f = ASTFM ASTNil FMFunction g
 
 -- Helper for pure functions that operates on one string
 fn1s :: (Text -> AST) -> AST
-fn1s f = ASTFM ASTNil FMFunction g
+fn1s f = ASTFM noMeta FMFunction g
  where
   g :: [AST] -> Mal AST
   g [ASTStr s] = return $ f s
@@ -94,7 +96,7 @@ fn1m matcher = fn1 $ return . (\x -> if matcher x then ASTTrue else ASTFalse)
 
 -- Helper for pure functions that operates on two arguments
 fn2 :: (AST -> AST -> AST) -> AST
-fn2 f = ASTFM ASTNil FMFunction g
+fn2 f = ASTFM noMeta FMFunction g
  where
   g :: [AST] -> Mal AST
   g [x, y] = return $ f x y
@@ -102,7 +104,7 @@ fn2 f = ASTFM ASTNil FMFunction g
 
 -- Helper for pure functions that operate on two ints
 fn2i :: (Int -> Int -> AST) -> AST
-fn2i f = ASTFM ASTNil FMFunction g
+fn2i f = ASTFM noMeta FMFunction g
  where
   g :: [AST] -> Mal AST
   g [ASTInt a, ASTInt b] = return $ f a b
@@ -133,8 +135,8 @@ nameSpace envRef = M.fromList
   , ( "atom?"
     , fn1m
       (\case
-        ASTAtom _ -> True
-        _         -> False
+        ASTAtom _ _ -> True
+        _           -> False
       )
     )
   , ( "nil?"
@@ -248,13 +250,11 @@ nameSpace envRef = M.fromList
         else magicKeywordPrefix <> s
       )
     )
-  , ("eval"   , fn1 (eval envRef))
-  , ("apply"  , fn apply)
-  , ("throw"  , fn malThrow)
-  , ("time-ms", fn timeMS)
-  , ("meta"   , fn nyi)
-  , ( "with-meta"
-    , fn nyi
+  , ("eval" , fn1 (eval envRef))
+  , ("apply", fn apply)
+  , ("throw", fn malThrow)
+  , ( "time-ms"
+    , fn timeMS
     )
 
   -- IO functions
@@ -269,8 +269,8 @@ nameSpace envRef = M.fromList
     )
 
     -- Sequence functions
-  , ("list", fn $ \xs -> return (ASTLV ASTNil LVList xs))
-  , ("vector", fn $ \xs -> return (ASTLV ASTNil LVVector xs))
+  , ("list", fn $ \xs -> return (ASTLV noMeta LVList xs))
+  , ("vector", fn $ \xs -> return (ASTLV noMeta LVVector xs))
   , ("count" , fn count)
   , ("cons"  , fn cons)
   , ("concat", fn malConcat)
@@ -298,7 +298,13 @@ nameSpace envRef = M.fromList
   , ("atom"  , fn atom)
   , ("deref" , fn deref)
   , ("reset!", fn reset)
-  , ("swap!" , fn (swap envRef))
+  , ( "swap!"
+    , fn (swap envRef)
+    )
+
+    -- Meta functions
+  , ("meta"     , fn malMeta)
+  , ("with-meta", fn withMeta)
   ]
 
 --
@@ -423,14 +429,14 @@ count [ASTLV _ _ xs] = return (ASTInt (length xs))
 count _              = return (ASTInt 0)
 
 cons :: [AST] -> Mal AST
-cons [ast, ASTLV _ _ xs] = return $ ASTLV ASTNil LVList (ast : xs)
+cons [ast, ASTLV _ _ xs] = return $ ASTLV noMeta LVList (ast : xs)
 cons _                   = throwString "Bad arguments for cons"
 
 malConcat :: [AST] -> Mal AST
 malConcat (ASTLV _ _ xs : ASTLV _ _ ys : zs) =
-  malConcat (ASTLV ASTNil LVList (xs ++ ys) : zs)
+  malConcat (ASTLV noMeta LVList (xs ++ ys) : zs)
 malConcat [ASTLV meta _ xs] = return $ ASTLV meta LVList xs
-malConcat []                = return $ ASTLV ASTNil LVList []
+malConcat []                = return $ ASTLV noMeta LVList []
 malConcat _                 = throwString "Bad arguments for concat"
 
 nth :: [AST] -> Mal AST
@@ -446,16 +452,16 @@ first [ASTNil           ] = return ASTNil
 first _                   = throwString "Bad arguments for first"
 
 rest :: [AST] -> Mal AST
-rest [ASTLV _ _ (_ : ys)] = return $ ASTLV ASTNil LVList ys
-rest [ASTLV _ _ []      ] = return $ ASTLV ASTNil LVList []
-rest [ASTNil            ] = return $ ASTLV ASTNil LVList []
+rest [ASTLV _ _ (_ : ys)] = return $ ASTLV noMeta LVList ys
+rest [ASTLV _ _ []      ] = return $ ASTLV noMeta LVList []
+rest [ASTNil            ] = return $ ASTLV noMeta LVList []
 rest _                    = throwString "Bad arguments for rest"
 
 malSeq :: [AST] -> Mal AST
 malSeq [ASTLV _ _ []] = return ASTNil
-malSeq [ASTLV _ _ xs] = return $ ASTLV ASTNil LVList xs
+malSeq [ASTLV _ _ xs] = return $ ASTLV noMeta LVList xs
 malSeq [ASTStr ""   ] = return ASTNil
-malSeq [ASTStr s] = return . ASTLV ASTNil LVList . map ASTStr $ T.chunksOf 1 s
+malSeq [ASTStr s] = return . ASTLV noMeta LVList . map ASTStr $ T.chunksOf 1 s
 malSeq [ASTNil      ] = return ASTNil
 malSeq _              = throwString "Unexpected arguments for seq"
 
@@ -479,7 +485,7 @@ conj _ = throwString "Unexpected arguments for conj"
 hashMap :: [AST] -> Mal AST
 hashMap xs = do
   xs' <- alternatingToPairs xs
-  return $ ASTMap ASTNil (M.fromList xs')
+  return $ ASTMap noMeta (M.fromList xs')
 
 -- Helper function
 alternatingToPairs :: [AST] -> Mal [(Text, AST)]
@@ -533,27 +539,46 @@ vals _               = throwString "vals expects a hash-map"
 atom :: [AST] -> Mal AST
 atom [ast] = do
   ref <- liftIO $ newIORef ast
-  return $ ASTAtom ref
+  return $ ASTAtom noMeta ref
 atom _ = throwString "Bad arguments for atom"
 
 deref :: [AST] -> Mal AST
-deref [ASTAtom ref] = liftIO $ readIORef ref
-deref _             = throwString "Bad arguments for deref"
+deref [ASTAtom _ ref] = liftIO $ readIORef ref
+deref _               = throwString "Bad arguments for deref"
 
 reset :: [AST] -> Mal AST
-reset [ASTAtom ref, val] = do
+reset [ASTAtom _ ref, val] = do
   liftIO $ writeIORef ref val
   return val
 reset _ = throwString "Bad arguments for reset"
 
 swap :: EnvRef -> [AST] -> Mal AST
-swap _ (ASTAtom ref : ASTFM _ FMFunction func : args) = do
+swap _ (ASTAtom _ ref : ASTFM _ FMFunction func : args) = do
   val  <- liftIO $ readIORef ref
   val' <- func (val : args)
   liftIO $ writeIORef ref val'
   return val'
 swap _ _ = throwString "Bad arguments for swap"
 
-nyi :: [AST] -> Mal AST
-nyi _ = throwString "NYI"
+
+--
+-- Meta functions
+--
+
+malMeta :: [AST] -> Mal AST
+malMeta [ASTAtom (Metadata meta) _] = return meta
+malMeta [ASTFM (Metadata meta) _ _] = return meta
+malMeta [ASTLV (Metadata meta) _ _] = return meta
+malMeta [ASTMap (Metadata meta) _ ] = return meta
+malMeta [_                        ] = return ASTNil
+malMeta _ = throwString "Expected a single argument for meta"
+
+withMeta :: [AST] -> Mal AST
+withMeta [ASTAtom _ a      , meta] = return $ ASTAtom (Metadata meta) a
+withMeta [ASTFM _ fmType xs, meta] = return $ ASTFM (Metadata meta) fmType xs
+withMeta [ASTLV _ lvType xs, meta] = return $ ASTLV (Metadata meta) lvType xs
+withMeta [ASTMap _ m       , meta] = return $ ASTMap (Metadata meta) m
+withMeta [_, _] =
+  throwString "Can only apply meta data to a function, list, vector or map"
+withMeta _ = throwString "Bad arguments for with-meta"
 

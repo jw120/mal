@@ -23,6 +23,7 @@ import qualified Data.Map                      as M
 import qualified Env
 import qualified Debug
 import           Types                          ( AST(..)
+                                                , noMeta
                                                 , FMType(..)
                                                 , LVType(..)
                                                 , EnvRef
@@ -51,17 +52,17 @@ evalAst :: EnvRef -> AST -> Mal AST
 evalAst envRef ast = do
   Debug.printInfo "evalAst" envRef ast
   case ast of
-    ASTLV _ LVVector xs -> ASTLV ASTNil LVVector <$> mapM (eval envRef) xs
+    ASTLV _ LVVector xs -> ASTLV noMeta LVVector <$> mapM (eval envRef) xs
     ASTMap _ m          -> do
       elems' <- mapM (eval envRef) $ M.elems m
-      return . ASTMap ASTNil . M.fromList $ zip (M.keys m) elems'
+      return . ASTMap noMeta . M.fromList $ zip (M.keys m) elems'
     ASTSym s -> Env.get envRef s
     _        -> return ast
 
 -- | Helper function apply to handle lists (mainly special forms)
 apply :: EnvRef -> [AST] -> Mal AST
 apply envRef astList = do
-  Debug.printInfo "apply" envRef $ ASTLV ASTNil LVList astList
+  Debug.printInfo "apply" envRef $ ASTLV noMeta LVList astList
   case astList of
 
       -- Special form: def!
@@ -76,7 +77,7 @@ apply envRef astList = do
       fn <- eval envRef fnBody
       case fn of
         ASTFM _ FMFunction f -> do
-          let macro = ASTFM ASTNil FMMacro f
+          let macro = ASTFM noMeta FMMacro f
           Env.set envRef sym macro
           return macro
         _ -> throwString "Expected a function in defmacro!"
@@ -90,7 +91,7 @@ apply envRef astList = do
     -- Special form: fn*
     [ASTSym "fn*", ASTLV _ _ binds, body] -> do
       binds' <- mapM extractSym binds
-      return . ASTFM ASTNil FMFunction $ closure binds'
+      return . ASTFM noMeta FMFunction $ closure binds'
      where
       closure :: [Text] -> [AST] -> Mal AST
       closure bindNames args = do
@@ -101,7 +102,7 @@ apply envRef astList = do
       -- Add bindings to the environment as two lists (a b) (2 3), catches clojure-style "&"
       addBindingLists :: EnvRef -> [Text] -> [AST] -> Mal ()
       addBindingLists e ["&", symVariadic] valVariadic = do
-        Env.set e symVariadic $ ASTLV ASTNil LVList valVariadic
+        Env.set e symVariadic $ ASTLV noMeta LVList valVariadic
         return ()
       addBindingLists e (sym : symRest) (val : valRest) = do
         Env.set e sym val
@@ -151,14 +152,14 @@ apply envRef astList = do
       quasiQuote :: AST -> AST
       quasiQuote (ASTLV _ LVList [ASTSym "unquote", x]) = x
       quasiQuote (ASTLV _ LVList (ASTLV _ _ [ASTSym "splice-unquote", x] : ys))
-        = ASTLV ASTNil
+        = ASTLV noMeta
                 LVList
-                [ASTSym "concat", x, quasiQuote (ASTLV ASTNil LVList ys)]
+                [ASTSym "concat", x, quasiQuote (ASTLV noMeta LVList ys)]
       quasiQuote (ASTLV _ _ (x : ys)) = ASTLV
-        ASTNil
+        noMeta
         LVList
-        [ASTSym "cons", quasiQuote x, quasiQuote (ASTLV ASTNil LVList ys)]
-      quasiQuote x = ASTLV ASTNil LVList [ASTSym "quote", x]
+        [ASTSym "cons", quasiQuote x, quasiQuote (ASTLV noMeta LVList ys)]
+      quasiQuote x = ASTLV noMeta LVList [ASTSym "quote", x]
     (ASTSym "quasiquote" : _) ->
       throwString "Bad syntax in quasiquote special form"
 

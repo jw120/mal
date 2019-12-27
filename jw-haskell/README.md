@@ -2,8 +2,13 @@
 
 My Haskell implementation of make-a-list
 
-make "test^jw-haskell^step0"
-make MAL_IMPL=jw-haskell "test^mal"
+How to run tests (all run from parent directory, `mal`)
+
+```
+make "test^jw-haskell^step0"  # Run one step of the tests (step runs from 0..A)
+make "test^jw-haskell"  # Run all the tests
+make MAL_IMPL=jw-haskell "test^mal"  # Run all the tests in self-hosting mode
+```
 
 Design choices:
 

@@ -52,11 +52,11 @@ malFormat readable ast = do
       (Just kw, _    ) -> [":" <> kw]
       (Nothing, True ) -> ["\"" <> makeReadable t <> "\""]
       (Nothing, False) -> [t]
-  fmt ASTNil        = return ["nil"]
-  fmt ASTTrue       = return ["true"]
-  fmt ASTFalse      = return ["false"]
-  fmt ASTFM{}       = return ["#<function>"]
-  fmt (ASTAtom ref) = do
+  fmt ASTNil          = return ["nil"]
+  fmt ASTTrue         = return ["true"]
+  fmt ASTFalse        = return ["false"]
+  fmt ASTFM{}         = return ["#<function>"]
+  fmt (ASTAtom _ ref) = do
     val  <- readIORef ref
     val' <- fmt val
     return $ ["(", "atom"] ++ val' ++ [")"]

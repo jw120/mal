@@ -26,6 +26,7 @@ import           Printer                        ( malFormat
                                                 , malPrint
                                                 )
 import           Types                          ( AST(..)
+                                                , noMeta
                                                 , EnvRef
                                                 , Env(..)
                                                 , Mal
@@ -50,6 +51,6 @@ printInfo msg envRef ast = do
 
 -- Helper function to covert an Environment to a list of ASTMaps
 envToMap :: Env -> [AST]
-envToMap Env { envTable = table, envOuter = Nothing } = [ASTMap ASTNil table]
+envToMap Env { envTable = table, envOuter = Nothing } = [ASTMap noMeta table]
 envToMap Env { envTable = table, envOuter = Just o } =
-  ASTMap ASTNil table : envToMap o
+  ASTMap noMeta table : envToMap o
