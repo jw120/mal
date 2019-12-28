@@ -9,15 +9,26 @@ class MalType:
     """Abstract type for any Mal element"""
 
 
-class MalList(MalType):
-    """List type for MAL"""
+class MalSeq(MalType):
+    """Sequence type for Mal - lists or vectors"""
 
     def __init__(self, elements: List[MalType]):
         self.elements = elements
         super().__init__()
 
+
+class MalList(MalSeq):
+    """List type for MAL"""
+
     def __str__(self):
         return "(" + " ".join(map(str, self.elements)) + ")"
+
+
+class MalVec(MalSeq):
+    """Vector type for MAL"""
+
+    def __str__(self):
+        return "[" + " ".join(map(str, self.elements)) + "]"
 
 
 class MalNum(MalType):
@@ -90,7 +101,7 @@ class ReaderError(MalError):
 
     def __str__(self):
         expression_msg = "" if self.expression is None else " at " + self.expression
-        return "Reader Error: " + self.message + expression_msg
+        return "Reader error: " + self.message + expression_msg
 
 
 class InternalError(MalError):
@@ -105,4 +116,4 @@ class InternalError(MalError):
         super().__init__()
 
     def __str__(self):
-        return "Internal Error: " + self.message
+        return "Internal error: " + self.message

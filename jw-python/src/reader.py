@@ -3,7 +3,7 @@
 import re
 from typing import Generic, List, Optional, TypeVar
 
-from mal import MalType, MalList, MalNum, MalSym, MalStr, MalBool, MalNil
+from mal import MalType, MalList, MalVec, MalNum, MalSym, MalStr, MalBool, MalNil
 from mal import InternalError, ReaderError
 
 T = TypeVar('T')
@@ -65,28 +65,34 @@ def read_form(reader: Reader[str]) -> MalType:
 
     if reader.peek() == "(":
         return read_list(reader)
+    if reader.peek() == "[":
+        return read_list(reader, read_vector=True)
     return read_atom(reader)
 
 
-def read_list(reader: Reader[str]) -> MalType:
-    """Read a list from the given Reader"""
+def read_list(reader: Reader[str], read_vector: bool = False) -> MalType:
+    """Read a list or vector from the given Reader"""
 
-    if reader.next() != "(":
-        raise InternalError("No opening paren in read_list")
+    opener = "[" if read_vector else "("
+    closer = "]" if read_vector else ")"
+    if reader.next() != opener:
+        raise InternalError("no opener in read_list")
+
     elements: List[MalType] = []
     while True:
         next_value = reader.peek()
-        if next_value == ")":
+        if next_value == closer:
+            reader.next()
             break
         if next_value is None:
             raise ReaderError("EOF before closing paren in read_list")
         elements.append(read_form(reader))
-    return MalList(elements)
+
+    return MalVec(elements) if read_vector else MalList(elements)
 
 
 STRING_REGEX = re.compile('"(.*)"')
 NUMBER_REGEX = re.compile(r"\d+")
-
 
 def read_atom(reader: Reader[str]) -> MalType:
     """Read an atom from the given Reader"""
@@ -103,6 +109,21 @@ def read_atom(reader: Reader[str]) -> MalType:
     match = STRING_REGEX.fullmatch(token)
     if match:
         return MalStr(match.group(1))
+    if token.startswith('"'):
+        raise ReaderError("unbalanced quotes", token)
+    if token.startswith(";"):
+        return MalNil()
+    if token == "'":
+        return MalList([MalSym("quote"), read_form(reader)])
+    if token == "`":
+        return MalList([MalSym("quasiquote"), read_form(reader)])
+    if token == "~":
+        return MalList([MalSym("unquote"), read_form(reader)])
+    if token == "~@":
+        return MalList([MalSym("splice-unquote"), read_form(reader)])
+    if token == "@":
+        return MalList([MalSym("deref"), read_form(reader)])
     if NUMBER_REGEX.fullmatch(token):
         return MalNum(int(token))
+
     return MalSym(token)
