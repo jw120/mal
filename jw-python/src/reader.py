@@ -3,11 +3,17 @@
 import re
 from typing import Generic, List, TypeVar
 
-from types import MalType, MalList, MalNil
+from mal import MalType, MalList, MalNum, MalSym, MalStr, MalBool, MalNil
+
 
 T = TypeVar('T') #pylint: disable=invalid-name
 class Reader(Generic[T]):
-    """Stateful reader object"""
+    """Creates a stateful reader object that supports peek and next
+
+    >>> r = Reader([1,2,3])
+    >>> print(r.peek(), r.next(), r.next())
+    1 1 2
+    """
 
     def __init__(self, source: List[T]) -> None:
         self.source = source
@@ -35,23 +41,54 @@ TOKEN_REGEX = re.compile(
     '"`,;)]*)'
     )
 
+
+
 def read_str(source: str) -> MalType:
-    """Read the tokens in the given string"""
+    """Read the tokens in the given string and return the MAL AST
+
+    >>> print(read_str("42"), read_str("abc"), read_str('"s123"'))
+    42 abc "s123"
+    >>> print(read_str("nil"), read_str("true"), read_str("false"))
+    nil true false
+    >>> print(read_str("(+ 2 3 (- 4 5))"))
+    (+ 2 3 (- 4 5))
+    """
+
     tokens = TOKEN_REGEX.findall(source)
     return read_form(Reader(tokens))
 
 def read_form(reader: Reader) -> MalType:
     """Read a general form from the given Reader"""
-    if reader.peek() == "()":
+    if reader.peek() == "(":
         return read_list(reader)
     return read_atom(reader)
 
-def read_list(_reader: Reader) -> MalType:
+def read_list(reader: Reader) -> MalType:
     """Read a list from the given Reader"""
-    return MalList([])
 
-def read_atom(_reader: Reader) -> MalType:
+    if reader.next() != "(":
+        raise RuntimeError
+    elements: List[MalType] = []
+    while reader.peek() != ")":
+        elements.append(read_form(reader))
+    return MalList(elements)
+
+STRING_REGEX = re.compile('"(.*)"')
+NUMBER_REGEX = re.compile(r"\d+")
+
+def read_atom(reader: Reader) -> MalType:
     """Read an atom from the given Reader"""
-    return MalNil()
 
-#if __name__ == "__main__":
+    token = reader.next()
+    if token == "nil":
+        return MalNil()
+    if token == "true":
+        return MalBool(True)
+    if token == "false":
+        return MalBool(False)
+    match = STRING_REGEX.fullmatch(token)
+    if match:
+        return MalStr(match.group(1))
+    if NUMBER_REGEX.fullmatch(token):
+        return MalNum(int(token))
+    return MalSym(token)
