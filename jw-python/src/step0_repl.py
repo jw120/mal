@@ -1,25 +1,34 @@
-"""step0"""
+"""Implements step0 of https://github.com/kanaka/mal - the repl"""
 
-def mal_read(input_string: str) -> str:
+
+def READ(input_string: str) -> str:
     """Dummy read function - just passes through its argument"""
     return input_string
 
-def mal_eval(ast: str) -> str:
+
+def EVAL(ast: str) -> str:
     """Dummy eval function - just passes through its argument"""
     return ast
 
-def mal_print(ast: str) -> None:
+
+def PRINT(ast: str) -> None:
     """Minimal print function - just prints its argument"""
     print(ast)
 
+
 def rep(input_string: str) -> None:
     """Calls read-eval-print on its argument"""
-    mal_print(mal_eval(mal_read(input_string)))
+    PRINT(EVAL(READ(input_string)))
+
 
 def rep_loop() -> None:
-    """Reapeatedly provides user prompt and passes the input to read-eval-print"""
+    """Repeatedly provides user prompt and passes the input to read-eval-print"""
     while True:
-        rep(input("user> "))
+        try:
+            rep(input("user> "))
+        except EOFError:
+            break
+
 
 if __name__ == "__main__":
     rep_loop()

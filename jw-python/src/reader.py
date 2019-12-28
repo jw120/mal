@@ -1,12 +1,14 @@
 """Reader"""
 
 import re
-from typing import Generic, List, TypeVar
+from typing import Generic, List, Optional, TypeVar
 
 from mal import MalType, MalList, MalNum, MalSym, MalStr, MalBool, MalNil
+from mal import InternalError, ReaderError
+
+T = TypeVar('T')
 
 
-T = TypeVar('T') #pylint: disable=invalid-name
 class Reader(Generic[T]):
     """Creates a stateful reader object that supports peek and next
 
@@ -19,17 +21,18 @@ class Reader(Generic[T]):
         self.source = source
         self.current = 0
 
-    def peek(self) -> T:
-        """Return the current element without advancing the current element"""
+    def peek(self) -> Optional[T]:
+        """Return the current element without advancing. None if no more elements."""
 
-        return self.source[self.current]
+        return self.source[self.current] if self.current < len(self.source) else None
 
-    def next(self) -> T:
-        """Return the current element and advance the current element"""
+    def next(self) -> Optional[T]:
+        """Return the current element and advance the current element. None if no more elements"""
 
         val = self.peek()
         self.current += 1
         return val
+
 
 TOKEN_REGEX = re.compile(
     r"[\s,]*"                 # Any number of whitespaces or commas (not captured)
@@ -40,7 +43,6 @@ TOKEN_REGEX = re.compile(
     r"[^\s\[\]{}('"           # Captures a sequence of zero or more non special characters
     '"`,;)]*)'
     )
-
 
 
 def read_str(source: str) -> MalType:
@@ -57,29 +59,41 @@ def read_str(source: str) -> MalType:
     tokens = TOKEN_REGEX.findall(source)
     return read_form(Reader(tokens))
 
-def read_form(reader: Reader) -> MalType:
+
+def read_form(reader: Reader[str]) -> MalType:
     """Read a general form from the given Reader"""
+
     if reader.peek() == "(":
         return read_list(reader)
     return read_atom(reader)
 
-def read_list(reader: Reader) -> MalType:
+
+def read_list(reader: Reader[str]) -> MalType:
     """Read a list from the given Reader"""
 
     if reader.next() != "(":
-        raise RuntimeError
+        raise InternalError("No opening paren in read_list")
     elements: List[MalType] = []
-    while reader.peek() != ")":
+    while True:
+        next_value = reader.peek()
+        if next_value == ")":
+            break
+        if next_value is None:
+            raise ReaderError("EOF before closing paren in read_list")
         elements.append(read_form(reader))
     return MalList(elements)
+
 
 STRING_REGEX = re.compile('"(.*)"')
 NUMBER_REGEX = re.compile(r"\d+")
 
-def read_atom(reader: Reader) -> MalType:
+
+def read_atom(reader: Reader[str]) -> MalType:
     """Read an atom from the given Reader"""
 
     token = reader.next()
+    if token is None:
+        raise InternalError("EOF in read_atom")
     if token == "nil":
         return MalNil()
     if token == "true":

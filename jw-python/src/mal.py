@@ -2,7 +2,8 @@
 
 #pylint: disable=too-few-public-methods
 
-from typing import List
+from typing import List, Optional
+
 
 class MalType:
     """Abstract type for any Mal element"""
@@ -40,6 +41,7 @@ class MalSym(MalType):
     def __str__(self):
         return self.value
 
+
 class MalStr(MalType):
     """String type for MAL"""
 
@@ -65,6 +67,42 @@ class MalBool(MalType):
         self.value = value
         super().__init__()
 
-
     def __str__(self):
         return "true" if self.value else "false"
+
+
+class MalError(Exception):
+    """Base class for mal exceptions"""
+
+
+class ReaderError(MalError):
+    """Exception raised for errors in the reader
+
+    Attributes:
+        expression -- input expression in which the error occurred
+        message -- explanation of the error
+    """
+
+    def __init__(self, message: str, expression: Optional[str] = None):
+        self.expression = expression
+        self.message = message
+        super().__init__()
+
+    def __str__(self):
+        expression_msg = "" if self.expression is None else " at " + self.expression
+        return "Reader Error: " + self.message + expression_msg
+
+
+class InternalError(MalError):
+    """Exception raised for internal errors (should only be caused by bugs in the python code)
+
+    Attribute:
+        message -- explanation of the error
+    """
+
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__()
+
+    def __str__(self):
+        return "Internal Error: " + self.message
