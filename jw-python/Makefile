@@ -1,4 +1,4 @@
-LINT = ~/Library/Python/3.7/bin/pylint
+LINT = pylint
 TYPECHECK = mypy
 
 SRCDIR = src/
