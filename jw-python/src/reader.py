@@ -1,10 +1,14 @@
 """Reader"""
 
+#pylint: disable=too-many-return-statements,too-many-branches
+
 import re
 from typing import Generic, List, Optional, TypeVar
 
-from mal import MalType, MalList, MalVec, MalNum, MalSym, MalStr, MalBool, MalNil
-from mal import InternalError, ReaderError
+from mal_errors import InternalError, ReaderError
+from mal_types import MalAny, MalList, MalVec, MalMap, MalNum
+from mal_types import MalKeyword, MalSym, MalStr, MalBool, MalNil
+from utils import remove_escapes
 
 T = TypeVar('T')
 
@@ -45,7 +49,7 @@ TOKEN_REGEX = re.compile(
     )
 
 
-def read_str(source: str) -> MalType:
+def read_str(source: str) -> MalAny:
     """Read the tokens in the given string and return the MAL AST
 
     >>> print(read_str("42"), read_str("abc"), read_str('"s123"'))
@@ -60,25 +64,25 @@ def read_str(source: str) -> MalType:
     return read_form(Reader(tokens))
 
 
-def read_form(reader: Reader[str]) -> MalType:
+def read_form(reader: Reader[str]) -> MalAny:
     """Read a general form from the given Reader"""
 
     if reader.peek() == "(":
-        return read_list(reader)
+        return MalList(read_seq(reader, "(", ")"))
     if reader.peek() == "[":
-        return read_list(reader, read_vector=True)
+        return MalVec(read_seq(reader, "[", "]"))
+    if reader.peek() == "{":
+        return MalMap(read_seq(reader, "{", "}"))
     return read_atom(reader)
 
 
-def read_list(reader: Reader[str], read_vector: bool = False) -> MalType:
-    """Read a list or vector from the given Reader"""
+def read_seq(reader: Reader[str], opener: str, closer: str) -> List[MalAny]:
+    """Read a sequence of values between given delimiters"""
 
-    opener = "[" if read_vector else "("
-    closer = "]" if read_vector else ")"
     if reader.next() != opener:
-        raise InternalError("no opener in read_list")
+        raise InternalError("no opener in read_seq")
 
-    elements: List[MalType] = []
+    elements: List[MalAny] = []
     while True:
         next_value = reader.peek()
         if next_value == closer:
@@ -88,31 +92,25 @@ def read_list(reader: Reader[str], read_vector: bool = False) -> MalType:
             raise ReaderError("EOF before closing paren in read_list")
         elements.append(read_form(reader))
 
-    return MalVec(elements) if read_vector else MalList(elements)
+    return elements
 
 
-STRING_REGEX = re.compile('"(.*)"')
+QUOTED_STRING_REGEX = re.compile('"(.*)"')
 NUMBER_REGEX = re.compile(r"\d+")
 
-def read_atom(reader: Reader[str]) -> MalType:
+def read_atom(reader: Reader[str]) -> MalAny:
     """Read an atom from the given Reader"""
 
     token = reader.next()
     if token is None:
         raise InternalError("EOF in read_atom")
+
     if token == "nil":
         return MalNil()
     if token == "true":
         return MalBool(True)
     if token == "false":
         return MalBool(False)
-    match = STRING_REGEX.fullmatch(token)
-    if match:
-        return MalStr(match.group(1))
-    if token.startswith('"'):
-        raise ReaderError("unbalanced quotes", token)
-    if token.startswith(";"):
-        return MalNil()
     if token == "'":
         return MalList([MalSym("quote"), read_form(reader)])
     if token == "`":
@@ -123,6 +121,20 @@ def read_atom(reader: Reader[str]) -> MalType:
         return MalList([MalSym("splice-unquote"), read_form(reader)])
     if token == "@":
         return MalList([MalSym("deref"), read_form(reader)])
+    if token == "^":
+        target = read_form(reader)
+        meta = read_form(reader)
+        return MalList([MalSym("with-meta"), meta, target])
+
+    match = QUOTED_STRING_REGEX.fullmatch(token)
+    if match:
+        return MalStr(remove_escapes(match.group(1)))
+    if token.startswith('"'):
+        raise ReaderError("unbalanced quotes", token)
+    if token.startswith(":"):
+        return MalKeyword(token[1:])
+    if token.startswith(";"):
+        return MalNil()
     if NUMBER_REGEX.fullmatch(token):
         return MalNum(int(token))
 

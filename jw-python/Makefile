@@ -6,8 +6,8 @@ SRCDIR = src/
 SRCFILES = $(SRCDIR)/*.py
 
 .PHONY: check all typecheck lint test
+all: check test
 check: typecheck lint doctest
-all: check
 
 doctest:
 	$(DOCTEST) $(SRCFILES)
@@ -24,7 +24,7 @@ lint:
 test: step0 step1
 
 step0:
-	echo step0; cd ..; make "test^jw-python^step0" | grep "failing tests"
+	cd ..; make "test^jw-python^step0" | grep ": failing tests"
 
 step1:
-	echo step1; cd ..; make "test^jw-python^step1"
+	cd ..; make "test^jw-python^step1" | grep ": failing tests"

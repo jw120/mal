@@ -3,7 +3,6 @@ Note
 
 Python 3
 mypy
-# Using regex library for better pcre regexps
 
 
 
