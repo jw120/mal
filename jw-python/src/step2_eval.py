@@ -22,11 +22,11 @@ repl_env: Mal_Environment = {
 def EVAL(ast: MalAny, env: Mal_Environment) -> MalAny:
     """Top-level eval function that handles apply"""
 
-    # apply for a non-empty sequence
-    if isinstance(ast, MalSeq) and len(ast.value) > 0:
+    # apply for a non-empty list
+    if isinstance(ast, MalList) and len(ast.value) > 0:
         evaluated = eval_ast(ast, env)
-        if not isinstance(evaluated, MalSeq): # For type checker - should always be a MalSeq
-            raise InternalError("Expected a MalSeq")
+        if not isinstance(evaluated, MalList): # For type checker - should always be a MalSeq
+            raise InternalError("Expected a MalList")
         head = evaluated.value[0]
         if isinstance(head, MalFunc):
             return head.value(evaluated.value[1:])
