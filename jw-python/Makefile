@@ -21,7 +21,7 @@ typecheck:
 lint:
 	$(LINT) $(SRCDIR)
 
-test: step0 step1 step2
+test: step0 step1 step2 step3
 
 step0:
 	cd ..; make "test^jw-python^step0" | grep ": failing tests"
@@ -31,3 +31,6 @@ step1:
 
 step2:
 	cd ..; make "test^jw-python^step2" | grep ": failing tests"
+
+step3:
+	cd ..; make "test^jw-python^step3" | grep ": failing tests"

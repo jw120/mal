@@ -29,55 +29,58 @@ from utils import add_escapes
 class MalAny:
     """Abstract type for any Mal element"""
 
-    def str_readable(self):
+    def str_readable(self) -> str:
         """Default implementation of readable string, overridedn by string types"""
         return str(self)
 
 
+class MalKey(MalAny):
+    """Type for mal that can be used as a map key"""
+
+    def __init__(self, value: str) -> None:
+        self.value = value
+        super().__init__()
+
+    def __str__(self) -> str:
+        return '"' + self.value + '"'
+
+
 Mal_Environment = Dict[str, MalAny]
+Mal_Function = Callable[[List[MalAny]], MalAny]
+Mal_Map = Dict[MalKey, MalAny]
 
 
 class MalSeq(MalAny):
     """Sequence type for Mal - lists or vectors"""
 
-    value: List[MalAny]
-
-    def __init__(self, value: List[MalAny]):
-        self.value = value
+    def __init__(self, value: List[MalAny]) -> None:
+        self.value: List[MalAny] = value
         super().__init__()
 
 
 class MalList(MalSeq):
     """List type for mal"""
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "(" + " ".join(map(str, self.value)) + ")"
 
 
 class MalVec(MalSeq):
     """Vector type for mal"""
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "[" + " ".join(map(str, self.value)) + "]"
 
 
-class MalKey(MalAny):
-    """Type for mal that can be used as a map key"""
 
-    def __init__(self, value: str):
-        self.value = value
-        super().__init__()
-
-    def __str__(self):
-        return '"' + self.value + '"'
 
 
 class MalMap(MalAny):
     """Mal type for mal"""
 
-    value: Dict[MalKey, MalAny]
+    value: Mal_Map
 
-    def __init__(self, elements: Union[List[MalAny], Tuple[List[MalKey], List[MalAny]]]):
+    def __init__(self, elements: Union[List[MalAny], Tuple[List[MalKey], List[MalAny]]]) -> None:
 
         # Construct from an alternating key-value list
         if isinstance(elements, list):
@@ -96,26 +99,23 @@ class MalMap(MalAny):
 
         super().__init__()
 
-    def __str__(self):
+    def __str__(self) -> str:
         accumulated: List[str] = []
         for k in self.value:
-            accumulated.append(k)
-            accumulated.append(self.value[k])
+            accumulated.append(str(k))
+            accumulated.append(str(self.value[k]))
         return  "{" + " ".join(map(str, accumulated)) + "}"
 
 
-Mal_Function = Callable[[List[MalAny]], MalAny]
 
 
 class MalFunc(MalAny):
     """Type for mal functions"""
 
-#    value: Mal_Function
+    def __init__(self, value: Mal_Function) -> None:
+        self.value: Mal_Function = value
 
-    def __init__(self, value: Mal_Function):
-        self.value = value
-
-    def __str__(self):
+    def __str__(self) -> str:
         return "#<function>"
 
 
@@ -129,54 +129,48 @@ class MalKeyword(MalKey):
 class MalStr(MalKey):
     """String type for mal"""
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '"' + self.value + '"'
 
-    def str_readable(self):
+    def str_readable(self) -> str:
         return '"' + add_escapes(self.value) + '"'
 
 
 class MalSym(MalAny):
     """Symbol type for mal"""
 
-    value: str
-
     def __init__(self, value: str):
-        self.value = value
+        self.value: str = value
         super().__init__()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.value
 
 
 class MalNum(MalAny):
     """Number type for mal"""
 
-    value: int
-
-    def __init__(self, value: int):
-        self.value = value
+    def __init__(self, value: int) -> None:
+        self.value: int = value
         super().__init__()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.value)
 
 
 class MalBool(MalAny):
     """Boolean type for mal"""
 
-    value: bool
-
-    def __init__(self, value: bool):
-        self.value = value
+    def __init__(self, value: bool) -> None:
+        self.value: bool = value
         super().__init__()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "true" if self.value else "false"
 
 
 class MalNil(MalAny):
     """Nil type for mal"""
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "nil"
