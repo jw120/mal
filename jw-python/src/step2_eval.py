@@ -1,16 +1,17 @@
 """Implements step 2 of https://github.com/kanaka/mal - eval"""
 
 
-from typing import cast, Dict
+from typing import cast
 
-from mal_errors import EvalError, ReaderError
+from mal_errors import EvalError, InternalError, ReaderError
 from mal_types import MalAny, MalFunc, MalList, MalVec, MalMap, MalSeq, MalSym, MalNum
+from mal_types import Mal_Environment
 from printer import pr_str
 from reader import read_str
 
-Environment = Dict[str, MalAny]
 
-repl_env: Environment = {
+# Simple environment for step 2
+repl_env: Mal_Environment = {
     '+': MalFunc(lambda xs: MalNum(cast(MalNum, xs[0]).value +  cast(MalNum, xs[1]).value)),
     '-': MalFunc(lambda xs: MalNum(cast(MalNum, xs[0]).value -  cast(MalNum, xs[1]).value)),
     '*': MalFunc(lambda xs: MalNum(cast(MalNum, xs[0]).value *  cast(MalNum, xs[1]).value)),
@@ -18,21 +19,24 @@ repl_env: Environment = {
     }
 
 
-def EVAL(ast: MalAny, env: Environment) -> MalAny:
+def EVAL(ast: MalAny, env: Mal_Environment) -> MalAny:
     """Top-level eval function that handles apply"""
 
+    # apply for a non-empty sequence
     if isinstance(ast, MalSeq) and len(ast.value) > 0:
         evaluated = eval_ast(ast, env)
-        if isinstance(evaluated, MalSeq) and len(evaluated.value) > 0:
-            head = evaluated.value[0]
-            if isinstance(head, MalFunc):
-                return head.value(evaluated.value[1:])
-        return evaluated
+        if not isinstance(evaluated, MalSeq): # For type checker - should always be a MalSeq
+            raise InternalError("Expected a MalSeq")
+        head = evaluated.value[0]
+        if isinstance(head, MalFunc):
+            return head.value(evaluated.value[1:])
+        raise EvalError("Cannot apply a non-function", str(ast))
 
+    # Use eval_ast for all other values
     return eval_ast(ast, env)
 
 
-def eval_ast(ast: MalAny, env: Environment) -> MalAny:
+def eval_ast(ast: MalAny, env: Mal_Environment) -> MalAny:
     """Eval function"""
 
     # A symbol evaluates to its value in the environment
@@ -46,11 +50,12 @@ def eval_ast(ast: MalAny, env: Environment) -> MalAny:
         evaluated = list(map(lambda x: EVAL(x, env), ast.value))
         return MalVec(evaluated) if isinstance(ast, MalVec) else MalList(evaluated)
 
-    # A map has its value evaluated
+    # A map has its values evaluated
     if isinstance(ast, MalMap):
         evaluated = list(map(lambda x: EVAL(x, env), ast.value.values()))
         return MalMap((list(ast.value.keys()), evaluated))
 
+    # Any other type is just returned
     return ast
 
 

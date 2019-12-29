@@ -34,6 +34,9 @@ class MalAny:
         return str(self)
 
 
+Mal_Environment = Dict[str, MalAny]
+
+
 class MalSeq(MalAny):
     """Sequence type for Mal - lists or vectors"""
 
