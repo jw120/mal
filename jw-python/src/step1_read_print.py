@@ -1,4 +1,4 @@
-"""Implements step0 of https://github.com/kanaka/mal - read and print"""
+"""Implements step 1 of https://github.com/kanaka/mal - read and print"""
 
 
 from mal_errors import EvalError, ReaderError

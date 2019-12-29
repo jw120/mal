@@ -96,7 +96,7 @@ def read_seq(reader: Reader[str], opener: str, closer: str) -> List[MalAny]:
 
 
 QUOTED_STRING_REGEX = re.compile('"(.*)"')
-NUMBER_REGEX = re.compile(r"\d+")
+NUMBER_REGEX = re.compile(r"-?\d+")
 
 def read_atom(reader: Reader[str]) -> MalAny:
     """Read an atom from the given Reader"""

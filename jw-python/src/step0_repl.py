@@ -1,4 +1,4 @@
-"""Implements step0 of https://github.com/kanaka/mal - the repl"""
+"""Implements step 0 of https://github.com/kanaka/mal - the repl"""
 
 
 def READ(input_string: str) -> str:
