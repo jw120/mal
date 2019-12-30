@@ -1,6 +1,6 @@
 """Reader"""
 
-#pylint: disable=too-many-return-statements,too-many-branches
+# pylint: disable=too-many-return-statements,too-many-branches
 
 import re
 from typing import Generic, List, Optional, TypeVar
@@ -10,7 +10,7 @@ from mal_types import MalAny, MalList, MalVec, MalMap, MalNum
 from mal_types import MalKeyword, MalSym, MalStr, MalBool, MalNil
 from utils import remove_escapes
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class Reader(Generic[T]):
@@ -39,14 +39,14 @@ class Reader(Generic[T]):
 
 
 TOKEN_REGEX = re.compile(
-    r"[\s,]*"                 # Any number of whitespaces or commas (not captured)
-    "(~@|"                    # Captures the special two-characters ~@
-    r"[\[\]{}()'`~^@]|"       # Captures any special single character, one of []{}()'`~^@
-    r'"(?:\\.|[^\\"])*"?|'    # Starts at a " and stops at next " unless escaped
-    r";.*|"                   # Captures any sequence of characters starting with ;
-    r"[^\s\[\]{}('"           # Captures a sequence of zero or more non special characters
+    r"[\s,]*"  # Any number of whitespaces or commas (not captured)
+    "(~@|"  # Captures the special two-characters ~@
+    r"[\[\]{}()'`~^@]|"  # Captures any special single character, one of []{}()'`~^@
+    r'"(?:\\.|[^\\"])*"?|'  # Starts at a " and stops at next " unless escaped
+    r";.*|"  # Captures any sequence of characters starting with ;
+    r"[^\s\[\]{}('"  # Captures a sequence of zero or more non special characters
     '"`,;)]*)'
-    )
+)
 
 
 def read_str(source: str) -> MalAny:
@@ -97,6 +97,7 @@ def read_seq(reader: Reader[str], opener: str, closer: str) -> List[MalAny]:
 
 QUOTED_STRING_REGEX = re.compile('"(.*)"')
 NUMBER_REGEX = re.compile(r"-?\d+")
+
 
 def read_atom(reader: Reader[str]) -> MalAny:
     """Read an atom from the given Reader"""

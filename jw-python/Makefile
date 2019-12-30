@@ -5,7 +5,7 @@ TYPECHECK = mypy
 SRCDIR = src/
 SRCFILES = $(SRCDIR)*.py
 
-.PHONY: check all typecheck lint test
+.PHONY: check all typecheck lint test format
 all: check test
 check: typecheck lint doctest
 
@@ -22,6 +22,9 @@ lint:
 	$(LINT) $(SRCDIR)
 
 test: step0 step1 step2 step3
+
+format:
+	black --target-version py37 src/
 
 step0:
 	cd ..; make "test^jw-python^step0" | grep ": failing tests"

@@ -20,7 +20,7 @@ Defines a value equality
 
 """
 
-#pylint: disable=too-few-public-methods
+# pylint: disable=too-few-public-methods
 
 from typing import Callable, Dict, List, Tuple, Union
 
@@ -103,7 +103,9 @@ class MalVec(MalSeq):
 class MalMap(MalAny):
     """Mal type for mal"""
 
-    def __init__(self, elements: Union[List[MalAny], Tuple[List[MalKey], List[MalAny]]]) -> None:
+    def __init__(
+        self, elements: Union[List[MalAny], Tuple[List[MalKey], List[MalAny]]]
+    ) -> None:
 
         # Construct from an alternating key-value list
         if isinstance(elements, list):
@@ -127,7 +129,7 @@ class MalMap(MalAny):
         for k in self.value:
             accumulated.append(str(k))
             accumulated.append(str(self.value[k]))
-        return  "{" + " ".join(map(str, accumulated)) + "}"
+        return "{" + " ".join(map(str, accumulated)) + "}"
 
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.value == other.value
@@ -144,9 +146,6 @@ class MalFunc(MalAny):
 
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.value == other.value
-
-
-
 
 
 class MalSym(MalAny):

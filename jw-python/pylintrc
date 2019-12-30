@@ -1,2 +1,5 @@
 [MESSAGES CONTROL]
-disable=duplicate-code, invalid-name
+disable=duplicate-code, invalid-name, bad-continuation
+# duplicate-code disabled as tripped by required repetition in stepX files
+# invalid-name
+# bad-continuation conflicts with black's formatting

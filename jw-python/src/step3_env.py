@@ -42,7 +42,9 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
 
         # Apply normal list
         evaluated = eval_ast(ast, env)
-        if not isinstance(evaluated, MalList): # For type checker - should always be a MalSeq
+        if not isinstance(
+            evaluated, MalList
+        ):  # For type checker - should always be a MalSeq
             raise InternalError("Expected a MalList")
         eval_head = evaluated.value[0]
         if isinstance(eval_head, MalFunc):

@@ -12,11 +12,19 @@ from reader import read_str
 
 # Simple environment for step 2
 repl_env: Mal_Environment = {
-    '+': MalFunc(lambda xs: MalNum(cast(MalNum, xs[0]).value +  cast(MalNum, xs[1]).value)),
-    '-': MalFunc(lambda xs: MalNum(cast(MalNum, xs[0]).value -  cast(MalNum, xs[1]).value)),
-    '*': MalFunc(lambda xs: MalNum(cast(MalNum, xs[0]).value *  cast(MalNum, xs[1]).value)),
-    '/': MalFunc(lambda xs: MalNum(cast(MalNum, xs[0]).value // cast(MalNum, xs[1]).value))
-    }
+    "+": MalFunc(
+        lambda xs: MalNum(cast(MalNum, xs[0]).value + cast(MalNum, xs[1]).value)
+    ),
+    "-": MalFunc(
+        lambda xs: MalNum(cast(MalNum, xs[0]).value - cast(MalNum, xs[1]).value)
+    ),
+    "*": MalFunc(
+        lambda xs: MalNum(cast(MalNum, xs[0]).value * cast(MalNum, xs[1]).value)
+    ),
+    "/": MalFunc(
+        lambda xs: MalNum(cast(MalNum, xs[0]).value // cast(MalNum, xs[1]).value)
+    ),
+}
 
 
 def EVAL(ast: MalAny, env: Mal_Environment) -> MalAny:
@@ -25,7 +33,9 @@ def EVAL(ast: MalAny, env: Mal_Environment) -> MalAny:
     # apply for a non-empty list
     if isinstance(ast, MalList) and len(ast.value) > 0:
         evaluated = eval_ast(ast, env)
-        if not isinstance(evaluated, MalList): # For type checker - should always be a MalSeq
+        if not isinstance(
+            evaluated, MalList
+        ):  # For type checker - should always be a MalSeq
             raise InternalError("Expected a MalList")
         head = evaluated.value[0]
         if isinstance(head, MalFunc):
