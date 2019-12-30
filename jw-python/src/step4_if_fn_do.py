@@ -1,6 +1,5 @@
 """Implements step 4 of https://github.com/kanaka/mal - if, fn, do"""
 
-import operator
 from typing import Callable, cast, List
 
 from mal_errors import EvalError, InternalError, ReaderError
@@ -16,6 +15,7 @@ from mal_types import (
     MalNil,
     MalBool,
 )
+import core
 from env import Environment
 from printer import pr_str
 from reader import read_str
@@ -149,10 +149,8 @@ def rep_loop() -> None:
     """Repeatedly provides user prompt and passes the input to read-eval-print"""
 
     repl_env = Environment()
-    repl_env.set(MalSym("+"), int_fn(operator.add))
-    repl_env.set(MalSym("-"), int_fn(operator.sub))
-    repl_env.set(MalSym("*"), int_fn(operator.mul))
-    repl_env.set(MalSym("/"), int_fn(operator.floordiv))
+    for sym_name in core.ns:
+        repl_env.set(MalSym(sym_name), core.ns[sym_name])
 
     while True:
         try:
