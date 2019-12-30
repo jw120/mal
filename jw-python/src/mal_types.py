@@ -84,7 +84,7 @@ class MalSeq(MalAny):
         super().__init__()
 
     def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.value == other.value
+        return isinstance(other, MalSeq) and self.value == other.value
 
 
 class MalList(MalSeq):

@@ -51,7 +51,7 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
         # Special form fn*
         if head == MalSym("fn*"):
             if num_args == 2:
-                if isinstance(args[0], MalList):
+                if isinstance(args[0], MalSeq):
                     if all(map(lambda x: isinstance(x, MalSym), args[0].value)):
                         bind_syms = cast(List[MalSym], args[0].value)  # For type check
 
@@ -151,6 +151,7 @@ def rep_loop() -> None:
     repl_env = Environment()
     for sym_name in core.ns:
         repl_env.set(MalSym(sym_name), core.ns[sym_name])
+    EVAL(READ("(def! not (fn* (a) (if a false true)))"), repl_env)
 
     while True:
         try:
