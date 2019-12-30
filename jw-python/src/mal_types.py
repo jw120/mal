@@ -23,22 +23,24 @@ conversion with and without prettifying strings
 
 # pylint: disable=too-few-public-methods
 
+from abc import ABC, abstractmethod
 from typing import Callable, Dict, List, Tuple, Union
 
 import mal_errors as err
 from utils import add_escapes
 
 
-class MalAny:
+class MalAny(ABC):
     """Abstract type for any Mal element"""
 
     # Use to_string as the __str__ method for all child types
     def __str__(self) -> str:
         return self.to_string(False)
 
+    @abstractmethod
     def to_string(self, _print_readably: bool) -> str:
         """Provide a string version with or without strings made readable"""
-        raise err.InternalError("to_string called on MalAny")
+        pass
 
 
 class MalKey(MalAny):

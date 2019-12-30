@@ -6,7 +6,6 @@ mypy
 
 Running on mac with python 3.x installed from brew as python3
 
-Better way to mark MalAny.to_string as abstract?
 
 Move VS Code settings to workspace
 
