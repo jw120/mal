@@ -53,7 +53,7 @@ def read_str(source: str) -> MalAny:
     """Read the tokens in the given string and return the MAL AST
 
     >>> print(read_str("42"), read_str("abc"), read_str('"s123"'))
-    42 abc "s123"
+    42 abc s123
     >>> print(read_str("nil"), read_str("true"), read_str("false"))
     nil true false
     >>> print(read_str("(+ 2 3 (- 4 5))"))

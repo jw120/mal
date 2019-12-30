@@ -1,6 +1,7 @@
 """Provides type defintions for our AST and for our exceptions
 
-Defines a value equality
+Defines a value equality and a to_string method which allows string
+conversion with and without prettifying strings
 
 ## Class hierarchy:
 
@@ -31,9 +32,13 @@ from utils import add_escapes
 class MalAny:
     """Abstract type for any Mal element"""
 
-    def str_readable(self) -> str:
-        """Default implementation of readable string, overridedn by string types"""
-        return str(self)
+    # Use to_string as the __str__ method for all child types
+    def __str__(self) -> str:
+        return self.to_string(False)
+
+    def to_string(self, _print_readably: bool) -> str:
+        """Provide a string version with or without strings made readable"""
+        raise err.InternalError("to_string called on MalAny")
 
 
 class MalKey(MalAny):
@@ -42,9 +47,6 @@ class MalKey(MalAny):
     def __init__(self, value: str) -> None:
         self.value: str = value
         super().__init__()
-
-    def __str__(self) -> str:
-        return '"' + self.value + '"'
 
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.value == other.value
@@ -57,18 +59,17 @@ class MalKey(MalAny):
 class MalKeyword(MalKey):
     """Keyword type for mal"""
 
-    def __str__(self):
+    def to_string(self, _print_readably: bool):
         return ":" + self.value
 
 
 class MalStr(MalKey):
     """String type for mal"""
 
-    def __str__(self) -> str:
-        return '"' + self.value + '"'
-
-    def str_readable(self) -> str:
-        return '"' + add_escapes(self.value) + '"'
+    def to_string(self, print_readably: bool) -> str:
+        if print_readably:
+            return '"' + add_escapes(self.value) + '"'
+        return self.value
 
 
 Mal_Environment = Dict[str, MalAny]
@@ -90,15 +91,17 @@ class MalSeq(MalAny):
 class MalList(MalSeq):
     """List type for mal"""
 
-    def __str__(self) -> str:
-        return "(" + " ".join(map(str, self.value)) + ")"
+    def to_string(self, print_readably: bool) -> str:
+        str_values = map(lambda x: x.to_string(print_readably), self.value)
+        return "(" + " ".join(str_values) + ")"
 
 
 class MalVec(MalSeq):
     """Vector type for mal"""
 
-    def __str__(self) -> str:
-        return "[" + " ".join(map(str, self.value)) + "]"
+    def to_string(self, print_readably: bool) -> str:
+        str_values = map(lambda x: x.to_string(print_readably), self.value)
+        return "[" + " ".join(str_values) + "]"
 
 
 class MalMap(MalAny):
@@ -125,11 +128,11 @@ class MalMap(MalAny):
 
         super().__init__()
 
-    def __str__(self) -> str:
+    def to_string(self, print_readably: bool) -> str:
         accumulated: List[str] = []
         for k in self.value:
-            accumulated.append(str(k))
-            accumulated.append(str(self.value[k]))
+            accumulated.append(k.to_string(print_readably))
+            accumulated.append(self.value[k].to_string(print_readably))
         return "{" + " ".join(map(str, accumulated)) + "}"
 
     def __eq__(self, other):
@@ -142,7 +145,7 @@ class MalFunc(MalAny):
     def __init__(self, value: Mal_Function) -> None:
         self.value: Mal_Function = value
 
-    def __str__(self) -> str:
+    def to_string(self, _print_readably: bool) -> str:
         return "#<function>"
 
     def __eq__(self, other):
@@ -156,7 +159,7 @@ class MalSym(MalAny):
         self.value: str = value
         super().__init__()
 
-    def __str__(self) -> str:
+    def to_string(self, _print_readably: bool) -> str:
         return self.value
 
     def __eq__(self, other):
@@ -170,7 +173,7 @@ class MalNum(MalAny):
         self.value: int = value
         super().__init__()
 
-    def __str__(self) -> str:
+    def to_string(self, _print_readably: bool) -> str:
         return str(self.value)
 
     def __eq__(self, other):
@@ -184,7 +187,7 @@ class MalBool(MalAny):
         self.value: bool = value
         super().__init__()
 
-    def __str__(self) -> str:
+    def to_string(self, _print_readably: bool) -> str:
         return "true" if self.value else "false"
 
     def __eq__(self, other):
@@ -194,7 +197,7 @@ class MalBool(MalAny):
 class MalNil(MalAny):
     """Nil type for mal"""
 
-    def __str__(self) -> str:
+    def to_string(self, _print_readably: bool) -> str:
         return "nil"
 
     def __eq__(self, other):
