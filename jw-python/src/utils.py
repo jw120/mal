@@ -1,5 +1,7 @@
 """Utilities"""
 
+from typing import TypeVar, List, Iterable, Tuple
+
 import mal_errors as err
 
 def add_escapes(s: str) -> str:
@@ -40,3 +42,12 @@ def remove_escapes(s: str) -> str:
         raise err.ReaderError("Backslash at end of input", s)
 
     return new_string
+
+
+T = TypeVar('T')
+
+def pairs(xs: List[T]) -> Iterable[Tuple[T, T]]:
+    """Extract an iterator over pairs (a,b), (c,d), ... from a list [a,b,c,d,...]"""
+    if len(xs) % 2 == 1:
+        raise err.EvalError("Unmatched item in pair list", str(xs[-1]))
+    return zip(xs[0::2], xs[1::2])

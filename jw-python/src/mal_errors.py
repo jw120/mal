@@ -30,7 +30,7 @@ class EvalError(MalError):
         super().__init__()
 
     def __str__(self):
-        expression_msg = "" if self.expression is None else " in " + self.expression
+        expression_msg = "" if self.expression is None else ": " + self.expression
         return "Evaluation error: " + self.message + expression_msg
 
 

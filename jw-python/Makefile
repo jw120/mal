@@ -3,7 +3,7 @@ LINT = pylint
 TYPECHECK = mypy
 
 SRCDIR = src/
-SRCFILES = $(SRCDIR)/*.py
+SRCFILES = $(SRCDIR)*.py
 
 .PHONY: check all typecheck lint test
 all: check test
