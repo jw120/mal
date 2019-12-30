@@ -26,12 +26,12 @@ class Reader(Generic[T]):
         self.current = 0
 
     def peek(self) -> Optional[T]:
-        """Return the current element without advancing. None if no more elements."""
+        """Return current element without advancing. None if no more elements."""
 
         return self.source[self.current] if self.current < len(self.source) else None
 
     def next(self) -> Optional[T]:
-        """Return the current element and advance the current element. None if no more elements"""
+        """Return and advance current element. None if no more elements"""
 
         val = self.peek()
         self.current += 1

@@ -1,10 +1,21 @@
-"""Implements step 3 of https://github.com/kanaka/mal - env"""
+"""Implements step 4 of https://github.com/kanaka/mal - if, fn, do"""
 
 import operator
 from typing import Callable, cast, List
 
 from mal_errors import EvalError, InternalError, ReaderError
-from mal_types import MalAny, MalFunc, MalList, MalVec, MalMap, MalSeq, MalSym, MalNum
+from mal_types import (
+    MalAny,
+    MalFunc,
+    MalList,
+    MalVec,
+    MalMap,
+    MalSeq,
+    MalSym,
+    MalNum,
+    MalNil,
+    MalBool,
+)
 from env import Environment
 from printer import pr_str
 from reader import read_str
@@ -30,6 +41,36 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
                 return val
             raise EvalError("Bad arguments for def!", str(ast))
 
+        # Special form do
+        if head == MalSym("do"):
+            if num_args >= 1:
+                evaluated_args = list(map(lambda e: EVAL(e, env), args))
+                return evaluated_args[-1]
+            raise EvalError("Bad arguments for do!", str(ast))
+
+        # Special form fn*
+        if head == MalSym("fn*"):
+            if num_args == 2:
+                if isinstance(args[0], MalList):
+                    if all(map(lambda x: isinstance(x, MalSym), args[0].value)):
+                        bind_syms = cast(List[MalSym], args[0].value)  # For type check
+
+                        def closure(call_args: List[MalAny]):
+                            closure_env = Environment(bind_syms, call_args, outer=env)
+                            return EVAL(args[1], closure_env)
+
+                        return MalFunc(closure)
+            raise EvalError("Bad arguments for fn*", str(ast))
+
+        # Special form if
+        if head == MalSym("if"):
+            if num_args in [2, 3]:
+                evaluated_first = EVAL(args[0], env)
+                if evaluated_first in [MalNil(), MalBool(False)]:
+                    return EVAL(args[2], env) if num_args == 3 else MalNil()
+                return EVAL(args[1], env)
+            raise EvalError("Bad arguments for if", str(ast))
+
         # Special form let!
         if head == MalSym("let*"):
             if num_args == 2 and isinstance(args[0], MalSeq):
@@ -41,12 +82,12 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
             raise EvalError("Bad arguments for let*", str(ast))
 
         # Apply normal list
-        evaluated = eval_ast(ast, env)
-        if not isinstance(evaluated, MalList):
+        evaluated_ast = eval_ast(ast, env)
+        if not isinstance(evaluated_ast, MalList):
             raise InternalError("Expected a MalList")  # For type checker
-        eval_head = evaluated.value[0]
-        if isinstance(eval_head, MalFunc):
-            return eval_head.value(evaluated.value[1:])
+        evaluated_head = evaluated_ast.value[0]
+        if isinstance(evaluated_head, MalFunc):
+            return evaluated_head.value(evaluated_ast.value[1:])
         raise EvalError("Cannot apply a non-function", str(ast))
 
     # Use eval_ast for all other values

@@ -35,7 +35,7 @@ class EvalError(MalError):
 
 
 class InternalError(MalError):
-    """Exception raised for internal errors (should only be caused by bugs in the python code)
+    """Exception for internal errors (should only be caused by bugs in the python code)
 
     Attribute:
         message -- explanation of the error

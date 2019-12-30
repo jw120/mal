@@ -37,7 +37,7 @@ class MalAny:
 
 
 class MalKey(MalAny):
-    """Type for mal that can be used as a map key"""
+    """Type for mal that can be used as a hash-map key"""
 
     def __init__(self, value: str) -> None:
         self.value: str = value
@@ -49,6 +49,7 @@ class MalKey(MalAny):
     def __eq__(self, other):
         return isinstance(other, self.__class__) and self.value == other.value
 
+    # Defining __eq__ disables the default __hash__ definition
     def __hash__(self):
         return hash(str(self))
 

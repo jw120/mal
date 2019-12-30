@@ -1,12 +1,12 @@
 DOCTEST = python3 -m doctest
-LINT = pylint
+LINT = flake8
 TYPECHECK = mypy
 
 SRCDIR = src/
 SRCFILES = $(SRCDIR)*.py
 
 .PHONY: check all typecheck lint test format
-all: check test
+all: format check test
 check: typecheck lint doctest
 
 doctest:
@@ -21,7 +21,7 @@ typecheck:
 lint:
 	$(LINT) $(SRCDIR)
 
-test: step0 step1 step2 step3
+test: step0 step1 step2 step3 step4
 
 format:
 	black --target-version py37 src/
@@ -37,3 +37,6 @@ step2:
 
 step3:
 	cd ..; make "test^jw-python^step3" | grep ": failing tests"
+
+step4:
+	cd ..; make "test^jw-python^step4" | grep ": failing tests"
