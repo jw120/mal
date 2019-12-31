@@ -1,4 +1,4 @@
-"""Reader"""
+"""Reader functionality for mal."""
 
 # pylint: disable=too-many-return-statements,too-many-branches
 
@@ -14,7 +14,7 @@ T = TypeVar("T")
 
 
 class Reader(Generic[T]):
-    """Creates a stateful reader object that supports peek and next
+    """Stateful reader object that supports peek and next.
 
     >>> r = Reader([1,2,3])
     >>> print(r.peek(), r.next(), r.next())
@@ -22,17 +22,16 @@ class Reader(Generic[T]):
     """
 
     def __init__(self, source: List[T]) -> None:
+        """Initialize reader with a list."""
         self.source = source
         self.current = 0
 
     def peek(self) -> Optional[T]:
         """Return current element without advancing. None if no more elements."""
-
         return self.source[self.current] if self.current < len(self.source) else None
 
     def next(self) -> Optional[T]:
-        """Return and advance current element. None if no more elements"""
-
+        """Return and advance current element. None if no more elements."""
         val = self.peek()
         self.current += 1
         return val
@@ -50,7 +49,7 @@ TOKEN_REGEX = re.compile(
 
 
 def read_str(source: str) -> MalAny:
-    """Read the tokens in the given string and return the MAL AST
+    """Read the tokens in the given string and return the MAL AST.
 
     >>> print(read_str("42"), read_str("abc"), read_str('"s123"'))
     42 abc s123
@@ -59,14 +58,12 @@ def read_str(source: str) -> MalAny:
     >>> print(read_str("(+ 2 3 (- 4 5))"))
     (+ 2 3 (- 4 5))
     """
-
     tokens = TOKEN_REGEX.findall(source)
     return read_form(Reader(tokens))
 
 
 def read_form(reader: Reader[str]) -> MalAny:
-    """Read a general form from the given Reader"""
-
+    """Read a general form from the given Reader."""
     if reader.peek() == "(":
         return MalList(read_seq(reader, "(", ")"))
     if reader.peek() == "[":
@@ -77,8 +74,7 @@ def read_form(reader: Reader[str]) -> MalAny:
 
 
 def read_seq(reader: Reader[str], opener: str, closer: str) -> List[MalAny]:
-    """Read a sequence of values between given delimiters"""
-
+    """Read a sequence of values between given delimiters."""
     if reader.next() != opener:
         raise InternalError("no opener in read_seq")
 
@@ -100,8 +96,7 @@ NUMBER_REGEX = re.compile(r"-?\d+")
 
 
 def read_atom(reader: Reader[str]) -> MalAny:
-    """Read an atom from the given Reader"""
-
+    """Read an atom from the given Reader."""
     token = reader.next()
     if token is None:
         raise InternalError("EOF in read_atom")

@@ -1,4 +1,4 @@
-"""Implements step 2 of https://github.com/kanaka/mal - eval"""
+"""Implements step 2 of https://github.com/kanaka/mal - eval."""
 
 
 from typing import cast
@@ -28,8 +28,7 @@ repl_env: Mal_Environment = {
 
 
 def EVAL(ast: MalAny, env: Mal_Environment) -> MalAny:
-    """Top-level eval function that handles apply"""
-
+    """Top-level eval function that handles apply."""
     # apply for a non-empty list
     if isinstance(ast, MalList) and len(ast.value) > 0:
         evaluated = eval_ast(ast, env)
@@ -47,8 +46,7 @@ def EVAL(ast: MalAny, env: Mal_Environment) -> MalAny:
 
 
 def eval_ast(ast: MalAny, env: Mal_Environment) -> MalAny:
-    """Eval function"""
-
+    """Eval function."""
     # A symbol evaluates to its value in the environment
     if isinstance(ast, MalSym):
         if ast.value in env:
@@ -70,18 +68,17 @@ def eval_ast(ast: MalAny, env: Mal_Environment) -> MalAny:
 
 
 def READ(input_string: str) -> MalAny:
-    """Read a mal element from the given string"""
+    """Read a mal element from the given string."""
     return read_str(input_string)
 
 
 def PRINT(ast: MalAny) -> None:
-    """Prints the string form of its argument to stdout"""
+    """Print the string form of its argument to stdout."""
     print(pr_str(ast, True))
 
 
 def rep(input_string: str) -> None:
-    """Calls read-eval-print on its argument"""
-
+    """Call read-eval-print on its argument."""
     try:
         PRINT(EVAL(READ(input_string), repl_env))
     except (EvalError, ReaderError) as err:
@@ -89,7 +86,7 @@ def rep(input_string: str) -> None:
 
 
 def rep_loop() -> None:
-    """Repeatedly provides user prompt and passes the input to read-eval-print"""
+    """Repeatedly provides user prompt and passes the input to read-eval-print."""
     while True:
         try:
             rep(input("user> "))

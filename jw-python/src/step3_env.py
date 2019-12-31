@@ -1,4 +1,4 @@
-"""Implements step 3 of https://github.com/kanaka/mal - env"""
+"""Implements step 3 of https://github.com/kanaka/mal - env."""
 
 import operator
 from typing import Callable, cast, List
@@ -12,8 +12,7 @@ from utils import pairs
 
 
 def EVAL(ast: MalAny, env: Environment) -> MalAny:
-    """Top-level eval function that handles apply"""
-
+    """Top-level eval function that handles apply."""
     # apply for a non-empty list
     if isinstance(ast, MalList) and len(ast.value) > 0:
 
@@ -54,8 +53,7 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
 
 
 def eval_ast(ast: MalAny, env: Environment) -> MalAny:
-    """Eval function"""
-
+    """Eval function."""
     # A symbol evaluates to its value in the environment
     if isinstance(ast, MalSym):
         return env.get(ast)
@@ -75,18 +73,17 @@ def eval_ast(ast: MalAny, env: Environment) -> MalAny:
 
 
 def READ(input_string: str) -> MalAny:
-    """Read a mal element from the given string"""
+    """Read a mal element from the given string."""
     return read_str(input_string)
 
 
 def PRINT(ast: MalAny) -> None:
-    """Prints the string form of its argument to stdout"""
+    """Print the string form of its argument to stdout."""
     print(pr_str(ast, True))
 
 
 def rep(input_string: str, env: Environment) -> None:
-    """Calls read-eval-print on its argument"""
-
+    """Call read-eval-print on its argument."""
     try:
         PRINT(EVAL(READ(input_string), env))
     except (EvalError, ReaderError) as err:
@@ -94,7 +91,7 @@ def rep(input_string: str, env: Environment) -> None:
 
 
 def int_fn(op: Callable[[int, int], int]) -> MalFunc:
-    """Helper function to make a quick-and-dirty mal function"""
+    """Make a quick-and-dirty mal function (helper function)."""
 
     def f(xs: List[MalAny]) -> MalAny:
         x1 = cast(MalNum, xs[0]).value
@@ -105,8 +102,7 @@ def int_fn(op: Callable[[int, int], int]) -> MalFunc:
 
 
 def rep_loop() -> None:
-    """Repeatedly provides user prompt and passes the input to read-eval-print"""
-
+    """Repeatedly provide user prompt and passes the input to read-eval-print."""
     repl_env = Environment()
     repl_env.set(MalSym("+"), int_fn(operator.add))
     repl_env.set(MalSym("-"), int_fn(operator.sub))

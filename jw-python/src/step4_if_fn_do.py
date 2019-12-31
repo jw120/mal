@@ -1,6 +1,6 @@
-"""Implements step 4 of https://github.com/kanaka/mal - if, fn, do"""
+"""Implements step 4 of https://github.com/kanaka/mal - if, fn, do."""
 
-from typing import Callable, cast, List
+from typing import cast, List
 
 from mal_errors import EvalError, InternalError, ReaderError
 from mal_types import (
@@ -11,11 +11,10 @@ from mal_types import (
     MalMap,
     MalSeq,
     MalSym,
-    MalNum,
     MalNil,
     MalBool,
 )
-import core
+from core import create_ns
 from env import Environment
 from printer import pr_str
 from reader import read_str
@@ -23,8 +22,7 @@ from utils import pairs
 
 
 def EVAL(ast: MalAny, env: Environment) -> MalAny:
-    """Top-level eval function that handles apply"""
-
+    """Top-level eval function that handles apply."""
     # apply for a non-empty list
     if isinstance(ast, MalList) and len(ast.value) > 0:
 
@@ -95,8 +93,7 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
 
 
 def eval_ast(ast: MalAny, env: Environment) -> MalAny:
-    """Eval function"""
-
+    """Eval function."""
     # A symbol evaluates to its value in the environment
     if isinstance(ast, MalSym):
         return env.get(ast)
@@ -116,41 +113,30 @@ def eval_ast(ast: MalAny, env: Environment) -> MalAny:
 
 
 def READ(input_string: str) -> MalAny:
-    """Read a mal element from the given string"""
+    """Read a mal element from the given string."""
     return read_str(input_string)
 
 
 def PRINT(ast: MalAny) -> None:
-    """Prints the string form of its argument to stdout"""
+    """Print the string form of its argument to stdout."""
     print(pr_str(ast, True))
 
 
 def rep(input_string: str, env: Environment) -> None:
-    """Calls read-eval-print on its argument"""
-
+    """Call read-eval-print on its argument."""
     try:
         PRINT(EVAL(READ(input_string), env))
     except (EvalError, ReaderError) as err:
         print(err)
 
 
-def int_fn(op: Callable[[int, int], int]) -> MalFunc:
-    """Helper function to make a quick-and-dirty mal function"""
-
-    def f(xs: List[MalAny]) -> MalAny:
-        x1 = cast(MalNum, xs[0]).value
-        x2 = cast(MalNum, xs[1]).value
-        return MalNum(op(x1, x2))
-
-    return MalFunc(f)
-
-
 def rep_loop() -> None:
-    """Repeatedly provides user prompt and passes the input to read-eval-print"""
-
+    """Repeatedly provide user prompt and passes the input to read-eval-print."""
     repl_env = Environment()
-    for sym_name in core.ns:
-        repl_env.set(MalSym(sym_name), core.ns[sym_name])
+    core_ns = create_ns()
+    for sym_name in core_ns:
+        repl_env.set(MalSym(sym_name), core_ns[sym_name])
+
     EVAL(READ("(def! not (fn* (a) (if a false true)))"), repl_env)
 
     while True:

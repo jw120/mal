@@ -1,4 +1,4 @@
-"""Implements step 1 of https://github.com/kanaka/mal - read and print"""
+"""Implements step 1 of https://github.com/kanaka/mal - read and print."""
 
 
 from mal_errors import EvalError, ReaderError
@@ -8,23 +8,22 @@ from reader import read_str
 
 
 def READ(input_string: str) -> MalAny:
-    """Read a mal element from the given string"""
+    """Read a mal element from the given string."""
     return read_str(input_string)
 
 
 def EVAL(ast: MalAny) -> MalAny:
-    """Dummy eval function - just passes through its argument"""
+    """Just passes through its argument (dummy eval function)."""
     return ast
 
 
 def PRINT(ast: MalAny) -> None:
-    """Prints the string form of its argument to stdout"""
+    """Print the string form of its argument to stdout."""
     print(pr_str(ast, True))
 
 
 def rep(input_string: str) -> None:
-    """Calls read-eval-print on its argument"""
-
+    """Call read-eval-print on its argument."""
     try:
         PRINT(EVAL(READ(input_string)))
     except (EvalError, ReaderError) as err:
@@ -32,7 +31,7 @@ def rep(input_string: str) -> None:
 
 
 def rep_loop() -> None:
-    """Repeatedly provides user prompt and passes the input to read-eval-print"""
+    """Repeatedly provides user prompt and passes the input to read-eval-print."""
     while True:
         try:
             rep(input("user> "))

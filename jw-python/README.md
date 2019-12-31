@@ -3,6 +3,8 @@ Note
 
 Python 3
 mypy
+flake8
+pip install flake8-docstrings
 
 Running on mac with python 3.x installed from brew as python3
 
