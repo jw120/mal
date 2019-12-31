@@ -4,9 +4,12 @@
 from typing import cast
 
 from mal_errors import EvalError, InternalError, ReaderError
-from mal_types import MalAny, MalFunc, MalList, MalVec, MalMap, MalSeq, MalSym, MalNum
+
+from mal_types import MalAny, MalFunc, MalList, MalMap, MalNum, MalSeq, MalSym, MalVec
 from mal_types import Mal_Environment
+
 from printer import pr_str
+
 from reader import read_str
 
 

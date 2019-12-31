@@ -1,6 +1,6 @@
 """Utility functions for mal."""
 
-from typing import TypeVar, List, Iterable, Tuple
+from typing import Iterable, List, Tuple, TypeVar
 
 import mal_errors as err
 

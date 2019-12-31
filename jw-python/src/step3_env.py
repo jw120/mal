@@ -1,13 +1,18 @@
 """Implements step 3 of https://github.com/kanaka/mal - env."""
 
 import operator
-from typing import Callable, cast, List
+from typing import Callable, List, cast
+
+from env import Environment
 
 from mal_errors import EvalError, InternalError, ReaderError
-from mal_types import MalAny, MalFunc, MalList, MalVec, MalMap, MalSeq, MalSym, MalNum
-from env import Environment
+
+from mal_types import MalAny, MalFunc, MalList, MalMap, MalNum, MalSeq, MalSym, MalVec
+
 from printer import pr_str
+
 from reader import read_str
+
 from utils import pairs
 
 

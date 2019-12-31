@@ -30,7 +30,7 @@ class EvalError(MalError):
         self.expression = expression
         super().__init__()
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Convert to string in form suitable to show to the user."""
         expression_msg = "" if self.expression is None else ": " + self.expression
         return "Evaluation error: " + self.message + expression_msg
@@ -48,7 +48,7 @@ class InternalError(MalError):
         self.message = message
         super().__init__()
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Convert to string in form suitable to show to the user."""
         return "Internal error: " + self.message
 
@@ -67,7 +67,7 @@ class ReaderError(MalError):
         self.expression = expression
         super().__init__()
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Convert to string in form suitable to show to the user."""
         expression_msg = "" if self.expression is None else " at " + self.expression
         return "Reader error: " + self.message + expression_msg

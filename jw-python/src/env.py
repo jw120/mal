@@ -4,10 +4,11 @@
 # (to allow find to return an Environment before class is defined)
 from __future__ import annotations
 
-from typing import Optional, List
+from typing import List, Optional
 
 from mal_errors import EvalError
-from mal_types import MalAny, Mal_Environment, MalList, MalSym
+
+from mal_types import MalAny, MalList, MalSym, Mal_Environment
 
 
 class Environment:
@@ -62,7 +63,7 @@ class Environment:
             return None
         return self.outer.find(sym)
 
-    def get(self, sym: MalSym):
+    def get(self, sym: MalSym) -> MalAny:
         """Return the symbol's value in the environement or its chain."""
         env = self.find(sym)
         if env is None:

@@ -1,5 +1,0 @@
-[flake8]
-# Match black's default
-max-line-length = 88
-# Rely on black for formatting lists
-extend-ignore = E203

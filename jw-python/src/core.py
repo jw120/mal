@@ -1,11 +1,13 @@
 """Core function definitions for mal."""
 
-from functools import reduce
 import operator
+from functools import reduce
 from typing import Any, Callable, Dict, Iterator, List
 
 from mal_errors import EvalError
+
 from mal_types import MalAny, MalBool, MalFunc, MalList, MalNil, MalNum, MalSeq, MalStr
+
 from printer import pr_str
 
 

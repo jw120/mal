@@ -1,23 +1,29 @@
 """Implements step 4 of https://github.com/kanaka/mal - if, fn, do."""
 
-from typing import cast, List
+from typing import List, cast
+
+from core import create_ns
+
+from env import Environment
 
 from mal_errors import EvalError, InternalError, ReaderError
+
 from mal_types import (
     MalAny,
+    MalBool,
     MalFunc,
     MalList,
-    MalVec,
     MalMap,
+    MalNil,
     MalSeq,
     MalSym,
-    MalNil,
-    MalBool,
+    MalVec,
 )
-from core import create_ns
-from env import Environment
+
 from printer import pr_str
+
 from reader import read_str
+
 from utils import pairs
 
 
@@ -53,7 +59,7 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
                     if all(map(lambda x: isinstance(x, MalSym), args[0].value)):
                         bind_syms = cast(List[MalSym], args[0].value)  # For type check
 
-                        def closure(call_args: List[MalAny]):
+                        def closure(call_args: List[MalAny]) -> MalAny:
                             closure_env = Environment(bind_syms, call_args, outer=env)
                             return EVAL(args[1], closure_env)
 

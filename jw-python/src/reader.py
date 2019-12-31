@@ -6,8 +6,10 @@ import re
 from typing import Generic, List, Optional, TypeVar
 
 from mal_errors import InternalError, ReaderError
-from mal_types import MalAny, MalList, MalVec, MalMap, MalNum
-from mal_types import MalKeyword, MalSym, MalStr, MalBool, MalNil
+
+from mal_types import MalAny, MalList, MalMap, MalNum, MalVec
+from mal_types import MalBool, MalKeyword, MalNil, MalStr, MalSym
+
 from utils import remove_escapes
 
 T = TypeVar("T")

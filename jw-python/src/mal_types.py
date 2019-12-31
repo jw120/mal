@@ -24,9 +24,10 @@ conversion with and without prettifying strings
 # pylint: disable=too-few-public-methods
 
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 import mal_errors as err
+
 from utils import add_escapes
 
 
@@ -51,11 +52,11 @@ class MalKey(MalAny):
         self.value: str = value
         super().__init__()
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         """Equality based on value."""
         return isinstance(other, self.__class__) and self.value == other.value
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Hash based on value. (needed as defining __eq__ disables default)."""
         return hash(str(self))
 
@@ -63,7 +64,7 @@ class MalKey(MalAny):
 class MalKeyword(MalKey):
     """Keyword type for mal."""
 
-    def to_string(self, _print_readably: bool):
+    def to_string(self, _print_readably: bool) -> str:
         """Convert to a string."""
         return ":" + self.value
 
@@ -91,7 +92,7 @@ class MalSeq(MalAny):
         self.value: List[MalAny] = value
         super().__init__()
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         """Value equality considering all MalSeq sub-classses to be equal."""
         return isinstance(other, MalSeq) and self.value == other.value
 
@@ -151,7 +152,7 @@ class MalMap(MalAny):
             accumulated.append(self.value[k].to_string(print_readably))
         return "{" + " ".join(map(str, accumulated)) + "}"
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         """Value equality."""
         return isinstance(other, self.__class__) and self.value == other.value
 
@@ -167,7 +168,7 @@ class MalFunc(MalAny):
         """Convert to a string."""
         return "#<function>"
 
-    def __eq__(self, _other):
+    def __eq__(self, _other: Any) -> bool:
         """Equality for functions always false."""
         return False
 
@@ -184,7 +185,7 @@ class MalSym(MalAny):
         """Convert to a string, optionally adding quotes and escapes."""
         return self.value
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         """Value equality."""
         return isinstance(other, self.__class__) and self.value == other.value
 
@@ -201,7 +202,7 @@ class MalNum(MalAny):
         """Convert to a string."""
         return str(self.value)
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         """Value equality."""
         return isinstance(other, self.__class__) and self.value == other.value
 
@@ -218,7 +219,7 @@ class MalBool(MalAny):
         """Convert to a string."""
         return "true" if self.value else "false"
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         """Value equality."""
         return isinstance(other, self.__class__) and self.value == other.value
 
@@ -230,6 +231,6 @@ class MalNil(MalAny):
         """Convert to a string."""
         return "nil"
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         """Value equality."""
         return isinstance(other, self.__class__)
