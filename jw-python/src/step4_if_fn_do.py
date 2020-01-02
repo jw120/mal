@@ -10,7 +10,7 @@ from mal_types import (
     Environment,
     MalAny,
     MalBool,
-    MalCallable,
+    MalBuiltin,
     MalList,
     MalMap,
     MalNil,
@@ -62,7 +62,7 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
                             closure_env = Environment(bind_syms, call_args, outer=env)
                             return EVAL(args[1], closure_env)
 
-                        return MalCallable(closure)
+                        return MalBuiltin(closure)
             raise mal_errors.EvalError("Bad arguments for fn*", str(ast))
 
         # Special form if
@@ -89,7 +89,7 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
         if not isinstance(evaluated_ast, MalList):
             raise mal_errors.InternalError("Expected a MalList")  # For type checker
         evaluated_head = evaluated_ast.value[0]
-        if isinstance(evaluated_head, MalCallable):
+        if isinstance(evaluated_head, MalBuiltin):
             return evaluated_head.value(evaluated_ast.value[1:])
         raise mal_errors.EvalError("Cannot apply a non-function", str(ast))
 

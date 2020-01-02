@@ -10,8 +10,8 @@ conversion with and without prettifying strings
         - MalList
         - MalVec
     + MalMap
-    + MalCallable
-        - MalMalFunc (a function defined by fn* in Mal)
+    + MalBuiltin (a function define in python)
+    + MalFunc (a function defined by fn* in Mal)
     + MalKey (valid keys for a map)
         - MalKeyword
         - MalStr
@@ -177,11 +177,11 @@ class MalSym(MalAny):
         return isinstance(other, self.__class__) and self.value == other.value
 
 
-class MalCallable(MalAny):
-    """Type for mal functions."""
+class MalBuiltin(MalAny):
+    """Type for builtin mal functions (defined in python)."""
 
     def __init__(self, value: Mal_Function) -> None:
-        """Create a MalFunc."""
+        """Create a MalBuiltin."""
         self.value: Mal_Function = value
 
     def to_string(self, _print_readably: bool) -> str:
@@ -193,17 +193,10 @@ class MalCallable(MalAny):
         return False
 
 
-class MalMalFunc(MalCallable):
+class MalFunc(MalAny):
     """Type for mal functions defined in mal by fn*."""
 
-    def __init__(
-        self,
-        value: Mal_Function,
-        *,
-        ast: MalAny,
-        params: List[MalSym],
-        env: Environment,
-    ) -> None:
+    def __init__(self, ast: MalAny, params: List[MalSym], env: Environment,) -> None:
         """Create a mal-defined function.
 
         Argument:
@@ -214,7 +207,6 @@ class MalMalFunc(MalCallable):
         self.ast: MalAny = ast
         self.params: List[MalSym] = params
         self.env: Environment = env
-        super().__init__(value)
 
     def to_string(self, _print_readably: bool) -> str:
         """Convert to a string."""

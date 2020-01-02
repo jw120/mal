@@ -9,7 +9,7 @@ import mal_errors
 from mal_types import (
     MalAny,
     MalBool,
-    MalCallable,
+    MalBuiltin,
     MalList,
     MalNil,
     MalNum,
@@ -23,23 +23,23 @@ import printer
 def create_ns() -> Dict[str, MalAny]:
     """Return the core namespace."""  # Within a function so can precede the definitions
     return {
-        "+": MalCallable(addition),
-        "*": MalCallable(multiplication),
-        "-": MalCallable(subtraction),
-        "/": MalCallable(division),
-        "=": MalCallable(equality),
+        "+": MalBuiltin(addition),
+        "*": MalBuiltin(multiplication),
+        "-": MalBuiltin(subtraction),
+        "/": MalBuiltin(division),
+        "=": MalBuiltin(equality),
         ">": make_num_logical(operator.gt),
         "<": make_num_logical(operator.lt),
         ">=": make_num_logical(operator.ge),
         "<=": make_num_logical(operator.le),
-        "list": MalCallable(mal_list),
-        "list?": MalCallable(list_test),
-        "count": MalCallable(count),
-        "empty?": MalCallable(empty_test),
-        "pr-str": MalCallable(mal_pr_str),
-        "str": MalCallable(mal_str),
-        "prn": MalCallable(mal_prn),
-        "println": MalCallable(mal_println),
+        "list": MalBuiltin(mal_list),
+        "list?": MalBuiltin(list_test),
+        "count": MalBuiltin(count),
+        "empty?": MalBuiltin(empty_test),
+        "pr-str": MalBuiltin(mal_pr_str),
+        "str": MalBuiltin(mal_str),
+        "prn": MalBuiltin(mal_prn),
+        "println": MalBuiltin(mal_println),
     }
 
 
@@ -82,7 +82,7 @@ def equality(args: List[MalAny]) -> MalBool:
     raise mal_errors.EvalError("Bad arguments to /")
 
 
-def make_num_logical(op: Callable[[int, int], bool]) -> MalCallable:
+def make_num_logical(op: Callable[[int, int], bool]) -> MalBuiltin:
     """Return the python function for a mal logical comparison on MalNums."""
 
     def f(args: List[MalAny]) -> MalBool:
@@ -91,7 +91,7 @@ def make_num_logical(op: Callable[[int, int], bool]) -> MalCallable:
             return MalBool(op(x, y))
         raise mal_errors.EvalError("Bad arguments to logical comparison")
 
-    return MalCallable(f)
+    return MalBuiltin(f)
 
 
 def mal_list(args: List[MalAny]) -> MalList:

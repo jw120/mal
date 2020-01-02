@@ -7,7 +7,7 @@ from mal_errors import EvalError, InternalError, ReaderError
 
 from mal_types import (
     MalAny,
-    MalCallable,
+    MalBuiltin,
     MalList,
     MalMap,
     MalNum,
@@ -23,16 +23,16 @@ import reader
 
 # Simple environment for step 2
 repl_env: Mal_Environment = {
-    "+": MalCallable(
+    "+": MalBuiltin(
         lambda xs: MalNum(cast(MalNum, xs[0]).value + cast(MalNum, xs[1]).value)
     ),
-    "-": MalCallable(
+    "-": MalBuiltin(
         lambda xs: MalNum(cast(MalNum, xs[0]).value - cast(MalNum, xs[1]).value)
     ),
-    "*": MalCallable(
+    "*": MalBuiltin(
         lambda xs: MalNum(cast(MalNum, xs[0]).value * cast(MalNum, xs[1]).value)
     ),
-    "/": MalCallable(
+    "/": MalBuiltin(
         lambda xs: MalNum(cast(MalNum, xs[0]).value // cast(MalNum, xs[1]).value)
     ),
 }
@@ -48,7 +48,7 @@ def EVAL(ast: MalAny, env: Mal_Environment) -> MalAny:
         ):  # For type checker - should always be a MalSeq
             raise InternalError("Expected a MalList")
         head = evaluated.value[0]
-        if isinstance(head, MalCallable):
+        if isinstance(head, MalBuiltin):
             return head.value(evaluated.value[1:])
         raise EvalError("Cannot apply a non-function", str(ast))
 

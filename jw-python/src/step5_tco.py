@@ -11,9 +11,9 @@ from mal_types import (
     Environment,
     MalAny,
     MalBool,
-    MalCallable,
+    MalBuiltin,
+    MalFunc,
     MalList,
-    MalMalFunc,
     MalMap,
     MalNil,
     MalSeq,
@@ -30,14 +30,17 @@ import utils
 
 
 class EvalMode(Enum):
-    """Whether EVAL should continue."""
+    """Whether EVAL should continue. Part of EvalState."""
 
     CONTINUING = auto()
     FINISHED = auto()
 
 
 class EvalState(NamedTuple):
-    """State of the EVAL function when iterating."""
+    """State of the EVAL function when iterating.
+
+    Used for TCO to avoid EVAL calling EVAL.
+    """
 
     ast: MalAny
     env: Environment
@@ -78,16 +81,8 @@ def if_handler(args: List[MalAny], env: Environment) -> EvalState:
 def fn_handler(args: List[MalAny], env: Environment) -> EvalState:
     """Handle the special form fn*."""
     if len(args) == 2:
-        params = to_symlist(args[0])
-
-        def closure(call_args: List[MalAny]) -> MalAny:
-            closure_env = Environment(params, call_args, outer=env)
-            return EVAL(args[1], closure_env)
-
         return EvalState(
-            MalMalFunc(closure, ast=args[1], params=params, env=env),
-            env,
-            EvalMode.FINISHED,
+            MalFunc(args[1], to_symlist(args[0]), env), env, EvalMode.FINISHED,
         )
     raise mal_errors.EvalError("Bad arguments for fn*", str(args))
 
@@ -140,7 +135,7 @@ def EVAL(entry_ast: MalAny, entry_env: Environment) -> MalAny:
         evaluated_head: MalAny = evaluated_elements[0]
 
         # Apply a mal-defined function
-        if isinstance(evaluated_head, MalMalFunc):
+        if isinstance(evaluated_head, MalFunc):
             current = EvalState(
                 evaluated_head.ast,
                 Environment(
@@ -153,7 +148,7 @@ def EVAL(entry_ast: MalAny, entry_env: Environment) -> MalAny:
             continue
 
         # Apply a python-defined function
-        if isinstance(evaluated_head, MalCallable):
+        if isinstance(evaluated_head, MalBuiltin):
             return evaluated_head.value(evaluated_elements[1:])
 
         # Fail if applying a non-function

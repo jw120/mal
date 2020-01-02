@@ -8,7 +8,7 @@ import mal_errors
 from mal_types import (
     Environment,
     MalAny,
-    MalCallable,
+    MalBuiltin,
     MalList,
     MalMap,
     MalNum,
@@ -57,7 +57,7 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
         if not isinstance(evaluated, MalList):
             raise mal_errors.InternalError("Expected a MalList")  # For type checker
         eval_head = evaluated.value[0]
-        if isinstance(eval_head, MalCallable):
+        if isinstance(eval_head, MalBuiltin):
             return eval_head.value(evaluated.value[1:])
         raise mal_errors.EvalError("Cannot apply a non-function", str(ast))
 
@@ -103,7 +103,7 @@ def rep(input_string: str, env: Environment) -> None:
         print(err)
 
 
-def int_fn(op: Callable[[int, int], int]) -> MalCallable:
+def int_fn(op: Callable[[int, int], int]) -> MalBuiltin:
     """Make a quick-and-dirty mal function (helper function)."""
 
     def f(xs: List[MalAny]) -> MalAny:
@@ -111,7 +111,7 @@ def int_fn(op: Callable[[int, int], int]) -> MalCallable:
         x2 = cast(MalNum, xs[1]).value
         return MalNum(op(x1, x2))
 
-    return MalCallable(f)
+    return MalBuiltin(f)
 
 
 def rep_loop() -> None:
