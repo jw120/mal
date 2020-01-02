@@ -5,7 +5,7 @@
 import re
 from typing import Generic, List, Optional, TypeVar
 
-from mal_errors import InternalError, ReaderError
+import mal_errors
 
 from mal_types import MalAny, MalList, MalMap, MalNum, MalVec
 from mal_types import MalBool, MalKeyword, MalNil, MalStr, MalSym
@@ -78,7 +78,7 @@ def read_form(reader: Reader[str]) -> MalAny:
 def read_seq(reader: Reader[str], opener: str, closer: str) -> List[MalAny]:
     """Read a sequence of values between given delimiters."""
     if reader.next() != opener:
-        raise InternalError("no opener in read_seq")
+        raise mal_errors.InternalError("no opener in read_seq")
 
     elements: List[MalAny] = []
     while True:
@@ -87,7 +87,7 @@ def read_seq(reader: Reader[str], opener: str, closer: str) -> List[MalAny]:
             reader.next()
             break
         if next_value is None:
-            raise ReaderError("EOF before closing paren in read_list")
+            raise mal_errors.ReaderError("EOF before closing paren in read_list")
         elements.append(read_form(reader))
 
     return elements
@@ -101,7 +101,7 @@ def read_atom(reader: Reader[str]) -> MalAny:
     """Read an atom from the given Reader."""
     token = reader.next()
     if token is None:
-        raise InternalError("EOF in read_atom")
+        raise mal_errors.InternalError("EOF in read_atom")
 
     if token == "nil":
         return MalNil()
@@ -128,7 +128,7 @@ def read_atom(reader: Reader[str]) -> MalAny:
     if match:
         return MalStr(remove_escapes(match.group(1)))
     if token.startswith('"'):
-        raise ReaderError("unbalanced quotes", token)
+        raise mal_errors.ReaderError("unbalanced quotes", token)
     if token.startswith(":"):
         return MalKeyword(token[1:])
     if token.startswith(";"):

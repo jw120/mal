@@ -1,18 +1,18 @@
 """Implements step 1 of https://github.com/kanaka/mal - read and print."""
 
 
-from mal_errors import EvalError, ReaderError
+import mal_errors
 
 from mal_types import MalAny
 
-from printer import pr_str
+import printer
 
-from reader import read_str
+import reader
 
 
 def READ(input_string: str) -> MalAny:
     """Read a mal element from the given string."""
-    return read_str(input_string)
+    return reader.read_str(input_string)
 
 
 def EVAL(ast: MalAny) -> MalAny:
@@ -22,14 +22,14 @@ def EVAL(ast: MalAny) -> MalAny:
 
 def PRINT(ast: MalAny) -> None:
     """Print the string form of its argument to stdout."""
-    print(pr_str(ast, True))
+    print(printer.pr_str(ast, True))
 
 
 def rep(input_string: str) -> None:
     """Call read-eval-print on its argument."""
     try:
         PRINT(EVAL(READ(input_string)))
-    except (EvalError, ReaderError) as err:
+    except (mal_errors.EvalError, mal_errors.ReaderError) as err:
         print(err)
 
 

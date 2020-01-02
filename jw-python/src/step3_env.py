@@ -3,17 +3,25 @@
 import operator
 from typing import Callable, List, cast
 
-from env import Environment
+import mal_errors
 
-from mal_errors import EvalError, InternalError, ReaderError
+from mal_types import (
+    Environment,
+    MalAny,
+    MalCallable,
+    MalList,
+    MalMap,
+    MalNum,
+    MalSeq,
+    MalSym,
+    MalVec,
+)
 
-from mal_types import MalAny, MalFunc, MalList, MalMap, MalNum, MalSeq, MalSym, MalVec
+import printer
 
-from printer import pr_str
+import reader
 
-from reader import read_str
-
-from utils import pairs
+import utils
 
 
 def EVAL(ast: MalAny, env: Environment) -> MalAny:
@@ -32,26 +40,26 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
                 val = EVAL(args[1], env)
                 env.set(args[0], val)
                 return val
-            raise EvalError("Bad arguments for def!", str(ast))
+            raise mal_errors.EvalError("Bad arguments for def!", str(ast))
 
         # Special form let!
         if head == MalSym("let*"):
             if num_args == 2 and isinstance(args[0], MalSeq):
                 local_env = Environment(outer=env)
-                for sym, binding in pairs(args[0].value):
+                for sym, binding in utils.pairs(args[0].value):
                     if isinstance(sym, MalSym):
                         local_env.set(sym, EVAL(binding, local_env))
                 return EVAL(args[1], local_env)
-            raise EvalError("Bad arguments for let*", str(ast))
+            raise mal_errors.EvalError("Bad arguments for let*", str(ast))
 
         # Apply normal list
         evaluated = eval_ast(ast, env)
         if not isinstance(evaluated, MalList):
-            raise InternalError("Expected a MalList")  # For type checker
+            raise mal_errors.InternalError("Expected a MalList")  # For type checker
         eval_head = evaluated.value[0]
-        if isinstance(eval_head, MalFunc):
+        if isinstance(eval_head, MalCallable):
             return eval_head.value(evaluated.value[1:])
-        raise EvalError("Cannot apply a non-function", str(ast))
+        raise mal_errors.EvalError("Cannot apply a non-function", str(ast))
 
     # Use eval_ast for all other values
     return eval_ast(ast, env)
@@ -79,23 +87,23 @@ def eval_ast(ast: MalAny, env: Environment) -> MalAny:
 
 def READ(input_string: str) -> MalAny:
     """Read a mal element from the given string."""
-    return read_str(input_string)
+    return reader.read_str(input_string)
 
 
 def PRINT(ast: MalAny) -> None:
     """Print the string form of its argument to stdout."""
-    print(pr_str(ast, True))
+    print(printer.pr_str(ast, True))
 
 
 def rep(input_string: str, env: Environment) -> None:
     """Call read-eval-print on its argument."""
     try:
         PRINT(EVAL(READ(input_string), env))
-    except (EvalError, ReaderError) as err:
+    except (mal_errors.EvalError, mal_errors.ReaderError) as err:
         print(err)
 
 
-def int_fn(op: Callable[[int, int], int]) -> MalFunc:
+def int_fn(op: Callable[[int, int], int]) -> MalCallable:
     """Make a quick-and-dirty mal function (helper function)."""
 
     def f(xs: List[MalAny]) -> MalAny:
@@ -103,7 +111,7 @@ def int_fn(op: Callable[[int, int], int]) -> MalFunc:
         x2 = cast(MalNum, xs[1]).value
         return MalNum(op(x1, x2))
 
-    return MalFunc(f)
+    return MalCallable(f)
 
 
 def rep_loop() -> None:

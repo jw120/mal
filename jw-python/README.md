@@ -13,6 +13,14 @@ pip3 install flake8-blind-except flake8-builtins
 * flake8-import-order - standard order
 * flake8-blind-except - catchs use of except without exception types
 
+Refactor types - namedtuple? frozen dataclass
+
+Move special form handlers our of EVAL
+
+requirements.txt
+
+
+What is the difference between EVAL and eval_ast? (why _ast in do?)
 
 Running on mac with python 3.x installed from brew as python3
 

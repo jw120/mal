@@ -5,26 +5,34 @@ from typing import cast
 
 from mal_errors import EvalError, InternalError, ReaderError
 
-from mal_types import MalAny, MalFunc, MalList, MalMap, MalNum, MalSeq, MalSym, MalVec
+from mal_types import (
+    MalAny,
+    MalCallable,
+    MalList,
+    MalMap,
+    MalNum,
+    MalSeq,
+    MalSym,
+    MalVec,
+)
 from mal_types import Mal_Environment
 
-from printer import pr_str
+import printer
 
-from reader import read_str
-
+import reader
 
 # Simple environment for step 2
 repl_env: Mal_Environment = {
-    "+": MalFunc(
+    "+": MalCallable(
         lambda xs: MalNum(cast(MalNum, xs[0]).value + cast(MalNum, xs[1]).value)
     ),
-    "-": MalFunc(
+    "-": MalCallable(
         lambda xs: MalNum(cast(MalNum, xs[0]).value - cast(MalNum, xs[1]).value)
     ),
-    "*": MalFunc(
+    "*": MalCallable(
         lambda xs: MalNum(cast(MalNum, xs[0]).value * cast(MalNum, xs[1]).value)
     ),
-    "/": MalFunc(
+    "/": MalCallable(
         lambda xs: MalNum(cast(MalNum, xs[0]).value // cast(MalNum, xs[1]).value)
     ),
 }
@@ -40,7 +48,7 @@ def EVAL(ast: MalAny, env: Mal_Environment) -> MalAny:
         ):  # For type checker - should always be a MalSeq
             raise InternalError("Expected a MalList")
         head = evaluated.value[0]
-        if isinstance(head, MalFunc):
+        if isinstance(head, MalCallable):
             return head.value(evaluated.value[1:])
         raise EvalError("Cannot apply a non-function", str(ast))
 
@@ -72,12 +80,12 @@ def eval_ast(ast: MalAny, env: Mal_Environment) -> MalAny:
 
 def READ(input_string: str) -> MalAny:
     """Read a mal element from the given string."""
-    return read_str(input_string)
+    return reader.read_str(input_string)
 
 
 def PRINT(ast: MalAny) -> None:
     """Print the string form of its argument to stdout."""
-    print(pr_str(ast, True))
+    print(printer.pr_str(ast, True))
 
 
 def rep(input_string: str) -> None:

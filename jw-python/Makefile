@@ -21,7 +21,7 @@ typecheck:
 lint:
 	$(LINT) $(SRCDIR)
 
-test: step0 step1 step2 step3 step4
+test: step0 step1 step2 step3 step4 step5
 
 format:
 	black --target-version py37 src/
@@ -40,3 +40,6 @@ step3:
 
 step4:
 	cd ..; make "test^jw-python^step4" | grep ": failing tests"
+
+step5:
+	cd ..; make "test^jw-python^step5" | grep ": failing tests"

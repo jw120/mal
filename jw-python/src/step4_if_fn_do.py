@@ -2,16 +2,15 @@
 
 from typing import List, cast
 
-from core import create_ns
+import core
 
-from env import Environment
-
-from mal_errors import EvalError, InternalError, ReaderError
+import mal_errors
 
 from mal_types import (
+    Environment,
     MalAny,
     MalBool,
-    MalFunc,
+    MalCallable,
     MalList,
     MalMap,
     MalNil,
@@ -20,11 +19,11 @@ from mal_types import (
     MalVec,
 )
 
-from printer import pr_str
+import printer
 
-from reader import read_str
+import reader
 
-from utils import pairs
+import utils
 
 
 def EVAL(ast: MalAny, env: Environment) -> MalAny:
@@ -43,14 +42,14 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
                 val = EVAL(args[1], env)
                 env.set(args[0], val)
                 return val
-            raise EvalError("Bad arguments for def!", str(ast))
+            raise mal_errors.EvalError("Bad arguments for def!", str(ast))
 
         # Special form do
         if head == MalSym("do"):
             if num_args >= 1:
                 evaluated_args = list(map(lambda e: EVAL(e, env), args))
                 return evaluated_args[-1]
-            raise EvalError("Bad arguments for do!", str(ast))
+            raise mal_errors.EvalError("Bad arguments for do!", str(ast))
 
         # Special form fn*
         if head == MalSym("fn*"):
@@ -63,8 +62,8 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
                             closure_env = Environment(bind_syms, call_args, outer=env)
                             return EVAL(args[1], closure_env)
 
-                        return MalFunc(closure)
-            raise EvalError("Bad arguments for fn*", str(ast))
+                        return MalCallable(closure)
+            raise mal_errors.EvalError("Bad arguments for fn*", str(ast))
 
         # Special form if
         if head == MalSym("if"):
@@ -73,26 +72,26 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
                 if evaluated_first in [MalNil(), MalBool(False)]:
                     return EVAL(args[2], env) if num_args == 3 else MalNil()
                 return EVAL(args[1], env)
-            raise EvalError("Bad arguments for if", str(ast))
+            raise mal_errors.EvalError("Bad arguments for if", str(ast))
 
         # Special form let!
         if head == MalSym("let*"):
             if num_args == 2 and isinstance(args[0], MalSeq):
                 local_env = Environment(outer=env)
-                for sym, binding in pairs(args[0].value):
+                for sym, binding in utils.pairs(args[0].value):
                     if isinstance(sym, MalSym):
                         local_env.set(sym, EVAL(binding, local_env))
                 return EVAL(args[1], local_env)
-            raise EvalError("Bad arguments for let*", str(ast))
+            raise mal_errors.EvalError("Bad arguments for let*", str(ast))
 
         # Apply normal list
         evaluated_ast = eval_ast(ast, env)
         if not isinstance(evaluated_ast, MalList):
-            raise InternalError("Expected a MalList")  # For type checker
+            raise mal_errors.InternalError("Expected a MalList")  # For type checker
         evaluated_head = evaluated_ast.value[0]
-        if isinstance(evaluated_head, MalFunc):
+        if isinstance(evaluated_head, MalCallable):
             return evaluated_head.value(evaluated_ast.value[1:])
-        raise EvalError("Cannot apply a non-function", str(ast))
+        raise mal_errors.EvalError("Cannot apply a non-function", str(ast))
 
     # Use eval_ast for all other values
     return eval_ast(ast, env)
@@ -120,26 +119,26 @@ def eval_ast(ast: MalAny, env: Environment) -> MalAny:
 
 def READ(input_string: str) -> MalAny:
     """Read a mal element from the given string."""
-    return read_str(input_string)
+    return reader.read_str(input_string)
 
 
 def PRINT(ast: MalAny) -> None:
     """Print the string form of its argument to stdout."""
-    print(pr_str(ast, True))
+    print(printer.pr_str(ast, True))
 
 
 def rep(input_string: str, env: Environment) -> None:
     """Call read-eval-print on its argument."""
     try:
         PRINT(EVAL(READ(input_string), env))
-    except (EvalError, ReaderError) as err:
+    except (mal_errors.EvalError, mal_errors.ReaderError) as err:
         print(err)
 
 
 def rep_loop() -> None:
     """Repeatedly provide user prompt and passes the input to read-eval-print."""
     repl_env = Environment()
-    core_ns = create_ns()
+    core_ns = core.create_ns()
     for sym_name in core_ns:
         repl_env.set(MalSym(sym_name), core_ns[sym_name])
 
