@@ -1,6 +1,6 @@
 """Implements step 4 of https://github.com/kanaka/mal - if, fn, do."""
 
-from typing import List, cast
+from typing import Callable, List, cast
 
 import core
 
@@ -9,11 +9,9 @@ import mal_errors
 from mal_types import (
     Environment,
     MalAny,
-    MalBool,
     MalBuiltin,
     MalList,
     MalMap,
-    MalNil,
     MalSeq,
     MalSym,
     MalVec,
@@ -69,8 +67,10 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
         if head == MalSym("if"):
             if num_args in [2, 3]:
                 evaluated_first = EVAL(args[0], env)
-                if evaluated_first in [MalNil(), MalBool(False)]:
-                    return EVAL(args[2], env) if num_args == 3 else MalNil()
+                if evaluated_first is None or (
+                    isinstance(evaluated_first, bool) and (not evaluated_first)
+                ):
+                    return EVAL(args[2], env) if num_args == 3 else None
                 return EVAL(args[1], env)
             raise mal_errors.EvalError("Bad arguments for if", str(ast))
 
@@ -88,9 +88,10 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
         evaluated_ast = eval_ast(ast, env)
         if not isinstance(evaluated_ast, MalList):
             raise mal_errors.InternalError("Expected a MalList")  # For type checker
-        evaluated_head = evaluated_ast.value[0]
-        if isinstance(evaluated_head, MalBuiltin):
-            return evaluated_head.value(evaluated_ast.value[1:])
+        eval_head = evaluated_ast.value[0]
+        if isinstance(eval_head, MalBuiltin):
+            f = cast(Callable[[List[MalAny]], MalAny], eval_head.value)  # Workaround
+            return f(evaluated_ast.value[1:])
         raise mal_errors.EvalError("Cannot apply a non-function", str(ast))
 
     # Use eval_ast for all other values

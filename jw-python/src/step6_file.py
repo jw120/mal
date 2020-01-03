@@ -1,7 +1,7 @@
 """Implements step 6 of https://github.com/kanaka/mal - file."""
 
 from enum import Enum, auto
-from typing import Callable, Dict, List, NamedTuple
+from typing import Callable, Dict, List, NamedTuple, cast
 
 import core
 
@@ -10,12 +10,10 @@ import mal_errors
 from mal_types import (
     Environment,
     MalAny,
-    MalBool,
     MalBuiltin,
     MalFunc,
     MalList,
     MalMap,
-    MalNil,
     MalSeq,
     MalSym,
     MalVec,
@@ -69,11 +67,13 @@ def if_handler(args: List[MalAny], env: Environment) -> EvalState:
     """Handle the special form if."""
     if len(args) in [2, 3]:
         evaluated_first = EVAL(args[0], env)
-        if evaluated_first in [MalNil(), MalBool(False)]:
+        if evaluated_first is None or (
+            isinstance(evaluated_first, bool) and (not evaluated_first)
+        ):
             if len(args) == 3:
                 return EvalState(args[2], env, EvalMode.CONTINUING)
             else:
-                return EvalState(MalNil(), env, EvalMode.FINISHED)
+                return EvalState(None, env, EvalMode.FINISHED)
         return EvalState(args[1], env, EvalMode.CONTINUING)
     raise mal_errors.EvalError("Bad arguments for if", str(args))
 
@@ -149,7 +149,10 @@ def EVAL(entry_ast: MalAny, entry_env: Environment) -> MalAny:
 
         # Apply a python-defined function
         if isinstance(evaluated_head, MalBuiltin):
-            return evaluated_head.value(evaluated_elements[1:])
+            f = cast(
+                Callable[[List[MalAny]], MalAny], evaluated_head.value
+            )  # Workaround
+            return f(evaluated_elements[1:])
 
         # Fail if applying a non-function
         raise mal_errors.EvalError("Cannot apply a non-function", str(current.ast))

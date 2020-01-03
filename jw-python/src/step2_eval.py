@@ -1,20 +1,11 @@
 """Implements step 2 of https://github.com/kanaka/mal - eval."""
 
 
-from typing import cast
+from typing import Callable, List, cast
 
 from mal_errors import EvalError, InternalError, ReaderError
 
-from mal_types import (
-    MalAny,
-    MalBuiltin,
-    MalList,
-    MalMap,
-    MalNum,
-    MalSeq,
-    MalSym,
-    MalVec,
-)
+from mal_types import MalAny, MalBuiltin, MalList, MalMap, MalSeq, MalSym, MalVec
 from mal_types import Mal_Environment
 
 import printer
@@ -23,18 +14,10 @@ import reader
 
 # Simple environment for step 2
 repl_env: Mal_Environment = {
-    "+": MalBuiltin(
-        lambda xs: MalNum(cast(MalNum, xs[0]).value + cast(MalNum, xs[1]).value)
-    ),
-    "-": MalBuiltin(
-        lambda xs: MalNum(cast(MalNum, xs[0]).value - cast(MalNum, xs[1]).value)
-    ),
-    "*": MalBuiltin(
-        lambda xs: MalNum(cast(MalNum, xs[0]).value * cast(MalNum, xs[1]).value)
-    ),
-    "/": MalBuiltin(
-        lambda xs: MalNum(cast(MalNum, xs[0]).value // cast(MalNum, xs[1]).value)
-    ),
+    "+": MalBuiltin(lambda xs: xs[0] + xs[1]),
+    "-": MalBuiltin(lambda xs: xs[0] - xs[1]),
+    "*": MalBuiltin(lambda xs: xs[0] * xs[1]),
+    "/": MalBuiltin(lambda xs: xs[0] // xs[1]),
 }
 
 
@@ -49,7 +32,8 @@ def EVAL(ast: MalAny, env: Mal_Environment) -> MalAny:
             raise InternalError("Expected a MalList")
         head = evaluated.value[0]
         if isinstance(head, MalBuiltin):
-            return head.value(evaluated.value[1:])
+            f = cast(Callable[[List[MalAny]], MalAny], head.value)  # Workaround
+            return f(evaluated.value[1:])
         raise EvalError("Cannot apply a non-function", str(ast))
 
     # Use eval_ast for all other values

@@ -7,8 +7,7 @@ from typing import Generic, List, Optional, TypeVar
 
 import mal_errors
 
-from mal_types import MalAny, MalList, MalMap, MalNum, MalVec
-from mal_types import MalBool, MalKeyword, MalNil, MalStr, MalSym
+from mal_types import MalAny, MalKeyword, MalList, MalMap, MalSym, MalVec
 
 from utils import remove_escapes
 
@@ -56,9 +55,7 @@ def read_str(source: str) -> MalAny:
     >>> print(read_str("42"), read_str("abc"), read_str('"s123"'))
     42 abc s123
     >>> print(read_str("nil"), read_str("true"), read_str("false"))
-    nil true false
-    >>> print(read_str("(+ 2 3 (- 4 5))"))
-    (+ 2 3 (- 4 5))
+    None True False
     """
     tokens = TOKEN_REGEX.findall(source)
     return read_form(Reader(tokens))
@@ -104,11 +101,11 @@ def read_atom(reader: Reader[str]) -> MalAny:
         raise mal_errors.InternalError("EOF in read_atom")
 
     if token == "nil":
-        return MalNil()
+        return None
     if token == "true":
-        return MalBool(True)
+        return True
     if token == "false":
-        return MalBool(False)
+        return False
     if token == "'":
         return MalList([MalSym("quote"), read_form(reader)])
     if token == "`":
@@ -126,14 +123,14 @@ def read_atom(reader: Reader[str]) -> MalAny:
 
     match = QUOTED_STRING_REGEX.fullmatch(token)
     if match:
-        return MalStr(remove_escapes(match.group(1)))
+        return remove_escapes(match.group(1))
     if token.startswith('"'):
         raise mal_errors.ReaderError("unbalanced quotes", token)
     if token.startswith(":"):
         return MalKeyword(token[1:])
     if token.startswith(";"):
-        return MalNil()
+        return None
     if NUMBER_REGEX.fullmatch(token):
-        return MalNum(int(token))
+        return int(token)
 
     return MalSym(token)

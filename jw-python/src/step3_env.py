@@ -11,7 +11,6 @@ from mal_types import (
     MalBuiltin,
     MalList,
     MalMap,
-    MalNum,
     MalSeq,
     MalSym,
     MalVec,
@@ -58,7 +57,8 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
             raise mal_errors.InternalError("Expected a MalList")  # For type checker
         eval_head = evaluated.value[0]
         if isinstance(eval_head, MalBuiltin):
-            return eval_head.value(evaluated.value[1:])
+            f = cast(Callable[[List[MalAny]], MalAny], eval_head.value)  # Workaround
+            return f(evaluated.value[1:])
         raise mal_errors.EvalError("Cannot apply a non-function", str(ast))
 
     # Use eval_ast for all other values
@@ -107,9 +107,9 @@ def int_fn(op: Callable[[int, int], int]) -> MalBuiltin:
     """Make a quick-and-dirty mal function (helper function)."""
 
     def f(xs: List[MalAny]) -> MalAny:
-        x1 = cast(MalNum, xs[0]).value
-        x2 = cast(MalNum, xs[1]).value
-        return MalNum(op(x1, x2))
+        if isinstance(xs[0], int) and isinstance(xs[1], int):
+            return op(xs[0], xs[1])
+        raise mal_errors.EvalError("Bad arguments to int_fn")
 
     return MalBuiltin(f)
 
