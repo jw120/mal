@@ -1,23 +1,10 @@
 
-Note
 
-Python 3
-mypy
-flake8
-pip install flake8-docstrings
-flake8-import-order
-pip3 install flake8-blind-except flake8-builtins
+Try native types
 
-* flake8-docstrings - make sure docstrings are present and PEP compliane
-& flake8-rst-docstrings - format within docstrings
-* flake8-import-order - standard order
-* flake8-blind-except - catchs use of except without exception types
+# To setup
 
-Refactor types - namedtuple? frozen dataclass
-
-Move special form handlers our of EVAL
-
-requirements.txt
+pip install -r requirements.txt
 
 
 What is the difference between EVAL and eval_ast? (why _ast in do?)

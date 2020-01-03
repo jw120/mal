@@ -19,10 +19,13 @@ from mal_types import (
 
 import printer
 
+import reader
+
 
 def create_ns() -> Dict[str, MalAny]:
     """Return the core namespace."""  # Within a function so can precede the definitions
     return {
+        # Arithmetic and numeric comparisons
         "+": MalBuiltin(addition),
         "*": MalBuiltin(multiplication),
         "-": MalBuiltin(subtraction),
@@ -32,15 +35,23 @@ def create_ns() -> Dict[str, MalAny]:
         "<": make_num_logical(operator.lt),
         ">=": make_num_logical(operator.ge),
         "<=": make_num_logical(operator.le),
+        # Collection functions
         "list": MalBuiltin(mal_list),
         "list?": MalBuiltin(list_test),
         "count": MalBuiltin(count),
         "empty?": MalBuiltin(empty_test),
+        # IO and string functions
         "pr-str": MalBuiltin(mal_pr_str),
         "str": MalBuiltin(mal_str),
         "prn": MalBuiltin(mal_prn),
         "println": MalBuiltin(mal_println),
+        "read-string": MalBuiltin(mal_read_string),
     }
+
+
+#
+# Arithmetic and numeric comparisons
+#
 
 
 def addition(args: List[MalAny]) -> MalNum:
@@ -94,6 +105,11 @@ def make_num_logical(op: Callable[[int, int], bool]) -> MalBuiltin:
     return MalBuiltin(f)
 
 
+#
+# Collection functions
+#
+
+
 def mal_list(args: List[MalAny]) -> MalList:
     """Python definition of mal list function."""
     return MalList(args)
@@ -126,6 +142,11 @@ def empty_test(args: List[MalAny]) -> MalBool:
     raise mal_errors.EvalError("Bad arguments to empty?")
 
 
+#
+# IO and string functions
+#
+
+
 def mal_pr_str(args: List[MalAny]) -> MalStr:
     """Python definition of mal pr-str function."""
     str_args = map(lambda x: printer.pr_str(x, print_readably=True), args)
@@ -150,6 +171,20 @@ def mal_println(args: List[MalAny]) -> MalNil:
     str_args = map(lambda x: printer.pr_str(x, print_readably=False), args)
     print(" ".join(str_args))
     return MalNil()
+
+
+def mal_read_string(args: List[MalAny]) -> MalAny:
+    """Python definition of mal read-string function."""
+    if len(args) == 1:
+        head = args[0]
+        if isinstance(head, MalStr):
+            return reader.read_str(head.value)
+    raise mal_errors.EvalError("Bad arguments to read-string")
+
+
+#
+# Helper functions
+#
 
 
 def all_isinstance(xs: List[Any], t: type) -> bool:

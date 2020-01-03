@@ -1,1 +1,7 @@
-regex
+black
+flake8
+mypy
+flake8-blind-except
+flake8-docstrings
+flake8-import-order
+flake8-rst-docstrings
