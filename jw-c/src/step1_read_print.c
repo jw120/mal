@@ -6,10 +6,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "reader.h"
+
 #define INPUT_BUFFER_SIZE 200
 
 const char *READ(const char * s)
 {
+    reader_initialize();
+    tokenize(s);
     return s;
 }
 
