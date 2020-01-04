@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "*.Rmd": "markdown",
-        "reader.h": "c"
+        "reader.h": "c",
+        "iterator": "c"
     }
 }

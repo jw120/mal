@@ -9,8 +9,10 @@ CC = clang
 CFLAGS = -Wall -O2 -std=c17
 LIBS= -lreadline -lpcre
 
-bin/step1_read_print: reader.o utils.o
-reader.o: utils.o
+bin/step1_read_print: reader.o tokenize.o utils.o
+
+reader.o: src/tokenize.h src/utils.h
+tokenize.o: src/utils.h
 
 bin/%: %.o
 	$(CC) $(CFLAGS) $(LIBS) $^ -o $@

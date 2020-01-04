@@ -3,73 +3,41 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "reader.h"
+#include "tokenize.h"
 #include "utils.h"
 
-#define TOKEN_REGEX " *(Q.Q)" // "[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]*)"
-#define OVEC_COUNT 300 // Must be a multiple of 3
-
-#define REGEX_OPTIONS PCRE_ANCHORED
-
-pcre *token_regexp;
-
-void reader_initialize(void) {
-
-    // Compile the regexp
-    const char * error;
-    int erroffset;
-    token_regexp = pcre_compile(TOKEN_REGEX, 0, & error, &erroffset, NULL);
-    if (token_regexp == NULL) {
-        internal_error("Regexp compilation failed");
-    }
-
-
+const char *reader_peek(reader_state state) {
+    return state.current;
 }
 
-const char **tokenize(const char *input_string) {
-
-    int ovec[OVEC_COUNT];
-
-    int offset = 0;
-    bool finished = false;
-
-    while (!finished) {
-
-        int rc = pcre_exec(
-            token_regexp, NULL,
-            input_string, strlen(input_string),
-            offset, 0,
-            ovec, OVEC_COUNT);
-
-        // ovec[0] and ovec[1] are offsets of start and end of whole match
-        // ovec[2] and ovec[3] are offsets of start and end of (first and only ) group
-
-
-        if (rc < 0) {
-            internal_error("Regexp match failed %d", rc);
+const char *reader_next(reader_state *state_ptr) {
+    const char *current = state_ptr->current;
+    if (state_ptr->offset < state_ptr->input_length) {
+        const token_result *next = tokenize(state_ptr->input_string, state_ptr->offset);
+        if (next == NULL) {
+           internal_error("Got null from tokenize");
         }
-
-        if (rc == 0) {
-            internal_error("Regexp output vector not big enough");
-        }
-
-        if (rc > 2) {
-            internal_error("Expected one group to match: %d", rc);
-        }
-
-        if (rc == 1) {
-            finished = true;
-            // Spaces only
-        } else {
-
-            const char *token_start = input_string + ovec[2];
-            int token_length = ovec[3] - ovec[2];
-            char *token = malloc(token_length + 1);
-            strncpy(token, token_start, token_length);
-            printf("Token '%s'\n", token);
-            offset = ovec[1] + 1;
-            finished = offset > strlen(input_string);
-        }
+        printf("Fetched token %s\n", next->val);
+        state_ptr->current = next->val;
+        state_ptr->offset = next->next_offset;
+    } else {
+        state_ptr->current = NULL;
     }
+    printf("Returned token %s\n", next->val);
+    return current;
+}
 
-    return NULL;
+
+void read_str(const char *input_string) {
+
+    static reader_state *state_ptr;
+    state_ptr = malloc(sizeof(reader_state));
+
+    state_ptr->input_string = input_string;
+    state_ptr->input_length = strlen(input_string);
+    state_ptr->offset = 0;
+    state_ptr->current = reader_next(state_ptr);
+
+
 }

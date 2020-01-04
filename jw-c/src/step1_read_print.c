@@ -12,8 +12,7 @@
 
 const char *READ(const char * s)
 {
-    reader_initialize();
-    tokenize(s);
+    read_str(s);
     return s;
 }
 
