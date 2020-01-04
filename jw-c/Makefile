@@ -1,9 +1,10 @@
-.PHONY: all
+.PHONY: all build
 
-all: bin/step0_repl
+all: build
+
+build: bin/step0_repl
 
 CC = clang
-CFLAGS = -Wall -O2
-
+CFLAGS = -Wall -O2 -std=c17
 
 bin/% : src/%.c ; $(CC) $(CFLAGS) $< -o $@
