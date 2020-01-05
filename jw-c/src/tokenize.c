@@ -1,11 +1,26 @@
-#include <pcre.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
 
+// Use pcre2 library without support for wide characters
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
+
 #include "tokenize.h"
 #include "utils.h"
 
+/***
+ *
+ * Tokenize
+ *
+ * When called repeatedly on a fixed input string, it returns the matched tokens
+ * one by one using the mal PCRE regex.
+ *
+ * Uses pcre2 library (installed by default on mac)
+ *
+ **/
+
+// Regex for mal tokens (given in mal instructions)
 #define TOKEN_REGEX \
     "[\\s,]*" \
     "(~@|" \
@@ -15,52 +30,65 @@
     "[^\\s\\[\\]{}('\"`,;)]*)"
 #define OVEC_SIZE 6
 
-// [\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]*)
-
-// Return the next token
+// Search input_string from offset, returning the next token and the next offset
 const token_result *tokenize(const char *input_string, const int offset) {
 
-    static pcre *token_regexp = NULL;
-    static int ovec[OVEC_SIZE];
+    static pcre2_code *token_regexp = NULL;
+    pcre2_match_data *match_data = NULL;
 
-    printf("tokenize at offset %d\n", offset);
+    debug("tokenize", "called at offset %d", offset);
 
     if (token_regexp == NULL) { // Compile the regexp if has not been done
-        const char * error;
-        int erroffset;
-        token_regexp = pcre_compile(TOKEN_REGEX, 0, & error, &erroffset, NULL);
+
+        int errornumber;
+        size_t erroroffset;
+
+        token_regexp = pcre2_compile(
+            (PCRE2_SPTR8) TOKEN_REGEX,  // Our regex
+            PCRE2_ZERO_TERMINATED,      // ... which is zero-terminated
+            0,                          // No options
+            &errornumber, &erroroffset, // For error return values
+            NULL);                      // Use default compile context
+
         if (token_regexp == NULL) {
-            internal_error("Regexp compilation failed");
+            PCRE2_UCHAR buffer[256];
+            pcre2_get_error_message(errornumber, buffer, sizeof(buffer));
+            internal_error("PCRE2 compilation failed at offset %d: %s\n",
+                (int)erroroffset, buffer);
         }
+
+        // Reserve space for matches that will be returned
+        match_data = pcre2_match_data_create_from_pattern(token_regexp, NULL);
     }
 
-    int rc = pcre_exec(
-        token_regexp, NULL,
-        input_string, strlen(input_string),
-        offset,
-        PCRE_ANCHORED,
-        ovec, OVEC_SIZE);
+    int regexp_result = pcre2_match(
+        token_regexp, (PCRE2_SPTR8) input_string, strlen(input_string), offset,
+        0 /* default options */, match_data, NULL /* default match context */);
 
-    // Our regexp has one mandatory grouping so we expect two matches to be returned
-    if (rc == 0) {
+    // Nothing to retrun if no match or a match with no group (which is for whitespace only)
+    if (regexp_result == PCRE2_ERROR_NOMATCH || regexp_result == 1) {
+        debug("tokenize", "found nothing");
         return NULL;
     }
-    if (rc != 2) {
-        internal_error("Regexp match failed %d", rc);
+
+    // Fail if anyother error or more than one matched group
+    if (regexp_result < 0 || regexp_result > 2) {
+        internal_error("Regexp match failed (return code %d)", regexp_result);
     }
 
-    // ovec[0] and ovec[1] are offsets of start and end of whole match
-    // ovec[2] and ovec[3] are offsets of start and end of (first and only ) group
-    // ovec[4] and ovec[5] are working space for the library
+    // Get the matches
+    // ovector[0] and ovector[1] are offsets of start and end of whole match
+    // ovector[2] and ovector[3] are offsets of start and end of (first and only ) group
+    size_t *ovector = pcre2_get_ovector_pointer(match_data);
 
-    const char *token_start = input_string + ovec[2];
-    int token_length = ovec[3] - ovec[2];
-    char *token = malloc(token_length + 1);
+    const char *token_start = input_string + ovector[2];
+    int token_length = ovector[3] - ovector[2];
+    char *token = checked_malloc(token_length + 1, "token allocation in tokenize");
     strncpy(token, token_start, token_length);
-    printf("Token '%s'\n", token);
+    debug("tokenize", "found token '%s'", token);
 
-    token_result *result = malloc(sizeof(token_result));
+    token_result *result = checked_malloc(sizeof(token_result), "result allocation in tokenize");
     result->val = token;
-    result->next_offset = ovec[1] + 1;
+    result->next_offset = ovector[1] + 1;
     return result;
 }

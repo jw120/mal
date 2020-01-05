@@ -3,7 +3,11 @@
 
 #include <stdnoreturn.h>
 
-noreturn void internal_error(const char * fmt, ...);
+extern bool debug_mode;
+
+noreturn void internal_error(const char * restrict, ...);
+void debug(const char *, const char * restrict, ...);
+void *checked_malloc(size_t, const char * restrict, ...);
 
 
 #endif

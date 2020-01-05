@@ -12,32 +12,64 @@ const char *reader_peek(reader_state state) {
 }
 
 const char *reader_next(reader_state *state_ptr) {
-    const char *current = state_ptr->current;
+
+    debug("reader_next", "called with state {'%s', %d, '%s', %d}",
+        state_ptr->input_string, state_ptr->input_length,
+        state_ptr->current == NULL ? "NULL" : state_ptr->current,
+        state_ptr->offset);
+
+    // We return this pre-fetched current match
+    const char *pre_fetched_current = state_ptr->current;
+
+    const token_result *next;
     if (state_ptr->offset < state_ptr->input_length) {
-        const token_result *next = tokenize(state_ptr->input_string, state_ptr->offset);
+        debug("reader_next", "calling tokenize on '%s' at %d", state_ptr->input_string, state_ptr->offset);
+        next = tokenize(state_ptr->input_string, state_ptr->offset);
         if (next == NULL) {
            internal_error("Got null from tokenize");
         }
-        printf("Fetched token %s\n", next->val);
+        debug("reader_next", "fetched '%s' with %d", next->val, next->next_offset);
         state_ptr->current = next->val;
         state_ptr->offset = next->next_offset;
+        debug("reader_next", "updated state_ptr");
     } else {
         state_ptr->current = NULL;
     }
-    printf("Returned token %s\n", next->val);
-    return current;
-}
+    debug("reader_next", "leaving with state {'%s', %d, '%s', %d}",
+        state_ptr->input_string, state_ptr->input_length,
+        state_ptr->current == NULL ? "NULL" : state_ptr->current,
+        state_ptr->offset);
 
+    debug("reader_next", "returning '%s'\n", pre_fetched_current == NULL ? "NULL" : pre_fetched_current);
+    return pre_fetched_current;
+}
 
 void read_str(const char *input_string) {
 
+    debug("read_str", "called on '%s'", input_string);
+
     static reader_state *state_ptr;
-    state_ptr = malloc(sizeof(reader_state));
+    state_ptr = checked_malloc(sizeof(reader_state), "state allocation in read_str");
+
+    debug("read_str", "allocated %p", state_ptr);
 
     state_ptr->input_string = input_string;
+    debug("read_str", "set input_string '%s'", state_ptr->input_string);
+
     state_ptr->input_length = strlen(input_string);
+    debug("read_str", "set input_length %d", state_ptr->input_length);
+
     state_ptr->offset = 0;
-    state_ptr->current = reader_next(state_ptr);
+    debug("read_str", "set offset %d", state_ptr->offset);
+
+    state_ptr->current = NULL;
+    debug("read_str", "set current '%s'", state_ptr->current == NULL ? "NULL" : state_ptr->current);
 
 
+    debug("read_str", "set to {'%s', %d, '%s', %d}",
+        state_ptr->input_string, state_ptr->input_length,
+        state_ptr->current == NULL ? "NULL" : state_ptr->current,
+        state_ptr->offset);
+
+    reader_next(state_ptr);
 }

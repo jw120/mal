@@ -3,6 +3,6 @@ readline
 pcre
 
 
-Should we study the pcre regexp
+Move to pcre2 (which seems to have come from brew)
 
 Check all malloc returns

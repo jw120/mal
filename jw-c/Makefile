@@ -7,7 +7,7 @@ build: bin/step0_repl bin/step1_read_print
 
 CC = clang
 CFLAGS = -Wall -O2 -std=c17
-LIBS= -lreadline -lpcre
+LIBS= -lreadline -lpcre2-8
 
 bin/step1_read_print: reader.o tokenize.o utils.o
 
