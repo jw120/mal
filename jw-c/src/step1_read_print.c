@@ -36,8 +36,17 @@ const char *rep(const char *s)
 
 int main()
 {
-    read_str("  QQ  2");
-    debug("main", "back");
+    mal m = read_str("23");
+    debug("main", "got %d %d", m.tag, m.i);
+    printf("---\n");
+    m = read_str("\"abc\"");
+    debug("main", "got %d %s", m.tag, m.s);
+    printf("---\n");
+    m = read_str("def");
+    debug("main", "got %d %s", m.tag, m.s);
+    printf("---\n");
+    m = read_str("(qq 2 3)");
+    debug("main", "got %d", m.tag);
     return 0;
 
     // while (1) {

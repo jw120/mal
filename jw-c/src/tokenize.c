@@ -34,9 +34,9 @@
 const token_result *tokenize(const char *input_string, const int offset) {
 
     static pcre2_code *token_regexp = NULL;
-    pcre2_match_data *match_data = NULL;
+    static pcre2_match_data *match_data = NULL;
 
-    debug("tokenize", "called at offset %d", offset);
+    debug("tokenize", "called on '%s' at offset %d", input_string, offset);
 
     if (token_regexp == NULL) { // Compile the regexp if has not been done
 
@@ -65,7 +65,7 @@ const token_result *tokenize(const char *input_string, const int offset) {
         token_regexp, (PCRE2_SPTR8) input_string, strlen(input_string), offset,
         0 /* default options */, match_data, NULL /* default match context */);
 
-    // Nothing to retrun if no match or a match with no group (which is for whitespace only)
+    // Nothing to return if no match or a match with no group (which is for whitespace only)
     if (regexp_result == PCRE2_ERROR_NOMATCH || regexp_result == 1) {
         debug("tokenize", "found nothing");
         return NULL;

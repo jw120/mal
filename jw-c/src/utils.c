@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "utils.h"
 
@@ -39,4 +40,26 @@ void *checked_malloc(size_t size, const char * restrict fmt, ...) {
         internal_error(fmt, args);
     }
     return ptr;
+}
+
+bool is_number(const char *s) {
+
+    debug("is_number", "called with %s", s);
+
+    if (s == NULL) {
+        internal_error("is_number", "null string");
+    }
+    if (strlen(s) == 0) {
+        return false;
+    }
+    if (s[0] == '-') {
+        return is_number(s + 1);
+    }
+    for (const char *p = s; *p; p++) {
+        if (!isdigit(*p)) {
+            return false;
+        }
+    }
+    debug("is_number", "succeeded");
+    return true;
 }

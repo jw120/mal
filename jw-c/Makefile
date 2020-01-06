@@ -11,7 +11,7 @@ LIBS= -lreadline -lpcre2-8
 
 bin/step1_read_print: reader.o tokenize.o utils.o
 
-reader.o: src/tokenize.h src/utils.h
+reader.o: src/mal.h src/tokenize.h src/utils.h
 tokenize.o: src/utils.h
 
 bin/%: %.o
