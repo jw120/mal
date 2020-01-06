@@ -13,7 +13,13 @@ typedef struct {
     union {
         int i;
         char * s;
+        list_node *p;
     };
 } mal;
+
+typedef struct {
+    mal *val;
+    list_node *next;
+} list_node;
 
 #endif

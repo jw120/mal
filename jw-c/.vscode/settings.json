@@ -2,6 +2,7 @@
     "files.associations": {
         "*.Rmd": "markdown",
         "reader.h": "c",
-        "iterator": "c"
+        "iterator": "c",
+        "printer.h": "c"
     }
 }

@@ -67,15 +67,21 @@ mal read_list(reader_state *state_ptr) {
         internal_error("read_list", "called without leading paren: '%s'", token);
     }
 
+    mal m = { LIST, NULL };
+    list_node *last_element = &m;
+
     while (strcmp(token, ")") != 0) {
         token = reader_next(state_ptr);
         if (token == NULL) {
             internal_error("Missing end of list");
         }
+        list_node *new_node = checked_malloc(sizeof(list_node), "list_node in read_list");
+        last_element->next = new_node;
+        new_node->val = token;
+        new_node->next = NULL;
         debug("read_list", "found element '%s'", token);
     }
 
-    mal m = { LIST };
     return m;
 
 }
