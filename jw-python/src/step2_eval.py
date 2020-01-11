@@ -1,9 +1,9 @@
 """Implements step 2 of https://github.com/kanaka/mal - eval."""
 
 
-from typing import Callable, List, cast
+from typing import Callable, List, Optional, cast
 
-from mal_errors import EvalError, InternalError, ReaderError
+import mal_errors
 
 from mal_types import MalAny, MalBuiltin, MalList, MalMap, MalSeq, MalSym, MalVec
 from mal_types import Mal_Environment
@@ -29,12 +29,12 @@ def EVAL(ast: MalAny, env: Mal_Environment) -> MalAny:
         if not isinstance(
             evaluated, MalList
         ):  # For type checker - should always be a MalSeq
-            raise InternalError("Expected a MalList")
+            raise mal_errors.InternalError("Expected a MalList")
         head = evaluated.value[0]
         if isinstance(head, MalBuiltin):
             f = cast(Callable[[List[MalAny]], MalAny], head.value)  # Workaround
             return f(evaluated.value[1:])
-        raise EvalError("Cannot apply a non-function", str(ast))
+        raise mal_errors.EvalError("Cannot apply a non-function", str(ast))
 
     # Use eval_ast for all other values
     return eval_ast(ast, env)
@@ -46,7 +46,7 @@ def eval_ast(ast: MalAny, env: Mal_Environment) -> MalAny:
     if isinstance(ast, MalSym):
         if ast.value in env:
             return env[ast.value]
-        raise EvalError("Unknown symbol", str(ast))
+        raise mal_errors.EvalError("Unknown symbol", str(ast))
 
     # A list or vector has all of its contents evaluated
     if isinstance(ast, MalSeq):
@@ -62,7 +62,7 @@ def eval_ast(ast: MalAny, env: Mal_Environment) -> MalAny:
     return ast
 
 
-def READ(input_string: str) -> MalAny:
+def READ(input_string: str) -> Optional[MalAny]:
     """Read a mal element from the given string."""
     return reader.read_str(input_string)
 
@@ -75,8 +75,10 @@ def PRINT(ast: MalAny) -> None:
 def rep(input_string: str) -> None:
     """Call read-eval-print on its argument."""
     try:
-        PRINT(EVAL(READ(input_string), repl_env))
-    except (EvalError, ReaderError) as err:
+        input_form = READ(input_string)
+        if input_form is not None:
+            PRINT(EVAL(input_form, repl_env))
+    except (mal_errors.EvalError, mal_errors.ReaderError) as err:
         print(err)
 
 

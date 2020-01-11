@@ -1,7 +1,7 @@
 """Implements step 6 of https://github.com/kanaka/mal - file."""
 
 from enum import Enum, auto
-from typing import Callable, Dict, List, NamedTuple, cast
+from typing import Callable, Dict, List, NamedTuple, Optional, cast
 
 import core
 
@@ -14,6 +14,7 @@ from mal_types import (
     MalFunc,
     MalList,
     MalMap,
+    MalNil,
     MalSeq,
     MalSym,
     MalVec,
@@ -58,7 +59,7 @@ def do_handler(args: List[MalAny], env: Environment) -> EvalState:
     """Handle the special form do."""
     if len(args) >= 1:
         for arg in args[:-1]:  # Evaluate all args except the last one
-            eval_ast(arg, env)
+            EVAL(arg, env)
         return EvalState(args[-1], env, EvalMode.CONTINUING)
     raise mal_errors.EvalError("Bad arguments for do!", str(args))
 
@@ -67,13 +68,13 @@ def if_handler(args: List[MalAny], env: Environment) -> EvalState:
     """Handle the special form if."""
     if len(args) in [2, 3]:
         evaluated_first = EVAL(args[0], env)
-        if evaluated_first is None or (
+        if isinstance(evaluated_first, MalNil) or (
             isinstance(evaluated_first, bool) and (not evaluated_first)
         ):
             if len(args) == 3:
                 return EvalState(args[2], env, EvalMode.CONTINUING)
             else:
-                return EvalState(None, env, EvalMode.FINISHED)
+                return EvalState(MalNil(), env, EvalMode.FINISHED)
         return EvalState(args[1], env, EvalMode.CONTINUING)
     raise mal_errors.EvalError("Bad arguments for if", str(args))
 
@@ -180,7 +181,7 @@ def eval_ast(ast: MalAny, env: Environment) -> MalAny:
     return ast
 
 
-def READ(input_string: str) -> MalAny:
+def READ(input_string: str) -> Optional[MalAny]:
     """Read a mal element from the given string."""
     return reader.read_str(input_string)
 
@@ -193,9 +194,38 @@ def PRINT(ast: MalAny) -> None:
 def rep(input_string: str, env: Environment) -> None:
     """Call read-eval-print on its argument."""
     try:
-        PRINT(EVAL(READ(input_string), env))
+        input_form = READ(input_string)
+        if input_form is not None:
+            PRINT(EVAL(input_form, env))
     except (mal_errors.EvalError, mal_errors.ReaderError) as err:
         print(err)
+
+
+def mal_eval(args: List[MalAny], env: Environment) -> MalAny:
+    """Python definition of eval function."""
+    if len(args) == 1:
+        return EVAL(args[0], env)
+    raise mal_errors.EvalError("Bad arguments to eval")
+
+
+prelude: str = """
+(do
+    (def! not
+        (fn* (a)
+            (if a false true)))
+    (def! load-file
+        (fn* (f)
+            (eval (read-string
+                (str "(do " (slurp f) "\nnil)")))))
+(def! sumdown1 (fn* (n) (if (= n 0) 0 (+ n (sumdown1  (- n 1))))))
+(def! sumdown2 (fn* [n] (if (= n 0) 0 (+ n (sumdown2  (- n 1))))))
+(def! sumdown
+  (fn* [n]
+    (if (= n 0)
+      0
+      (+ n (sumdown  (- n 1))))))
+)
+"""
 
 
 def rep_loop() -> None:
@@ -204,8 +234,12 @@ def rep_loop() -> None:
     core_ns = core.create_ns()
     for sym_name in core_ns:
         repl_env.set(MalSym(sym_name), core_ns[sym_name])
+    repl_env.set(MalSym("eval"), MalBuiltin(lambda xs: mal_eval(xs, repl_env)))
 
-    EVAL(READ("(def! not (fn* (a) (if a false true)))"), repl_env)
+    prelude_form = READ(prelude)
+    if prelude_form is None:
+        raise mal_errors.InternalError("Unexpected None reading prelude")
+    EVAL(prelude_form, repl_env)
 
     while True:
         try:

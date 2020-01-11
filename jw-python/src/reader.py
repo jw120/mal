@@ -7,7 +7,7 @@ from typing import Generic, List, Optional, TypeVar
 
 import mal_errors
 
-from mal_types import MalAny, MalKeyword, MalList, MalMap, MalSym, MalVec
+from mal_types import MalAny, MalKeyword, MalList, MalMap, MalNil, MalSym, MalVec
 
 from utils import remove_escapes
 
@@ -49,19 +49,21 @@ TOKEN_REGEX = re.compile(
 )
 
 
-def read_str(source: str) -> MalAny:
+def read_str(source: str) -> Optional[MalAny]:
     """Read the tokens in the given string and return the MAL AST.
+
+    Returns None in the absence of tokens (just whitespace or comments)
 
     >>> print(read_str("42"), read_str("abc"), read_str('"s123"'))
     42 abc s123
-    >>> print(read_str("nil"), read_str("true"), read_str("false"))
-    None True False
+    >>> print(read_str("true"), read_str("false"))
+    True False
     """
     tokens = TOKEN_REGEX.findall(source)
     return read_form(Reader(tokens))
 
 
-def read_form(reader: Reader[str]) -> MalAny:
+def read_form(reader: Reader[str]) -> Optional[MalAny]:
     """Read a general form from the given Reader."""
     if reader.peek() == "(":
         return MalList(read_seq(reader, "(", ")"))
@@ -85,40 +87,61 @@ def read_seq(reader: Reader[str], opener: str, closer: str) -> List[MalAny]:
             break
         if next_value is None:
             raise mal_errors.ReaderError("EOF before closing paren in read_list")
-        elements.append(read_form(reader))
+        form = read_form(reader)
+        if form is not None:
+            elements.append(form)
 
     return elements
 
 
-QUOTED_STRING_REGEX = re.compile('"(.*)"')
+QUOTED_STRING_REGEX = re.compile('"(.*)"', re.DOTALL)
 NUMBER_REGEX = re.compile(r"-?\d+")
 
 
-def read_atom(reader: Reader[str]) -> MalAny:
+def read_atom(reader: Reader[str]) -> Optional[MalAny]:
     """Read an atom from the given Reader."""
     token = reader.next()
     if token is None:
         raise mal_errors.InternalError("EOF in read_atom")
 
     if token == "nil":
-        return None
+        return MalNil()
     if token == "true":
         return True
     if token == "false":
         return False
     if token == "'":
-        return MalList([MalSym("quote"), read_form(reader)])
+        form = read_form(reader)
+        if form is None:
+            raise mal_errors.ReaderError("Missing form in quote")
+        return MalList([MalSym("quote"), form])
     if token == "`":
-        return MalList([MalSym("quasiquote"), read_form(reader)])
+        form = read_form(reader)
+        if form is None:
+            raise mal_errors.ReaderError("Missing form in quasiquote")
+        return MalList([MalSym("quasiquote"), form])
     if token == "~":
-        return MalList([MalSym("unquote"), read_form(reader)])
+        form = read_form(reader)
+        if form is None:
+            raise mal_errors.ReaderError("Missing form in unquote")
+        return MalList([MalSym("unquote"), form])
     if token == "~@":
-        return MalList([MalSym("splice-unquote"), read_form(reader)])
+        form = read_form(reader)
+        if form is None:
+            raise mal_errors.ReaderError("Missing form in splice-quote")
+        return MalList([MalSym("splice-unquote"), form])
     if token == "@":
-        return MalList([MalSym("deref"), read_form(reader)])
+        form = read_form(reader)
+        if form is None:
+            raise mal_errors.ReaderError("Missing form in deref")
+        return MalList([MalSym("deref"), form])
     if token == "^":
         target = read_form(reader)
+        if target is None:
+            raise mal_errors.ReaderError("Missing target in with-meta")
         meta = read_form(reader)
+        if meta is None:
+            raise mal_errors.ReaderError("Missing meta in with-meta")
         return MalList([MalSym("with-meta"), meta, target])
 
     match = QUOTED_STRING_REGEX.fullmatch(token)

@@ -2,7 +2,7 @@
 
 from typing import List
 
-from mal_types import MalAny, MalList, MalMap, MalVec
+from mal_types import MalAny, MalList, MalMap, MalNil, MalVec
 
 import utils
 
@@ -24,6 +24,9 @@ def pr_str(element: MalAny, print_readably: bool) -> str:
             accumulated.append(pr_str(element.value[k], print_readably))
         return "{" + " ".join(map(str, accumulated)) + "}"
 
+    if isinstance(element, MalNil):
+        return "nil"
+
     if isinstance(element, str):
         if print_readably:
             return '"' + utils.add_escapes(element) + '"'
@@ -31,8 +34,5 @@ def pr_str(element: MalAny, print_readably: bool) -> str:
 
     if isinstance(element, bool):
         return "true" if element else "false"
-
-    if element is None:
-        return "nil"
 
     return str(element)

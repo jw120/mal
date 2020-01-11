@@ -1,7 +1,7 @@
 """Implements step 3 of https://github.com/kanaka/mal - env."""
 
 import operator
-from typing import Callable, List, cast
+from typing import Callable, List, Optional, cast
 
 import mal_errors
 
@@ -85,7 +85,7 @@ def eval_ast(ast: MalAny, env: Environment) -> MalAny:
     return ast
 
 
-def READ(input_string: str) -> MalAny:
+def READ(input_string: str) -> Optional[MalAny]:
     """Read a mal element from the given string."""
     return reader.read_str(input_string)
 
@@ -98,7 +98,9 @@ def PRINT(ast: MalAny) -> None:
 def rep(input_string: str, env: Environment) -> None:
     """Call read-eval-print on its argument."""
     try:
-        PRINT(EVAL(READ(input_string), env))
+        input_form = READ(input_string)
+        if input_form is not None:
+            PRINT(EVAL(input_form, env))
     except (mal_errors.EvalError, mal_errors.ReaderError) as err:
         print(err)
 

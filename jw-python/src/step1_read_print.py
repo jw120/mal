@@ -1,6 +1,8 @@
 """Implements step 1 of https://github.com/kanaka/mal - read and print."""
 
 
+from typing import Optional
+
 import mal_errors
 
 from mal_types import MalAny
@@ -10,7 +12,7 @@ import printer
 import reader
 
 
-def READ(input_string: str) -> MalAny:
+def READ(input_string: str) -> Optional[MalAny]:
     """Read a mal element from the given string."""
     return reader.read_str(input_string)
 
@@ -28,7 +30,9 @@ def PRINT(ast: MalAny) -> None:
 def rep(input_string: str) -> None:
     """Call read-eval-print on its argument."""
     try:
-        PRINT(EVAL(READ(input_string)))
+        input_form = READ(input_string)
+        if input_form is not None:
+            PRINT(EVAL(input_form))
     except (mal_errors.EvalError, mal_errors.ReaderError) as err:
         print(err)
 

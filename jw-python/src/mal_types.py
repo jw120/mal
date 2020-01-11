@@ -12,11 +12,11 @@ MalAny is a union of the following
     + MalFunc (a function defined by fn* in Mal)
     + MalKeyword
     + MalSym
+    + MalNil
     + Callable
     + str (builtin)
     + int (builtin)
     + bool (builtin)
-    + Nonetype (builtin), used to represent mal's nil
 
 
 """
@@ -58,7 +58,6 @@ class MalSeq:
     def __init__(self, value: List[MalAny]) -> None:
         """Create a MalSeq. Called via super() from subclases."""
         self.value: List[MalAny] = value
-        super().__init__()
 
     def __eq__(self, other: Any) -> bool:
         """Value equality considering all MalSeq sub-classses to be equal."""
@@ -75,6 +74,14 @@ class MalVec(MalSeq):
     """Vector type for mal."""
 
     pass
+
+
+class MalNil:
+    """Nil type for mal."""
+
+    def __eq__(self, other: Any) -> bool:
+        """Value equality."""
+        return isinstance(other, self.__class__)
 
 
 class MalMap:
@@ -164,7 +171,7 @@ class MalFunc:
 
 
 MalAny = Union[
-    MalSeq, MalMap, MalFunc, MalKeyword, MalBuiltin, MalSym, str, int, bool, None,
+    MalSeq, MalMap, MalFunc, MalKeyword, MalBuiltin, MalSym, MalNil, str, int, bool,
 ]
 Mal_Environment = Dict[str, MalAny]
 MalKey = Union[MalKeyword, str]
@@ -234,13 +241,13 @@ class Environment:
 
 
 def to_symlist(xs: MalAny) -> List[MalSym]:
-    """Convert a mal value to a list of symbols suitable.
+    """Convert a mal value to a list of symbols.
 
-    Mal value should be a list of symbols. Useful for creating a new environment.
+    Mal value should be a sequence of symbols. Useful for creating a new environment.
     """
-    if not isinstance(xs, MalSeq):
-        raise mal_errors.EvalError("Expected a sequence", str(xs))
-    for x in xs.value:
-        if not isinstance(x, MalSym):
-            raise mal_errors.EvalError("Expected a symbol", str(x))
-    return cast(List[MalSym], xs.value)
+    if isinstance(xs, MalSeq):
+        for x in xs.value:
+            if not isinstance(x, MalSym):
+                raise mal_errors.EvalError("Expected a symbol", str(x))
+        return cast(List[MalSym], xs.value)
+    raise mal_errors.EvalError("Expected a sequence", str(xs))

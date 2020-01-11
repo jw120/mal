@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, List, cast
 
 import mal_errors
 
-from mal_types import MalAny, MalBuiltin, MalList, MalSeq
+from mal_types import MalAny, MalBuiltin, MalList, MalNil, MalSeq
 
 import printer
 
@@ -37,6 +37,7 @@ def create_ns() -> Dict[str, MalBuiltin]:
         "prn": MalBuiltin(mal_prn),
         "println": MalBuiltin(mal_println),
         "read-string": MalBuiltin(mal_read_string),
+        "slurp": MalBuiltin(slurp),
     }
 
 
@@ -114,7 +115,7 @@ def count(args: List[MalAny]) -> int:
         head = args[0]
         if isinstance(head, MalSeq):
             return len(head.value)
-        if head is None:
+        if isinstance(head, MalNil):
             return 0
     raise mal_errors.EvalError("Bad arguments to count")
 
@@ -145,16 +146,18 @@ def mal_str(args: List[MalAny]) -> str:
     return "".join(str_args)
 
 
-def mal_prn(args: List[MalAny]) -> None:
+def mal_prn(args: List[MalAny]) -> MalNil:
     """Python definition of mal prn function."""
     str_args = map(lambda x: printer.pr_str(x, print_readably=True), args)
     print(" ".join(str_args))
+    return MalNil()
 
 
-def mal_println(args: List[MalAny]) -> None:
+def mal_println(args: List[MalAny]) -> MalNil:
     """Python definition of mal println function."""
     str_args = map(lambda x: printer.pr_str(x, print_readably=False), args)
     print(" ".join(str_args))
+    return MalNil()
 
 
 def mal_read_string(args: List[MalAny]) -> MalAny:
@@ -162,8 +165,24 @@ def mal_read_string(args: List[MalAny]) -> MalAny:
     if len(args) == 1:
         head = args[0]
         if isinstance(head, str):
-            return reader.read_str(head)
+            read_form = reader.read_str(head)
+            if read_form is None:
+                return MalNil()
+            return read_form
     raise mal_errors.EvalError("Bad arguments to read-string")
+
+
+def slurp(args: List[MalAny]) -> MalAny:
+    """Python definition of function to return contents of give filename as a string."""
+    if len(args) == 1:
+        head = args[0]
+        if isinstance(head, str):
+            try:
+                with open(head, "r") as f:
+                    return f.read()
+            except (OSError) as err:
+                raise mal_errors.EvalError(err.strerror + " (OS error)")
+    raise mal_errors.EvalError("Bad arguments to slurp")
 
 
 #

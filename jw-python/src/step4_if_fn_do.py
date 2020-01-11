@@ -1,6 +1,6 @@
 """Implements step 4 of https://github.com/kanaka/mal - if, fn, do."""
 
-from typing import Callable, List, cast
+from typing import Callable, List, Optional, cast
 
 import core
 
@@ -12,6 +12,7 @@ from mal_types import (
     MalBuiltin,
     MalList,
     MalMap,
+    MalNil,
     MalSeq,
     MalSym,
     MalVec,
@@ -67,10 +68,10 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
         if head == MalSym("if"):
             if num_args in [2, 3]:
                 evaluated_first = EVAL(args[0], env)
-                if evaluated_first is None or (
+                if isinstance(evaluated_first, MalNil) or (
                     isinstance(evaluated_first, bool) and (not evaluated_first)
                 ):
-                    return EVAL(args[2], env) if num_args == 3 else None
+                    return EVAL(args[2], env) if num_args == 3 else MalNil()
                 return EVAL(args[1], env)
             raise mal_errors.EvalError("Bad arguments for if", str(ast))
 
@@ -118,7 +119,7 @@ def eval_ast(ast: MalAny, env: Environment) -> MalAny:
     return ast
 
 
-def READ(input_string: str) -> MalAny:
+def READ(input_string: str) -> Optional[MalAny]:
     """Read a mal element from the given string."""
     return reader.read_str(input_string)
 
@@ -131,7 +132,9 @@ def PRINT(ast: MalAny) -> None:
 def rep(input_string: str, env: Environment) -> None:
     """Call read-eval-print on its argument."""
     try:
-        PRINT(EVAL(READ(input_string), env))
+        input_form = READ(input_string)
+        if input_form is not None:
+            PRINT(EVAL(input_form, env))
     except (mal_errors.EvalError, mal_errors.ReaderError) as err:
         print(err)
 
@@ -143,7 +146,10 @@ def rep_loop() -> None:
     for sym_name in core_ns:
         repl_env.set(MalSym(sym_name), core_ns[sym_name])
 
-    EVAL(READ("(def! not (fn* (a) (if a false true)))"), repl_env)
+    prelude_form = READ("(def! not (fn* (a) (if a false true)))")
+    if prelude_form is None:
+        raise mal_errors.InternalError("Unexpected None reading prelude")
+    EVAL(prelude_form, repl_env)
 
     while True:
         try:
