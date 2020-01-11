@@ -1,7 +1,8 @@
 """Implements step 6 of https://github.com/kanaka/mal - file."""
 
 from enum import Enum, auto
-from typing import Callable, Dict, List, NamedTuple, Optional, cast
+from sys import argv
+from typing import Callable, Dict, List, NamedTuple, Optional, Sequence, cast
 
 import core
 
@@ -10,6 +11,7 @@ import mal_errors
 from mal_types import (
     Environment,
     MalAny,
+    MalAtom,
     MalBuiltin,
     MalFunc,
     MalList,
@@ -181,6 +183,31 @@ def eval_ast(ast: MalAny, env: Environment) -> MalAny:
     return ast
 
 
+def mal_swap(args: List[MalAny]) -> MalAny:
+    """Python definition of the mal swap! function."""
+    if (
+        len(args) >= 2
+        and isinstance(args[0], MalAtom)
+        and (isinstance(args[1], MalFunc) or isinstance(args[1], MalBuiltin))
+    ):
+        target_atom: MalAtom = args[0]
+        if isinstance(args[1], MalFunc):
+            update_func: MalFunc = args[1]
+            target_atom.value = EVAL(
+                update_func.ast,
+                Environment(
+                    update_func.params,
+                    [target_atom.value] + args[2:],
+                    outer=update_func.env,
+                ),
+            )
+        else:
+            update_fn = cast(Callable[[List[MalAny]], MalAny], args[1].value)
+            target_atom.value = update_fn([target_atom.value] + args[2:])
+        return target_atom.value
+    raise mal_errors.EvalError("Bad arguments for swap!", str(args))
+
+
 def READ(input_string: str) -> Optional[MalAny]:
     """Read a mal element from the given string."""
     return reader.read_str(input_string)
@@ -197,6 +224,16 @@ def rep(input_string: str, env: Environment) -> None:
         input_form = READ(input_string)
         if input_form is not None:
             PRINT(EVAL(input_form, env))
+    except (mal_errors.EvalError, mal_errors.ReaderError) as err:
+        print(err)
+
+
+def read_eval(input_string: str, env: Environment) -> None:
+    """Call read-eval on its argument."""
+    try:
+        input_form = READ(input_string)
+        if input_form is not None:
+            EVAL(input_form, env)
     except (mal_errors.EvalError, mal_errors.ReaderError) as err:
         print(err)
 
@@ -234,18 +271,26 @@ def rep_loop() -> None:
     core_ns = core.create_ns()
     for sym_name in core_ns:
         repl_env.set(MalSym(sym_name), core_ns[sym_name])
+
     repl_env.set(MalSym("eval"), MalBuiltin(lambda xs: mal_eval(xs, repl_env)))
+    repl_env.set(MalSym("swap!"), MalBuiltin(mal_swap))
+    repl_env.set(MalSym("*ARGV*"), MalList([]))
 
     prelude_form = READ(prelude)
     if prelude_form is None:
         raise mal_errors.InternalError("Unexpected None reading prelude")
     EVAL(prelude_form, repl_env)
 
-    while True:
-        try:
-            rep(input("user> "), repl_env)
-        except EOFError:
-            break
+    if len(argv) > 1:
+        argv_list: Sequence[MalAny] = argv[2:]
+        repl_env.set(MalSym("*ARGV*"), MalList(argv_list))
+        read_eval('(load-file "' + argv[1] + '")', repl_env)
+    else:
+        while True:
+            try:
+                rep(input("user> "), repl_env)
+            except EOFError:
+                break
 
 
 if __name__ == "__main__":

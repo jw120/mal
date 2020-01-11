@@ -13,6 +13,7 @@ MalAny is a union of the following
     + MalKeyword
     + MalSym
     + MalNil
+    + MalAtom
     + Callable
     + str (builtin)
     + int (builtin)
@@ -25,7 +26,18 @@ MalAny is a union of the following
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    cast,
+)
 
 import mal_errors
 
@@ -52,12 +64,28 @@ class MalKeyword(NamedTuple):
         return hash(str(self))
 
 
+class MalAtom:
+    """Atom type for mal."""
+
+    def __init__(self, value: MalAny) -> None:
+        """Create an atom."""
+        self.value: MalAny = value
+
+    def __eq__(self, other: object) -> bool:
+        """Equality based on value."""
+        return (
+            self.__class__ == other.__class__
+            and isinstance(other, self.__class__)  # For typechecker
+            and self.value == other.value
+        )
+
+
 class MalSeq:
     """Sequence type for Mal - lists or vectors."""
 
-    def __init__(self, value: List[MalAny]) -> None:
+    def __init__(self, value: Sequence[MalAny]) -> None:
         """Create a MalSeq. Called via super() from subclases."""
-        self.value: List[MalAny] = value
+        self.value: List[MalAny] = list(value)
 
     def __eq__(self, other: Any) -> bool:
         """Value equality considering all MalSeq sub-classses to be equal."""
@@ -81,7 +109,9 @@ class MalNil:
 
     def __eq__(self, other: Any) -> bool:
         """Value equality."""
-        return isinstance(other, self.__class__)
+        return self.__class__ == other.__class__ and isinstance(
+            other, self.__class__
+        )  # For typechecker
 
 
 class MalMap:
@@ -171,7 +201,17 @@ class MalFunc:
 
 
 MalAny = Union[
-    MalSeq, MalMap, MalFunc, MalKeyword, MalBuiltin, MalSym, MalNil, str, int, bool,
+    MalSeq,
+    MalMap,
+    MalFunc,
+    MalAtom,
+    MalKeyword,
+    MalBuiltin,
+    MalSym,
+    MalNil,
+    str,
+    int,
+    bool,
 ]
 Mal_Environment = Dict[str, MalAny]
 MalKey = Union[MalKeyword, str]

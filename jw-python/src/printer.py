@@ -2,7 +2,7 @@
 
 from typing import List
 
-from mal_types import MalAny, MalList, MalMap, MalNil, MalVec
+from mal_types import MalAny, MalAtom, MalList, MalMap, MalNil, MalVec
 
 import utils
 
@@ -26,6 +26,9 @@ def pr_str(element: MalAny, print_readably: bool) -> str:
 
     if isinstance(element, MalNil):
         return "nil"
+
+    if isinstance(element, MalAtom):
+        return "(atom " + pr_str(element.value, print_readably) + ")"
 
     if isinstance(element, str):
         if print_readably:

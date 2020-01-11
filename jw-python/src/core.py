@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, List, cast
 
 import mal_errors
 
-from mal_types import MalAny, MalBuiltin, MalList, MalNil, MalSeq
+from mal_types import MalAny, MalAtom, MalBuiltin, MalList, MalNil, MalSeq
 
 import printer
 
@@ -38,6 +38,11 @@ def create_ns() -> Dict[str, MalBuiltin]:
         "println": MalBuiltin(mal_println),
         "read-string": MalBuiltin(mal_read_string),
         "slurp": MalBuiltin(slurp),
+        # Atom functions
+        "atom": MalBuiltin(atom),
+        "atom?": MalBuiltin(atom_test),
+        "deref": MalBuiltin(deref),
+        "reset!": MalBuiltin(reset),
     }
 
 
@@ -183,6 +188,40 @@ def slurp(args: List[MalAny]) -> MalAny:
             except (OSError) as err:
                 raise mal_errors.EvalError(err.strerror + " (OS error)")
     raise mal_errors.EvalError("Bad arguments to slurp")
+
+
+#
+# Atom functions
+#
+
+
+def atom(args: List[MalAny]) -> MalAny:
+    """Python definition of atom function to create an atom."""
+    if len(args) == 1:
+        return MalAtom(args[0])
+    raise mal_errors.EvalError("Bad arguments to atom")
+
+
+def atom_test(args: List[MalAny]) -> MalAny:
+    """Python definition of atom? function to test if value is an atom."""
+    if len(args) == 1:
+        return isinstance(args[0], MalAtom)
+    raise mal_errors.EvalError("Bad arguments to atom?")
+
+
+def deref(args: List[MalAny]) -> MalAny:
+    """Python definition of deref function to return vaue from an atom."""
+    if len(args) == 1 and isinstance(args[0], MalAtom):
+        return args[0].value
+    raise mal_errors.EvalError("Bad arguments to deref")
+
+
+def reset(args: List[MalAny]) -> MalAny:
+    """Python definition of reset! function to reset an atom's value."""
+    if len(args) == 2 and isinstance(args[0], MalAtom):
+        args[0].value = args[1]
+        return args[1]
+    raise mal_errors.EvalError("Bad arguments to reset!")
 
 
 #
