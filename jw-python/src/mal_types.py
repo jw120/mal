@@ -291,3 +291,8 @@ def to_symlist(xs: MalAny) -> List[MalSym]:
                 raise mal_errors.EvalError("Expected a symbol", str(x))
         return cast(List[MalSym], xs.value)
     raise mal_errors.EvalError("Expected a sequence", str(xs))
+
+
+def is_pair(xs: MalAny) -> bool:
+    """Test if the argument a non-empty list."""
+    return isinstance(xs, MalList) and len(xs.value) > 0
