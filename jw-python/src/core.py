@@ -6,7 +6,7 @@ environment.
 
 import operator
 from functools import reduce
-from typing import Callable, Dict, List, cast
+from typing import Callable, Dict, List, NoReturn, cast
 
 import mal_errors
 
@@ -55,6 +55,8 @@ def create_ns() -> Dict[str, MalBuiltin]:
         "atom?": MalBuiltin(atom_test),
         "deref": MalBuiltin(deref),
         "reset!": MalBuiltin(reset),
+        # Other functions
+        "throw": MalBuiltin(mal_throw),
     }
 
 
@@ -283,3 +285,15 @@ def reset(args: List[MalAny]) -> MalAny:
         args[0].value = args[1]
         return args[1]
     raise mal_errors.EvalError("Bad arguments to reset!")
+
+
+#
+# Other functions
+#
+
+
+def mal_throw(args: List[MalAny]) -> NoReturn:
+    """Python definition of mal throw function."""
+    if len(args) == 1:
+        raise mal_errors.UserException(args[0])
+    raise mal_errors.EvalError("Bad argument to throw")

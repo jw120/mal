@@ -1,8 +1,7 @@
 # TODO
 
-Tidy step 6
-- Can swap! be done in mal
-- Document mutability
+Step 9 exceptions - should we have two string forms of exceptions, one for showing the user when uncaught
+and one value for catchin?
 
 
 # To setup

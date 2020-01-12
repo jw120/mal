@@ -6,10 +6,13 @@
     + EvalError - runtime error during evaluation
     + InternalError - unexpected failure
     + ReaderError - failure due to malformed input
+    + UserException - raised by throw within mal code
 
 """
 
 from typing import Optional
+
+from mal_types import MalAny
 
 
 class MalError(Exception):
@@ -51,6 +54,23 @@ class InternalError(MalError):
     def __str__(self) -> str:
         """Convert to string in form suitable to show to the user."""
         return "Internal error: " + self.message
+
+
+class UserException(MalError):
+    """Exception raised by the user within mal.
+
+    Attributes:
+        value -- mal value
+    """
+
+    def __init__(self, value: MalAny):
+        """Initialize with a mal value."""
+        self.value = value
+        super().__init__()
+
+    def __str__(self) -> str:
+        """Convert to string in form suitable to show to the user."""
+        return "User exception: " + str(self.value)
 
 
 class ReaderError(MalError):
