@@ -147,8 +147,7 @@ def rep_loop() -> None:
         repl_env.set(MalSym(sym_name), core_ns[sym_name])
 
     prelude_form = READ("(def! not (fn* (a) (if a false true)))")
-    if prelude_form is None:
-        raise mal_errors.InternalError("Unexpected None reading prelude")
+    assert prelude_form is not None
     EVAL(prelude_form, repl_env)
 
     while True:

@@ -121,6 +121,7 @@ def EVAL(entry_ast: MalAny, entry_env: Environment) -> MalAny:
         # Hand-off non-list (and empty list)
         if not isinstance(current.ast, MalList) or len(current.ast.value) == 0:
             return eval_ast(current.ast, current.env)
+
         elements: List[MalAny] = current.ast.value
         head: MalAny = elements[0]
 
@@ -220,22 +221,20 @@ def PRINT(ast: MalAny) -> None:
 
 def rep(input_string: str, env: Environment) -> None:
     """Call read-eval-print on its argument."""
-    try:
-        input_form = READ(input_string)
-        if input_form is not None:
-            PRINT(EVAL(input_form, env))
-    except (mal_errors.EvalError, mal_errors.ReaderError) as err:
-        print(err)
+    form = read_eval(input_string, env)
+    if form is not None:
+        PRINT(form)
 
 
-def read_eval(input_string: str, env: Environment) -> None:
+def read_eval(input_string: str, env: Environment) -> Optional[MalAny]:
     """Call read-eval on its argument."""
     try:
         input_form = READ(input_string)
         if input_form is not None:
-            EVAL(input_form, env)
+            return EVAL(input_form, env)
     except (mal_errors.EvalError, mal_errors.ReaderError) as err:
         print(err)
+    return None
 
 
 def mal_eval(args: List[MalAny], env: Environment) -> MalAny:
@@ -254,19 +253,15 @@ prelude: str = """
         (fn* (f)
             (eval (read-string
                 (str "(do " (slurp f) "\nnil)")))))
-(def! sumdown1 (fn* (n) (if (= n 0) 0 (+ n (sumdown1  (- n 1))))))
-(def! sumdown2 (fn* [n] (if (= n 0) 0 (+ n (sumdown2  (- n 1))))))
-(def! sumdown
-  (fn* [n]
-    (if (= n 0)
-      0
-      (+ n (sumdown  (- n 1))))))
+;    (def! swap!
+;        (fn* [a f & rest]
+;            (reset! a (apply f @a rest))))
 )
 """
 
 
-def rep_loop() -> None:
-    """Repeatedly provide user prompt and passes the input to read-eval-print."""
+def main() -> None:
+    """Set up environment and then load given file or start REPL."""
     repl_env = Environment()
     core_ns = core.create_ns()
     for sym_name in core_ns:
@@ -277,8 +272,7 @@ def rep_loop() -> None:
     repl_env.set(MalSym("*ARGV*"), MalList([]))
 
     prelude_form = READ(prelude)
-    if prelude_form is None:
-        raise mal_errors.InternalError("Unexpected None reading prelude")
+    assert prelude_form is not None
     EVAL(prelude_form, repl_env)
 
     if len(argv) > 1:
@@ -294,4 +288,4 @@ def rep_loop() -> None:
 
 
 if __name__ == "__main__":
-    rep_loop()
+    main()

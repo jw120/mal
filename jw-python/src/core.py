@@ -1,8 +1,12 @@
-"""Core function definitions for mal."""
+"""Core function definitions for mal.
+
+Functions defined here are in pure python and have no access to the
+environment.
+"""
 
 import operator
 from functools import reduce
-from typing import Any, Callable, Dict, List, cast
+from typing import Callable, Dict, List, cast
 
 import mal_errors
 
@@ -14,7 +18,10 @@ import reader
 
 
 def create_ns() -> Dict[str, MalBuiltin]:
-    """Return the core namespace."""  # Within a function so can precede the definitions
+    """Create and return the core namespace.
+
+    Provided as a function so it can precede the definitions of the functions
+    """
     return {
         # Arithmetic and numeric comparisons
         "+": MalBuiltin(addition),
@@ -31,6 +38,7 @@ def create_ns() -> Dict[str, MalBuiltin]:
         "list?": MalBuiltin(list_test),
         "count": MalBuiltin(count),
         "empty?": MalBuiltin(empty_test),
+        "cons": MalBuiltin(cons),
         # IO and string functions
         "pr-str": MalBuiltin(mal_pr_str),
         "str": MalBuiltin(mal_str),
@@ -134,6 +142,13 @@ def empty_test(args: List[MalAny]) -> bool:
     raise mal_errors.EvalError("Bad arguments to empty?")
 
 
+def cons(args: List[MalAny]) -> MalList:
+    """Python definition of mal cons function."""
+    if len(args) == 2 and isinstance(args[1], MalSeq):
+        return MalList([args[0]] + args[1].value)
+    raise mal_errors.EvalError("Bad arguments to cons")
+
+
 #
 # IO and string functions
 #
@@ -222,13 +237,3 @@ def reset(args: List[MalAny]) -> MalAny:
         args[0].value = args[1]
         return args[1]
     raise mal_errors.EvalError("Bad arguments to reset!")
-
-
-#
-# Helper functions
-#
-
-
-def all_isinstance(xs: List[Any], t: type) -> bool:
-    """Test if all list items are instances of the given type."""
-    return all(map(lambda x: isinstance(x, t), xs))

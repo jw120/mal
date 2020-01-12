@@ -13,7 +13,7 @@ MalAny is a union of the following
     + MalKeyword
     + MalSym
     + MalNil
-    + MalAtom
+    + MalAtom (mutable reference to a value)
     + Callable
     + str (builtin)
     + int (builtin)
@@ -65,7 +65,7 @@ class MalKeyword(NamedTuple):
 
 
 class MalAtom:
-    """Atom type for mal."""
+    """Atom type for mal. Mutable."""
 
     def __init__(self, value: MalAny) -> None:
         """Create an atom."""
