@@ -39,6 +39,7 @@ def create_ns() -> Dict[str, MalBuiltin]:
         "count": MalBuiltin(count),
         "empty?": MalBuiltin(empty_test),
         "cons": MalBuiltin(cons),
+        "concat": MalBuiltin(mal_concat),
         # IO and string functions
         "pr-str": MalBuiltin(mal_pr_str),
         "str": MalBuiltin(mal_str),
@@ -147,6 +148,17 @@ def cons(args: List[MalAny]) -> MalList:
     if len(args) == 2 and isinstance(args[1], MalSeq):
         return MalList([args[0]] + args[1].value)
     raise mal_errors.EvalError("Bad arguments to cons")
+
+
+def mal_concat(args: List[MalAny]) -> MalList:
+    """Python definition of mal concat function."""
+
+    def contents(m: MalAny) -> List[MalAny]:
+        if isinstance(m, MalSeq):
+            return m.value
+        raise mal_errors.EvalError("Non-list argument to concat")
+
+    return MalList([y for x in map(contents, args) for y in x])
 
 
 #
