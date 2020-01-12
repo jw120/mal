@@ -40,6 +40,9 @@ def create_ns() -> Dict[str, MalBuiltin]:
         "empty?": MalBuiltin(empty_test),
         "cons": MalBuiltin(cons),
         "concat": MalBuiltin(mal_concat),
+        "nth": MalBuiltin(nth),
+        "first": MalBuiltin(first),
+        "rest": MalBuiltin(rest),
         # IO and string functions
         "pr-str": MalBuiltin(mal_pr_str),
         "str": MalBuiltin(mal_str),
@@ -159,6 +162,37 @@ def mal_concat(args: List[MalAny]) -> MalList:
         raise mal_errors.EvalError("Non-list argument to concat")
 
     return MalList([y for x in map(contents, args) for y in x])
+
+
+def nth(args: List[MalAny]) -> MalAny:
+    """Python definition of mal nth function."""
+    if len(args) == 2 and isinstance(args[0], MalSeq) and isinstance(args[1], int):
+        if args[1] >= 0 and args[1] < len(args[0].value):
+            return args[0].value[args[1]]
+        raise mal_errors.EvalError("Bad index for nth")
+    raise mal_errors.EvalError("Bad arguments to nth")
+
+
+def first(args: List[MalAny]) -> MalAny:
+    """Python definition of mal first function."""
+    if len(args) == 1:
+        if isinstance(args[0], MalSeq):
+            if len(args[0].value) > 0:
+                return args[0].value[0]
+            return MalNil()
+        if isinstance(args[0], MalNil):
+            return MalNil()
+    raise mal_errors.EvalError("Bad arguments to first")
+
+
+def rest(args: List[MalAny]) -> MalAny:
+    """Python definition of mal first function."""
+    if len(args) == 1:
+        if isinstance(args[0], MalSeq):
+            return MalList(args[0].value[1:])
+        if isinstance(args[0], MalNil):
+            return MalList([])
+    raise mal_errors.EvalError("Bad arguments to rest")
 
 
 #

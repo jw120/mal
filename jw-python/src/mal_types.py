@@ -183,17 +183,25 @@ class MalBuiltin(NamedTuple):
 class MalFunc:
     """Type for mal functions defined in mal by fn*."""
 
-    def __init__(self, ast: MalAny, params: List[MalSym], env: Environment,) -> None:
+    def __init__(
+        self,
+        ast: MalAny,
+        params: List[MalSym],
+        env: Environment,
+        is_macro: bool = False,
+    ) -> None:
         """Create a mal-defined function.
 
         Argument:
             ast - the body of the function
             params - paramater names of the function (added to env before calling)
             env - the environment to use when calling
+            is_macro - is the function a macro
         """
         self.ast: MalAny = ast
         self.params: List[MalSym] = params
         self.env: Environment = env
+        self.is_macro: bool = is_macro
 
     def __eq__(self, _other: Any) -> bool:
         """Equality for functions always false."""
