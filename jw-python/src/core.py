@@ -8,7 +8,16 @@ import operator
 from functools import reduce
 from typing import Callable, Dict, List, NoReturn, cast
 
-from mal_types import MalAny, MalAtom, MalBuiltin, MalException, MalList, MalNil, MalSeq
+from mal_types import (
+    MalAny,
+    MalAtom,
+    MalBuiltin,
+    MalException,
+    MalList,
+    MalNil,
+    MalSeq,
+    MalSym,
+)
 
 import printer
 
@@ -55,6 +64,10 @@ def create_ns() -> Dict[str, MalBuiltin]:
         "reset!": MalBuiltin(reset),
         # Other functions
         "throw": MalBuiltin(mal_throw),
+        "nil?": mk_single_arg_test("nil?", lambda x: isinstance(x, MalNil)),
+        "false?": mk_single_arg_test("false?", lambda x: x is False),
+        "true?": mk_single_arg_test("true?", lambda x: x is True),
+        "symbol?": mk_single_arg_test("symbol?", lambda x: isinstance(x, MalSym)),
     }
 
 
@@ -295,3 +308,14 @@ def mal_throw(args: List[MalAny]) -> NoReturn:
     if len(args) == 1:
         raise MalException(args[0])
     raise MalException("Bad argument to throw")
+
+
+def mk_single_arg_test(name: str, pred: Callable[[MalAny], bool]) -> MalBuiltin:
+    """Create a builtin that applies its predicate to a single argument."""
+
+    def f(args: List[MalAny]) -> MalAny:
+        if len(args) != 1:
+            raise MalException("Bad arguments to " + name, str(args))
+        return pred(args[0])
+
+    return MalBuiltin(f)
