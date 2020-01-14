@@ -8,9 +8,7 @@ import operator
 from functools import reduce
 from typing import Callable, Dict, List, NoReturn, cast
 
-import mal_errors
-
-from mal_types import MalAny, MalAtom, MalBuiltin, MalList, MalNil, MalSeq
+from mal_types import MalAny, MalAtom, MalBuiltin, MalException, MalList, MalNil, MalSeq
 
 import printer
 
@@ -69,35 +67,35 @@ def addition(args: List[MalAny]) -> int:
     """Python definition of mal + function."""
     if all(map(lambda x: isinstance(x, int), args)):
         return sum(cast(List[int], args))
-    raise mal_errors.EvalError("Bad arguments to +")
+    raise MalException("Bad arguments to +")
 
 
 def multiplication(args: List[MalAny]) -> int:
     """Python definition of mal * function."""
     if all(map(lambda x: isinstance(x, int), args)):
         return reduce(lambda x, y: x * y, cast(List[int], args), 1)
-    raise mal_errors.EvalError("Bad arguments to *")
+    raise MalException("Bad arguments to *")
 
 
 def subtraction(args: List[MalAny]) -> int:
     """Python definition of mal - function."""
     if len(args) == 2 and isinstance(args[0], int) and isinstance(args[1], int):
         return args[0] - args[1]
-    raise mal_errors.EvalError("Bad arguments to -")
+    raise MalException("Bad arguments to -")
 
 
 def division(args: List[MalAny]) -> int:
     """Python definition of mal / function."""
     if len(args) == 2 and isinstance(args[0], int) and isinstance(args[1], int):
         return args[0] // args[1]
-    raise mal_errors.EvalError("Bad arguments to /")
+    raise MalException("Bad arguments to /")
 
 
 def equality(args: List[MalAny]) -> bool:
     """Python definition of mal = function."""
     if len(args) == 2:
         return args[0] == args[1]
-    raise mal_errors.EvalError("Bad arguments to ==")
+    raise MalException("Bad arguments to ==")
 
 
 def make_num_logical(op: Callable[[int, int], bool]) -> MalBuiltin:
@@ -106,7 +104,7 @@ def make_num_logical(op: Callable[[int, int], bool]) -> MalBuiltin:
     def f(args: List[MalAny]) -> bool:
         if len(args) == 2 and isinstance(args[0], int) and isinstance(args[1], int):
             return op(args[0], args[1])
-        raise mal_errors.EvalError("Bad arguments to logical comparison")
+        raise MalException("Bad arguments to logical comparison")
 
     return MalBuiltin(f)
 
@@ -125,7 +123,7 @@ def list_test(args: List[MalAny]) -> bool:
     """Python definition of mal list? function."""
     if len(args) == 1:
         return isinstance(args[0], MalList)
-    raise mal_errors.EvalError("Bad arguments to list?")
+    raise MalException("Bad arguments to list?")
 
 
 def count(args: List[MalAny]) -> int:
@@ -136,7 +134,7 @@ def count(args: List[MalAny]) -> int:
             return len(head.value)
         if isinstance(head, MalNil):
             return 0
-    raise mal_errors.EvalError("Bad arguments to count")
+    raise MalException("Bad arguments to count")
 
 
 def empty_test(args: List[MalAny]) -> bool:
@@ -145,14 +143,14 @@ def empty_test(args: List[MalAny]) -> bool:
         head = args[0]
         if isinstance(head, MalSeq):
             return len(head.value) == 0
-    raise mal_errors.EvalError("Bad arguments to empty?")
+    raise MalException("Bad arguments to empty?")
 
 
 def cons(args: List[MalAny]) -> MalList:
     """Python definition of mal cons function."""
     if len(args) == 2 and isinstance(args[1], MalSeq):
         return MalList([args[0]] + args[1].value)
-    raise mal_errors.EvalError("Bad arguments to cons")
+    raise MalException("Bad arguments to cons")
 
 
 def mal_concat(args: List[MalAny]) -> MalList:
@@ -161,7 +159,7 @@ def mal_concat(args: List[MalAny]) -> MalList:
     def contents(m: MalAny) -> List[MalAny]:
         if isinstance(m, MalSeq):
             return m.value
-        raise mal_errors.EvalError("Non-list argument to concat")
+        raise MalException("Non-list argument to concat")
 
     return MalList([y for x in map(contents, args) for y in x])
 
@@ -171,8 +169,8 @@ def nth(args: List[MalAny]) -> MalAny:
     if len(args) == 2 and isinstance(args[0], MalSeq) and isinstance(args[1], int):
         if args[1] >= 0 and args[1] < len(args[0].value):
             return args[0].value[args[1]]
-        raise mal_errors.EvalError("Bad index for nth")
-    raise mal_errors.EvalError("Bad arguments to nth")
+        raise MalException("Index for nth out of bounds")
+    raise MalException("Bad arguments to nth")
 
 
 def first(args: List[MalAny]) -> MalAny:
@@ -184,7 +182,7 @@ def first(args: List[MalAny]) -> MalAny:
             return MalNil()
         if isinstance(args[0], MalNil):
             return MalNil()
-    raise mal_errors.EvalError("Bad arguments to first")
+    raise MalException("Bad arguments to first")
 
 
 def rest(args: List[MalAny]) -> MalAny:
@@ -194,7 +192,7 @@ def rest(args: List[MalAny]) -> MalAny:
             return MalList(args[0].value[1:])
         if isinstance(args[0], MalNil):
             return MalList([])
-    raise mal_errors.EvalError("Bad arguments to rest")
+    raise MalException("Bad arguments to rest")
 
 
 #
@@ -237,7 +235,7 @@ def mal_read_string(args: List[MalAny]) -> MalAny:
             if read_form is None:
                 return MalNil()
             return read_form
-    raise mal_errors.EvalError("Bad arguments to read-string")
+    raise MalException("Bad arguments to read-string")
 
 
 def slurp(args: List[MalAny]) -> MalAny:
@@ -249,8 +247,8 @@ def slurp(args: List[MalAny]) -> MalAny:
                 with open(head, "r") as f:
                     return f.read()
             except (OSError) as err:
-                raise mal_errors.EvalError(err.strerror + " (OS error)")
-    raise mal_errors.EvalError("Bad arguments to slurp")
+                raise MalException(err.strerror, "OS error")
+    raise MalException("Bad arguments to slurp")
 
 
 #
@@ -262,21 +260,21 @@ def atom(args: List[MalAny]) -> MalAny:
     """Python definition of atom function to create an atom."""
     if len(args) == 1:
         return MalAtom(args[0])
-    raise mal_errors.EvalError("Bad arguments to atom")
+    raise MalException("Bad arguments to atom")
 
 
 def atom_test(args: List[MalAny]) -> MalAny:
     """Python definition of atom? function to test if value is an atom."""
     if len(args) == 1:
         return isinstance(args[0], MalAtom)
-    raise mal_errors.EvalError("Bad arguments to atom?")
+    raise MalException("Bad arguments to atom?")
 
 
 def deref(args: List[MalAny]) -> MalAny:
     """Python definition of deref function to return vaue from an atom."""
     if len(args) == 1 and isinstance(args[0], MalAtom):
         return args[0].value
-    raise mal_errors.EvalError("Bad arguments to deref")
+    raise MalException("Bad arguments to deref")
 
 
 def reset(args: List[MalAny]) -> MalAny:
@@ -284,7 +282,7 @@ def reset(args: List[MalAny]) -> MalAny:
     if len(args) == 2 and isinstance(args[0], MalAtom):
         args[0].value = args[1]
         return args[1]
-    raise mal_errors.EvalError("Bad arguments to reset!")
+    raise MalException("Bad arguments to reset!")
 
 
 #
@@ -295,5 +293,5 @@ def reset(args: List[MalAny]) -> MalAny:
 def mal_throw(args: List[MalAny]) -> NoReturn:
     """Python definition of mal throw function."""
     if len(args) == 1:
-        raise mal_errors.UserException(args[0])
-    raise mal_errors.EvalError("Bad argument to throw")
+        raise MalException(args[0])
+    raise MalException("Bad argument to throw")

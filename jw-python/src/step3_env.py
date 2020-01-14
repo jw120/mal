@@ -3,12 +3,11 @@
 import operator
 from typing import Callable, List, Optional, cast
 
-import mal_errors
-
 from mal_types import (
     Environment,
     MalAny,
     MalBuiltin,
+    MalException,
     MalList,
     MalMap,
     MalSeq,
@@ -39,7 +38,7 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
                 val = EVAL(args[1], env)
                 env.set(args[0], val)
                 return val
-            raise mal_errors.EvalError("Bad arguments for def!", str(ast))
+            raise MalException("Bad arguments for def! in ", str(ast))
 
         # Special form let!
         if head == MalSym("let*"):
@@ -49,17 +48,17 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
                     if isinstance(sym, MalSym):
                         local_env.set(sym, EVAL(binding, local_env))
                 return EVAL(args[1], local_env)
-            raise mal_errors.EvalError("Bad arguments for let*", str(ast))
+            raise MalException("Bad arguments for let* in ", str(ast))
 
         # Apply normal list
         evaluated = eval_ast(ast, env)
         if not isinstance(evaluated, MalList):
-            raise mal_errors.InternalError("Expected a MalList")  # For type checker
+            raise MalException("Expected a MalList")  # For type checker
         eval_head = evaluated.value[0]
         if isinstance(eval_head, MalBuiltin):
             f = cast(Callable[[List[MalAny]], MalAny], eval_head.value)  # Workaround
             return f(evaluated.value[1:])
-        raise mal_errors.EvalError("Cannot apply a non-function", str(ast))
+        raise MalException("Cannot apply a non-function", str(ast))
 
     # Use eval_ast for all other values
     return eval_ast(ast, env)
@@ -101,8 +100,8 @@ def rep(input_string: str, env: Environment) -> None:
         input_form = READ(input_string)
         if input_form is not None:
             PRINT(EVAL(input_form, env))
-    except (mal_errors.EvalError, mal_errors.ReaderError) as err:
-        print(err)
+    except MalException as err:
+        print(printer.pr_str(err.value, False))
 
 
 def int_fn(op: Callable[[int, int], int]) -> MalBuiltin:
@@ -111,7 +110,7 @@ def int_fn(op: Callable[[int, int], int]) -> MalBuiltin:
     def f(xs: List[MalAny]) -> MalAny:
         if isinstance(xs[0], int) and isinstance(xs[1], int):
             return op(xs[0], xs[1])
-        raise mal_errors.EvalError("Bad arguments to int_fn")
+        raise MalException("Bad arguments to int_fn")
 
     return MalBuiltin(f)
 

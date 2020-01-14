@@ -39,8 +39,6 @@ from typing import (
     cast,
 )
 
-import mal_errors
-
 
 class MalKeyword(NamedTuple):
     """Keyword type for mal."""
@@ -129,11 +127,11 @@ class MalMap:
         # Construct from an alternating key-value list
         if isinstance(elements, list):
             if len(elements) % 2 == 1:
-                raise mal_errors.EvalError("Unmatched key for map", str(elements[-1]))
+                raise MalException("Unmatched key for map: ", str(elements[-1]))
             self.value: Dict[MalKey, MalAny] = {}
             for k, v in zip(elements[0::2], elements[1::2]):
                 if not (isinstance(k, str) or isinstance(k, MalKeyword)):
-                    raise mal_errors.EvalError("Bad key type for map", str(k))
+                    raise MalException("Bad key type for map: ", str(k))
                 self.value[k] = v
 
         # Construct from a tuple of keys and values
@@ -226,6 +224,18 @@ MalKey = Union[MalKeyword, str]
 Mal_Callable = Callable[[List[MalAny]], MalAny]
 
 
+class MalException(Exception):
+    """Exception thrown during mal execution."""
+
+    def __init__(self, value: MalAny, extra: Optional[str] = None):
+        """Initialize with value describing the exception or with two strings."""
+        if isinstance(value, str) and extra is not None:
+            self.value: MalAny = value + ": " + extra
+        else:
+            self.value = value
+        super().__init__()
+
+
 class Environment:
     """Environment holding symbols and values."""
 
@@ -249,12 +259,12 @@ class Environment:
         if binds is None and exprs is None:
             return
         if binds is None or exprs is None:
-            raise mal_errors.EvalError("Bad args to env - missing list")
+            raise MalException("Bad args to env - missing list")
         found_ampersand = False
         for i in range(len(binds)):
             bind = binds[i]
             if not isinstance(bind, MalSym):
-                raise mal_errors.EvalError("Bad args to env - non-symbol")
+                raise MalException("Bad args to env - non-symbol")
             if found_ampersand:
                 self.data[bind.value] = MalList(exprs[i - 1 :])
                 break
@@ -264,7 +274,7 @@ class Environment:
                 if i < len(exprs):
                     self.data[bind.value] = exprs[i]
                 else:
-                    raise mal_errors.EvalError("Bad args to env - missing expr")
+                    raise MalException("Bad args to env - missing expr")
 
     def set(self, sym: MalSym, value: MalAny) -> None:
         """Add the symbol and value to the environment."""
@@ -282,9 +292,7 @@ class Environment:
         """Return the symbol's value in the environement or its chain."""
         env = self.find(sym)
         if env is None:
-            raise mal_errors.EvalError(
-                "Symbol '" + str(sym) + "' not found in environment"
-            )
+            raise MalException("'" + str(sym) + "' not found")
         return env.data[sym.value]
 
 
@@ -296,9 +304,9 @@ def to_symlist(xs: MalAny) -> List[MalSym]:
     if isinstance(xs, MalSeq):
         for x in xs.value:
             if not isinstance(x, MalSym):
-                raise mal_errors.EvalError("Expected a symbol", str(x))
+                raise MalException("Expected a symbol: ", str(x))
         return cast(List[MalSym], xs.value)
-    raise mal_errors.EvalError("Expected a sequence", str(xs))
+    raise MalException("Expected a sequence: ", str(xs))
 
 
 def is_pair(xs: MalAny) -> bool:

@@ -3,9 +3,7 @@
 
 from typing import Optional
 
-import mal_errors
-
-from mal_types import MalAny
+from mal_types import MalAny, MalException
 
 import printer
 
@@ -33,8 +31,8 @@ def rep(input_string: str) -> None:
         input_form = READ(input_string)
         if input_form is not None:
             PRINT(EVAL(input_form))
-    except (mal_errors.EvalError, mal_errors.ReaderError) as err:
-        print(err)
+    except MalException as err:
+        print(printer.pr_str(err.value, False))
 
 
 def rep_loop() -> None:

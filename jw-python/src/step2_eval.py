@@ -3,9 +3,16 @@
 
 from typing import Callable, List, Optional, cast
 
-import mal_errors
-
-from mal_types import MalAny, MalBuiltin, MalList, MalMap, MalSeq, MalSym, MalVec
+from mal_types import (
+    MalAny,
+    MalBuiltin,
+    MalException,
+    MalList,
+    MalMap,
+    MalSeq,
+    MalSym,
+    MalVec,
+)
 from mal_types import Mal_Environment
 
 import printer
@@ -29,12 +36,12 @@ def EVAL(ast: MalAny, env: Mal_Environment) -> MalAny:
         if not isinstance(
             evaluated, MalList
         ):  # For type checker - should always be a MalSeq
-            raise mal_errors.InternalError("Expected a MalList")
+            raise MalException("Expected a MalList")
         head = evaluated.value[0]
         if isinstance(head, MalBuiltin):
             f = cast(Callable[[List[MalAny]], MalAny], head.value)  # Workaround
             return f(evaluated.value[1:])
-        raise mal_errors.EvalError("Cannot apply a non-function", str(ast))
+        raise MalException("Cannot apply a non-function", str(ast))
 
     # Use eval_ast for all other values
     return eval_ast(ast, env)
@@ -46,7 +53,7 @@ def eval_ast(ast: MalAny, env: Mal_Environment) -> MalAny:
     if isinstance(ast, MalSym):
         if ast.value in env:
             return env[ast.value]
-        raise mal_errors.EvalError("Unknown symbol", str(ast))
+        raise MalException("Unknown symbol", str(ast))
 
     # A list or vector has all of its contents evaluated
     if isinstance(ast, MalSeq):
@@ -78,8 +85,8 @@ def rep(input_string: str) -> None:
         input_form = READ(input_string)
         if input_form is not None:
             PRINT(EVAL(input_form, repl_env))
-    except (mal_errors.EvalError, mal_errors.ReaderError) as err:
-        print(err)
+    except MalException as err:
+        print(printer.pr_str(err.value, False))
 
 
 def rep_loop() -> None:

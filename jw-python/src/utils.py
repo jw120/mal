@@ -2,7 +2,7 @@
 
 from typing import Iterable, List, Tuple, TypeVar
 
-import mal_errors as err
+from mal_types import MalException
 
 
 def add_escapes(s: str) -> str:
@@ -31,17 +31,17 @@ def remove_escapes(s: str) -> str:
             elif c == "n":
                 new_string += "\n"
             else:
-                raise err.ReaderError("Unknown escape in string", s)
+                raise MalException("Unknown escape in string", s)
             backslash_active = False
         else:
             if c == "\\":
                 backslash_active = True
             elif c == '"':
-                raise err.ReaderError("Unexpected double quote in string", s)
+                raise MalException("Unexpected double quote in string", s)
             else:
                 new_string += c
     if backslash_active:
-        raise err.ReaderError("Backslash at end of input", s)
+        raise MalException("Backslash at end of input", s)
 
     return new_string
 
@@ -52,5 +52,5 @@ T = TypeVar("T")
 def pairs(xs: List[T]) -> Iterable[Tuple[T, T]]:
     """Extract an iterator over pairs from a list."""
     if len(xs) % 2 == 1:
-        raise err.EvalError("Unmatched item in pair list", str(xs[-1]))
+        raise MalException("Unmatched item in pair list", str(xs[-1]))
     return zip(xs[0::2], xs[1::2])

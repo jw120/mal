@@ -4,12 +4,11 @@ from typing import Callable, List, Optional, cast
 
 import core
 
-import mal_errors
-
 from mal_types import (
     Environment,
     MalAny,
     MalBuiltin,
+    MalException,
     MalList,
     MalMap,
     MalNil,
@@ -41,14 +40,14 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
                 val = EVAL(args[1], env)
                 env.set(args[0], val)
                 return val
-            raise mal_errors.EvalError("Bad arguments for def!", str(ast))
+            raise MalException("Bad arguments for def! in ", str(ast))
 
         # Special form do
         if head == MalSym("do"):
             if num_args >= 1:
                 evaluated_args = list(map(lambda e: EVAL(e, env), args))
                 return evaluated_args[-1]
-            raise mal_errors.EvalError("Bad arguments for do!", str(ast))
+            raise MalException("Bad arguments for do! in ", str(ast))
 
         # Special form fn*
         if head == MalSym("fn*"):
@@ -62,7 +61,7 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
                             return EVAL(args[1], closure_env)
 
                         return MalBuiltin(closure)
-            raise mal_errors.EvalError("Bad arguments for fn*", str(ast))
+            raise MalException("Bad arguments for fn* in ", str(ast))
 
         # Special form if
         if head == MalSym("if"):
@@ -73,7 +72,7 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
                 ):
                     return EVAL(args[2], env) if num_args == 3 else MalNil()
                 return EVAL(args[1], env)
-            raise mal_errors.EvalError("Bad arguments for if", str(ast))
+            raise MalException("Bad arguments for if in ", str(ast))
 
         # Special form let!
         if head == MalSym("let*"):
@@ -83,17 +82,17 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
                     if isinstance(sym, MalSym):
                         local_env.set(sym, EVAL(binding, local_env))
                 return EVAL(args[1], local_env)
-            raise mal_errors.EvalError("Bad arguments for let*", str(ast))
+            raise MalException("Bad arguments for let* in ", str(ast))
 
         # Apply normal list
         evaluated_ast = eval_ast(ast, env)
         if not isinstance(evaluated_ast, MalList):
-            raise mal_errors.InternalError("Expected a MalList")  # For type checker
+            raise MalException("Expected a MalList")  # For type checker
         eval_head = evaluated_ast.value[0]
         if isinstance(eval_head, MalBuiltin):
             f = cast(Callable[[List[MalAny]], MalAny], eval_head.value)  # Workaround
             return f(evaluated_ast.value[1:])
-        raise mal_errors.EvalError("Cannot apply a non-function", str(ast))
+        raise MalException("Cannot apply a non-function in ", str(ast))
 
     # Use eval_ast for all other values
     return eval_ast(ast, env)
@@ -135,8 +134,8 @@ def rep(input_string: str, env: Environment) -> None:
         input_form = READ(input_string)
         if input_form is not None:
             PRINT(EVAL(input_form, env))
-    except (mal_errors.EvalError, mal_errors.ReaderError) as err:
-        print(err)
+    except MalException as err:
+        print(printer.pr_str(err.value, False))
 
 
 def rep_loop() -> None:

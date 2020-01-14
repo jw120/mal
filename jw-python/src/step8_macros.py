@@ -6,13 +6,12 @@ from typing import Callable, Dict, List, NamedTuple, Optional, Sequence, cast
 
 import core
 
-import mal_errors
-
 from mal_types import (
     Environment,
     MalAny,
     MalAtom,
     MalBuiltin,
+    MalException,
     MalFunc,
     MalList,
     MalMap,
@@ -54,7 +53,7 @@ def def_handler(args: List[MalAny], env: Environment) -> EvalState:
         val = EVAL(args[1], env)
         env.set(args[0], val)
         return EvalState(val, env, EvalMode.FINISHED)
-    raise mal_errors.EvalError("Bad arguments for def!", str(args))
+    raise MalException("Bad arguments for def!", str(args))
 
 
 def defmacro_handler(args: List[MalAny], env: Environment) -> EvalState:
@@ -65,8 +64,8 @@ def defmacro_handler(args: List[MalAny], env: Environment) -> EvalState:
             val.is_macro = True
             env.set(args[0], val)
             return EvalState(val, env, EvalMode.FINISHED)
-        raise mal_errors.EvalError("Non-function in defmacro!", str(args))
-    raise mal_errors.EvalError("Bad arguments for defmacro!", str(args))
+        raise MalException("Non-function in defmacro!", str(args))
+    raise MalException("Bad arguments for defmacro!", str(args))
 
 
 def do_handler(args: List[MalAny], env: Environment) -> EvalState:
@@ -75,7 +74,7 @@ def do_handler(args: List[MalAny], env: Environment) -> EvalState:
         for arg in args[:-1]:  # Evaluate all args except the last one
             EVAL(arg, env)
         return EvalState(args[-1], env, EvalMode.CONTINUING)
-    raise mal_errors.EvalError("Bad arguments for do!", str(args))
+    raise MalException("Bad arguments for do!", str(args))
 
 
 def if_handler(args: List[MalAny], env: Environment) -> EvalState:
@@ -90,7 +89,7 @@ def if_handler(args: List[MalAny], env: Environment) -> EvalState:
             else:
                 return EvalState(MalNil(), env, EvalMode.FINISHED)
         return EvalState(args[1], env, EvalMode.CONTINUING)
-    raise mal_errors.EvalError("Bad arguments for if", str(args))
+    raise MalException("Bad arguments for if", str(args))
 
 
 def fn_handler(args: List[MalAny], env: Environment) -> EvalState:
@@ -99,7 +98,7 @@ def fn_handler(args: List[MalAny], env: Environment) -> EvalState:
         return EvalState(
             MalFunc(args[1], to_symlist(args[0]), env), env, EvalMode.FINISHED,
         )
-    raise mal_errors.EvalError("Bad arguments for fn*", str(args))
+    raise MalException("Bad arguments for fn*", str(args))
 
 
 def let_handler(args: List[MalAny], env: Environment) -> EvalState:
@@ -110,30 +109,30 @@ def let_handler(args: List[MalAny], env: Environment) -> EvalState:
             if isinstance(sym, MalSym):
                 new_env.set(sym, EVAL(binding, env))
             else:
-                raise mal_errors.EvalError("Non-symbol in let*", str(sym))
+                raise MalException("Non-symbol in let*", str(sym))
         return EvalState(args[1], new_env, EvalMode.CONTINUING)
-    raise mal_errors.EvalError("Bad arguments for let*", str(args))
+    raise MalException("Bad arguments for let*", str(args))
 
 
 def macroexpand_handler(args: List[MalAny], env: Environment) -> EvalState:
     """Handle the special form macroexpand."""
     if len(args) == 1:
         return EvalState(macroexpand(args[0], env), env, EvalMode.FINISHED)
-    raise mal_errors.EvalError("Bad arguments for quote", str(args))
+    raise MalException("Bad arguments for quote", str(args))
 
 
 def quote_handler(args: List[MalAny], env: Environment) -> EvalState:
     """Handle the special form quote."""
     if len(args) == 1:
         return EvalState(args[0], env, EvalMode.FINISHED)
-    raise mal_errors.EvalError("Bad arguments for quote", str(args))
+    raise MalException("Bad arguments for quote", str(args))
 
 
 def quasiquote_handler(args: List[MalAny], env: Environment) -> EvalState:
     """Handle the special form quasiquote."""
     if len(args) == 1:
         return EvalState(quasiquote(args[0]), env, EvalMode.CONTINUING)
-    raise mal_errors.EvalError("Bad arguments for quasiquote", str(args))
+    raise MalException("Bad arguments for quasiquote", str(args))
 
 
 special_form_handlers: Dict[str, Callable[[List[MalAny], Environment], EvalState]] = {
@@ -182,7 +181,7 @@ def EVAL(entry_ast: MalAny, entry_env: Environment) -> MalAny:
         # Apply a mal-defined function
         if isinstance(evaluated_head, MalFunc):
             if evaluated_head.is_macro:
-                raise mal_errors.EvalError("Using a macro as a function")
+                raise MalException("Using a macro as a function")
             current = EvalState(
                 evaluated_head.ast,
                 Environment(
@@ -202,7 +201,7 @@ def EVAL(entry_ast: MalAny, entry_env: Environment) -> MalAny:
             return f(evaluated_elements[1:])
 
         # Fail if applying a non-function
-        raise mal_errors.EvalError("Cannot apply a non-function", str(current.ast))
+        raise MalException("Cannot apply a non-function", str(current.ast))
 
     return current.ast
 
@@ -235,7 +234,7 @@ def quasiquote(ast: MalAny) -> MalAny:
     if elems[0] == MalSym("unquote"):
         if len(elems) == 2:
             return elems[1]
-        raise mal_errors.EvalError("Too many arguments to unquote", str(ast))
+        raise MalException("Too many arguments to unquote", str(ast))
     if isinstance(elems[0], MalSeq) and len(elems[0].value) > 0:
         sub_elems: List[MalAny] = elems[0].value
         if sub_elems[0] == MalSym("splice-unquote"):
@@ -243,7 +242,7 @@ def quasiquote(ast: MalAny) -> MalAny:
                 return MalList(
                     [MalSym("concat"), sub_elems[1], quasiquote(MalList(elems[1:]))]
                 )
-            raise mal_errors.EvalError("Too many arguments to splice-unquote", str(ast))
+            raise MalException("Too many arguments to splice-unquote", str(ast))
     return MalList(
         [MalSym("cons"), quasiquote(elems[0]), quasiquote(MalList(elems[1:]))]
     )
@@ -297,7 +296,7 @@ def mal_swap(args: List[MalAny]) -> MalAny:
             update_fn = cast(Callable[[List[MalAny]], MalAny], args[1].value)
             target_atom.value = update_fn([target_atom.value] + args[2:])
         return target_atom.value
-    raise mal_errors.EvalError("Bad arguments for swap!", str(args))
+    raise MalException("Bad arguments for swap!", str(args))
 
 
 def READ(input_string: str) -> Optional[MalAny]:
@@ -323,8 +322,8 @@ def read_eval(input_string: str, env: Environment) -> Optional[MalAny]:
         input_form = READ(input_string)
         if input_form is not None:
             return EVAL(input_form, env)
-    except (mal_errors.EvalError, mal_errors.ReaderError) as err:
-        print(err)
+    except MalException as err:
+        print(printer.pr_str(err.value, False))
     return None
 
 
@@ -332,7 +331,7 @@ def mal_eval(args: List[MalAny], env: Environment) -> MalAny:
     """Python definition of eval function."""
     if len(args) == 1:
         return EVAL(args[0], env)
-    raise mal_errors.EvalError("Bad arguments to eval")
+    raise MalException("Bad arguments to eval")
 
 
 prelude: str = """

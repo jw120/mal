@@ -5,9 +5,16 @@
 import re
 from typing import Generic, List, Optional, TypeVar
 
-import mal_errors
-
-from mal_types import MalAny, MalKeyword, MalList, MalMap, MalNil, MalSym, MalVec
+from mal_types import (
+    MalAny,
+    MalException,
+    MalKeyword,
+    MalList,
+    MalMap,
+    MalNil,
+    MalSym,
+    MalVec,
+)
 
 from utils import remove_escapes
 
@@ -77,7 +84,7 @@ def read_form(reader: Reader[str]) -> Optional[MalAny]:
 def read_seq(reader: Reader[str], opener: str, closer: str) -> List[MalAny]:
     """Read a sequence of values between given delimiters."""
     if reader.next() != opener:
-        raise mal_errors.InternalError("no opener in read_seq")
+        raise MalException("no opener in read_seq")
 
     elements: List[MalAny] = []
     while True:
@@ -86,7 +93,7 @@ def read_seq(reader: Reader[str], opener: str, closer: str) -> List[MalAny]:
             reader.next()
             break
         if next_value is None:
-            raise mal_errors.ReaderError("EOF before closing paren in read_list")
+            raise MalException("EOF before closing paren in read_list")
         form = read_form(reader)
         if form is not None:
             elements.append(form)
@@ -102,7 +109,7 @@ def read_atom(reader: Reader[str]) -> Optional[MalAny]:
     """Read an atom from the given Reader."""
     token = reader.next()
     if token is None:
-        raise mal_errors.InternalError("EOF in read_atom")
+        raise MalException("EOF in read_atom")
 
     if token == "nil":
         return MalNil()
@@ -113,42 +120,42 @@ def read_atom(reader: Reader[str]) -> Optional[MalAny]:
     if token == "'":
         form = read_form(reader)
         if form is None:
-            raise mal_errors.ReaderError("Missing form in quote")
+            raise MalException("Missing form in quote")
         return MalList([MalSym("quote"), form])
     if token == "`":
         form = read_form(reader)
         if form is None:
-            raise mal_errors.ReaderError("Missing form in quasiquote")
+            raise MalException("Missing form in quasiquote")
         return MalList([MalSym("quasiquote"), form])
     if token == "~":
         form = read_form(reader)
         if form is None:
-            raise mal_errors.ReaderError("Missing form in unquote")
+            raise MalException("Missing form in unquote")
         return MalList([MalSym("unquote"), form])
     if token == "~@":
         form = read_form(reader)
         if form is None:
-            raise mal_errors.ReaderError("Missing form in splice-quote")
+            raise MalException("Missing form in splice-quote")
         return MalList([MalSym("splice-unquote"), form])
     if token == "@":
         form = read_form(reader)
         if form is None:
-            raise mal_errors.ReaderError("Missing form in deref")
+            raise MalException("Missing form in deref")
         return MalList([MalSym("deref"), form])
     if token == "^":
         target = read_form(reader)
         if target is None:
-            raise mal_errors.ReaderError("Missing target in with-meta")
+            raise MalException("Missing target in with-meta")
         meta = read_form(reader)
         if meta is None:
-            raise mal_errors.ReaderError("Missing meta in with-meta")
+            raise MalException("Missing meta in with-meta")
         return MalList([MalSym("with-meta"), meta, target])
 
     match = QUOTED_STRING_REGEX.fullmatch(token)
     if match:
         return remove_escapes(match.group(1))
     if token.startswith('"'):
-        raise mal_errors.ReaderError("unbalanced quotes", token)
+        raise MalException("unbalanced quotes", token)
     if token.startswith(":"):
         return MalKeyword(token[1:])
     if token.startswith(";"):
