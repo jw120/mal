@@ -6,17 +6,19 @@ environment.
 
 import operator
 from functools import reduce
-from typing import Callable, Dict, List, NoReturn, cast
+from typing import Callable, Dict, List, NoReturn, Tuple, cast
 
 from mal_types import (
     MalAny,
     MalAtom,
     MalBuiltin,
     MalException,
+    MalKeyword,
     MalList,
     MalNil,
     MalSeq,
     MalSym,
+    MalVec,
 )
 
 import printer
@@ -29,46 +31,113 @@ def create_ns() -> Dict[str, MalBuiltin]:
 
     Provided as a function so it can precede the definitions of the functions
     """
-    return {
-        # Arithmetic and numeric comparisons
-        "+": MalBuiltin(addition),
-        "*": MalBuiltin(multiplication),
-        "-": MalBuiltin(subtraction),
-        "/": MalBuiltin(division),
-        "=": MalBuiltin(equality),
-        ">": make_num_logical(operator.gt),
-        "<": make_num_logical(operator.lt),
-        ">=": make_num_logical(operator.ge),
-        "<=": make_num_logical(operator.le),
-        # Collection functions
-        "list": MalBuiltin(mal_list),
-        "list?": MalBuiltin(list_test),
-        "count": MalBuiltin(count),
-        "empty?": MalBuiltin(empty_test),
-        "cons": MalBuiltin(cons),
-        "concat": MalBuiltin(mal_concat),
-        "nth": MalBuiltin(nth),
-        "first": MalBuiltin(first),
-        "rest": MalBuiltin(rest),
-        # IO and string functions
-        "pr-str": MalBuiltin(mal_pr_str),
-        "str": MalBuiltin(mal_str),
-        "prn": MalBuiltin(mal_prn),
-        "println": MalBuiltin(mal_println),
-        "read-string": MalBuiltin(mal_read_string),
-        "slurp": MalBuiltin(slurp),
-        # Atom functions
-        "atom": MalBuiltin(atom),
-        "atom?": MalBuiltin(atom_test),
-        "deref": MalBuiltin(deref),
-        "reset!": MalBuiltin(reset),
-        # Other functions
-        "throw": MalBuiltin(mal_throw),
-        "nil?": mk_single_arg_test("nil?", lambda x: isinstance(x, MalNil)),
-        "false?": mk_single_arg_test("false?", lambda x: x is False),
-        "true?": mk_single_arg_test("true?", lambda x: x is True),
-        "symbol?": mk_single_arg_test("symbol?", lambda x: isinstance(x, MalSym)),
-    }
+    return dict(
+        [
+            # Arithmetic and numeric comparisons
+            make_any("+", addition),
+            make_any("*", multiplication),
+            make_2int("-", operator.sub),
+            make_2int("/", operator.floordiv),
+            make_2arg("=", operator.eq),
+            make_2int(">", operator.gt),
+            make_2int("<", operator.lt),
+            make_2int(">=", operator.ge),
+            make_2int("<=", operator.le),
+            # Collection functions
+            make_any("list", MalList),
+            make_1arg("list?", lambda x: isinstance(x, MalList)),
+            make_1arg("count", count),
+            make_1arg("empty?", empty_test),
+            make_2arg("cons", cons),
+            make_any("concat", mal_concat),
+            make_2arg("nth", nth),
+            make_1arg("first", first),
+            make_1arg("rest", rest),
+            # Hash-map functions
+            # IO and string functions
+            make_any("pr-str", mal_pr_str),
+            make_any("str", mal_str),
+            make_any("prn", mal_prn),
+            make_any("println", mal_println),
+            make_1str("read-string", mal_read_string),
+            make_1str("slurp", slurp),
+            # Atom functions
+            make_1arg("atom", MalAtom),
+            make_1arg("atom?", lambda x: isinstance(x, MalAtom)),
+            make_1arg("deref", deref),
+            make_2arg("reset!", reset),
+            # Other type functions
+            make_1arg("nil?", lambda x: isinstance(x, MalNil)),
+            make_1arg("false?", lambda x: x is False),
+            make_1arg("true?", lambda x: x is True),
+            make_1arg("symbol?", lambda x: isinstance(x, MalSym)),
+            make_1str("symbol", MalSym),
+            make_1arg("keyword", mal_keyword),
+            make_1arg("keyword?", lambda x: isinstance(x, MalKeyword)),
+            make_any("vector", MalVec),
+            make_1arg("vector?", lambda x: isinstance(x, MalVec)),
+            make_1arg("sequential?", lambda x: isinstance(x, MalSeq)),
+            # Misc functions
+            make_1arg("throw", mal_throw),
+        ]
+    )
+
+
+#
+# Helper functions that return (string, MalBuiltin pairs)
+#
+
+
+def make_any(name: str, f: Callable[[List[MalAny]], MalAny]) -> Tuple[str, MalBuiltin]:
+    """Make a (name, builtin) tuple for a function of any mal values."""
+    return (name, MalBuiltin(f))
+
+
+def make_1arg(name: str, f: Callable[[MalAny], MalAny]) -> Tuple[str, MalBuiltin]:
+    """Make a (name, builtin) tuple for a function of a single mal value."""
+
+    def g(args: List[MalAny]) -> MalAny:
+        if len(args) != 1:
+            raise MalException("Bad arguments to " + name, str(args))
+        return f(args[0])
+
+    return (name, MalBuiltin(g))
+
+
+def make_1str(name: str, f: Callable[[str], MalAny]) -> Tuple[str, MalBuiltin]:
+    """Make a (name, builtin) tuple for a function of a single string."""
+
+    def g(args: List[MalAny]) -> MalAny:
+        if len(args) == 1 and isinstance(args[0], str):
+            return f(args[0])
+        raise MalException("Bad arguments to " + name, str(args))
+
+    return (name, MalBuiltin(g))
+
+
+def make_2arg(
+    name: str, f: Callable[[MalAny, MalAny], MalAny]
+) -> Tuple[str, MalBuiltin]:
+    """Make a (name, builtin) tuple for a function acting of two mal values."""
+
+    def g(args: List[MalAny]) -> MalAny:
+        if len(args) != 2:
+            raise MalException("Bad arguments to " + name, str(args))
+        return f(args[0], args[1])
+
+    return (name, MalBuiltin(g))
+
+
+def make_2int(name: str, f: Callable[[int, int], MalAny]) -> Tuple[str, MalBuiltin]:
+    """Make a (name, builtin) tuple for a function acting of two ints."""
+
+    def g(args: List[MalAny]) -> MalAny:
+        if len(args) == 2:
+            if isinstance(args[0], int) and isinstance(args[1], int):
+                return f(args[0], args[1])
+        raise MalException("Bad arguments to " + name, str(args))
+
+    return (name, MalBuiltin(g))
 
 
 #
@@ -90,79 +159,31 @@ def multiplication(args: List[MalAny]) -> int:
     raise MalException("Bad arguments to *")
 
 
-def subtraction(args: List[MalAny]) -> int:
-    """Python definition of mal - function."""
-    if len(args) == 2 and isinstance(args[0], int) and isinstance(args[1], int):
-        return args[0] - args[1]
-    raise MalException("Bad arguments to -")
-
-
-def division(args: List[MalAny]) -> int:
-    """Python definition of mal / function."""
-    if len(args) == 2 and isinstance(args[0], int) and isinstance(args[1], int):
-        return args[0] // args[1]
-    raise MalException("Bad arguments to /")
-
-
-def equality(args: List[MalAny]) -> bool:
-    """Python definition of mal = function."""
-    if len(args) == 2:
-        return args[0] == args[1]
-    raise MalException("Bad arguments to ==")
-
-
-def make_num_logical(op: Callable[[int, int], bool]) -> MalBuiltin:
-    """Return the python function for a mal logical comparison on ints."""
-
-    def f(args: List[MalAny]) -> bool:
-        if len(args) == 2 and isinstance(args[0], int) and isinstance(args[1], int):
-            return op(args[0], args[1])
-        raise MalException("Bad arguments to logical comparison")
-
-    return MalBuiltin(f)
-
-
 #
 # Collection functions
 #
 
 
-def mal_list(args: List[MalAny]) -> MalList:
-    """Python definition of mal list function."""
-    return MalList(args)
-
-
-def list_test(args: List[MalAny]) -> bool:
-    """Python definition of mal list? function."""
-    if len(args) == 1:
-        return isinstance(args[0], MalList)
-    raise MalException("Bad arguments to list?")
-
-
-def count(args: List[MalAny]) -> int:
+def count(x: MalAny) -> int:
     """Python definition of mal count function."""
-    if len(args) == 1:
-        head = args[0]
-        if isinstance(head, MalSeq):
-            return len(head.value)
-        if isinstance(head, MalNil):
-            return 0
+    if isinstance(x, MalSeq):
+        return len(x.value)
+    if isinstance(x, MalNil):
+        return 0
     raise MalException("Bad arguments to count")
 
 
-def empty_test(args: List[MalAny]) -> bool:
+def empty_test(x: MalAny) -> bool:
     """Python definition of mal empty? function."""
-    if len(args) == 1:
-        head = args[0]
-        if isinstance(head, MalSeq):
-            return len(head.value) == 0
+    if isinstance(x, MalSeq):
+        return len(x.value) == 0
     raise MalException("Bad arguments to empty?")
 
 
-def cons(args: List[MalAny]) -> MalList:
+def cons(x: MalAny, y: MalAny) -> MalList:
     """Python definition of mal cons function."""
-    if len(args) == 2 and isinstance(args[1], MalSeq):
-        return MalList([args[0]] + args[1].value)
+    if isinstance(y, MalSeq):
+        return MalList([x] + y.value)
     raise MalException("Bad arguments to cons")
 
 
@@ -177,35 +198,38 @@ def mal_concat(args: List[MalAny]) -> MalList:
     return MalList([y for x in map(contents, args) for y in x])
 
 
-def nth(args: List[MalAny]) -> MalAny:
+def nth(x: MalAny, y: MalAny) -> MalAny:
     """Python definition of mal nth function."""
-    if len(args) == 2 and isinstance(args[0], MalSeq) and isinstance(args[1], int):
-        if args[1] >= 0 and args[1] < len(args[0].value):
-            return args[0].value[args[1]]
+    if isinstance(x, MalSeq) and isinstance(y, int):
+        if y >= 0 and y < len(x.value):
+            return x.value[y]
         raise MalException("Index for nth out of bounds")
     raise MalException("Bad arguments to nth")
 
 
-def first(args: List[MalAny]) -> MalAny:
+def first(x: MalAny) -> MalAny:
     """Python definition of mal first function."""
-    if len(args) == 1:
-        if isinstance(args[0], MalSeq):
-            if len(args[0].value) > 0:
-                return args[0].value[0]
-            return MalNil()
-        if isinstance(args[0], MalNil):
-            return MalNil()
+    if isinstance(x, MalSeq):
+        if len(x.value) > 0:
+            return x.value[0]
+        return MalNil()
+    if isinstance(x, MalNil):
+        return MalNil()
     raise MalException("Bad arguments to first")
 
 
-def rest(args: List[MalAny]) -> MalAny:
+def rest(x: MalAny) -> MalAny:
     """Python definition of mal first function."""
-    if len(args) == 1:
-        if isinstance(args[0], MalSeq):
-            return MalList(args[0].value[1:])
-        if isinstance(args[0], MalNil):
-            return MalList([])
+    if isinstance(x, MalSeq):
+        return MalList(x.value[1:])
+    if isinstance(x, MalNil):
+        return MalList([])
     raise MalException("Bad arguments to rest")
+
+
+#
+# Hash map functions
+#
 
 
 #
@@ -239,29 +263,21 @@ def mal_println(args: List[MalAny]) -> MalNil:
     return MalNil()
 
 
-def mal_read_string(args: List[MalAny]) -> MalAny:
+def mal_read_string(s: str) -> MalAny:
     """Python definition of mal read-string function."""
-    if len(args) == 1:
-        head = args[0]
-        if isinstance(head, str):
-            read_form = reader.read_str(head)
-            if read_form is None:
-                return MalNil()
-            return read_form
-    raise MalException("Bad arguments to read-string")
+    read_form = reader.read_str(s)
+    if read_form is None:
+        return MalNil()
+    return read_form
 
 
-def slurp(args: List[MalAny]) -> MalAny:
+def slurp(fn: str) -> MalAny:
     """Python definition of function to return contents of give filename as a string."""
-    if len(args) == 1:
-        head = args[0]
-        if isinstance(head, str):
-            try:
-                with open(head, "r") as f:
-                    return f.read()
-            except (OSError) as err:
-                raise MalException(err.strerror, "OS error")
-    raise MalException("Bad arguments to slurp")
+    try:
+        with open(fn, "r") as f:
+            return f.read()
+    except (OSError) as err:
+        raise MalException(err.strerror, "OS error")
 
 
 #
@@ -269,53 +285,39 @@ def slurp(args: List[MalAny]) -> MalAny:
 #
 
 
-def atom(args: List[MalAny]) -> MalAny:
-    """Python definition of atom function to create an atom."""
-    if len(args) == 1:
-        return MalAtom(args[0])
-    raise MalException("Bad arguments to atom")
-
-
-def atom_test(args: List[MalAny]) -> MalAny:
-    """Python definition of atom? function to test if value is an atom."""
-    if len(args) == 1:
-        return isinstance(args[0], MalAtom)
-    raise MalException("Bad arguments to atom?")
-
-
-def deref(args: List[MalAny]) -> MalAny:
+def deref(x: MalAny) -> MalAny:
     """Python definition of deref function to return vaue from an atom."""
-    if len(args) == 1 and isinstance(args[0], MalAtom):
-        return args[0].value
+    if isinstance(x, MalAtom):
+        return x.value
     raise MalException("Bad arguments to deref")
 
 
-def reset(args: List[MalAny]) -> MalAny:
+def reset(x: MalAny, y: MalAny) -> MalAny:
     """Python definition of reset! function to reset an atom's value."""
-    if len(args) == 2 and isinstance(args[0], MalAtom):
-        args[0].value = args[1]
-        return args[1]
+    if isinstance(x, MalAtom):
+        x.value = y
+        return y
     raise MalException("Bad arguments to reset!")
 
 
 #
-# Other functions
+# Other type functions
+#
+
+def mal_keyword(x: MalAny) -> MalAny:
+    """Python definition of keyword."""
+    if isinstance(x, str):
+        return MalKeyword(x)
+    if isinstance(x, MalKeyword):
+        return x
+    raise MalException("Bad arguments to keyword")
+
+
+#
+# Misc functions
 #
 
 
-def mal_throw(args: List[MalAny]) -> NoReturn:
+def mal_throw(x: MalAny) -> NoReturn:
     """Python definition of mal throw function."""
-    if len(args) == 1:
-        raise MalException(args[0])
-    raise MalException("Bad argument to throw")
-
-
-def mk_single_arg_test(name: str, pred: Callable[[MalAny], bool]) -> MalBuiltin:
-    """Create a builtin that applies its predicate to a single argument."""
-
-    def f(args: List[MalAny]) -> MalAny:
-        if len(args) != 1:
-            raise MalException("Bad arguments to " + name, str(args))
-        return pred(args[0])
-
-    return MalBuiltin(f)
+    raise MalException(x)

@@ -1,6 +1,9 @@
 """Implements step 6 of https://github.com/kanaka/mal - file."""
 
+import atexit
+import os
 from enum import Enum, auto
+from readline import read_history_file, set_history_length, write_history_file
 from sys import argv
 from typing import Callable, Dict, List, NamedTuple, Optional, Sequence, cast
 
@@ -404,6 +407,15 @@ def main() -> None:
         repl_env.set(MalSym("*ARGV*"), MalList(argv_list))
         read_eval('(load-file "' + argv[1] + '")', repl_env)
     else:
+
+        histfile = os.path.join(os.path.expanduser("~"), ".python_mal_history")
+        try:
+            read_history_file(histfile)
+            set_history_length(1000)
+        except FileNotFoundError:
+            pass
+        atexit.register(write_history_file, histfile)
+
         while True:
             try:
                 rep(input("user> "), repl_env)
