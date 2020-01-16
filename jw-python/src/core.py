@@ -98,7 +98,7 @@ def make_1arg(name: str, f: Callable[[MalAny], MalAny]) -> Tuple[str, MalBuiltin
 
     def g(args: List[MalAny]) -> MalAny:
         if len(args) != 1:
-            raise MalException("Bad arguments to " + name, str(args))
+            raise MalException("Bad arguments to " + name, args)
         return f(args[0])
 
     return (name, MalBuiltin(g))
@@ -110,7 +110,7 @@ def make_1str(name: str, f: Callable[[str], MalAny]) -> Tuple[str, MalBuiltin]:
     def g(args: List[MalAny]) -> MalAny:
         if len(args) == 1 and isinstance(args[0], str):
             return f(args[0])
-        raise MalException("Bad arguments to " + name, str(args))
+        raise MalException("Bad arguments to " + name, args)
 
     return (name, MalBuiltin(g))
 
@@ -122,7 +122,7 @@ def make_2arg(
 
     def g(args: List[MalAny]) -> MalAny:
         if len(args) != 2:
-            raise MalException("Bad arguments to " + name, str(args))
+            raise MalException("Bad arguments to " + name, args)
         return f(args[0], args[1])
 
     return (name, MalBuiltin(g))
@@ -135,7 +135,7 @@ def make_2int(name: str, f: Callable[[int, int], MalAny]) -> Tuple[str, MalBuilt
         if len(args) == 2:
             if isinstance(args[0], int) and isinstance(args[1], int):
                 return f(args[0], args[1])
-        raise MalException("Bad arguments to " + name, str(args))
+        raise MalException("Bad arguments to " + name, args)
 
     return (name, MalBuiltin(g))
 
@@ -149,14 +149,14 @@ def addition(args: List[MalAny]) -> int:
     """Python definition of mal + function."""
     if all(map(lambda x: isinstance(x, int), args)):
         return sum(cast(List[int], args))
-    raise MalException("Bad arguments to +")
+    raise MalException("Bad arguments to +", args)
 
 
 def multiplication(args: List[MalAny]) -> int:
     """Python definition of mal * function."""
     if all(map(lambda x: isinstance(x, int), args)):
         return reduce(lambda x, y: x * y, cast(List[int], args), 1)
-    raise MalException("Bad arguments to *")
+    raise MalException("Bad arguments to *", args)
 
 
 #
@@ -303,6 +303,7 @@ def reset(x: MalAny, y: MalAny) -> MalAny:
 #
 # Other type functions
 #
+
 
 def mal_keyword(x: MalAny) -> MalAny:
     """Python definition of keyword."""

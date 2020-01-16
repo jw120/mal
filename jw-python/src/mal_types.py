@@ -32,6 +32,7 @@ from typing import (
     Dict,
     List,
     NamedTuple,
+    NoReturn,
     Optional,
     Sequence,
     Tuple,
@@ -127,11 +128,11 @@ class MalMap:
         # Construct from an alternating key-value list
         if isinstance(elements, list):
             if len(elements) % 2 == 1:
-                raise MalException("Unmatched key for map: ", str(elements[-1]))
+                raise MalException("Unmatched key for map: ", elements[-1])
             self.value: Dict[MalKey, MalAny] = {}
             for k, v in zip(elements[0::2], elements[1::2]):
                 if not (isinstance(k, str) or isinstance(k, MalKeyword)):
-                    raise MalException("Bad key type for map: ", str(k))
+                    raise MalException("Bad key type for map: ", k)
                 self.value[k] = v
 
         # Construct from a tuple of keys and values
@@ -186,6 +187,8 @@ class MalFunc:
         ast: MalAny,
         params: List[MalSym],
         env: Environment,
+        *,
+        closure: Optional[Callable[..., Any]] = None,
         is_macro: bool = False,
     ) -> None:
         """Create a mal-defined function.
@@ -194,16 +197,26 @@ class MalFunc:
             ast - the body of the function
             params - paramater names of the function (added to env before calling)
             env - the environment to use when calling
+            closure - for calling in map and apply
             is_macro - is the function a macro
         """
         self.ast: MalAny = ast
         self.params: List[MalSym] = params
         self.env: Environment = env
+        if closure is None:
+            self.value: Callable[..., Any] = raise_no_closure
+        else:
+            self.value = closure
         self.is_macro: bool = is_macro
 
     def __eq__(self, _other: Any) -> bool:
         """Equality for functions always false."""
         return False
+
+
+def raise_no_closure() -> NoReturn:
+    """Raise a no closure exception."""
+    raise MalException("No closure!")
 
 
 MalAny = Union[
@@ -227,12 +240,12 @@ Mal_Callable = Callable[[List[MalAny]], MalAny]
 class MalException(Exception):
     """Exception thrown during mal execution."""
 
-    def __init__(self, value: MalAny, extra: Optional[str] = None):
-        """Initialize with value describing the exception or with two strings."""
-        if isinstance(value, str) and extra is not None:
-            self.value: MalAny = value + ": " + extra
-        else:
-            self.value = value
+    def __init__(
+        self, value: MalAny, context: Optional[Union[MalAny, List[MalAny]]] = None
+    ):
+        """Initialize with a mal value and an optional context value."""
+        self.value: MalAny = value
+        self.context: Optional[Union[MalAny, List[MalAny]]] = context
         super().__init__()
 
 
@@ -304,9 +317,9 @@ def to_symlist(xs: MalAny) -> List[MalSym]:
     if isinstance(xs, MalSeq):
         for x in xs.value:
             if not isinstance(x, MalSym):
-                raise MalException("Expected a symbol: ", str(x))
+                raise MalException("Expected a symbol: ", x)
         return cast(List[MalSym], xs.value)
-    raise MalException("Expected a sequence: ", str(xs))
+    raise MalException("Expected a sequence: ", xs)
 
 
 def is_pair(xs: MalAny) -> bool:

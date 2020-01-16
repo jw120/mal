@@ -40,14 +40,14 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
                 val = EVAL(args[1], env)
                 env.set(args[0], val)
                 return val
-            raise MalException("Bad arguments for def! in ", str(ast))
+            raise MalException("Bad arguments for def! in ", ast)
 
         # Special form do
         if head == MalSym("do"):
             if num_args >= 1:
                 evaluated_args = list(map(lambda e: EVAL(e, env), args))
                 return evaluated_args[-1]
-            raise MalException("Bad arguments for do! in ", str(ast))
+            raise MalException("Bad arguments for do! in ", ast)
 
         # Special form fn*
         if head == MalSym("fn*"):
@@ -61,7 +61,7 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
                             return EVAL(args[1], closure_env)
 
                         return MalBuiltin(closure)
-            raise MalException("Bad arguments for fn* in ", str(ast))
+            raise MalException("Bad arguments for fn* in ", ast)
 
         # Special form if
         if head == MalSym("if"):
@@ -72,7 +72,7 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
                 ):
                     return EVAL(args[2], env) if num_args == 3 else MalNil()
                 return EVAL(args[1], env)
-            raise MalException("Bad arguments for if in ", str(ast))
+            raise MalException("Bad arguments for if in ", ast)
 
         # Special form let!
         if head == MalSym("let*"):
@@ -82,7 +82,7 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
                     if isinstance(sym, MalSym):
                         local_env.set(sym, EVAL(binding, local_env))
                 return EVAL(args[1], local_env)
-            raise MalException("Bad arguments for let* in ", str(ast))
+            raise MalException("Bad arguments for let* in ", ast)
 
         # Apply normal list
         evaluated_ast = eval_ast(ast, env)
@@ -92,7 +92,7 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
         if isinstance(eval_head, MalBuiltin):
             f = cast(Callable[[List[MalAny]], MalAny], eval_head.value)  # Workaround
             return f(evaluated_ast.value[1:])
-        raise MalException("Cannot apply a non-function in ", str(ast))
+        raise MalException("Cannot apply a non-function in ", ast)
 
     # Use eval_ast for all other values
     return eval_ast(ast, env)

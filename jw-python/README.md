@@ -1,10 +1,16 @@
 # TODO
 
+Streamline step9 - move map/apply out? move special forms out?
 
 
 # To setup
 
+use_pyenv
+use_venc
 pip install -r requirements.txt
+
+# To develop
+
 
 
 # Open questions

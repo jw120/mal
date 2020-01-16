@@ -53,7 +53,7 @@ def def_handler(args: List[MalAny], env: Environment) -> EvalState:
         val = EVAL(args[1], env)
         env.set(args[0], val)
         return EvalState(val, env, EvalMode.FINISHED)
-    raise MalException("Bad arguments for def! in ", str(args))
+    raise MalException("Bad arguments for def! in ", args)
 
 
 def do_handler(args: List[MalAny], env: Environment) -> EvalState:
@@ -62,7 +62,7 @@ def do_handler(args: List[MalAny], env: Environment) -> EvalState:
         for arg in args[:-1]:  # Evaluate all args except the last one
             EVAL(arg, env)
         return EvalState(args[-1], env, EvalMode.CONTINUING)
-    raise MalException("Bad arguments for do! in ", str(args))
+    raise MalException("Bad arguments for do! in ", args)
 
 
 def if_handler(args: List[MalAny], env: Environment) -> EvalState:
@@ -77,7 +77,7 @@ def if_handler(args: List[MalAny], env: Environment) -> EvalState:
             else:
                 return EvalState(MalNil(), env, EvalMode.FINISHED)
         return EvalState(args[1], env, EvalMode.CONTINUING)
-    raise MalException("Bad arguments for if in ", str(args))
+    raise MalException("Bad arguments for if in ", args)
 
 
 def fn_handler(args: List[MalAny], env: Environment) -> EvalState:
@@ -86,7 +86,7 @@ def fn_handler(args: List[MalAny], env: Environment) -> EvalState:
         return EvalState(
             MalFunc(args[1], to_symlist(args[0]), env), env, EvalMode.FINISHED,
         )
-    raise MalException("Bad arguments for fn* in ", str(args))
+    raise MalException("Bad arguments for fn* in ", args)
 
 
 def let_handler(args: List[MalAny], env: Environment) -> EvalState:
@@ -99,7 +99,7 @@ def let_handler(args: List[MalAny], env: Environment) -> EvalState:
             else:
                 raise MalException("Non-symbol in let* in ", str(sym))
         return EvalState(args[1], new_env, EvalMode.CONTINUING)
-    raise MalException("Bad arguments for let* in ", str(args))
+    raise MalException("Bad arguments for let* in ", args)
 
 
 special_form_handlers: Dict[str, Callable[[List[MalAny], Environment], EvalState]] = {
@@ -205,7 +205,7 @@ def mal_swap(args: List[MalAny]) -> MalAny:
             update_fn = cast(Callable[[List[MalAny]], MalAny], args[1].value)
             target_atom.value = update_fn([target_atom.value] + args[2:])
         return target_atom.value
-    raise MalException("Bad arguments for swap!", str(args))
+    raise MalException("Bad arguments for swap!", args)
 
 
 def READ(input_string: str) -> Optional[MalAny]:

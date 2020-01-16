@@ -53,7 +53,7 @@ def def_handler(args: List[MalAny], env: Environment) -> EvalState:
         val = EVAL(args[1], env)
         env.set(args[0], val)
         return EvalState(val, env, EvalMode.FINISHED)
-    raise MalException("Bad arguments for def!", str(args))
+    raise MalException("Bad arguments for def!", args)
 
 
 def do_handler(args: List[MalAny], env: Environment) -> EvalState:
@@ -62,7 +62,7 @@ def do_handler(args: List[MalAny], env: Environment) -> EvalState:
         for arg in args[:-1]:  # Evaluate all args except the last one
             EVAL(arg, env)
         return EvalState(args[-1], env, EvalMode.CONTINUING)
-    raise MalException("Bad arguments for do!", str(args))
+    raise MalException("Bad arguments for do!", args)
 
 
 def if_handler(args: List[MalAny], env: Environment) -> EvalState:
@@ -77,7 +77,7 @@ def if_handler(args: List[MalAny], env: Environment) -> EvalState:
             else:
                 return EvalState(MalNil(), env, EvalMode.FINISHED)
         return EvalState(args[1], env, EvalMode.CONTINUING)
-    raise MalException("Bad arguments for if", str(args))
+    raise MalException("Bad arguments for if", args)
 
 
 def fn_handler(args: List[MalAny], env: Environment) -> EvalState:
@@ -86,7 +86,7 @@ def fn_handler(args: List[MalAny], env: Environment) -> EvalState:
         return EvalState(
             MalFunc(args[1], to_symlist(args[0]), env), env, EvalMode.FINISHED,
         )
-    raise MalException("Bad arguments for fn*", str(args))
+    raise MalException("Bad arguments for fn*", args)
 
 
 def let_handler(args: List[MalAny], env: Environment) -> EvalState:
@@ -99,21 +99,21 @@ def let_handler(args: List[MalAny], env: Environment) -> EvalState:
             else:
                 raise MalException("Non-symbol in let*", str(sym))
         return EvalState(args[1], new_env, EvalMode.CONTINUING)
-    raise MalException("Bad arguments for let*", str(args))
+    raise MalException("Bad arguments for let*", args)
 
 
 def quote_handler(args: List[MalAny], env: Environment) -> EvalState:
     """Handle the special form quote."""
     if len(args) == 1:
         return EvalState(args[0], env, EvalMode.FINISHED)
-    raise MalException("Bad arguments for quote", str(args))
+    raise MalException("Bad arguments for quote", args)
 
 
 def quasiquote_handler(args: List[MalAny], env: Environment) -> EvalState:
     """Handle the special form quasiquote."""
     if len(args) == 1:
         return EvalState(quasiquote(args[0]), env, EvalMode.CONTINUING)
-    raise MalException("Bad arguments for quasiquote", str(args))
+    raise MalException("Bad arguments for quasiquote", args)
 
 
 special_form_handlers: Dict[str, Callable[[List[MalAny], Environment], EvalState]] = {
@@ -207,7 +207,7 @@ def quasiquote(ast: MalAny) -> MalAny:
     if elems[0] == MalSym("unquote"):
         if len(elems) == 2:
             return elems[1]
-        raise MalException("Too many arguments to unquote", str(ast))
+        raise MalException("Too many arguments to unquote", ast)
     if isinstance(elems[0], MalSeq) and len(elems[0].value) > 0:
         sub_elems: List[MalAny] = elems[0].value
         if sub_elems[0] == MalSym("splice-unquote"):
@@ -215,7 +215,7 @@ def quasiquote(ast: MalAny) -> MalAny:
                 return MalList(
                     [MalSym("concat"), sub_elems[1], quasiquote(MalList(elems[1:]))]
                 )
-            raise MalException("Too many arguments to splice-unquote", str(ast))
+            raise MalException("Too many arguments to splice-unquote", ast)
     return MalList(
         [MalSym("cons"), quasiquote(elems[0]), quasiquote(MalList(elems[1:]))]
     )
@@ -243,7 +243,7 @@ def mal_swap(args: List[MalAny]) -> MalAny:
             update_fn = cast(Callable[[List[MalAny]], MalAny], args[1].value)
             target_atom.value = update_fn([target_atom.value] + args[2:])
         return target_atom.value
-    raise MalException("Bad arguments for swap!", str(args))
+    raise MalException("Bad arguments for swap!", args)
 
 
 def READ(input_string: str) -> Optional[MalAny]:

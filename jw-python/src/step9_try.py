@@ -56,7 +56,7 @@ def def_handler(args: List[MalAny], env: Environment) -> EvalState:
         val = EVAL(args[1], env)
         env.set(args[0], val)
         return EvalState(val, env, EvalMode.FINISHED)
-    raise MalException("Bad arguments for def!", str(args))
+    raise MalException("Bad arguments for def!", args)
 
 
 def defmacro_handler(args: List[MalAny], env: Environment) -> EvalState:
@@ -67,8 +67,8 @@ def defmacro_handler(args: List[MalAny], env: Environment) -> EvalState:
             val.is_macro = True
             env.set(args[0], val)
             return EvalState(val, env, EvalMode.FINISHED)
-        raise MalException("Non-function in defmacro!", str(args))
-    raise MalException("Bad arguments for defmacro!", str(args))
+        raise MalException("Non-function in defmacro!", args)
+    raise MalException("Bad arguments for defmacro!", args)
 
 
 def do_handler(args: List[MalAny], env: Environment) -> EvalState:
@@ -77,7 +77,7 @@ def do_handler(args: List[MalAny], env: Environment) -> EvalState:
         for arg in args[:-1]:  # Evaluate all args except the last one
             EVAL(arg, env)
         return EvalState(args[-1], env, EvalMode.CONTINUING)
-    raise MalException("Bad arguments for do!", str(args))
+    raise MalException("Bad arguments for do!", args)
 
 
 def if_handler(args: List[MalAny], env: Environment) -> EvalState:
@@ -92,16 +92,22 @@ def if_handler(args: List[MalAny], env: Environment) -> EvalState:
             else:
                 return EvalState(MalNil(), env, EvalMode.FINISHED)
         return EvalState(args[1], env, EvalMode.CONTINUING)
-    raise MalException("Bad arguments for if", str(args))
+    raise MalException("Bad arguments for if", args)
 
 
 def fn_handler(args: List[MalAny], env: Environment) -> EvalState:
     """Handle the special form fn*."""
     if len(args) == 2:
+        bind_list = to_symlist(args[0])
+
+        def closure(call_args: List[MalAny]) -> MalAny:
+            closure_env = Environment(bind_list, call_args, outer=env)
+            return EVAL(args[1], closure_env)
+
         return EvalState(
-            MalFunc(args[1], to_symlist(args[0]), env), env, EvalMode.FINISHED,
+            MalFunc(args[1], bind_list, env, closure=closure), env, EvalMode.FINISHED,
         )
-    raise MalException("Bad arguments for fn*", str(args))
+    raise MalException("Bad arguments for fn*", args)
 
 
 def let_handler(args: List[MalAny], env: Environment) -> EvalState:
@@ -114,21 +120,21 @@ def let_handler(args: List[MalAny], env: Environment) -> EvalState:
             else:
                 raise MalException("Non-symbol in let*", str(sym))
         return EvalState(args[1], new_env, EvalMode.CONTINUING)
-    raise MalException("Bad arguments for let*", str(args))
+    raise MalException("Bad arguments for let*", args)
 
 
 def macroexpand_handler(args: List[MalAny], env: Environment) -> EvalState:
     """Handle the special form macroexpand."""
     if len(args) == 1:
         return EvalState(macroexpand(args[0], env), env, EvalMode.FINISHED)
-    raise MalException("Bad arguments for quote", str(args))
+    raise MalException("Bad arguments for quote", args)
 
 
 def quote_handler(args: List[MalAny], env: Environment) -> EvalState:
     """Handle the special form quote."""
     if len(args) == 1:
         return EvalState(args[0], env, EvalMode.FINISHED)
-    raise MalException("Bad arguments for quote", str(args))
+    raise MalException("Bad arguments for quote", args)
 
 
 def quasiquote_handler(args: List[MalAny], env: Environment) -> EvalState:
@@ -136,7 +142,7 @@ def quasiquote_handler(args: List[MalAny], env: Environment) -> EvalState:
     if len(args) == 1:
 
         return EvalState(quasiquote(args[0]), env, EvalMode.CONTINUING)
-    raise MalException("Bad arguments for quasiquote", str(args))
+    raise MalException("Bad arguments for quasiquote", args)
 
 
 def try_handler(args: List[MalAny], env: Environment) -> EvalState:
@@ -159,9 +165,9 @@ def try_handler(args: List[MalAny], env: Environment) -> EvalState:
                         Environment([catch_binding], [err.value], outer=env),
                         EvalMode.CONTINUING,
                     )
-                raise MalException("Bad catch clause in try*", str(args))
-            raise MalException("Missing catch clause in try*", str(args))
-    raise MalException("Bad arguments for try*", str(args))
+                raise MalException("Bad catch clause in try*", args)
+            raise MalException("Missing catch clause in try*", args)
+    raise MalException("Bad arguments for try*", args)
 
 
 special_form_handlers: Dict[str, Callable[[List[MalAny], Environment], EvalState]] = {
@@ -264,7 +270,7 @@ def quasiquote(ast: MalAny) -> MalAny:
     if elems[0] == MalSym("unquote"):
         if len(elems) == 2:
             return elems[1]
-        raise MalException("Too many arguments to unquote", str(ast))
+        raise MalException("Too many arguments to unquote", ast)
     if isinstance(elems[0], MalSeq) and len(elems[0].value) > 0:
         sub_elems: List[MalAny] = elems[0].value
         if sub_elems[0] == MalSym("splice-unquote"):
@@ -272,7 +278,7 @@ def quasiquote(ast: MalAny) -> MalAny:
                 return MalList(
                     [MalSym("concat"), sub_elems[1], quasiquote(MalList(elems[1:]))]
                 )
-            raise MalException("Too many arguments to splice-unquote", str(ast))
+            raise MalException("Too many arguments to splice-unquote", ast)
     return MalList(
         [MalSym("cons"), quasiquote(elems[0]), quasiquote(MalList(elems[1:]))]
     )
@@ -326,7 +332,33 @@ def mal_swap(args: List[MalAny]) -> MalAny:
             update_fn = cast(Callable[[List[MalAny]], MalAny], args[1].value)
             target_atom.value = update_fn([target_atom.value] + args[2:])
         return target_atom.value
-    raise MalException("Bad arguments for swap!", str(args))
+    raise MalException("Bad arguments for swap!", args)
+
+
+def mal_map(args: List[MalAny]) -> MalAny:
+    """Python definition of the mal map function."""
+    if len(args) == 2:
+        if isinstance(args[1], MalSeq):
+            seq: MalSeq = args[1]
+            if isinstance(args[0], MalFunc) or isinstance(args[0], MalBuiltin):
+                func = cast(
+                    Callable[[List[MalAny]], MalAny], args[0].value
+                )  # Workaround
+                return MalList(list(map(lambda x: func([x]), seq.value)))
+    raise MalException("Bad arguments for map", args)
+
+
+def mal_apply(args: List[MalAny]) -> MalAny:
+    """Python definition of the mal apply function."""
+    if len(args) >= 2:
+        if isinstance(args[-1], MalSeq):
+            final_seq: MalSeq = args[-1]
+            if isinstance(args[0], MalFunc) or isinstance(args[0], MalBuiltin):
+                func = cast(
+                    Callable[[List[MalAny]], MalAny], args[0].value
+                )  # Workaround
+                return func(args[1:-1] + final_seq.value)
+    raise MalException("Bad arguments for map", args)
 
 
 def READ(input_string: str) -> Optional[MalAny]:
@@ -353,7 +385,16 @@ def read_eval(input_string: str, env: Environment) -> Optional[MalAny]:
         if input_form is not None:
             return EVAL(input_form, env)
     except MalException as err:
-        print("Exception: " + printer.pr_str(err.value, False))
+        value_str: str = printer.pr_str(err.value, False)
+        if err.context is None:
+            print(f"Exception: {value_str}")
+        elif isinstance(err.context, list):  # print a python list in mal-style
+            context_str: str = printer.pr_str(MalList(err.context), False)
+            print(f"Exception: {value_str} at {context_str}")
+        else:
+            context_str = printer.pr_str(err.context, False)
+            print(f"Exception: {value_str} at {context_str}")
+
     return None
 
 
@@ -396,6 +437,8 @@ def main() -> None:
 
     repl_env.set(MalSym("eval"), MalBuiltin(lambda xs: mal_eval(xs, repl_env)))
     repl_env.set(MalSym("swap!"), MalBuiltin(mal_swap))
+    repl_env.set(MalSym("map"), MalBuiltin(mal_map))
+    repl_env.set(MalSym("apply"), MalBuiltin(mal_apply))
     repl_env.set(MalSym("*ARGV*"), MalList([]))
 
     prelude_form = READ(prelude)

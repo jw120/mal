@@ -41,7 +41,7 @@ def EVAL(ast: MalAny, env: Mal_Environment) -> MalAny:
         if isinstance(head, MalBuiltin):
             f = cast(Callable[[List[MalAny]], MalAny], head.value)  # Workaround
             return f(evaluated.value[1:])
-        raise MalException("Cannot apply a non-function", str(ast))
+        raise MalException("Cannot apply a non-function", ast)
 
     # Use eval_ast for all other values
     return eval_ast(ast, env)
@@ -53,7 +53,7 @@ def eval_ast(ast: MalAny, env: Mal_Environment) -> MalAny:
     if isinstance(ast, MalSym):
         if ast.value in env:
             return env[ast.value]
-        raise MalException("Unknown symbol", str(ast))
+        raise MalException("Unknown symbol", ast)
 
     # A list or vector has all of its contents evaluated
     if isinstance(ast, MalSeq):
