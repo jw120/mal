@@ -13,6 +13,7 @@ from mal_types import (
     MalAtom,
     MalBuiltin,
     MalException,
+    MalFunc,
     MalKey,
     MalKeyword,
     MalList,
@@ -56,6 +57,8 @@ def create_ns() -> Dict[str, MalBuiltin]:
             make_2arg("nth", nth),
             make_1arg("first", first),
             make_1arg("rest", rest),
+            make_1arg("seq", mal_seq),
+            make_any("conj", nyi),
             # Hash-map functions
             make_1arg("map?", lambda x: isinstance(x, MalMap)),
             make_any("hash-map", lambda xs: MalMap(xs)),
@@ -88,17 +91,22 @@ def create_ns() -> Dict[str, MalBuiltin]:
             make_any("vector", MalVec),
             make_1arg("vector?", lambda x: isinstance(x, MalVec)),
             make_1arg("sequential?", lambda x: isinstance(x, MalSeq)),
+            make_1arg(
+                "fn?",
+                lambda x: isinstance(x, MalBuiltin)
+                or (isinstance(x, MalFunc) and not x.is_macro),
+            ),
+            make_1arg("macro?", lambda x: isinstance(x, MalFunc) and x.is_macro),
+            make_1arg("string?", lambda x: isinstance(x, str)),
+            make_1arg(
+                "number?", lambda x: isinstance(x, int) and not isinstance(x, bool)
+            ),
             # Misc functions
             make_1arg("throw", mal_throw),
             make_1str("readline", mal_readline),
             make_any("time-ms", nyi),
             make_any("meta", nyi),
             make_any("with-meta", nyi),
-            make_any("fn?", nyi),
-            make_any("string?", nyi),
-            make_any("number?", nyi),
-            make_any("seq", nyi),
-            make_any("conj", nyi),
         ]
     )
 
@@ -250,6 +258,19 @@ def rest(x: MalAny) -> MalAny:
     if isinstance(x, MalNil):
         return MalList([])
     raise MalException("Bad arguments to rest")
+
+
+def mal_seq(x: MalAny) -> MalAny:
+    """Python definition of mal seq function."""
+    if x == MalList([]) or x == MalVec([]) or x == "":
+        return MalNil()
+    if isinstance(x, MalList):
+        return x
+    if isinstance(x, MalVec):
+        return MalList(x.value)
+    if isinstance(x, str):
+        return MalList(list(x))
+    raise MalException("Bad arguments to seq")
 
 
 #

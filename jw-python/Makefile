@@ -57,4 +57,4 @@ step9:
 	cd ..; make "test^jw-python^step9" | grep ": failing tests"
 
 stepA:
-	cd ..; make "test^jw-python^stepA" | grep ": failing tests"
+	cd ..; make "test^jw-python^stepA" | grep "failing tests"
