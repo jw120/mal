@@ -167,6 +167,8 @@ def try_handler(args: List[MalAny], env: Environment) -> EvalState:
                     )
                 raise MalException("Bad catch clause in try*", args)
             raise MalException("Missing catch clause in try*", args)
+    if len(args) == 1:  # If not catch clause, just evaluate
+        return EvalState(EVAL(args[0], env), env, EvalMode.FINISHED)
     raise MalException("Bad arguments for try*", args)
 
 
