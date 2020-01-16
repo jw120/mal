@@ -6,7 +6,7 @@ environment.
 
 import operator
 from functools import reduce
-from typing import Callable, Dict, List, NoReturn, Optional, Tuple, cast
+from typing import Any, Callable, Dict, List, NoReturn, Optional, Tuple, cast
 
 from mal_types import (
     MalAny,
@@ -90,6 +90,15 @@ def create_ns() -> Dict[str, MalBuiltin]:
             make_1arg("sequential?", lambda x: isinstance(x, MalSeq)),
             # Misc functions
             make_1arg("throw", mal_throw),
+            make_1str("readline", mal_readline),
+            make_any("time-ms", nyi),
+            make_any("meta", nyi),
+            make_any("with-meta", nyi),
+            make_any("fn?", nyi),
+            make_any("string?", nyi),
+            make_any("number?", nyi),
+            make_any("seq", nyi),
+            make_any("conj", nyi),
         ]
     )
 
@@ -149,6 +158,11 @@ def make_2int(name: str, f: Callable[[int, int], MalAny]) -> Tuple[str, MalBuilt
         raise MalException("Bad arguments to " + name, args)
 
     return (name, MalBuiltin(g))
+
+
+def nyi(_: Any) -> NoReturn:
+    """Raise an exception."""
+    raise MalException("NYI")
 
 
 #
@@ -387,3 +401,11 @@ def mal_keyword(x: MalAny) -> MalAny:
 def mal_throw(x: MalAny) -> NoReturn:
     """Python definition of mal throw function."""
     raise MalException(x)
+
+
+def mal_readline(s: str) -> MalAny:
+    """Python definition of mal readline function."""
+    try:
+        return input(s)
+    except EOFError:
+        return MalNil()

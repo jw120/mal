@@ -95,7 +95,7 @@ def let_handler(args: List[MalAny], env: Environment) -> EvalState:
         new_env = Environment(outer=env)
         for sym, binding in utils.pairs(args[0].value):
             if isinstance(sym, MalSym):
-                new_env.set(sym, EVAL(binding, env))
+                new_env.set(sym, EVAL(binding, new_env))
             else:
                 raise MalException("Non-symbol in let* in ", str(sym))
         return EvalState(args[1], new_env, EvalMode.CONTINUING)

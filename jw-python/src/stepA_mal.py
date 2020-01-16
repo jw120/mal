@@ -442,6 +442,7 @@ def main() -> None:
     repl_env.set(MalSym("map"), MalBuiltin(mal_map))
     repl_env.set(MalSym("apply"), MalBuiltin(mal_apply))
     repl_env.set(MalSym("*ARGV*"), MalList([]))
+    repl_env.set(MalSym("*host-language*"), "jw-python")
 
     prelude_form = READ(prelude)
     assert prelude_form is not None
@@ -460,6 +461,8 @@ def main() -> None:
         except FileNotFoundError:
             pass
         atexit.register(write_history_file, histfile)
+
+        read_eval('(println (str "Mal [" *host-language* "]"))', repl_env)
 
         while True:
             try:
