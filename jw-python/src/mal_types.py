@@ -26,6 +26,7 @@ MalAny is a union of the following
 
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import (
     Any,
     Callable,
@@ -123,7 +124,7 @@ class MalMap:
 
         Argument:
             element - either an alternating list of symbols and values or a tuple
-            of a list of symbls and a list of values
+            of a list of symbols and a list of values
         """
         # Construct from an alternating key-value list
         if isinstance(elements, list):
@@ -141,6 +142,26 @@ class MalMap:
             self.value = dict(zip(keys, values))
 
         super().__init__()
+
+    def assoc(self, other: MalMap) -> MalMap:
+        """Return a new MalMap that merges in keys."""
+        new_map = MalMap([])
+        new_map.value = {**self.value, **other.value}
+        return new_map
+
+    def dissoc(self, keys: List[MalKey]) -> MalMap:
+        """Return a new MalMap that removes keys."""
+        new_map = MalMap([])
+        new_map.value = deepcopy(self.value)
+        for k in keys:
+            new_map.value.pop(k, None)
+        return new_map
+
+    def get(self, key: MalKey) -> Optional[MalAny]:
+        """Return the associated value if present."""
+        if key in self.value:
+            return self.value[key]
+        return None
 
     def __eq__(self, other: Any) -> bool:
         """Value equality."""
@@ -235,6 +256,11 @@ MalAny = Union[
 Mal_Environment = Dict[str, MalAny]
 MalKey = Union[MalKeyword, str]
 Mal_Callable = Callable[[List[MalAny]], MalAny]
+
+
+def isMalKey(x: MalAny) -> bool:
+    """Test whether this is a MalKey."""
+    return isinstance(x, MalKeyword) or isinstance(x, str)
 
 
 class MalException(Exception):

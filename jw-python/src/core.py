@@ -6,19 +6,22 @@ environment.
 
 import operator
 from functools import reduce
-from typing import Callable, Dict, List, NoReturn, Tuple, cast
+from typing import Callable, Dict, List, NoReturn, Optional, Tuple, cast
 
 from mal_types import (
     MalAny,
     MalAtom,
     MalBuiltin,
     MalException,
+    MalKey,
     MalKeyword,
     MalList,
+    MalMap,
     MalNil,
     MalSeq,
     MalSym,
     MalVec,
+    isMalKey,
 )
 
 import printer
@@ -54,6 +57,14 @@ def create_ns() -> Dict[str, MalBuiltin]:
             make_1arg("first", first),
             make_1arg("rest", rest),
             # Hash-map functions
+            make_1arg("map?", lambda x: isinstance(x, MalMap)),
+            make_any("hash-map", lambda xs: MalMap(xs)),
+            make_any("assoc", hash_map_assoc),
+            make_any("dissoc", hash_map_dissoc),
+            make_2arg("get", hash_map_get),
+            make_2arg("contains?", hash_map_contains_test),
+            make_1arg("keys", hash_map_keys),
+            make_1arg("vals", hash_map_vals),
             # IO and string functions
             make_any("pr-str", mal_pr_str),
             make_any("str", mal_str),
@@ -230,6 +241,60 @@ def rest(x: MalAny) -> MalAny:
 #
 # Hash map functions
 #
+
+
+def hash_map_assoc(args: List[MalAny]) -> MalMap:
+    """Python definition of mal assoc function."""
+    if len(args) >= 3:
+        if isinstance(args[0], MalMap):
+            return args[0].assoc(MalMap(args[1:]))
+    raise MalException("Bad arguments to assoc")
+
+
+def hash_map_dissoc(args: List[MalAny]) -> MalMap:
+    """Python definition of mal dissoc function."""
+    if len(args) >= 1:
+        if isinstance(args[0], MalMap):
+            for k in args[1:]:
+                if not isMalKey(k):
+                    raise MalException("Non-key passed to dissoc")
+            key_list = cast(List[MalKey], args[1:])
+            return args[0].dissoc(key_list)
+    raise MalException("Bad arguments to assoc")
+
+
+def hash_map_get(x: MalAny, y: MalAny) -> MalAny:
+    """Python definition of get function."""
+    if isinstance(x, MalMap) and isMalKey(y):
+        val: Optional[MalAny] = x.get(cast(MalKey, y))
+        if val is None:
+            return MalNil()
+        return val
+    if isinstance(x, MalNil):
+        return MalNil()
+    raise MalException("Bad arguments to get")
+
+
+def hash_map_contains_test(x: MalAny, y: MalAny) -> bool:
+    """Python definition of contains? function."""
+    if isinstance(x, MalMap) and isMalKey(y):
+        val: Optional[MalAny] = x.get(cast(MalKey, y))
+        return val is not None
+    raise MalException("Bad arguments to contains?")
+
+
+def hash_map_keys(x: MalAny) -> MalAny:
+    """Python definition of keys function."""
+    if isinstance(x, MalMap):
+        return MalList(list(x.value))
+    raise MalException("Bad arguments to keys")
+
+
+def hash_map_vals(x: MalAny) -> MalAny:
+    """Python definition of vals function."""
+    if isinstance(x, MalMap):
+        return MalList(list(x.value.values()))
+    raise MalException("Bad arguments to keys")
 
 
 #

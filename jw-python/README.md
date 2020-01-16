@@ -2,6 +2,8 @@
 
 Streamline step9 - move map/apply out? move special forms out?
 
+Allow iterators to __init__ to save list() calls
+
 
 # To setup
 
