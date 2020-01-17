@@ -42,6 +42,28 @@ from typing import (
 )
 
 
+class MetaMixin:
+    """Add meta variable to a mal class."""
+
+    meta: Optional[MalAny]
+
+    def __init__(self, val: Optional[MalAny] = None) -> None:
+        """Initialize the meta value."""
+        self.meta = val
+
+    def get_meta(self) -> MalAny:
+        """Return the current meta value."""
+        if self.meta is None:
+            return MalNil()
+        return self.meta
+
+    def with_meta(self, value: MalAny) -> MetaMixin:
+        """Create a new copy with the new meta value."""
+        new_obj = deepcopy(self)
+        new_obj.meta = value
+        return new_obj
+
+
 class MalKeyword(NamedTuple):
     """Keyword type for mal."""
 
@@ -64,11 +86,12 @@ class MalKeyword(NamedTuple):
         return hash(str(self))
 
 
-class MalAtom:
+class MalAtom(MetaMixin):
     """Atom type for mal. Mutable."""
 
     def __init__(self, value: MalAny) -> None:
         """Create an atom."""
+        super().__init__()
         self.value: MalAny = value
 
     def __eq__(self, other: object) -> bool:
@@ -80,11 +103,12 @@ class MalAtom:
         )
 
 
-class MalSeq:
+class MalSeq(MetaMixin):
     """Sequence type for Mal - lists or vectors."""
 
     def __init__(self, value: Sequence[MalAny]) -> None:
         """Create a MalSeq. Called via super() from subclases."""
+        super().__init__()
         self.value: List[MalAny] = list(value)
 
     def __eq__(self, other: Any) -> bool:
@@ -114,7 +138,7 @@ class MalNil:
         )  # For typechecker
 
 
-class MalMap:
+class MalMap(MetaMixin):
     """Mal type for mal."""
 
     def __init__(
@@ -127,6 +151,7 @@ class MalMap:
             of a list of symbols and a list of values
         """
         # Construct from an alternating key-value list
+        super().__init__()
         if isinstance(elements, list):
             if len(elements) % 2 == 1:
                 raise MalException("Unmatched key for map: ", elements[-1])
@@ -190,17 +215,20 @@ class MalSym(NamedTuple):
         return hash(str(self))
 
 
-class MalBuiltin(NamedTuple):
+class MalBuiltin(MetaMixin):
     """Type for mal functions defined in mal by fn*."""
 
-    value: Callable[..., Any]  # Should be Mal_Callable (but gives circular defn)
+    def __init__(self, val: Callable[..., Any]) -> None:
+        """Create a python-defined function."""
+        super().__init__()
+        self.value: Callable[..., Any] = val  # Should be Mal_Callable
 
     def __eq__(self, _other: Any) -> bool:
         """Equality for functions always false."""
         return False
 
 
-class MalFunc:
+class MalFunc(MetaMixin):
     """Type for mal functions defined in mal by fn*."""
 
     def __init__(
@@ -221,6 +249,7 @@ class MalFunc:
             closure - for calling in map and apply
             is_macro - is the function a macro
         """
+        super().__init__()
         self.ast: MalAny = ast
         self.params: List[MalSym] = params
         self.env: Environment = env

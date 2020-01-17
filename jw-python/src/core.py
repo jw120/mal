@@ -23,6 +23,7 @@ from mal_types import (
     MalSeq,
     MalSym,
     MalVec,
+    MetaMixin,
     isMalKey,
 )
 
@@ -106,8 +107,8 @@ def create_ns() -> Dict[str, MalBuiltin]:
             make_1arg("throw", mal_throw),
             make_1str("readline", mal_readline),
             make_0arg("time-ms", lambda: round(time() * 1000)),
-            make_any("meta", nyi),
-            make_any("with-meta", nyi),
+            make_1arg("meta", mal_meta),
+            make_2arg("with-meta", mal_with_meta),
         ]
     )
 
@@ -455,3 +456,17 @@ def mal_readline(s: str) -> MalAny:
         return input(s)
     except EOFError:
         return MalNil()
+
+
+def mal_meta(x: MalAny) -> MalAny:
+    """Python definition of meta."""
+    if isinstance(x, MetaMixin):
+        return x.get_meta()
+    raise MalException("Bad arguments to meta")
+
+
+def mal_with_meta(x: MalAny, y: MalAny) -> MalAny:
+    """Python definition of with-meta."""
+    if isinstance(x, MetaMixin):
+        return cast(MalAny, x.with_meta(y))
+    raise MalException("Bad arguments to with-meta")

@@ -1,17 +1,18 @@
 # TODO
 
-Streamline step9 - move map/apply out? move special forms out?
-
+Move A to mal.py with symlink
+Tidy up
+Add python-eval and tests
 Allow iterators to __init__ to save list() calls
+Benchmark
 
 
 # To setup
 
 use_pyenv
 use_venc
-pip install -r requirements.txt
 
-# To develop
+pip install -r requirements.txt
 
 
 

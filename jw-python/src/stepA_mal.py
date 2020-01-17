@@ -2,6 +2,7 @@
 
 import atexit
 import os
+from copy import deepcopy
 from enum import Enum, auto
 from readline import read_history_file, set_history_length, write_history_file
 from sys import argv
@@ -64,9 +65,10 @@ def defmacro_handler(args: List[MalAny], env: Environment) -> EvalState:
     if len(args) == 2 and isinstance(args[0], MalSym):
         val = EVAL(args[1], env)
         if isinstance(val, MalFunc):
-            val.is_macro = True
-            env.set(args[0], val)
-            return EvalState(val, env, EvalMode.FINISHED)
+            new_val = deepcopy(val)
+            new_val.is_macro = True
+            env.set(args[0], new_val)
+            return EvalState(new_val, env, EvalMode.FINISHED)
         raise MalException("Non-function in defmacro!", args)
     raise MalException("Bad arguments for defmacro!", args)
 
