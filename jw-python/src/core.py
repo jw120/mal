@@ -58,7 +58,7 @@ def create_ns() -> Dict[str, MalBuiltin]:
             make_1arg("first", first),
             make_1arg("rest", rest),
             make_1arg("seq", mal_seq),
-            make_any("conj", nyi),
+            make_any("conj", mal_conj),
             # Hash-map functions
             make_1arg("map?", lambda x: isinstance(x, MalMap)),
             make_any("hash-map", lambda xs: MalMap(xs)),
@@ -262,7 +262,7 @@ def rest(x: MalAny) -> MalAny:
 
 def mal_seq(x: MalAny) -> MalAny:
     """Python definition of mal seq function."""
-    if x == MalList([]) or x == MalVec([]) or x == "":
+    if x == MalList([]) or x == MalVec([]) or x == "" or x == MalNil():
         return MalNil()
     if isinstance(x, MalList):
         return x
@@ -271,6 +271,19 @@ def mal_seq(x: MalAny) -> MalAny:
     if isinstance(x, str):
         return MalList(list(x))
     raise MalException("Bad arguments to seq")
+
+
+def mal_conj(args: List[MalAny]) -> MalAny:
+    """Python definition of mal conj function."""
+    if len(args) >= 2:
+        new_elems: List[MalAny] = args[1:]
+        if isinstance(args[0], MalList):
+            rev_new_elems: List[MalAny] = list(new_elems)  # copy
+            rev_new_elems.reverse()  # in-place reverse
+            return MalList(rev_new_elems + args[0].value)
+        if isinstance(args[0], MalVec):
+            return MalVec(args[0].value + new_elems)
+    raise MalException("Bad arguments to conj")
 
 
 #
