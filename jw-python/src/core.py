@@ -6,6 +6,7 @@ environment.
 
 import operator
 from functools import reduce
+from time import time
 from typing import Any, Callable, Dict, List, NoReturn, Optional, Tuple, cast
 
 from mal_types import (
@@ -104,7 +105,7 @@ def create_ns() -> Dict[str, MalBuiltin]:
             # Misc functions
             make_1arg("throw", mal_throw),
             make_1str("readline", mal_readline),
-            make_any("time-ms", nyi),
+            make_0arg("time-ms", lambda: round(time() * 1000)),
             make_any("meta", nyi),
             make_any("with-meta", nyi),
         ]
@@ -119,6 +120,17 @@ def create_ns() -> Dict[str, MalBuiltin]:
 def make_any(name: str, f: Callable[[List[MalAny]], MalAny]) -> Tuple[str, MalBuiltin]:
     """Make a (name, builtin) tuple for a function of any mal values."""
     return (name, MalBuiltin(f))
+
+
+def make_0arg(name: str, f: Callable[[], MalAny]) -> Tuple[str, MalBuiltin]:
+    """Make a (name, builtin) tuple for a function that takes no arguments."""
+
+    def g(args: List[MalAny]) -> MalAny:
+        if len(args) != 0:
+            raise MalException("Bad arguments to " + name, args)
+        return f()
+
+    return (name, MalBuiltin(g))
 
 
 def make_1arg(name: str, f: Callable[[MalAny], MalAny]) -> Tuple[str, MalBuiltin]:
