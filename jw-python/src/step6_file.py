@@ -51,7 +51,7 @@ def def_handler(args: List[MalAny], env: Environment) -> EvalState:
     """Handle the special form def!."""
     if len(args) == 2 and isinstance(args[0], MalSym):
         val = EVAL(args[1], env)
-        env.set(args[0], val)
+        env.add(args[0], val)
         return EvalState(val, env, EvalMode.FINISHED)
     raise MalException("Bad arguments for def! in ", args)
 
@@ -95,7 +95,7 @@ def let_handler(args: List[MalAny], env: Environment) -> EvalState:
         new_env = Environment(outer=env)
         for sym, binding in utils.pairs(args[0].value):
             if isinstance(sym, MalSym):
-                new_env.set(sym, EVAL(binding, new_env))
+                new_env.add(sym, EVAL(binding, new_env))
             else:
                 raise MalException("Non-symbol in let* in ", str(sym))
         return EvalState(args[1], new_env, EvalMode.CONTINUING)
@@ -264,11 +264,11 @@ def main() -> None:
     repl_env = Environment()
     core_ns = core.create_ns()
     for sym_name in core_ns:
-        repl_env.set(MalSym(sym_name), core_ns[sym_name])
+        repl_env.add(MalSym(sym_name), core_ns[sym_name])
 
-    repl_env.set(MalSym("eval"), MalBuiltin(lambda xs: mal_eval(xs, repl_env)))
-    repl_env.set(MalSym("swap!"), MalBuiltin(mal_swap))
-    repl_env.set(MalSym("*ARGV*"), MalList([]))
+    repl_env.add(MalSym("eval"), MalBuiltin(lambda xs: mal_eval(xs, repl_env)))
+    repl_env.add(MalSym("swap!"), MalBuiltin(mal_swap))
+    repl_env.add(MalSym("*ARGV*"), MalList([]))
 
     prelude_form = READ(prelude)
     assert prelude_form is not None
@@ -276,7 +276,7 @@ def main() -> None:
 
     if len(argv) > 1:
         argv_list: Sequence[MalAny] = argv[2:]
-        repl_env.set(MalSym("*ARGV*"), MalList(argv_list))
+        repl_env.add(MalSym("*ARGV*"), MalList(argv_list))
         read_eval('(load-file "' + argv[1] + '")', repl_env)
     else:
         while True:

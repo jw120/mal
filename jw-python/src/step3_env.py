@@ -36,7 +36,7 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
         if head == MalSym("def!"):
             if num_args == 2 and isinstance(args[0], MalSym):
                 val = EVAL(args[1], env)
-                env.set(args[0], val)
+                env.add(args[0], val)
                 return val
             raise MalException("Bad arguments for def! in ", str(ast))
 
@@ -46,7 +46,7 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
                 local_env = Environment(outer=env)
                 for sym, binding in utils.pairs(args[0].value):
                     if isinstance(sym, MalSym):
-                        local_env.set(sym, EVAL(binding, local_env))
+                        local_env.add(sym, EVAL(binding, local_env))
                 return EVAL(args[1], local_env)
             raise MalException("Bad arguments for let* in ", str(ast))
 
@@ -118,10 +118,10 @@ def int_fn(op: Callable[[int, int], int]) -> MalBuiltin:
 def rep_loop() -> None:
     """Repeatedly provide user prompt and passes the input to read-eval-print."""
     repl_env = Environment()
-    repl_env.set(MalSym("+"), int_fn(operator.add))
-    repl_env.set(MalSym("-"), int_fn(operator.sub))
-    repl_env.set(MalSym("*"), int_fn(operator.mul))
-    repl_env.set(MalSym("/"), int_fn(operator.floordiv))
+    repl_env.add(MalSym("+"), int_fn(operator.add))
+    repl_env.add(MalSym("-"), int_fn(operator.sub))
+    repl_env.add(MalSym("*"), int_fn(operator.mul))
+    repl_env.add(MalSym("/"), int_fn(operator.floordiv))
 
     while True:
         try:

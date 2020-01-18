@@ -22,12 +22,7 @@ T = TypeVar("T")
 
 
 class Reader(Generic[T]):
-    """Stateful reader object that supports peek and next.
-
-    >>> r = Reader([1,2,3])
-    >>> print(r.peek(), r.next(), r.next())
-    1 1 2
-    """
+    """Stateful reader object that supports peek and next."""
 
     def __init__(self, source: List[T]) -> None:
         """Initialize reader with a list."""
@@ -38,7 +33,7 @@ class Reader(Generic[T]):
         """Return current element without advancing. None if no more elements."""
         return self.source[self.current] if self.current < len(self.source) else None
 
-    def next(self) -> Optional[T]:
+    def pull(self) -> Optional[T]:
         """Return and advance current element. None if no more elements."""
         val = self.peek()
         self.current += 1
@@ -60,11 +55,6 @@ def read_str(source: str) -> Optional[MalAny]:
     """Read the tokens in the given string and return the MAL AST.
 
     Returns None in the absence of tokens (just whitespace or comments)
-
-    >>> print(read_str("42"), read_str("abc"), read_str('"s123"'))
-    42 abc s123
-    >>> print(read_str("true"), read_str("false"))
-    True False
     """
     tokens = TOKEN_REGEX.findall(source)
     return read_form(Reader(tokens))
@@ -83,14 +73,14 @@ def read_form(reader: Reader[str]) -> Optional[MalAny]:
 
 def read_seq(reader: Reader[str], opener: str, closer: str) -> List[MalAny]:
     """Read a sequence of values between given delimiters."""
-    if reader.next() != opener:
+    if reader.pull() != opener:
         raise MalException("no opener in read_seq")
 
     elements: List[MalAny] = []
     while True:
         next_value = reader.peek()
         if next_value == closer:
-            reader.next()
+            reader.pull()
             break
         if next_value is None:
             raise MalException("EOF before closing paren in read_list")
@@ -107,7 +97,7 @@ NUMBER_REGEX = re.compile(r"-?\d+")
 
 def read_atom(reader: Reader[str]) -> Optional[MalAny]:
     """Read an atom from the given Reader."""
-    token = reader.next()
+    token = reader.pull()
     if token is None:
         raise MalException("EOF in read_atom")
 

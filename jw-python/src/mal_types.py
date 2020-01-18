@@ -344,7 +344,7 @@ class Environment:
                 else:
                     raise MalException("Bad args to env - missing expr")
 
-    def set(self, sym: MalSym, value: MalAny) -> None:
+    def add(self, sym: MalSym, value: MalAny) -> None:
         """Add the symbol and value to the environment."""
         self.data[sym.value] = value
 

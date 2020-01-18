@@ -38,7 +38,7 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
         if head == MalSym("def!"):
             if num_args == 2 and isinstance(args[0], MalSym):
                 val = EVAL(args[1], env)
-                env.set(args[0], val)
+                env.add(args[0], val)
                 return val
             raise MalException("Bad arguments for def! in ", ast)
 
@@ -80,7 +80,7 @@ def EVAL(ast: MalAny, env: Environment) -> MalAny:
                 local_env = Environment(outer=env)
                 for sym, binding in utils.pairs(args[0].value):
                     if isinstance(sym, MalSym):
-                        local_env.set(sym, EVAL(binding, local_env))
+                        local_env.add(sym, EVAL(binding, local_env))
                 return EVAL(args[1], local_env)
             raise MalException("Bad arguments for let* in ", ast)
 
@@ -143,7 +143,7 @@ def rep_loop() -> None:
     repl_env = Environment()
     core_ns = core.create_ns()
     for sym_name in core_ns:
-        repl_env.set(MalSym(sym_name), core_ns[sym_name])
+        repl_env.add(MalSym(sym_name), core_ns[sym_name])
 
     prelude_form = READ("(def! not (fn* (a) (if a false true)))")
     assert prelude_form is not None
