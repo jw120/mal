@@ -356,11 +356,11 @@ class Environment:
             return None
         return self.outer.find(sym)
 
-    def get(self, sym: MalSym) -> MalAny:
+    def get(self, sym: MalSym, *, context: Optional[MalAny] = None) -> MalAny:
         """Return the symbol's value in the environement or its chain."""
         env = self.find(sym)
         if env is None:
-            raise MalException("'" + str(sym) + "' not found")
+            raise MalException("'" + str(sym) + "' not found", context)
         return env.data[sym.value]
 
 

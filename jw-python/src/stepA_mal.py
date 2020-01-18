@@ -250,7 +250,7 @@ def eval_ast(ast: MalAny, env: Environment) -> MalAny:
     """Second-level eval function that does not apply."""
     # A symbol evaluates to its value in the environment
     if isinstance(ast, MalSym):
-        return env.get(ast)
+        return env.get(ast, context="eval_ast")
 
     # A list or vector has all of its contents evaluated
     if isinstance(ast, MalSeq):
@@ -294,7 +294,7 @@ def macroexpand(ast: MalAny, env: Environment) -> MalAny:
         assert isinstance(ast, MalList)
         head = ast.value[0]
         assert isinstance(head, MalSym)
-        macro = env.get(head)
+        macro = env.get(head, context=ast)
         assert isinstance(macro, MalFunc)
         assert macro.is_macro
         ast = EVAL(
@@ -308,7 +308,7 @@ def is_macro(ast: MalAny, env: Environment) -> bool:
     if isinstance(ast, MalList) and len(ast.value) > 0:
         head: MalAny = ast.value[0]
         if isinstance(head, MalSym) and env.find(head) is not None:
-            head_value: MalAny = env.get(head)
+            head_value: MalAny = env.get(head, context="is_macro")
             if isinstance(head_value, MalFunc) and head_value.is_macro:
                 return True
     return False
