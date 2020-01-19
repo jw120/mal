@@ -29,7 +29,7 @@ make "perf^jw-python"  # Performance tests
 
 # TODO
 
-* Should we use more realistic underlying types - a list with O(1) cons?
+* Should we use more realistic underlying types - a list with O(1) cons? deque
 * Add python-eval and tests
 * Allow iterators to __init__ to save list() calls
 * Improve Benchmark
