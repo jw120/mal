@@ -1,6 +1,6 @@
 """Utility functions for mal."""
 
-from typing import Iterable, List, Tuple, TypeVar
+from typing import Iterable, Tuple, TypeVar
 
 from mal_types import MalException
 
@@ -49,8 +49,11 @@ def remove_escapes(s: str) -> str:
 T = TypeVar("T")
 
 
-def pairs(xs: List[T]) -> Iterable[Tuple[T, T]]:
+def pairs(xs: Iterable[T]) -> Iterable[Tuple[T, T]]:
     """Extract an iterator over pairs from a list."""
-    if len(xs) % 2 == 1:
-        raise MalException("Unmatched item in pair list", str(xs[-1]))
-    return zip(xs[0::2], xs[1::2])
+    xs_iterator = iter(xs)
+    try:
+        for x in xs_iterator:
+            yield x, next(xs_iterator)
+    except StopIteration:
+        raise MalException("Unmatched item in pair list", str(list(xs))) from None
