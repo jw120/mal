@@ -1,6 +1,6 @@
 .PHONY: check all typecheck lint test format
 all: check test
-check: format typecheck lint doctest
+check: format typecheck lint
 
 LINT = flake8
 TYPECHECK = mypy
