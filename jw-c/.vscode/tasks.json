@@ -10,10 +10,14 @@
             "args": [
                 "build"
             ],
+
             "problemMatcher": [
                 "$gcc"
             ],
-            "group": "build"
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ]
 }

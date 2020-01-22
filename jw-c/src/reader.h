@@ -1,7 +1,7 @@
 #ifndef READER_H
 #define READER_H
 
-#include "mal.h"
+#include "mal_types.h"
 
 mal read_str(const char *);
 

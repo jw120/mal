@@ -2,31 +2,43 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdnoreturn.h>
 
-#include "mal.h"
+#include "mal_types.h"
+#include "list.h"
 #include "reader.h"
 #include "tokenize.h"
 #include "utils.h"
 
 /**
  *
+ * reader.c - Provides the read_str function which reads a mal form from a string
  *
- *
+ * Operates by tokenizing the input and holding a state which holds the input string,
+ * an index into it for the current location and a current token.
  *
  **/
 
-typedef struct reader_state reader_state;
-struct reader_state {
+// Reader state - used only within this module
+typedef struct {
     const char *input_string;
     int input_length;
     const char *current;
     int offset;
-};
+} reader_state;
 
+// Forward definitions of founctions used within this module
+mal read_form(reader_state *);
+mal read_atom(reader_state *);
+mal read_list(reader_state *);
+noreturn void reader_error(const char *, reader_state *);
+
+// Query the current token without advancing it
 const char *reader_peek(const reader_state *state_ptr) {
     return state_ptr->current;
 }
 
+// Read the current token and advance the reader
 const char *reader_next(reader_state *state_ptr) {
 
     debug("reader_next", "called with state {'%s', %d, '%s', %d}",
@@ -42,7 +54,7 @@ const char *reader_next(reader_state *state_ptr) {
         debug("reader_next", "calling tokenize on '%s' at %d", state_ptr->input_string, state_ptr->offset);
         next = tokenize(state_ptr->input_string, state_ptr->offset);
         if (next == NULL) {
-           internal_error("Got null from tokenize");
+           reader_error("reader_next got null from tokenize", state_ptr);
         }
         debug("reader_next", "fetched '%s' with %d", next->val, next->next_offset);
         state_ptr->current = next->val;
@@ -60,32 +72,28 @@ const char *reader_next(reader_state *state_ptr) {
     return pre_fetched_current;
 }
 
+// Read a list
 mal read_list(reader_state *state_ptr) {
 
-    const char * token = reader_next(state_ptr);
-    if (strcmp(token, "(") != 0) {
-        internal_error("read_list", "called without leading paren: '%s'", token);
+    mal current = read_atom(state_ptr);
+
+    if (!mal_equals(current, opening_paren)) {
+        reader_error("read_list called without leading paren", state_ptr);
     }
 
-    mal m = { LIST, NULL };
-    list_node *last_element = &m;
+    mal m = make_list();
+    list_node *last = NULL;
 
-    while (strcmp(token, ")") != 0) {
-        token = reader_next(state_ptr);
-        if (token == NULL) {
-            internal_error("Missing end of list");
-        }
-        list_node *new_node = checked_malloc(sizeof(list_node), "list_node in read_list");
-        last_element->next = new_node;
-        new_node->val = token;
-        new_node->next = NULL;
-        debug("read_list", "found element '%s'", token);
+    while (!mal_equals(current, closing_paren)) {
+        current = read_form(state_ptr);
+        last = list_extend(current, last);
+        debug("read_list", "found element '%s'", current);
     }
 
     return m;
 
-}
 
+}
 
 mal read_atom(reader_state *state_ptr) {
 
@@ -104,7 +112,7 @@ mal read_atom(reader_state *state_ptr) {
     if (token_len >=2 && token[0] == '\"' && token[token_len - 1] == '\"') {
         value.tag = STR;
         value.s = checked_malloc(token_len - 1, "STR in read_atom");
-        strncpy(value.s, (char *) token + 1, token_len - 2);
+        strncpy((char *)value.s, token + 1, token_len - 2);
         return value;
     }
 
@@ -114,7 +122,7 @@ mal read_atom(reader_state *state_ptr) {
         return value;
     }
 
-    internal_error("read_atom", "zero length token");
+    reader_error("read_atom received zero length token", state_ptr);
 
 }
 
@@ -166,5 +174,9 @@ mal read_str(const char *input_string) {
     return m;
 }
 
+
+noreturn void reader_error(const char * msg, reader_state *state_ptr) {
+    internal_error("Reader error %s at %s", msg, state_ptr->input_string + state_ptr->offset);
+}
 
 
