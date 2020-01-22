@@ -7,7 +7,7 @@
 
 #include "utils.h"
 
-bool debug_mode = true;
+bool debug_mode = false;
 
 #define INTERNAL_ERROR_PREFIX "Internal error: "
 
@@ -63,4 +63,12 @@ bool is_number(const char *s) {
     }
     debug("is_number", "succeeded");
     return true;
+}
+
+// Concatenates the source string onto the end of thhe buffer which is
+// already initailized as a null-terminated string. Count is the maximum
+// number of characters to include (excluding the null)
+void str_concat(char *buf, const char *source, size_t count) {
+    int current_len = strlen(buf);
+    strncat(buf + current_len, source, count - current_len);
 }
