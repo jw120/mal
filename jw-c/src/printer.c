@@ -47,7 +47,8 @@ const char *pr_str(mal m)
                 }
                 input_node = input_node->next;
             }
-            buf_size = 1 + 2 + char_count + (element_count - 1);
+            int num_spaces = element_count > 0 ? element_count - 1 : 0;
+            buf_size = 1 + 2 + char_count + num_spaces;
             buf = checked_malloc(buf_size, "pr_str LIST");
             str_concat(buf, "(", buf_size - 1);
             for (string_node = string_head; string_node != NULL; string_node = string_node->next) {
@@ -58,6 +59,10 @@ const char *pr_str(mal m)
             }
             str_concat(buf, ")", buf_size - 1);
             return buf;
+        case MISSING:
+            internal_error("pr_str attempting to print missing value");
+        default:
+            internal_error("pr_str saw unknown tag");
     }
 }
 

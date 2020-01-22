@@ -16,6 +16,7 @@ struct list_node;
 typedef struct list_node list_node;
 
 enum mal_tag {
+    MISSING, // reader may return a missing value, should not be passed to eval or print
     INT,
     STR,
     SYM,
@@ -44,6 +45,7 @@ mal make_int(int);
 mal make_str(const char *);
 mal make_sym(const char *);
 mal make_list(list_node *);
+mal make_missing();
 
 // Constants to simplify evaluation
 extern mal opening_paren;

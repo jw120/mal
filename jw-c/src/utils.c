@@ -7,8 +7,6 @@
 
 #include "utils.h"
 
-bool debug_mode = false;
-
 #define INTERNAL_ERROR_PREFIX "Internal error: "
 
 noreturn void internal_error(const char * restrict fmt, ...) {
@@ -48,7 +46,7 @@ bool is_number(const char *s) {
     debug("is_number", "called with %s", s);
 
     if (s == NULL) {
-        internal_error("is_number", "null string");
+        internal_error("is_number called on null string");
     }
     if (strlen(s) == 0) {
         return false;

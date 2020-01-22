@@ -267,7 +267,7 @@ wren_STEP_TO_PROG =    wren/$($(1)).wren
 yorick_STEP_TO_PROG =  yorick/$($(1)).i
 jw-haskell_STEP_TO_PROG = jw-haskell/app/$($(1)).hs
 jw-python_STEP_TO_PROG = jw-python/src/$($(1)).py
-jw-c_STEP_TO_PROG = jw-c/src/$($(1)).c
+jw-c_STEP_TO_PROG = jw-c/app/$($(1)).c
 
 #
 # General settings and utility functions

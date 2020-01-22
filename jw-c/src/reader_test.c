@@ -25,5 +25,8 @@ const char *reader_test() {
     mu_assert("reader (+ 2 3) NULL", actual.n->next->next->next == NULL);
     mu_assert("reader (+ 2 3) whole", mal_equals(actual, expected));
 
+    mu_assert("reader empty string", read_str("").tag == MISSING);
+    mu_assert("reader spaces", read_str("   ").tag == MISSING);
+
     return 0;
 }

@@ -1,5 +1,5 @@
 Next
-    - Print for lists. list_map then list_concat
+- How to handle exceptions
     - Get step1 working
     - Stremaline debugging
 

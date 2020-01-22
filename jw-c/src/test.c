@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include "minunit.h"
 
 #include "list_test.h"
@@ -17,7 +19,11 @@ const char *run_tests() {
     return 0;
  }
 
+bool debug_mode;
+
 int main(int argc, char **argv) {
+
+    debug_mode = getenv("DEBUG") != NULL;
 
     printf("Starting tests\n");
 

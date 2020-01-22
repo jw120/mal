@@ -11,6 +11,7 @@ const char *printer_test() {
     mu_assert("pr_str \"abc\"", strcmp(pr_str(make_str("abc")), "\"abc\"") == 0);
     mu_assert("pr_str def!", strcmp(pr_str(make_sym("def!")), "def!") == 0);
 
+    mu_assert("pr_str ()", strcmp(pr_str(make_list(NULL)), "()") == 0);
     mal m = make_list(
         list_cons(make_sym("plus"),
             list_cons(make_int(4),

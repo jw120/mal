@@ -45,6 +45,11 @@ mal make_list(list_node *n) {
     return val;
 }
 
+mal make_missing() {
+    mal val = { MISSING };
+    return val;
+}
+
 // Constants to simplify evaluation
 mal opening_paren = { SYM, { .s = "("} };
 mal closing_paren = { SYM, { .s = ")"} };

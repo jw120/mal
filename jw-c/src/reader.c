@@ -34,7 +34,7 @@ noreturn void reader_error(const char *, reader_state *);
 
 // Query the current token without advancing it
 const char *reader_peek(const reader_state *state_ptr) {
-    return state_ptr->current;
+    return state_ptr->current == NULL ? "" : state_ptr->current;
 }
 
 // Read the current token and advance the reader
@@ -89,6 +89,9 @@ mal read_list(reader_state *state_ptr) {
         if (mal_equals(current, closing_paren)) {
             break;
         }
+        if (current.tag == MISSING) {
+            internal_error("EOF in list");
+        }
         last = list_extend(current, last);
         if (head == NULL) {
             head = last;
@@ -133,11 +136,16 @@ mal read_atom(reader_state *state_ptr) {
         return value;
     }
 
+    puts("!!!");
     reader_error("read_atom received zero length token", state_ptr);
 
 }
 
 mal read_form(reader_state *state_ptr) {
+    if (strcmp(reader_peek(state_ptr), "") == 0) {
+        debug("read_form", "starting read_list");
+        return make_missing();
+    }
     if (strcmp(reader_peek(state_ptr), "(") == 0) {
         debug("read_form", "starting read_list");
         return read_list(state_ptr);
