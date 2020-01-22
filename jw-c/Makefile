@@ -21,6 +21,7 @@ mal: list.o mal.o types.o printer.o reader.o tokenize.o utils.o
 
 test: test.o types.o utils.o \
 	list_test.o list.o \
+	printer_test.o printer.o \
 	reader_test.o reader.o \
 	tokenize_test.o tokenize.o list.o
 	$(CC) $(CFLAGS) $(LIBS) $^ -o $@

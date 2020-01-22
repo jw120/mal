@@ -81,18 +81,23 @@ mal read_list(reader_state *state_ptr) {
     }
 
     debug("read_list", "started");
-    mal m = make_list(NULL);
-    list_node *last = m.n;
+    list_node *head = NULL;
+    list_node *last = NULL;
 
-    while (!mal_equals(current, closing_paren)) {
+    while (true) {
         current = read_form(state_ptr);
-        debug("read_list", "read_form returned tag %d", current.tag);
+        if (mal_equals(current, closing_paren)) {
+            break;
+        }
         last = list_extend(current, last);
+        if (head == NULL) {
+            head = last;
+        }
         debug("read_list", "found element tag %d", current.tag);
     }
     debug("read_list", "finished");
 
-    return m;
+    return make_list(head);
 
 
 }

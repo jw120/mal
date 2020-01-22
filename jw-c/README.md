@@ -1,3 +1,8 @@
+Next
+    - Print for lists. list_map then list_concat
+    - Get step1 working
+    - Stremaline debugging
+
 using only libs builtin on mac
 readline
 pcre

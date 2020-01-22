@@ -2,6 +2,7 @@
 #include "minunit.h"
 
 #include "list_test.h"
+#include "printer_test.h"
 #include "reader_test.h"
 #include "tokenize_test.h"
 
@@ -10,6 +11,7 @@ int tests_run = 0;
 
 const char *run_tests() {
     mu_run_test(list_test);
+    mu_run_test(printer_test);
     mu_run_test(reader_test);
     mu_run_test(tokenize_test);
     return 0;

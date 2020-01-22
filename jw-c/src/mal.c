@@ -51,6 +51,13 @@ int main()
     m = read_str("(qq 2 3)");
     debug("main", "got %d", m.tag);
     puts(PRINT(m));
+    if (m.tag == LIST) {
+        list_node * n = m.n;
+        while (n != NULL) {
+            puts(PRINT(n->val));
+            n = n->next;
+        }
+    }
     return 0;
 
     // while (1) {
