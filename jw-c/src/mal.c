@@ -6,27 +6,27 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "printer.h"
 #include "reader.h"
-#include "tokenize.h"
 #include "utils.h"
 
 #define INPUT_BUFFER_SIZE 200
 
-const char *READ(const char * s)
+mal READ(const char * s)
 {
-    read_str(s);
+    mal m = read_str(s);
     debug("READ", "read_str finished (have '%s')", s || "NULL");
-    return s;
+    return m;
 }
 
-const char *EVAL(const char * s)
+mal EVAL(mal m)
 {
-    return s;
+    return m;
 }
 
-const char *PRINT(const char* s)
+const char *PRINT(mal m)
 {
-    return s;
+    return pr_str(m);
 }
 
 const char *rep(const char *s)
@@ -38,15 +38,19 @@ int main()
 {
     mal m = read_str("23");
     debug("main", "got %d %d", m.tag, m.i);
+    puts(PRINT(m));
     printf("---\n");
     m = read_str("\"abc\"");
     debug("main", "got %d %s", m.tag, m.s);
+    puts(PRINT(m));
     printf("---\n");
     m = read_str("def");
     debug("main", "got %d %s", m.tag, m.s);
+    puts(PRINT(m));
     printf("---\n");
     m = read_str("(qq 2 3)");
     debug("main", "got %d", m.tag);
+    puts(PRINT(m));
     return 0;
 
     // while (1) {

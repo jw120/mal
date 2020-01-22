@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#include "mal_types.h"
+#include "types.h"
 
 // return a new list whose head is the given element and whose tail is the given list (which may be NULL)
 list_node *list_cons(mal, list_node *);

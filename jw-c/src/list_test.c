@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include "minunit.h"
 
-#include "test_list.h"
+#include "list_test.h"
 #include "list.h"
 
-const char *test_list() {
+const char *list_test() {
 
     // n0 = []
     list_node *n0 = NULL;
@@ -14,7 +14,7 @@ const char *test_list() {
     // n1 = 1 : []
     list_node *n1 = list_cons(make_int(1), n0);
     mu_assert("n1 empty", !list_empty(n1));
-    mu_assert("n1 not length one", list_len(n0) == 1);
+    mu_assert("n1 not length one", list_len(n1) == 1);
     mu_assert("n1 head value wrong", mal_equals(n1->val, make_int(1)));
     mu_assert("n1 next not null", n1->next == NULL);
 
@@ -40,9 +40,36 @@ const char *test_list() {
     mu_assert("n4 not length one", list_len(n4) == 1);
     mu_assert("n3 now not length two", list_len(n3) == 2);
     mu_assert("n4 head value wrong", mal_equals(n4->val, make_int(4)));
-    mu_assert("n4 next not null", n4->next == n1);
+    mu_assert("n4 next not null", n4->next == NULL);
     mu_assert("n3 head value wrong", mal_equals(n3->val, make_int(3)));
     mu_assert("n3 next not n4", n3->next == n4);
+
+    // Test of equality
+    mu_assert("n0 != n0", list_equals(n0, n0));
+    mu_assert("n0 == n1", !list_equals(n0, n1));
+    mu_assert("n0 == n2", !list_equals(n0, n2));
+    mu_assert("n0 == n3", !list_equals(n0, n3));
+    mu_assert("n0 == n4", !list_equals(n0, n4));
+    mu_assert("n1 == n0", !list_equals(n1, n0));
+    mu_assert("n1 /= n1", list_equals(n1, n1));
+    mu_assert("n1 == n2", !list_equals(n1, n2));
+    mu_assert("n1 == n3", !list_equals(n1, n3));
+    mu_assert("n1 == n4", !list_equals(n1, n4));
+    mu_assert("n2 == n0", !list_equals(n2, n0));
+    mu_assert("n2 == n1", !list_equals(n2, n1));
+    mu_assert("n2 /= n2", list_equals(n2, n2));
+    mu_assert("n2 == n3", !list_equals(n2, n3));
+    mu_assert("n2 == n4", !list_equals(n2, n4));
+    mu_assert("n3 == n0", !list_equals(n3, n0));
+    mu_assert("n3 == n1", !list_equals(n3, n1));
+    mu_assert("n3 == n2", !list_equals(n3, n2));
+    mu_assert("n3 /= n3", list_equals(n3, n3));
+    mu_assert("n3 == n4", !list_equals(n3, n4));
+    mu_assert("n4 == n0", !list_equals(n4, n0));
+    mu_assert("n4 == n1", !list_equals(n4, n1));
+    mu_assert("n4 == n2", !list_equals(n4, n2));
+    mu_assert("n4 == n3", !list_equals(n4, n3));
+    mu_assert("n4 /= n4", list_equals(n4, n4));
 
     return 0;
 }

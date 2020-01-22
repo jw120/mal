@@ -85,10 +85,10 @@ const token_result *tokenize(const char *input_string, const int offset) {
     int token_length = ovector[3] - ovector[2];
     char *token = checked_malloc(token_length + 1, "token allocation in tokenize");
     strncpy(token, token_start, token_length);
-    debug("tokenize", "found token '%s'", token);
+    debug("tokenize", "found token '%s', next is at %d", token, ovector[1]);
 
     token_result *result = checked_malloc(sizeof(token_result), "result allocation in tokenize");
     result->val = token;
-    result->next_offset = ovector[1] + 1;
+    result->next_offset = ovector[1];
     return result;
 }

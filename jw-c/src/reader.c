@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdnoreturn.h>
 
-#include "mal_types.h"
 #include "list.h"
 #include "reader.h"
 #include "tokenize.h"
@@ -81,14 +80,17 @@ mal read_list(reader_state *state_ptr) {
         reader_error("read_list called without leading paren", state_ptr);
     }
 
-    mal m = make_list();
-    list_node *last = NULL;
+    debug("read_list", "started");
+    mal m = make_list(NULL);
+    list_node *last = m.n;
 
     while (!mal_equals(current, closing_paren)) {
         current = read_form(state_ptr);
+        debug("read_list", "read_form returned tag %d", current.tag);
         last = list_extend(current, last);
-        debug("read_list", "found element '%s'", current);
+        debug("read_list", "found element tag %d", current.tag);
     }
+    debug("read_list", "finished");
 
     return m;
 
@@ -110,15 +112,19 @@ mal read_atom(reader_state *state_ptr) {
     }
 
     if (token_len >=2 && token[0] == '\"' && token[token_len - 1] == '\"') {
+        debug("read_atom", "found an string %s", token);
         value.tag = STR;
         value.s = checked_malloc(token_len - 1, "STR in read_atom");
         strncpy((char *)value.s, token + 1, token_len - 2);
+        debug("read_atom", "returning str %s", value.s);
         return value;
     }
 
     if (token_len >= 1) {
+        debug("read_atom", "found a symbol %s", token);
         value.tag = SYM;
         value.s = token;
+        debug("read_atom", "returning sym %s", value.s);
         return value;
     }
 
@@ -128,8 +134,10 @@ mal read_atom(reader_state *state_ptr) {
 
 mal read_form(reader_state *state_ptr) {
     if (strcmp(reader_peek(state_ptr), "(") == 0) {
+        debug("read_form", "starting read_list");
         return read_list(state_ptr);
     } else {
+        debug("read_form", "starting read_atom");
         return read_atom(state_ptr);
     }
 }

@@ -40,10 +40,10 @@ struct list_node {
 bool mal_equals(mal, mal);
 
 // Constructor functions
-mal make_int(int i);
-mal make_str(const char *s);
-mal make_sym(const char *s);
-mal make_list();
+mal make_int(int);
+mal make_str(const char *);
+mal make_sym(const char *);
+mal make_list(list_node *);
 
 // Constants to simplify evaluation
 extern mal opening_paren;

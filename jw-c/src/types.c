@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mal_types.h"
+#include "types.h"
 #include "list.h"
 #include "utils.h"
 
@@ -40,8 +40,8 @@ mal make_sym(const char *s) {
     return val;
 }
 
-mal make_list() {
-    mal val = { LIST, { .n = (list_node *) NULL } };
+mal make_list(list_node *n) {
+    mal val = { LIST, { .n = (list_node *) n } };
     return val;
 }
 
