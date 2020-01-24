@@ -1,3 +1,10 @@
+/**
+ *
+ * printer.c - provides the pr_str to convert a mal type to a character string
+ *
+ **/
+
+
 #include <stdio.h>
 #include <string.h>
 
@@ -14,6 +21,10 @@ const char *pr_str(mal m)
     char *buf;
 
     switch (m.tag) {
+        case MISSING:
+            internal_error("pr_str attempting to print missing value");
+        case EXCEPTION:
+            internal_error("pr_str attempting to print exception NYI");
         case INT:
             debug("pr_str", "int %d", m.i);
             buf_size = 1 + snprintf(NULL, 0, "%d", m.i);
@@ -59,8 +70,6 @@ const char *pr_str(mal m)
             }
             str_concat(buf, ")", buf_size - 1);
             return buf;
-        case MISSING:
-            internal_error("pr_str attempting to print missing value");
         default:
             internal_error("pr_str saw unknown tag");
     }

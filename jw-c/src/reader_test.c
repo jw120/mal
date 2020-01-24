@@ -18,15 +18,15 @@ const char *reader_test() {
             list_cons(make_int(2),
                 list_cons(make_int(3), NULL))));
     mal actual = read_str("(+ 2 3)");
-    mu_assert("reader (+ 2 3) list", actual.tag == LIST);
+    mu_assert("reader (+ 2 3) list", is_list(actual));
     mu_assert("reader (+ 2 3) head", mal_equals(actual.n->val, make_sym("+")));
     mu_assert("reader (+ 2 3) 2", mal_equals(actual.n->next->val, make_int(2)));
     mu_assert("reader (+ 2 3) 3", mal_equals(actual.n->next->next->val, make_int(3)));
     mu_assert("reader (+ 2 3) NULL", actual.n->next->next->next == NULL);
     mu_assert("reader (+ 2 3) whole", mal_equals(actual, expected));
 
-    mu_assert("reader empty string", read_str("").tag == MISSING);
-    mu_assert("reader spaces", read_str("   ").tag == MISSING);
+    mu_assert("reader empty string", is_missing(read_str("")));
+    mu_assert("reader spaces", is_missing(read_str("   ")));
 
     return 0;
 }

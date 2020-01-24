@@ -1,3 +1,10 @@
+/**
+ *
+ * list.c - provides a lisp-like singly linked list
+ *
+ **/
+
+
 #include <stdbool.h>
 #include <stddef.h>
 

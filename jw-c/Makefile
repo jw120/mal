@@ -1,6 +1,8 @@
-.PHONY: all clean run-test run
+.PHONY: all build clean run test
 
-all: mal run-test
+all: build test
+
+build: mal
 
 CC = clang
 CFLAGS = -Wall -O2 -std=c17
@@ -19,18 +21,19 @@ utils.o: src/types.h src/utils.h
 mal: list.o mal.o types.o printer.o reader.o tokenize.o utils.o
 	$(CC) $(CFLAGS) $(LIBS) $^ -o $@
 
-test: test.o types.o utils.o \
+tests: tests.o utils.o \
 	list_test.o list.o \
 	printer_test.o printer.o \
 	reader_test.o reader.o \
-	tokenize_test.o tokenize.o list.o
+	tokenize_test.o tokenize.o \
+	types_test.o types.o
 	$(CC) $(CFLAGS) $(LIBS) $^ -o $@
 
 run: mal
 	./mal
 
-run-test: test
-	./test
+test: tests
+	./tests
 
 %.o: src/%.c
 	$(CC) $(CFLAGS) -c $<

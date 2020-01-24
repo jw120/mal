@@ -1,7 +1,8 @@
 Next
-- How to handle exceptions
-    - Get step1 working
-    - Stremaline debugging
+- Dependency generation
+- Use exception returns
+- All free's for all mallocs?
+- Get step1 working
 
 using only libs builtin on mac
 readline

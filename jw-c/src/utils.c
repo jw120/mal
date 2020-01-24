@@ -1,3 +1,10 @@
+/**
+ *
+ * utils.c - misc utility functions
+ *
+ **/
+
+
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdbool.h>

@@ -1,3 +1,9 @@
+/**
+ *
+ * types.c - basic support for the mal type defined in mal.h
+ *
+ **/
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -23,7 +29,50 @@ bool mal_equals(mal a, mal b) {
     }
 }
 
-// Convenience constructor functions
+/**
+ *
+ * Convenience functions to test the type
+ *
+ */
+
+bool is_missing(mal m) {
+    return m.tag == MISSING;
+}
+
+bool is_exception(mal m) {
+    return m.tag == EXCEPTION;
+}
+
+bool is_int(mal m) {
+    return m.tag == INT;
+}
+
+bool is_str(mal m) {
+    return m.tag == STR;
+}
+
+bool is_sym(mal m) {
+    return m.tag == SYM;
+}
+
+bool is_list(mal m) {
+    return m.tag == LIST;
+}
+
+bool match_sym(mal m, const char * s) {
+    return m.tag == SYM && strcmp(m.s, s) == 0;
+}
+
+
+/**
+ * Convenience constructor functions
+ *
+ */
+
+mal make_missing() {
+    mal val = { MISSING };
+    return val;
+}
 
 mal make_int(int i) {
     mal val = { INT, { .i = i } };
@@ -45,8 +94,10 @@ mal make_list(list_node *n) {
     return val;
 }
 
-mal make_missing() {
-    mal val = { MISSING };
+mal make_exception(mal m) {
+    mal *m_ptr = checked_malloc(sizeof(mal), "make_exception");
+    *m_ptr = m;
+    mal val = { EXCEPTION, { .e = m_ptr }};
     return val;
 }
 

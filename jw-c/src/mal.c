@@ -1,4 +1,8 @@
-// Step 0 - repl
+/**
+ *
+ * mal.c - main program of the mal intepreter
+ *
+ **/
 
 #include <editline/readline.h>
 #include <stdbool.h>
@@ -30,7 +34,7 @@ const char *PRINT(mal m)
 mal read_eval(const char *s)
 {
     mal m = READ(s);
-    if (m.tag == MISSING) {
+    if (is_missing(m)) {
         return m;
     }
     return EVAL(m);
@@ -52,7 +56,8 @@ int main()
         }
         add_history(input);
         mal m = read_eval(input);
-        if (m.tag != MISSING) {
+        printf("m tag %d\n", m.tag);
+        if (!is_missing(m)) {
             puts(pr_str(m));
         }
         free((void *) input);

@@ -3,6 +3,7 @@
         "*.Rmd": "markdown",
         "reader.h": "c",
         "iterator": "c",
-        "printer.h": "c"
+        "printer.h": "c",
+        "stdbool.h": "c"
     }
 }

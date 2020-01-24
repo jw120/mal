@@ -1,3 +1,14 @@
+/**
+ *
+ * tokenize.c - returns a token from the input_string
+ *
+ * When called repeatedly on a fixed input string, it returns the matched tokens
+ * one by one using the mal PCRE regex.
+ *
+ * Uses pcre2 library
+ *
+ **/
+
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
@@ -8,17 +19,6 @@
 
 #include "tokenize.h"
 #include "utils.h"
-
-/***
- *
- * Tokenize
- *
- * When called repeatedly on a fixed input string, it returns the matched tokens
- * one by one using the mal PCRE regex.
- *
- * Uses pcre2 library (installed by default on mac)
- *
- **/
 
 // Regex for mal tokens (given in mal instructions)
 #define TOKEN_REGEX \
@@ -35,8 +35,6 @@ const token_result *tokenize(const char *input_string, const int offset) {
 
     static pcre2_code *token_regexp = NULL;
     static pcre2_match_data *match_data = NULL;
-
-    debug("tokenize", "called on '%s' at offset %d", input_string, offset);
 
     if (token_regexp == NULL) { // Compile the regexp if has not been done
 
