@@ -56,7 +56,6 @@ int main()
         }
         add_history(input);
         mal m = read_eval(input);
-        printf("m tag %d\n", m.tag);
         if (!is_missing(m)) {
             puts(pr_str(m));
         }

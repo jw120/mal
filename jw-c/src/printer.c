@@ -24,7 +24,7 @@ const char *pr_str(mal m)
         case MISSING:
             internal_error("pr_str attempting to print missing value");
         case EXCEPTION:
-            internal_error("pr_str attempting to print exception NYI");
+            return pr_str(*(m.e));
         case INT:
             debug("pr_str", "int %d", m.i);
             buf_size = 1 + snprintf(NULL, 0, "%d", m.i);
