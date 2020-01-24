@@ -1,43 +1,56 @@
-.PHONY: all build clean run test
+.PHONY: all build clean distclean run test
 
 all: build test
 
-build: mal
+# Directories - executables go in target, *.o and *.d in build
+TARGET_DIR := .
+BUILD_DIR := ./build
+SRC_DIR := ./src
 
+# Files
+SRC_FILES := $(wildcard $(SRC_DIR)/*.c)
+OBJ_FILES := $(addprefix $(BUILD_DIR)/,$(addsuffix .o,$(notdir $(basename $(SRC_FILES)))))
+DEP_FILES := $(SRC_FILES:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.d)
+MAIN_OBJ_FILES = $(filter-out %/tests.o %_test.o,$(OBJ_FILES))
+TEST_OBJ_FILES = $(filter-out %/mal.o,$(OBJ_FILES))
+
+# Command options
 CC = clang
 CFLAGS = -Wall -O2 -std=c17
+DEPFLAGS = -MMD -MT $@
 LIBS= -lreadline -lpcre2-8
 
-mal: list.o mal.o types.o printer.o reader.o tokenize.o utils.o
+# Build rules
 
-list.o: src/types.h src/list.h
-types.o: src/types.h
-mal.o: src/types.h src/reader.h src/tokenize.h src/utils.h
-printer.o: src/types.h src/printer.h src/utils.h
-reader.o: src/types.h src/reader.h src/list.h src/tokenize.h src/utils.h
-tokenize.o: src/types.h src/tokenize.h src/utils.h
-utils.o: src/types.h src/utils.h
+.PRECIOUS: $(DEP_FILES)
 
-mal: list.o mal.o types.o printer.o reader.o tokenize.o utils.o
-	$(CC) $(CFLAGS) $(LIBS) $^ -o $@
+$(BUILD_DIR)/%.o : $(SRC_DIR)/%.c $(BUILD_DIR)/%.d
+	$(CC) -c $(CFLAGS) $(DEPFLAGS) $(OUTPUT_OPTION) $<
 
-tests: tests.o utils.o \
-	list_test.o list.o \
-	printer_test.o printer.o \
-	reader_test.o reader.o \
-	tokenize_test.o tokenize.o \
-	types_test.o types.o
-	$(CC) $(CFLAGS) $(LIBS) $^ -o $@
+$(TARGET_DIR)/mal: $(MAIN_OBJ_FILES)
+	$(CC) $(LDFLAGS) $(LIBS) $^ -o $@
 
-run: mal
-	./mal
+$(TARGET_DIR)/tests: $(TEST_OBJ_FILES)
+	$(CC) $(LDFLAGS) $(LIBS) $^ -o $@
 
-test: tests
-	./tests
+# Dependencies
 
-%.o: src/%.c
-	$(CC) $(CFLAGS) -c $<
+$(DEP_FILES):# Mentioned as dependencies so make won't fail when they don't exist
+include $(wildcard $(DEP_FILES))
+
+# Top-level targets
+
+build: $(TARGET_DIR)/mal $(TARGET_DIR)/tests
+
+run: $(TARGET_DIR)/mal
+	-$(TARGET_DIR)/mal
+
+test: $(TARGET_DIR)/tests
+	-$(TARGET_DIR)/tests
 
 clean:
-	-rm *.o mal test_all
+	$(RM) $(BUILD_DIR)/*
+
+distclean: clean
+	$(RM) $(TARGET_DIR)/mal $(TARGET_DIR)/tests
 
