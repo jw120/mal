@@ -45,6 +45,7 @@ list_node *list_extend(mal, list_node *n);
 
 int vec_count(vec *);
 bool vec_empty(vec *);
+bool vec_equals(vec *, vec*);
 
 // Create a vector of the given size with elements from the given list
 vec *create_vec(size_t, list_node *);

@@ -14,15 +14,12 @@
 
 // Value equality
 bool mal_equals(mal a, mal b) {
-    if (a.tag != b.tag) {
-        return false;
-    }
     switch (a.tag) {
         case INT:
-            return a.i == b.i;
+            return a.tag == b.tag && a.i == b.i;
         case SYM:
         case STR:
-            return strcmp(a.s, b.s) == 0;
+            return a.tag == b.tag && strcmp(a.s, b.s) == 0;
         case LIST:
         case VEC:
             if (b.tag == LIST || b.tag == VEC) {

@@ -89,11 +89,12 @@ const char *seq_test() {
     mu_assert("v2[0] value wrong", mal_equals(v2->buf[0], make_int(2)));
     mu_assert("v2[1] value wrong", mal_equals(v2->buf[1], make_int(1)));
 
-    // v3 = [3]
-    vec *v3 = create_vec(1, n3);
+    // v3 = [3, 4]
+    vec *v3 = create_vec(2, n3);
     mu_assert("v3 empty", !vec_empty(v3));
-    mu_assert("v3 not length one", vec_count(v3) == 1);
-    mu_assert("v3[0] value wrong", mal_equals(v3->buf[0], make_int(1)));
+    mu_assert("v3 not length two", vec_count(v3) == 2);
+    mu_assert("v3[0] value wrong", mal_equals(v3->buf[0], make_int(3)));
+    mu_assert("v3[1] value wrong", mal_equals(v3->buf[1], make_int(4)));
 
     // Test seq_equals for vectors and lists
     mal mn0 = make_list(n0);
@@ -112,15 +113,14 @@ const char *seq_test() {
     mu_assert("mv1 != mn1", mal_equals(mv1, mn1));
     mu_assert("mv2 != mn2", mal_equals(mv2, mn2));
     mu_assert("mv3 != mn3", mal_equals(mv3, mn3));
-    mu_assert("mn0 == mv1", mal_equals(mn0, mv1));
-    mu_assert("mn1 == mv2", mal_equals(mn1, mv2));
-    mu_assert("mn2 == mv3", mal_equals(mn2, mv3));
-    mu_assert("mn3 == mv0", mal_equals(mn3, mv0));
-    mu_assert("mv0 == mn1", mal_equals(mv0, mn1));
-    mu_assert("mv1 == mn2", mal_equals(mv1, mn2));
-    mu_assert("mv2 == mn3", mal_equals(mv2, mn3));
-    mu_assert("mv3 == mn0", mal_equals(mv3, mn0));
-
+    mu_assert("mn0 == mv1", !mal_equals(mn0, mv1));
+    mu_assert("mn1 == mv2", !mal_equals(mn1, mv2));
+    mu_assert("mn2 == mv3", !mal_equals(mn2, mv3));
+    mu_assert("mn3 == mv0", !mal_equals(mn3, mv0));
+    mu_assert("mv0 == mn1", !mal_equals(mv0, mn1));
+    mu_assert("mv1 == mn2", !mal_equals(mv1, mn2));
+    mu_assert("mv2 == mn3", !mal_equals(mv2, mn3));
+    mu_assert("mv3 == mn0", !mal_equals(mv3, mn0));
 
     return 0;
 }
