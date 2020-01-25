@@ -9,7 +9,7 @@
 #include <stdio.h>
 
 #include "types.h"
-#include "list.h"
+#include "seq.h"
 #include "utils.h"
 
 // Value equality
@@ -24,7 +24,11 @@ bool mal_equals(mal a, mal b) {
         case STR:
             return strcmp(a.s, b.s) == 0;
         case LIST:
-            return list_equals(a.n, b.n);
+        case VEC:
+            if (b.tag == LIST || b.tag == VEC) {
+                return seq_equals(a, b);
+            }
+            return false;
         default:
             internal_error("Unknown tag in mal_equals", a.tag);
     }
@@ -60,6 +64,14 @@ bool is_list(mal m) {
     return m.tag == LIST;
 }
 
+bool is_vec(mal m) {
+    return m.tag == VEC;
+}
+
+bool is_seq(mal m) {
+    return m.tag == LIST || m.tag == VEC;
+}
+
 bool match_sym(mal m, const char * s) {
     return m.tag == SYM && strcmp(m.s, s) == 0;
 }
@@ -92,6 +104,11 @@ mal make_sym(const char *s) {
 
 mal make_list(list_node *n) {
     mal val = { LIST, { .n = (list_node *) n } };
+    return val;
+}
+
+mal make_vec(vec *v) {
+    mal val = { VEC, { .v = v }};
     return val;
 }
 

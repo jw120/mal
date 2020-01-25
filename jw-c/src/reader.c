@@ -13,8 +13,8 @@
 #include <stdio.h>
 #include <stdnoreturn.h>
 
-#include "list.h"
 #include "reader.h"
+#include "seq.h"
 #include "tokenize.h"
 #include "utils.h"
 
@@ -58,35 +58,44 @@ const char *reader_next(reader_state *state_ptr) {
     return pre_fetched_current;
 }
 
-// Read a list
-mal read_list(reader_state *state_ptr) {
+// Read a list or vector
+mal read_seq(reader_state *state_ptr) {
 
     mal current = read_atom(state_ptr);
-
-    if (!match_sym(current, "(")) {
-        return make_reader_exception("read_list called without leading paren", state_ptr);
+    bool reading_list;
+    if (match_sym(current, "(")) {
+        reading_list = true;
+    } else if (match_sym(current, "]")) {
+        reading_list = false;
+    } else {
+        return make_reader_exception("read_seq called without opener", state_ptr);
     }
 
-    debug("read_list", "started");
+    // Read the elements as a list, keeping a count of the number read
+    debug("read_seq", "started");
     list_node *head = NULL;
     list_node *last = NULL;
-
+    int nodes_count = 0;
     while (true) {
         current = read_form(state_ptr);
-        if (match_sym(current, ")")) {
+        if ((reading_list && match_sym(current, ")")) ||
+            (!reading_list && match_sym(current, "]"))) {
             break;
         }
         if (is_missing(current)) {
             return make_reader_exception("EOF in list", state_ptr);
         }
+        nodes_count++;
         last = list_extend(current, last);
         if (head == NULL) {
             head = last;
         }
     }
 
-    return make_list(head);
-
+    if (reading_list) {
+        return make_list(head);
+    }
+    return make_vec(create_vec(nodes_count, head));
 }
 
 // read a non-list
@@ -123,13 +132,14 @@ mal read_atom(reader_state *state_ptr) {
 }
 
 mal read_form(reader_state *state_ptr) {
-    if (strcmp(reader_peek(state_ptr), "") == 0) {
+    const char *next_token=reader_peek(state_ptr);
+    if (strcmp(next_token, "") == 0) {
         debug("read_form", "returning missing");
         return make_missing();
     }
-    if (strcmp(reader_peek(state_ptr), "(") == 0) {
-        debug("read_form", "starting read_list");
-        return read_list(state_ptr);
+    if (strcmp(next_token, "(") == 0 || strcmp(next_token, ")") == 0) {
+        debug("read_form", "starting read_seq");
+        return read_seq(state_ptr);
     } else {
         debug("read_form", "starting read_atom");
         return read_atom(state_ptr);

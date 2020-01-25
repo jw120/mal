@@ -1,9 +1,9 @@
 #include <string.h>
 #include "minunit.h"
 
-#include "list.h"
 #include "reader_test.h"
 #include "reader.h"
+#include "seq.h"
 
 const char *reader_test() {
 

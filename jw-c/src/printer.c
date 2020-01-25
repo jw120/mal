@@ -8,8 +8,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "list.h"
 #include "printer.h"
+#include "seq.h"
 #include "utils.h"
 
 #define BUFFER_SIZE_FOR_INT 16

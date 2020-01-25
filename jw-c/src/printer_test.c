@@ -3,7 +3,7 @@
 
 #include "printer_test.h"
 #include "printer.h"
-#include "list.h"
+#include "seq.h"
 
 const char *printer_test() {
 

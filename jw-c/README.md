@@ -1,6 +1,6 @@
 Next
-- Dependency generation
-- Use exception returns
+- Implement vector type - make a type that is a vector with a length and hold a pointer in mal
+- Implement equality for vectors/lists
 - All free's for all mallocs?
 - Get step1 working
 
