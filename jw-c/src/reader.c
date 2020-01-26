@@ -30,7 +30,7 @@ typedef struct {
 mal read_form(reader_state *);
 mal read_atom(reader_state *);
 mal read_list(reader_state *);
-mal make_reader_exception(const char *, reader_state *);
+mal mal_reader_exception(const char *, reader_state *);
 
 // Return the pre-fetched token without advancing it
 const char *reader_peek(const reader_state *state_ptr) {
@@ -47,7 +47,7 @@ const char *reader_next(reader_state *state_ptr) {
     if (state_ptr->offset < state_ptr->input_length) {
         const token_result *next = tokenize(state_ptr->input_string, state_ptr->offset);
         // if (next == NULL) {
-        //     return make_reader_exception("reader_next got null from tokenize", state_ptr);
+        //     return mal_reader_exception("reader_next got null from tokenize", state_ptr);
         // }
         state_ptr->current = next->val;
         state_ptr->offset = next->next_offset;
@@ -65,10 +65,10 @@ mal read_seq(reader_state *state_ptr) {
     bool reading_list;
     if (match_sym(current, "(")) {
         reading_list = true;
-    } else if (match_sym(current, "]")) {
+    } else if (match_sym(current, "[")) {
         reading_list = false;
     } else {
-        return make_reader_exception("read_seq called without opener", state_ptr);
+        return mal_reader_exception("read_seq called without opener", state_ptr);
     }
 
     // Read the elements as a list, keeping a count of the number read
@@ -83,7 +83,7 @@ mal read_seq(reader_state *state_ptr) {
             break;
         }
         if (is_missing(current)) {
-            return make_reader_exception("EOF in list", state_ptr);
+            return mal_reader_exception("EOF in list", state_ptr);
         }
         nodes_count++;
         last = list_extend(current, last);
@@ -93,9 +93,9 @@ mal read_seq(reader_state *state_ptr) {
     }
 
     if (reading_list) {
-        return make_list(head);
+        return mal_list(head);
     }
-    return make_vec(create_vec(nodes_count, head));
+    return mal_vec(create_vec(nodes_count, head));
 }
 
 // read a non-list
@@ -120,6 +120,26 @@ mal read_atom(reader_state *state_ptr) {
         return value;
     }
 
+    if (token_len >= 2 && strncmp(token, ":", 1) == 0) {
+        debug("read_atom", "returning keyword :%s", token + 1);
+        return mal_kw(token + 1);
+    }
+
+    if (strcmp(token, "true") == 0) {
+        debug("read_atom", "returning true");
+        return mal_true();
+    }
+
+    if (strcmp(token, "false") == 0) {
+        debug("read_atom", "returning false");
+        return mal_false();
+    }
+
+    if (strcmp(token, "nil") == 0) {
+        debug("read_atom", "returning nil");
+        return mal_nil();
+    }
+
     if (token_len >= 1) {
         value.tag = SYM;
         value.s = checked_malloc(token_len + 1, "SYM in read_atom");
@@ -128,16 +148,16 @@ mal read_atom(reader_state *state_ptr) {
         return value;
     }
 
-    return make_reader_exception("read_atom received zero length token", state_ptr);
+    return mal_reader_exception("read_atom received zero length token", state_ptr);
 }
 
 mal read_form(reader_state *state_ptr) {
     const char *next_token=reader_peek(state_ptr);
     if (strcmp(next_token, "") == 0) {
         debug("read_form", "returning missing");
-        return make_missing();
+        return mal_missing();
     }
-    if (strcmp(next_token, "(") == 0 || strcmp(next_token, ")") == 0) {
+    if (strcmp(next_token, "(") == 0 || strcmp(next_token, "[") == 0) {
         debug("read_form", "starting read_seq");
         return read_seq(state_ptr);
     } else {
@@ -166,14 +186,14 @@ mal read_str(const char *input_string) {
 
 static const char *reader_error_msg = "Reader error:";
 
-mal make_reader_exception(const char * msg, reader_state *state_ptr) {
+mal mal_reader_exception(const char * msg, reader_state *state_ptr) {
     const int buf_len =
         strlen(reader_error_msg) + strlen(msg)
         + state_ptr->input_length - state_ptr->offset
         + 2; // two spaces
-    char *buf = checked_malloc(buf_len + 1, "make_reader_exception");
+    char *buf = checked_malloc(buf_len + 1, "mal_reader_exception");
     snprintf(buf, buf_len, "%s %s %s", reader_error_msg, msg, state_ptr->input_string + state_ptr->offset);
-    return make_exception(make_str(buf));
+    return mal_exception(mal_str(buf));
 }
 
 

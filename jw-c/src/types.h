@@ -19,9 +19,13 @@ typedef struct vec vec;
 enum mal_tag {
     MISSING, // reader may return a missing value, should not be passed to eval or print
     EXCEPTION, // an error or thrown by the user
+    TRUE,
+    FALSE,
+    NIL,
     INT,
     STR,
     SYM,
+    KW,
     LIST,
     VEC
 };
@@ -29,11 +33,11 @@ enum mal_tag {
 struct mal_struct {
     enum mal_tag tag;
     union {
-        int i;
-        const char * s;
-        list_node *n;
-        vec *v;
-        struct mal_struct *e; // for an exception
+        struct mal_struct *e; // for EXCEPTION
+        int i; // for INT
+        const char * s; // for STR, SYM AND KEYWORD
+        list_node *n; // for LIST
+        vec *v; // for VEC
     };
 };
 typedef struct mal_struct mal;
@@ -51,22 +55,32 @@ struct vec {
 // Test functions
 bool is_missing(const mal);
 bool is_exception(const mal);
+bool is_bool(const mal);
+bool is_true(const mal);
+bool is_false(const mal);
+bool is_nil(const mal);
 bool is_int(const mal);
 bool is_str(const mal);
 bool is_sym(const mal);
+bool is_kw(const mal);
 bool is_list(const mal);
 bool is_vec(const mal);
 bool is_seq(const mal);
 bool match_sym(const mal, const char *);
 
 // Constructor functions
-mal make_missing();
-mal make_int(int);
-mal make_str(const char *);
-mal make_sym(const char *);
-mal make_list(list_node *);
-mal make_vec(vec *);
-mal make_exception(mal);
+mal mal_missing();
+mal mal_exception(mal);
+mal mal_true();
+mal mal_false();
+mal mal_nil();
+mal mal_int(int);
+mal mal_str(const char *);
+mal mal_sym(const char *);
+mal mal_kw(const char *);
+mal mal_kw(const char*);
+mal mal_list(list_node *);
+mal mal_vec(vec *);
 
 // Equality
 bool mal_equals(mal, mal);

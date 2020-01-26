@@ -7,6 +7,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 
 #include "seq.h"
 #include "utils.h"
@@ -40,8 +41,6 @@ bool seq_empty(mal m) {
 
 // Helper function to compare a list to a vector
 static bool list_vec_equals(list_node *n, vec *v) {
-    printf("list_vec_equals comparing n=%p and v=%p\n", n, v);
-    printf("list null? %s vec len %d\n", n == NULL ? "T" : "F", v->size);
     if (n == NULL && v == NULL) {
         return true;
     }
@@ -64,7 +63,6 @@ static bool list_vec_equals(list_node *n, vec *v) {
 
 // Are the two sequences equal
 bool seq_equals(mal x, mal y) {
-    printf("seq_equals comparing %d %d\n", x.tag, y.tag);
     if (x.tag == LIST && y.tag == LIST) {
         return list_equals(x.n, y.n);
     }

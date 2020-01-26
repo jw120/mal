@@ -1,8 +1,12 @@
-Next
-- Implement vector type - make a type that is a vector with a length and hold a pointer in mal
-- Implement equality for vectors/lists
+Next for step1
+- String reading - do escaping and catch unbalanced quotes/escapes
+- Add special chars ` etc
+- Add hashmaps
+
+Sometime
+- More tests for seq and types?
 - All free's for all mallocs?
-- Get step1 working
+- Eliminate internal_errors?
 
 using only libs builtin on mac
 readline

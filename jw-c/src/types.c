@@ -45,76 +45,117 @@ bool is_exception(mal m) {
     return m.tag == EXCEPTION;
 }
 
-bool is_int(mal m) {
+bool is_bool(const mal m) {
+    return m.tag == TRUE || m.tag == FALSE;
+}
+
+bool is_true(const mal m) {
+    return m.tag == TRUE;
+}
+
+bool is_false(const mal m) {
+    return m.tag == FALSE;
+}
+
+bool is_nil(const mal m) {
+    return m.tag == NIL;
+}
+
+bool is_int(const mal m) {
     return m.tag == INT;
 }
 
-bool is_str(mal m) {
+bool is_str(const mal m) {
     return m.tag == STR;
 }
 
-bool is_sym(mal m) {
+bool is_sym(const mal m) {
     return m.tag == SYM;
 }
 
-bool is_list(mal m) {
+bool is_kw(const mal m) {
+    return m.tag == KW;
+}
+
+bool is_list(const mal m) {
     return m.tag == LIST;
 }
 
-bool is_vec(mal m) {
+bool is_vec(const mal m) {
     return m.tag == VEC;
 }
 
-bool is_seq(mal m) {
+bool is_seq(const mal m) {
     return m.tag == LIST || m.tag == VEC;
 }
 
-bool match_sym(mal m, const char * s) {
+bool match_sym(const mal m, const char * s) {
     return m.tag == SYM && strcmp(m.s, s) == 0;
 }
-
 
 /**
  * Convenience constructor functions
  *
  */
 
-mal make_missing() {
+mal mal_missing() {
     mal val = { MISSING };
     return val;
 }
 
-mal make_int(int i) {
-    mal val = { INT, { .i = i } };
-    return val;
-}
-
-mal make_str(const char *s) {
-    mal val = { STR, { .s = s } };
-    return val;
-}
-
-mal make_sym(const char *s) {
-    mal val = { SYM, { .s = s } };
-    return val;
-}
-
-mal make_list(list_node *n) {
-    mal val = { LIST, { .n = (list_node *) n } };
-    return val;
-}
-
-mal make_vec(vec *v) {
-    mal val = { VEC, { .v = v }};
-    return val;
-}
-
-mal make_exception(mal m) {
-    mal *m_ptr = checked_malloc(sizeof(mal), "make_exception");
+mal mal_exception(mal m) {
+    mal *m_ptr = checked_malloc(sizeof(mal), "mal_exception");
     *m_ptr = m;
     mal val = { EXCEPTION, { .e = m_ptr }};
     return val;
 }
+
+mal mal_true() {
+    mal val = { TRUE };
+    return val;
+}
+
+mal mal_false() {
+    mal val = { FALSE };
+    return val;
+}
+
+mal mal_nil() {
+    mal val = { NIL };
+    return val;
+}
+
+mal mal_int(int i) {
+    mal val = { INT, { .i = i } };
+    return val;
+}
+
+mal mal_str(const char *s) {
+    mal val = { STR, { .s = s } };
+    return val;
+}
+
+mal mal_sym(const char *s) {
+    mal val = { SYM, { .s = s } };
+    return val;
+}
+
+mal mal_kw(const char *s) {
+    mal val = { KW, { .s = s } };
+    return val;
+}
+
+mal mal_list(list_node *n) {
+    mal val = { LIST, { .n = (list_node *) n } };
+    return val;
+}
+
+mal mal_vec(vec *v) {
+    mal val = { VEC, { .v = v }};
+    return val;
+}
+
+
 
 // Constants to simplify evaluation
 mal opening_paren = { SYM, { .s = "("} };
