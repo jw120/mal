@@ -1,7 +1,7 @@
 Next for step1
-- String reading - do escaping and catch unbalanced quotes/escapes
+- String reading - do escaping
 - Add special chars ` etc
-- Add hashmaps
+- Add hashmap reading
 
 Sometime
 - More tests for seq and types?

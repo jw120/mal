@@ -112,12 +112,15 @@ mal read_atom(reader_state *state_ptr) {
         return value;
     }
 
-    if (token_len >=2 && token[0] == '\"' && token[token_len - 1] == '\"') {
-        value.tag = STR;
-        value.s = checked_malloc(token_len - 1, "STR in read_atom");
-        strncpy((char *)value.s, token + 1, token_len - 2);
-        debug("read_atom", "returning str %s", value.s);
-        return value;
+    if (token[0] == '\"') {
+        if (token_len >=2 && token[token_len - 1] == '\"') {
+            value.tag = STR;
+            value.s = checked_malloc(token_len - 1, "STR in read_atom");
+            strncpy((char *)value.s, token + 1, token_len - 2);
+            debug("read_atom", "returning str %s", value.s);
+            return value;
+        }
+        return mal_reader_exception("unbalanced string quote", state_ptr);
     }
 
     if (token_len >= 2 && strncmp(token, ":", 1) == 0) {

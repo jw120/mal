@@ -28,5 +28,12 @@ const char *reader_test() {
     mu_assert("reader empty string", is_missing(read_str("")));
     mu_assert("reader spaces", is_missing(read_str("   ")));
 
+    mu_assert("reader \"", is_exception(read_str("\"")));
+    mu_assert("reader \"abc", is_exception(read_str("\"abc")));
+    mu_assert("reader (", is_exception(read_str("(")));
+    mu_assert("reader (+ 2", is_exception(read_str("(+ 2")));
+    mu_assert("reader [", is_exception(read_str("[")));
+    mu_assert("reader [+ 2", is_exception(read_str("[+ 2")));
+
     return 0;
 }
