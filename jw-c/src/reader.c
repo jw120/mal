@@ -143,6 +143,32 @@ mal read_atom(reader_state *state_ptr) {
         return mal_nil();
     }
 
+    if (strcmp(token, "'") == 0) {
+        debug("read_atom", "expanding quote");
+        return mal_cons(mal_sym("quote"), mal_cons(read_form(state_ptr), mal_list(NULL)));
+    }
+
+    if (strcmp(token, "`") == 0) {
+        debug("read_atom", "expanding quasiquote");
+        return mal_cons(mal_sym("quasiquote"), mal_cons(read_form(state_ptr), mal_list(NULL)));
+    }
+
+    if (strcmp(token, "~") == 0) {
+        debug("read_atom", "expanding unquote");
+        return mal_cons(mal_sym("unquote"), mal_cons(read_form(state_ptr), mal_list(NULL)));
+    }
+
+    if (strcmp(token, "@") == 0) {
+        debug("read_atom", "expanding deref");
+        return mal_cons(mal_sym("deref"), mal_cons(read_form(state_ptr), mal_list(NULL)));
+    }
+
+    if (strcmp(token, "~@") == 0) {
+        debug("read_atom", "expanding spliceunquote");
+        return mal_cons(mal_sym("splice-unquote"), mal_cons(read_form(state_ptr), mal_list(NULL)));
+    }
+
+
     if (token_len >= 1) {
         value.tag = SYM;
         value.s = checked_malloc(token_len + 1, "SYM in read_atom");

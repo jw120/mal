@@ -37,6 +37,11 @@ list_node *list_cons(mal, list_node *);
 // last element
 list_node *list_extend(mal, list_node *n);
 
+// Versions that work on a mal type
+mal mal_cons(mal, mal);
+mal mal_first(mal);
+mal mal_rest(mal);
+
 /**
  *
  * Vector functions

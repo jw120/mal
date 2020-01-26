@@ -44,6 +44,27 @@ const char *seq_test() {
     mu_assert("n3 head value wrong", mal_equals(n3->val, mal_int(3)));
     mu_assert("n3 next not n4", n3->next == n4);
 
+    // mal_cons, mal_tail and mal_head on lists
+    mal x0 = mal_list(NULL);
+    mal x1 = mal_cons(mal_int(3), x0);
+    mal x2 = mal_cons(mal_sym("ab"), x1);
+    mu_assert("mal_cons length", seq_count(x2) == 2);
+    mu_assert("mal_cons first", mal_equals(mal_first(x2), mal_sym("ab")));
+    mu_assert("mal_cons first rest", mal_equals(mal_first(mal_rest(x2)), mal_int(3)));
+    mu_assert("mal_head nil", mal_equals(mal_first(mal_nil()), mal_nil()));
+    mu_assert("mal_head ()", mal_equals(mal_first(mal_list(NULL)), mal_nil()));
+    mu_assert("mal_tail nil", mal_equals(mal_rest(mal_nil()), mal_list(NULL)));
+    mu_assert("mal_tail ()", mal_equals(mal_rest(mal_list(NULL)), mal_list(NULL)));
+
+   // mal_cons, mal_tail and mal_head on lists
+    mal xv = mal_vec(create_vec(2, x2.n));
+    mal xv0 = mal_vec(create_vec(0, NULL));
+    mu_assert("mal_cons vec length", seq_count(xv) == 2);
+    mu_assert("mal_cons vec first", mal_equals(mal_first(xv), mal_sym("ab")));
+    mu_assert("mal_cons vec first rest", mal_equals(mal_first(mal_rest(xv)), mal_int(3)));
+    mu_assert("mal_head vec []", mal_equals(mal_first(xv0), mal_nil()));
+    mu_assert("mal_tail vec []", mal_equals(mal_rest(xv0), mal_list(NULL)));
+
     // Test of equality for lists
     mu_assert("n0 != n0", list_equals(n0, n0));
     mu_assert("n0 == n1", !list_equals(n0, n1));

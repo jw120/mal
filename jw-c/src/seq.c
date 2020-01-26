@@ -125,6 +125,59 @@ list_node *list_cons(mal m , list_node *n) {
     return new_list_node;
 }
 
+mal mal_cons(mal m, mal n) {
+    if (!is_list(n)) {
+        return mal_exception(mal_str("non-list in mal_cons"));
+    }
+    return mal_list(list_cons(m, n.n));
+}
+
+mal mal_first(mal m) {
+    if (is_list(m)) {
+        if (m.n == NULL) {
+            return mal_nil();
+        }
+        return m.n->val;
+    }
+    if (is_vec(m)) {
+        if (m.v == NULL || m.v->size == 0) {
+            return mal_nil();
+        }
+        return m.v->buf[0];
+    }
+    if (is_nil(m)) {
+        return m;
+    }
+    return mal_exception(mal_str("non-sequence in mal_first"));
+}
+
+static list_node *vec_to_list(size_t size, mal *buf) {
+    list_node *p = NULL;
+    for (int i = size; i >= 0; i--) {
+        p = list_cons(buf[i], p);
+    }
+    return p;
+}
+
+mal mal_rest(mal m) {
+    if (is_list(m)) {
+        if (m.n == NULL) {
+            return mal_list(NULL);
+        }
+        return mal_list(m.n->next);
+    }
+    if (is_vec(m)) {
+        if (m.v == NULL || m.v->size == 0) {
+            return mal_list(NULL);
+        }
+        return mal_list(vec_to_list(m.v->size - 1, m.v->buf + 1));
+    }
+    if (is_nil(m)) {
+        return mal_list(NULL);
+    }
+    return mal_exception(mal_str("non-sequence in mal_first"));
+}
+
 // Given a pointer to the last element of a list (or NULL), add the given element and return the new
 // last element
 list_node *list_extend(mal m, list_node *n) {

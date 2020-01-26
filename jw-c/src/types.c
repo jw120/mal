@@ -15,6 +15,14 @@
 // Value equality
 bool mal_equals(mal a, mal b) {
     switch (a.tag) {
+        case MISSING:
+            internal_error("Missing tag in mal_equals", a.tag);
+        case EXCEPTION:
+            return a.tag == b.tag && mal_equals(*a.e, *b.e);
+        case TRUE:
+        case FALSE:
+        case NIL:
+            return a.tag == b.tag;
         case INT:
             return a.tag == b.tag && a.i == b.i;
         case SYM:
