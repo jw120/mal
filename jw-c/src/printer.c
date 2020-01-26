@@ -36,7 +36,7 @@ static const char *join_strings(list_node *s, int chars, int elements, bool is_v
     return buf;
 }
 
-static const char *print_list(list_node *input_head) {
+static const char *print_list(list_node *input_head, bool print_readably) {
     debug("pr_str", "print_list %p", input_head);
     list_node *string_head = NULL;
     int char_count = 0;
@@ -44,7 +44,7 @@ static const char *print_list(list_node *input_head) {
     list_node * input_node = input_head;
     list_node * string_node = string_head;
     while (input_node != NULL) {
-        const char * s = pr_str(input_node->val);
+        const char * s = pr_str(input_node->val, print_readably);
         char_count += strlen(s);
         element_count++;
         string_node = list_extend(mal_str(s), string_node);
@@ -56,7 +56,7 @@ static const char *print_list(list_node *input_head) {
     return join_strings(string_head, char_count, element_count, false);
 }
 
-static const char *print_vec(vec *v) {
+static const char *print_vec(vec *v, bool print_readably) {
     debug("pr_str", "print_vec %p", v);
     if (v == NULL) {
         return "[]";
@@ -66,7 +66,7 @@ static const char *print_vec(vec *v) {
     int element_count = 0;
     list_node *string_node = string_head;
     for (int i = 0; i < v->size ; i++) {
-        const char * s = pr_str(v->buf[i]);
+        const char * s = pr_str(v->buf[i], print_readably);
         char_count += strlen(s);
         element_count++;
         string_node = list_extend(mal_str(s), string_node);
@@ -78,7 +78,7 @@ static const char *print_vec(vec *v) {
 }
 
 // return a string representation of the mal value
-const char *pr_str(mal m)
+const char *pr_str(mal m, bool print_readably)
 {
     int buf_size;
     char *buf;
@@ -87,7 +87,7 @@ const char *pr_str(mal m)
         case MISSING:
             return "Internal error - pr_str on a missing value";
         case EXCEPTION:
-            return pr_str(*(m.e));
+            return pr_str(*(m.e), print_readably);
         case TRUE:
             return "true";
         case FALSE:
@@ -102,9 +102,10 @@ const char *pr_str(mal m)
             return buf;
         case STR:
             debug("pr_str", "str \"%s\"", m.s);
-            buf_size = 1 + snprintf(NULL, 0, "\"%s\"", m.s);
+            mal esc_m = print_readably ? add_escapes(mal_str(m.s)) : m;
+            buf_size = 1 + snprintf(NULL, 0, "\"%s\"", esc_m.s);
             buf = checked_malloc(buf_size, "pr_str STR");
-            snprintf(buf, buf_size, "\"%s\"", m.s);
+            snprintf(buf, buf_size, "\"%s\"", esc_m.s);
             return buf;
         case SYM:
             debug("pr_str", "sym %s", m.s);
@@ -116,9 +117,9 @@ const char *pr_str(mal m)
             snprintf(buf, buf_size, ":%s", m.s);
             return buf;
         case LIST:
-            return print_list(m.n);
+            return print_list(m.n, print_readably);
         case VEC:
-            return print_vec(m.v);
+            return print_vec(m.v, print_readably);
         default:
             internal_error("pr_str saw unknown tag");
     }

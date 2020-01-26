@@ -1,5 +1,5 @@
 Next for step1
-- String reading - do escaping
+- Check escaping
 - Add special chars ` etc
 - Add hashmap reading
 

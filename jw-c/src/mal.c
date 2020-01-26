@@ -28,7 +28,7 @@ mal EVAL(mal m)
 
 const char *PRINT(mal m)
 {
-    return pr_str(m);
+    return pr_str(m, true);
 }
 
 mal read_eval(const char *s)
@@ -57,7 +57,7 @@ int main()
         add_history(input);
         mal m = read_eval(input);
         if (!is_missing(m)) {
-            puts(pr_str(m));
+            puts(PRINT(m));
         }
         free((void *) input);
     }

@@ -14,6 +14,7 @@
 #include "reader_test.h"
 #include "tokenize_test.h"
 #include "types_test.h"
+#include "utils_test.h"
 
 int asserts_run = 0;
 int tests_run = 0;
@@ -24,6 +25,7 @@ const char *run_tests() {
     mu_run_test(seq_test);
     mu_run_test(tokenize_test);
     mu_run_test(types_test);
+    mu_run_test(utils_test);
     return 0;
  }
 

@@ -12,6 +12,7 @@ const char *reader_test() {
     mu_assert("reader '  456 '", mal_equals(read_str("  456 "), mal_int(456)));
     mu_assert("reader 'qwe'", mal_equals(read_str("qwe"), mal_sym("qwe")));
     mu_assert("reader '\"lkj\"'", mal_equals(read_str("\"lkj\""), mal_str("lkj")));
+    mu_assert("reader a\\\\b", mal_equals(read_str("\"a\\\\b\""), mal_str("a\\b")));
 
     mal expected = mal_list(
         list_cons(mal_sym("+"),

@@ -3,6 +3,6 @@
 
 #include "types.h"
 
-const char *pr_str(mal);
+const char *pr_str(mal, bool);
 
 #endif
