@@ -59,6 +59,7 @@ int main()
         if (!is_missing(m)) {
             puts(PRINT(m));
         }
+        fflush(stdout);
         free((void *) input);
     }
     return 0;

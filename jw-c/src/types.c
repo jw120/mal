@@ -34,6 +34,8 @@ bool mal_equals(mal a, mal b) {
                 return seq_equals(a, b);
             }
             return false;
+        case MAP:
+            return a.tag == b.tag && seq_equals(a, b);
         default:
             internal_error("Unknown tag in mal_equals", a.tag);
     }
@@ -95,6 +97,10 @@ bool is_vec(const mal m) {
 
 bool is_seq(const mal m) {
     return m.tag == LIST || m.tag == VEC;
+}
+
+bool is_map(const mal m) {
+    return m.tag == MAP;
 }
 
 bool match_sym(const mal m, const char * s) {
@@ -163,7 +169,10 @@ mal mal_vec(vec *v) {
     return val;
 }
 
-
+mal mal_map(list_node *n) {
+    mal val = { MAP, { .n = (list_node *) n } };
+    return val;
+}
 
 // Constants to simplify evaluation
 mal opening_paren = { SYM, { .s = "("} };

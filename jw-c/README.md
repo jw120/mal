@@ -1,18 +1,14 @@
 Next for step1
-- Check escaping
-- Add special chars ` etc
-- Add hashmap reading
-
-Sometime
-- More tests for seq and types?
-- All free's for all mallocs?
-- Eliminate internal_errors?
+- Review and tidy
+    - do we need the internal_errors
+    - debug levels?
+    - more tests?
+- Add proper hashmap
 
 using only libs builtin on mac
 readline
 pcre
 using C11 (anonymous unions/structs)
-
 
 
 Think about how to manage memory

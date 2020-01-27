@@ -33,6 +33,8 @@
 // Search input_string from offset, returning the next token and the next offset
 const token_result *tokenize(const char *input_string, const int offset) {
 
+    debug("tokenize", "called on %s", input_string + offset);
+
     static pcre2_code *token_regexp = NULL;
     static pcre2_match_data *match_data = NULL;
 
@@ -83,8 +85,11 @@ const token_result *tokenize(const char *input_string, const int offset) {
     int token_length = ovector[3] - ovector[2];
     char *token = checked_malloc(token_length + 1, "token allocation in tokenize");
     strncpy(token, token_start, token_length);
-    debug("tokenize", "found token '%s', next is at %d", token, ovector[1]);
-
+    token[token_length] = '\0';
+    debug("tokenize", "found token '%s', length %d, next is at %d", token, token_length, ovector[1]);
+    if (strlen(token) != token_length) {
+        debug("tokenize", "FAIL token length %d vs token_length %d");
+    }
     token_result *result = checked_malloc(sizeof(token_result), "result allocation in tokenize");
     result->val = token;
     result->next_offset = ovector[1];

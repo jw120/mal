@@ -14,11 +14,29 @@
 
 #define BUFFER_SIZE_FOR_INT 16
 
-// given a list of strings, concat with spaces and surround with (..) or [..]
-static const char *join_strings(list_node *s, int chars, int elements, bool is_vector) {
+typedef enum { PRINT_LIST, PRINT_VEC, PRINT_MAP } join_mode;
 
-    const char *opener = is_vector ? "[" : "(";
-    const char *closer = is_vector ? "]" : ")";
+// given a list of strings, concat with spaces and surround with (..) or [..]
+static const char *join_strings(list_node *s, int chars, int elements, join_mode mode) {
+
+    const char *opener;
+    const char *closer;
+    switch (mode) {
+        case PRINT_LIST:
+            opener = "(";
+            closer = ")";
+            break;
+        case PRINT_VEC:
+            opener = "[";
+            closer = "]";
+            break;
+        case PRINT_MAP:
+            opener = "{";
+            closer = "}";
+            break;
+        default:
+            internal_error("bad mode in join_strings");
+    }
 
     int num_spaces = elements > 0 ? elements - 1 : 0;
     int buf_size = 1 + 2 + chars + num_spaces;
@@ -36,7 +54,7 @@ static const char *join_strings(list_node *s, int chars, int elements, bool is_v
     return buf;
 }
 
-static const char *print_list(list_node *input_head, bool print_readably) {
+static const char *print_list(list_node *input_head, bool print_readably, join_mode mode) {
     debug("pr_str", "print_list %p", input_head);
     list_node *string_head = NULL;
     int char_count = 0;
@@ -48,12 +66,14 @@ static const char *print_list(list_node *input_head, bool print_readably) {
         char_count += strlen(s);
         element_count++;
         string_node = list_extend(mal_str(s), string_node);
+        debug("pr_str", "list_extend %s", s);
+
         if (string_head == NULL) {
             string_head = string_node;
         }
         input_node = input_node->next;
     }
-    return join_strings(string_head, char_count, element_count, false);
+    return join_strings(string_head, char_count, element_count, mode);
 }
 
 static const char *print_vec(vec *v, bool print_readably) {
@@ -74,7 +94,7 @@ static const char *print_vec(vec *v, bool print_readably) {
             string_head = string_node;
         }
     }
-    return join_strings(string_head, char_count, element_count, true);
+    return join_strings(string_head, char_count, element_count, PRINT_VEC);
 }
 
 // return a string representation of the mal value
@@ -117,9 +137,11 @@ const char *pr_str(mal m, bool print_readably)
             snprintf(buf, buf_size, ":%s", m.s);
             return buf;
         case LIST:
-            return print_list(m.n, print_readably);
+            return print_list(m.n, print_readably, PRINT_LIST);
         case VEC:
             return print_vec(m.v, print_readably);
+        case MAP:
+            return print_list(m.n, print_readably, PRINT_MAP);
         default:
             internal_error("pr_str saw unknown tag");
     }

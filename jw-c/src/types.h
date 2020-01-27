@@ -27,7 +27,8 @@ enum mal_tag {
     SYM,
     KW,
     LIST,
-    VEC
+    VEC,
+    MAP
 };
 
 struct mal_struct {
@@ -36,7 +37,7 @@ struct mal_struct {
         struct mal_struct *e; // for EXCEPTION
         int i; // for INT
         const char * s; // for STR, SYM AND KEYWORD
-        list_node *n; // for LIST
+        list_node *n; // for LIST or MAP
         vec *v; // for VEC
     };
 };
@@ -66,6 +67,7 @@ bool is_kw(const mal);
 bool is_list(const mal);
 bool is_vec(const mal);
 bool is_seq(const mal);
+bool is_map(const mal);
 bool match_sym(const mal, const char *);
 
 // Constructor functions
@@ -81,6 +83,7 @@ mal mal_kw(const char *);
 mal mal_kw(const char*);
 mal mal_list(list_node *);
 mal mal_vec(vec *);
+mal mal_map(list_node *);
 
 // Equality
 bool mal_equals(mal, mal);

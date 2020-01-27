@@ -58,15 +58,23 @@ const char *reader_next(reader_state *state_ptr) {
     return pre_fetched_current;
 }
 
+enum read_type { READ_LIST, READ_VEC, READ_MAP};
+
 // Read a list or vector
 mal read_seq(reader_state *state_ptr) {
 
     mal current = read_atom(state_ptr);
-    bool reading_list;
+    enum read_type reading_mode;
+    char *closing_char;
     if (match_sym(current, "(")) {
-        reading_list = true;
+        reading_mode = READ_LIST;
+        closing_char = ")";
     } else if (match_sym(current, "[")) {
-        reading_list = false;
+        reading_mode = READ_VEC;
+        closing_char = "]";
+    } else if (match_sym(current, "{")) {
+        reading_mode = READ_MAP;
+        closing_char = "}";
     } else {
         return mal_reader_exception("read_seq called without opener", state_ptr);
     }
@@ -78,8 +86,7 @@ mal read_seq(reader_state *state_ptr) {
     int nodes_count = 0;
     while (true) {
         current = read_form(state_ptr);
-        if ((reading_list && match_sym(current, ")")) ||
-            (!reading_list && match_sym(current, "]"))) {
+        if (match_sym(current, closing_char)) {
             break;
         }
         if (is_missing(current)) {
@@ -92,10 +99,16 @@ mal read_seq(reader_state *state_ptr) {
         }
     }
 
-    if (reading_list) {
-        return mal_list(head);
+    switch (reading_mode) {
+        case READ_LIST:
+            return mal_list(head);
+        case READ_VEC:
+            return mal_vec(create_vec(nodes_count, head));
+        case READ_MAP:
+            return mal_map(head);
+        default:
+            internal_error("bad mode at end of read_seq");
     }
-    return mal_vec(create_vec(nodes_count, head));
 }
 
 // read a non-list
@@ -104,6 +117,7 @@ mal read_atom(reader_state *state_ptr) {
     const char * const token = reader_next(state_ptr);
     const int token_len = strlen(token);
     mal value;
+    debug("read_atom", "received token %s, length %d", token, token_len);
 
     if (token_len > 0 && is_number(token)) {
         value.tag = INT;
@@ -116,6 +130,7 @@ mal read_atom(reader_state *state_ptr) {
         if (token_len >=2 && token[token_len - 1] == '\"') {
             char *buf = checked_malloc(token_len - 1, "STR in read_atom");
             strncpy(buf, token + 1, token_len - 2);
+            buf[token_len - 1] = '\0';
             mal val = remove_escapes(mal_str(buf));
             debug("read_atom", "returning str %s", val.s);
             return val;
@@ -168,11 +183,17 @@ mal read_atom(reader_state *state_ptr) {
         return mal_cons(mal_sym("splice-unquote"), mal_cons(read_form(state_ptr), mal_list(NULL)));
     }
 
+    if (strcmp(token, "^") == 0) {
+        debug("read_atom", "expanding deref");
+        mal m1 = read_form(state_ptr);
+        mal m2 = read_form(state_ptr);
+        return mal_cons(mal_sym("with-meta"), mal_cons(m2, mal_cons(m1, mal_list(NULL))));
+    }
 
     if (token_len >= 1) {
         value.tag = SYM;
         value.s = checked_malloc(token_len + 1, "SYM in read_atom");
-        strncpy((char *)value.s, token, token_len);
+        strncpy((char *)value.s, token, token_len + 1);
         debug("read_atom", "returning sym %s", value.s);
         return value;
     }
@@ -186,7 +207,7 @@ mal read_form(reader_state *state_ptr) {
         debug("read_form", "returning missing");
         return mal_missing();
     }
-    if (strcmp(next_token, "(") == 0 || strcmp(next_token, "[") == 0) {
+    if (strcmp(next_token, "(") == 0 || strcmp(next_token, "[") == 0 || strcmp(next_token, "{") == 0) {
         debug("read_form", "starting read_seq");
         return read_seq(state_ptr);
     } else {
