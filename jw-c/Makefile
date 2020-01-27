@@ -3,7 +3,7 @@
 all: build test
 
 # Directories - executables go in target, *.o and *.d in build
-TARGET_DIR := .
+TARGET_DIR := ./exec
 BUILD_DIR := ./build
 SRC_DIR := ./src
 
@@ -16,7 +16,7 @@ TEST_OBJ_FILES = $(filter-out %/mal.o,$(OBJ_FILES))
 
 # Command options
 CC = clang
-CFLAGS = -Wall -O2 -std=c17
+CFLAGS = -Wall -O2 -std=c17 -I/usr/local/opt/readline/include
 DEPFLAGS = -MMD -MT $@
 LIBS= -lreadline -lpcre2-8
 
@@ -55,5 +55,5 @@ clean:
 	$(RM) $(BUILD_DIR)/*
 
 distclean: clean
-	$(RM) $(TARGET_DIR)/mal $(TARGET_DIR)/tests $(TARGET_DIR)/step0_repl
+	$(RM) $(TARGET_DIR)/*
 

@@ -4,12 +4,14 @@
  *
  **/
 
-#include <editline/readline.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 
+#include "history.h"
 #include "printer.h"
 #include "reader.h"
 #include "utils.h"
@@ -47,10 +49,11 @@ int main()
 
     debug_mode = getenv("DEBUG") != NULL;
 
+    start_history();
     while (true) {
 
         const char *input = readline("user> ");
-        if (input == NULL) {
+        if (input == NULL) { // EOF from ctrl-D
             puts("");
             break;
         }
@@ -62,5 +65,6 @@ int main()
         fflush(stdout);
         free((void *) input);
     }
+    end_history();
     return 0;
 }
