@@ -16,7 +16,7 @@
 
 typedef enum { PRINT_LIST, PRINT_VEC, PRINT_MAP } join_mode;
 
-// given a list of strings, concat with spaces and surround with (..) or [..]
+// Helper function to concat a list of strings with spaces and surround with (..)  [..] {..}
 static const char *join_strings(list_node *s, int chars, int elements, join_mode mode) {
 
     const char *opener;
@@ -54,6 +54,7 @@ static const char *join_strings(list_node *s, int chars, int elements, join_mode
     return buf;
 }
 
+// Print a list or map
 static const char *print_list(list_node *input_head, bool print_readably, join_mode mode) {
     debug("pr_str", "print_list %p", input_head);
     list_node *string_head = NULL;
@@ -76,6 +77,7 @@ static const char *print_list(list_node *input_head, bool print_readably, join_m
     return join_strings(string_head, char_count, element_count, mode);
 }
 
+// Print a vector
 static const char *print_vec(vec *v, bool print_readably) {
     debug("pr_str", "print_vec %p", v);
     if (v == NULL) {
@@ -146,6 +148,3 @@ const char *pr_str(mal m, bool print_readably)
             internal_error("pr_str saw unknown tag");
     }
 }
-
-
-

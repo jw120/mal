@@ -27,18 +27,17 @@ typedef struct {
 } reader_state;
 
 // Forward definitions of founctions used within this module
-mal read_form(reader_state *);
-mal read_atom(reader_state *);
-mal read_list(reader_state *);
-mal mal_reader_exception(const char *, reader_state *);
+static mal read_form(reader_state *);
+static mal read_atom(reader_state *);
+static mal mal_reader_exception(const char *, reader_state *);
 
 // Return the pre-fetched token without advancing it
-const char *reader_peek(const reader_state *state_ptr) {
+static const char *reader_peek(const reader_state *state_ptr) {
     return state_ptr->current == NULL ? "" : state_ptr->current;
 }
 
 // Return the previously fetched token and fetch the next one
-const char *reader_next(reader_state *state_ptr) {
+static const char *reader_next(reader_state *state_ptr) {
 
     // We return this pre-fetched current match
     const char *pre_fetched_current = state_ptr->current;
@@ -60,8 +59,8 @@ const char *reader_next(reader_state *state_ptr) {
 
 enum read_type { READ_LIST, READ_VEC, READ_MAP};
 
-// Read a list or vector
-mal read_seq(reader_state *state_ptr) {
+// Read a list, vector or map
+static mal read_extended(reader_state *state_ptr) {
 
     mal current = read_atom(state_ptr);
     enum read_type reading_mode;
@@ -76,11 +75,11 @@ mal read_seq(reader_state *state_ptr) {
         reading_mode = READ_MAP;
         closing_char = "}";
     } else {
-        return mal_reader_exception("read_seq called without opener", state_ptr);
+        return mal_reader_exception("read_extended called without opener", state_ptr);
     }
 
     // Read the elements as a list, keeping a count of the number read
-    debug("read_seq", "started");
+    debug("read_extended", "started");
     list_node *head = NULL;
     list_node *last = NULL;
     int nodes_count = 0;
@@ -112,7 +111,7 @@ mal read_seq(reader_state *state_ptr) {
 }
 
 // read a non-list
-mal read_atom(reader_state *state_ptr) {
+static mal read_atom(reader_state *state_ptr) {
 
     const char * const token = reader_next(state_ptr);
     const int token_len = strlen(token);
@@ -201,15 +200,15 @@ mal read_atom(reader_state *state_ptr) {
     return mal_reader_exception("read_atom received zero length token", state_ptr);
 }
 
-mal read_form(reader_state *state_ptr) {
+static mal read_form(reader_state *state_ptr) {
     const char *next_token=reader_peek(state_ptr);
     if (strcmp(next_token, "") == 0) {
         debug("read_form", "returning missing");
         return mal_missing();
     }
     if (strcmp(next_token, "(") == 0 || strcmp(next_token, "[") == 0 || strcmp(next_token, "{") == 0) {
-        debug("read_form", "starting read_seq");
-        return read_seq(state_ptr);
+        debug("read_form", "starting read_extended");
+        return read_extended(state_ptr);
     } else {
         debug("read_form", "starting read_atom");
         return read_atom(state_ptr);
@@ -234,15 +233,15 @@ mal read_str(const char *input_string) {
     return read_form(state_ptr);
 }
 
-static const char *reader_error_msg = "Reader error:";
+#define READER_ERROR_MSG "Reader error:"
 
-mal mal_reader_exception(const char * msg, reader_state *state_ptr) {
+static mal mal_reader_exception(const char * msg, reader_state *state_ptr) {
     const int buf_len =
-        strlen(reader_error_msg) + strlen(msg)
+        strlen(READER_ERROR_MSG) + strlen(msg)
         + state_ptr->input_length - state_ptr->offset
         + 2; // two spaces
     char *buf = checked_malloc(buf_len + 1, "mal_reader_exception");
-    snprintf(buf, buf_len, "%s %s %s", reader_error_msg, msg, state_ptr->input_string + state_ptr->offset);
+    snprintf(buf, buf_len, "%s %s %s", READER_ERROR_MSG, msg, state_ptr->input_string + state_ptr->offset);
     return mal_exception(mal_str(buf));
 }
 

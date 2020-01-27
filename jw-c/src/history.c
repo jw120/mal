@@ -1,3 +1,9 @@
+/**
+ *
+ * history.c - handles start up and close down of readline history file
+ *
+ **/
+
 
 #include <stdio.h>
 #include <stdlib.h>

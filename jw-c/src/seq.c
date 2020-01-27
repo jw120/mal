@@ -78,8 +78,6 @@ bool seq_equals(mal x, mal y) {
     return false;
 }
 
-
-
 /**
  *
  * List functions
