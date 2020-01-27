@@ -1,6 +1,2 @@
 #!/bin/bash
-if [ ${STEP} == step0_repl ]; then
-    exec $(dirname $0)/exec/step0_repl "${@}"
-else
-    exec $(dirname $0)/exec/mal "${@}"
-fi
+exec $(dirname $0)/exec/mal "${@}"

@@ -42,11 +42,19 @@ mal read_eval(const char *s)
 }
 
 bool debug_mode;
+enum { ECHO, READ_PRINT, FULL } mode = FULL;
 
 int main()
 {
 
     debug_mode = getenv("DEBUG") != NULL;
+    const char *step = getenv("STEP");
+    if (step && strcmp(step, "step0_repl") == 0) {
+        mode = ECHO; // If running step0 we just echo the input
+    }
+    if (step && strcmp(step, "step1_read_print") == 0) {
+        mode = READ_PRINT; // If running step0 we just read and print the input
+    }
 
     start_history();
     while (true) {
@@ -57,10 +65,16 @@ int main()
             break;
         }
         add_history(input);
-        mal m = read_eval(input);
-        if (!is_missing(m)) {
-            puts(PRINT(m));
+
+        if (mode == ECHO) {
+            puts(input);
+        } else {
+            mal m = read_eval(input);
+            if (!is_missing(m)) {
+                puts(PRINT(m));
+            }
         }
+
         fflush(stdout);
         free((void *) input);
     }

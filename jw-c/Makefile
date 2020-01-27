@@ -33,9 +33,6 @@ $(TARGET_DIR)/mal: $(MAIN_OBJ_FILES)
 $(TARGET_DIR)/tests: $(TEST_OBJ_FILES)
 	$(CC) $(LDFLAGS) $(LIBS) $^ -o $@
 
-$(TARGET_DIR)/step0_repl: $(SRC_DIR)/step0_repl.c
-	$(CC) $(CFLAGS) $(LIBS) $^ -o $@
-
 # Dependencies
 
 $(DEP_FILES):# Mentioned as dependencies so make won't fail when they don't exist
@@ -43,7 +40,7 @@ include $(wildcard $(DEP_FILES))
 
 # Top-level targets
 
-build: $(TARGET_DIR)/mal $(TARGET_DIR)/tests $(TARGET_DIR)/step0_repl
+build: $(TARGET_DIR)/mal $(TARGET_DIR)/tests
 
 run: $(TARGET_DIR)/mal
 	-@$(TARGET_DIR)/mal
