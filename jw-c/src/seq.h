@@ -53,6 +53,6 @@ bool vec_empty(vec *);
 bool vec_equals(vec *, vec*);
 
 // Create a vector of the given size with elements from the given list
-vec *create_vec(size_t, list_node *);
+vec *list_to_vec(size_t, list_node *);
 
 #endif

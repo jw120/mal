@@ -10,6 +10,8 @@
 #include <string.h>
 #include <readline/history.h>
 
+#include "history.h"
+
 #include "utils.h"
 
 #define HISTORY_FILENAME ".c_mal_history"

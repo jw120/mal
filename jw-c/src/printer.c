@@ -4,11 +4,12 @@
  *
  **/
 
-
 #include <stdio.h>
 #include <string.h>
 
 #include "printer.h"
+
+#include "map.h"
 #include "seq.h"
 #include "utils.h"
 
@@ -54,8 +55,8 @@ static const char *join_strings(list_node *s, int chars, int elements, join_mode
     return buf;
 }
 
-// Print a list or map
-static const char *print_list(list_node *input_head, bool print_readably, join_mode mode) {
+// Print a list
+static const char *print_list(list_node *input_head, bool print_readably) {
     debug("pr_str", "print_list %p", input_head);
     list_node *string_head = NULL;
     int char_count = 0;
@@ -74,7 +75,30 @@ static const char *print_list(list_node *input_head, bool print_readably, join_m
         }
         input_node = input_node->next;
     }
-    return join_strings(string_head, char_count, element_count, mode);
+    return join_strings(string_head, char_count, element_count, PRINT_LIST);
+}
+
+// Print a map
+static const char *print_map(map *m, bool print_readably) {
+    debug("pr_str", "print_map %p", m);
+    list_node *string_head = NULL;
+    int char_count = 0;
+    int element_count = 0;
+    list_node * string_node = string_head;
+    for (int i = 0; i < m->size; i++) {
+        const char * s1 = pr_str(mal_str(m->table[i].key), print_readably);
+        char_count += strlen(s1);
+        element_count++;
+        string_node = list_extend(mal_str(s1), string_node);
+        debug("pr_str", "list_extend %s", s1);
+        string_head = (string_head == NULL) ? string_node : string_head;
+        const char * s2 = pr_str(m->table[i].val, print_readably);
+        char_count += strlen(s2);
+        element_count++;
+        string_node = list_extend(mal_str(s2), string_node);
+        debug("pr_str", "list_extend %s", s2);
+    }
+    return join_strings(string_head, char_count, element_count, PRINT_MAP);
 }
 
 // Print a vector
@@ -139,11 +163,11 @@ const char *pr_str(mal m, bool print_readably)
             snprintf(buf, buf_size, ":%s", m.s);
             return buf;
         case LIST:
-            return print_list(m.n, print_readably, PRINT_LIST);
+            return print_list(m.n, print_readably);
         case VEC:
             return print_vec(m.v, print_readably);
         case MAP:
-            return print_list(m.n, print_readably, PRINT_MAP);
+            return print_map(m.m, print_readably);
         default:
             internal_error("pr_str saw unknown tag");
     }

@@ -1,6 +1,6 @@
 #include <string.h>
-#include "minunit.h"
 
+#include "minunit.h"
 #include "utils_test.h"
 #include "utils.h"
 

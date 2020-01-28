@@ -3,6 +3,7 @@
 
 #include "reader_test.h"
 #include "reader.h"
+
 #include "seq.h"
 
 const char *types_test() {

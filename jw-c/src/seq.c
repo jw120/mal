@@ -10,6 +10,7 @@
 #include <stdio.h>
 
 #include "seq.h"
+
 #include "utils.h"
 
 /**
@@ -75,7 +76,7 @@ bool seq_equals(mal x, mal y) {
     if (x.tag == VEC && y.tag == LIST) {
         return list_vec_equals(y.n, x.v);
     }
-    return false;
+    internal_error("Non-seq passed to seq_equals");
 }
 
 /**
@@ -220,10 +221,10 @@ bool vec_equals(vec *a, vec *b) {
 }
 
 // Create a vector of the given size with elements from the given list
-vec *create_vec(size_t count, list_node *n) {
-    vec *v = checked_malloc(sizeof(vec), "create_vec vec");
+vec *list_to_vec(size_t count, list_node *n) {
+    vec *v = checked_malloc(sizeof(vec), "list_to_vec vec");
     v->size = count;
-    v->buf = checked_malloc(count* sizeof(mal), "create_vec");
+    v->buf = checked_malloc(count* sizeof(mal), "list_to_vec buf");
     mal *buf_ptr = v->buf;
     while (n != NULL) {
         *buf_ptr = n->val;

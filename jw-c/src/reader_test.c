@@ -1,8 +1,10 @@
 #include <string.h>
-#include "minunit.h"
 
+#include "minunit.h"
 #include "reader_test.h"
 #include "reader.h"
+
+#include "map.h"
 #include "printer.h"
 #include "seq.h"
 
@@ -27,6 +29,12 @@ const char *reader_test() {
     mu_assert("reader (+ 2 3) NULL", actual.n->next->next->next == NULL);
     mu_assert_eq("reader (+ 2 3) whole", actual, expected);
 
+    actual = read_str("{\"a\" 2 \"qq\" nil}");
+    expected = mal_map(list_to_map(
+                    list_cons(mal_str("a"), list_cons(mal_int(2),
+                        list_cons(mal_str("qq"), list_cons(mal_nil(), NULL))))));
+    mu_assert_eq("reader map", actual, expected);
+
     mu_assert("reader empty string", is_missing(read_str("")));
     mu_assert("reader spaces", is_missing(read_str("   ")));
 
@@ -47,6 +55,7 @@ const char *reader_test() {
                 mal_cons(mal_int(1), mal_cons(mal_int(2), mal_list(NULL))),
                 mal_list(NULL)));
     mu_assert_eq("reader '(1 2)", actual, expected);
+
 
     return 0;
 }

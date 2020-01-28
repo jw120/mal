@@ -18,6 +18,7 @@
 #include <pcre2.h>
 
 #include "tokenize.h"
+
 #include "utils.h"
 
 // Regex for mal tokens (given in mal instructions)

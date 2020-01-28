@@ -2,6 +2,7 @@
 #define MAL_TYPES_H
 
 #include <stdbool.h>
+#include <stdlib.h>
 
 /**
  *
@@ -15,6 +16,8 @@
 struct list_node;
 typedef struct list_node list_node;
 typedef struct vec vec;
+typedef struct map map;
+typedef struct map_record map_record;
 
 enum mal_tag {
     MISSING, // reader may return a missing value, should not be passed to eval or print
@@ -37,8 +40,9 @@ struct mal_struct {
         struct mal_struct *e; // for EXCEPTION
         int i; // for INT
         const char * s; // for STR, SYM AND KEYWORD
-        list_node *n; // for LIST or MAP
+        list_node *n; // for LIST
         vec *v; // for VEC
+        map *m; // FOR MAP
     };
 };
 typedef struct mal_struct mal;
@@ -51,6 +55,16 @@ struct list_node {
 struct vec {
     size_t size;
     mal *buf;
+};
+
+struct map_record {
+    const char *key;
+    mal val;
+};
+
+struct map {
+    size_t size;
+    map_record *table;
 };
 
 // Test functions
@@ -83,7 +97,7 @@ mal mal_kw(const char *);
 mal mal_kw(const char*);
 mal mal_list(list_node *);
 mal mal_vec(vec *);
-mal mal_map(list_node *);
+mal mal_map(map *);
 
 // Equality
 bool mal_equals(mal, mal);

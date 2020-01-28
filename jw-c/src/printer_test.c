@@ -1,8 +1,10 @@
 #include <string.h>
-#include "minunit.h"
 
+#include "minunit.h"
 #include "printer_test.h"
 #include "printer.h"
+
+#include "map.h"
 #include "seq.h"
 
 const char *printer_test() {
@@ -12,8 +14,12 @@ const char *printer_test() {
         list_cons(mal_sym("plus"),
             list_cons(mal_int(4),
                 list_cons(mal_int(5), NULL))));
-    mal v = mal_vec(create_vec(3, m.n));
-    mal hm = mal_map(m.n);
+    mal v = mal_vec(list_to_vec(3, m.n));
+    list_node *hm_list = list_cons(mal_str("a"),
+                    list_cons(mal_int(1),
+                        list_cons(mal_str("last"),
+                            list_cons(mal_true(), NULL))));
+    mal hm_map = mal_map(list_to_map(hm_list));
 
     mu_assert("pr_str missing", strncmp(pr_str(mal_missing(), true), "Internal", 8) == 0);
     mu_assert_str("pr_str exception", pr_str(e, true), "\"bad\"");
@@ -29,7 +35,7 @@ const char *printer_test() {
     mu_assert_str("pr_str list null", pr_str(mal_list(NULL), true), "()");
     mu_assert_str("pr_str list", pr_str(m, true), "(plus 4 5)");
     mu_assert_str("pr_str vec", pr_str(v, true), "[plus 4 5]");
-    mu_assert_str("pr_str map", pr_str(hm, true), "{plus 4 5}");
+    mu_assert_str("pr_str map", pr_str(hm_map, true), "{\"a\" 1 \"last\" true}");
 
     return 0;
 }

@@ -1,6 +1,6 @@
 #include <string.h>
-#include "minunit.h"
 
+#include "minunit.h"
 #include "tokenize_test.h"
 #include "tokenize.h"
 

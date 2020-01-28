@@ -9,6 +9,8 @@
 #include <stdio.h>
 
 #include "types.h"
+
+#include "map.h"
 #include "seq.h"
 #include "utils.h"
 
@@ -35,7 +37,7 @@ bool mal_equals(mal a, mal b) {
             }
             return false;
         case MAP:
-            return a.tag == b.tag && seq_equals(a, b);
+            return a.tag == b.tag && map_equals(a.m, b.m);
         default:
             internal_error("Unknown tag in mal_equals", a.tag);
     }
@@ -169,8 +171,8 @@ mal mal_vec(vec *v) {
     return val;
 }
 
-mal mal_map(list_node *n) {
-    mal val = { MAP, { .n = (list_node *) n } };
+mal mal_map(map *m) {
+    mal val = { MAP, { .m = m } };
     return val;
 }
 

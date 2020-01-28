@@ -14,6 +14,8 @@
 #include <stdnoreturn.h>
 
 #include "reader.h"
+
+#include "map.h"
 #include "seq.h"
 #include "tokenize.h"
 #include "utils.h"
@@ -98,13 +100,18 @@ static mal read_extended(reader_state *state_ptr) {
         }
     }
 
+    map *m;
     switch (reading_mode) {
         case READ_LIST:
             return mal_list(head);
         case READ_VEC:
-            return mal_vec(create_vec(nodes_count, head));
+            return mal_vec(list_to_vec(nodes_count, head));
         case READ_MAP:
-            return mal_map(head);
+            m = list_to_map(head);
+            if (m == NULL) {
+                return mal_exception(mal_str("Map creation failed"));
+            }
+            return mal_map(m);
         default:
             internal_error("bad mode at end of read_seq");
     }

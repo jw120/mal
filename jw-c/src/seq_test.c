@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "minunit.h"
 
+#include "minunit.h"
 #include "seq_test.h"
 #include "seq.h"
 
@@ -57,8 +57,8 @@ const char *seq_test() {
     mu_assert_eq("mal_tail ()", mal_rest(mal_list(NULL)), mal_list(NULL));
 
    // mal_cons, mal_tail and mal_head on lists
-    mal xv = mal_vec(create_vec(2, x2.n));
-    mal xv0 = mal_vec(create_vec(0, NULL));
+    mal xv = mal_vec(list_to_vec(2, x2.n));
+    mal xv0 = mal_vec(list_to_vec(0, NULL));
     mu_assert("mal_cons vec length", seq_count(xv) == 2);
     mu_assert_eq("mal_cons vec first", mal_first(xv), mal_sym("ab"));
     mu_assert_eq("mal_cons vec first rest", mal_first(mal_rest(xv)), mal_int(3));
@@ -93,25 +93,25 @@ const char *seq_test() {
     mu_assert("n4 /= n4", list_equals(n4, n4));
 
     // v0 = []
-    vec *v0 = create_vec(0, n0);
+    vec *v0 = list_to_vec(0, n0);
     mu_assert("v0 not empty", vec_empty(v0));
     mu_assert("v0 not zero length", vec_count(v0) == 0);
 
     // v1 = [1]
-    vec *v1 = create_vec(1, n1);
+    vec *v1 = list_to_vec(1, n1);
     mu_assert("v1 empty", !vec_empty(v1));
     mu_assert("v1 not length one", vec_count(v1) == 1);
     mu_assert_eq("v1 value wrong", v1->buf[0], mal_int(1));
 
     // v2 = [2, 1]
-    vec *v2 = create_vec(2, n2);
+    vec *v2 = list_to_vec(2, n2);
     mu_assert("v2 empty", !vec_empty(v2));
     mu_assert("v2 not length two", vec_count(v2) == 2);
     mu_assert_eq("v2[0] value wrong", v2->buf[0], mal_int(2));
     mu_assert_eq("v2[1] value wrong", v2->buf[1], mal_int(1));
 
     // v3 = [3, 4]
-    vec *v3 = create_vec(2, n3);
+    vec *v3 = list_to_vec(2, n3);
     mu_assert("v3 empty", !vec_empty(v3));
     mu_assert("v3 not length two", vec_count(v3) == 2);
     mu_assert_eq("v3[0] value wrong", v3->buf[0], mal_int(3));

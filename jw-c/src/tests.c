@@ -7,8 +7,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+
 #include "minunit.h"
 
+#include "map_test.h"
 #include "seq_test.h"
 #include "printer_test.h"
 #include "reader_test.h"
@@ -20,6 +22,7 @@ int asserts_run = 0;
 int tests_run = 0;
 
 const char *run_tests() {
+    mu_run_test(map_test);
     mu_run_test(printer_test);
     mu_run_test(reader_test);
     mu_run_test(seq_test);
