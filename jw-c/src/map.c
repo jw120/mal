@@ -14,12 +14,21 @@
 #include "types.h"
 #include "utils.h"
 
+// ordering on - string, keyword, duplicate
 int map_record_cmp(void const *lhs, void const *rhs) {
 
     map_record const *const l = lhs;
     map_record const *const r = rhs;
 
-    return strcmp(l->key, r->key);
+    int compare_strings = strcmp(l->key, r->key);
+    if (compare_strings) {
+        return compare_strings;
+    }
+    int compare_kw = l->is_kw - r->is_kw;
+    if (compare_kw) {
+        return compare_kw;
+    }
+    return l->is_dup - r->is_dup;
 }
 
 // create a map from an alternating list of elements [key, val, key, val...]
@@ -39,10 +48,12 @@ map *list_to_map(list_node *n) {
     // copy the elements from the list into the table
     int i = 0;
     while (n != NULL) {
-        if (n->val.tag != STR) {
+        if (!is_str(n->val) && !is_kw(n->val)) {
             return NULL;
         }
         new_map->table[i].key = n->val.s;
+        new_map->table[i].is_kw = n->val.tag == KW;
+        new_map->table[i].is_dup = false; // updated below
         n = n->next;
         new_map->table[i].val = n->val;
         n = n->next;
@@ -64,6 +75,9 @@ bool map_equals(map *m1, map *m2) {
         if (strcmp(r1.key, r2.key) != 0) {
             return false;
         }
+        if (r1.is_kw != r2.is_kw) {
+            return false;
+        }
         if (!mal_equals(r1.val, r2.val)) {
             return false;
         }
@@ -71,14 +85,20 @@ bool map_equals(map *m1, map *m2) {
     return true;
 }
 
-mal map_get(map *hm, const char *key) {
-    map_record key_record = { .key = key };
+mal map_get(map *hm, mal m) {
+    if (!is_str(m) && !is_kw(m)) {
+        return mal_nil();
+    }
+    map_record key_record = { .key = m.s, .is_kw = is_kw(m), .is_dup = false };
     map_record *res = bsearch(&key_record, hm->table, hm->size, sizeof(map_record), map_record_cmp);
     return res ? res->val : mal_nil();
 }
 
-bool map_contains(map *hm, const char *key) {
-    map_record key_record = { .key = key };
+bool map_contains(map *hm, mal m) {
+    if (!is_str(m) && !is_kw(m)) {
+        return false;
+    }
+    map_record key_record = { .key = m.s, .is_kw = is_kw(m), .is_dup = false };
     map_record *res = bsearch(&key_record, hm->table, hm->size, sizeof(map_record), map_record_cmp);
     return res != NULL;
 }

@@ -5,7 +5,7 @@
 
 map *list_to_map(list_node *);
 bool map_equals(map *, map *);
-mal map_get(map *, const char *);
-bool map_contains(map *, const char *);
+mal map_get(map *, mal);
+bool map_contains(map *, mal);
 
 #endif

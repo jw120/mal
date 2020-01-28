@@ -59,11 +59,13 @@ struct vec {
 
 struct map_record {
     const char *key;
+    bool is_kw; // is the key a keyword (not just a string)
+    bool is_dup; // is the key a duplicate (to be ignored)
     mal val;
 };
 
 struct map {
-    size_t size;
+    size_t size; // size of table (including duplicate keys)
     map_record *table;
 };
 

@@ -86,7 +86,8 @@ static const char *print_map(map *m, bool print_readably) {
     int element_count = 0;
     list_node * string_node = string_head;
     for (int i = 0; i < m->size; i++) {
-        const char * s1 = pr_str(mal_str(m->table[i].key), print_readably);
+        mal key = m->table[i].is_kw ? mal_kw(m->table[i].key) : mal_str(m->table[i].key);
+        const char * s1 = pr_str(key, print_readably);
         char_count += strlen(s1);
         element_count++;
         string_node = list_extend(mal_str(s1), string_node);
