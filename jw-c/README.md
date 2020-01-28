@@ -1,3 +1,8 @@
+Todo
+    - get array_to_list working (tests in seq_test)
+    - implement env
+    - work on step 2
+
 
 - Review and tidy
     - do we need the internal_errors

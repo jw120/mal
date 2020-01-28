@@ -162,7 +162,7 @@ mal mal_kw(const char *s) {
 }
 
 mal mal_list(list_node *n) {
-    mal val = { LIST, { .n = (list_node *) n } };
+    mal val = { LIST, { .n = n } };
     return val;
 }
 

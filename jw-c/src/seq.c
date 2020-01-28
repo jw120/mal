@@ -124,6 +124,15 @@ list_node *list_cons(mal m , list_node *n) {
     return new_list_node;
 }
 
+// generate a list from an array of mal values
+list_node *array_to_list(size_t size, mal a[]) {
+    list_node *n = NULL;
+    for (int i = size - 1; i >= 0; i--) {
+        n = list_cons(a[i], n);
+    }
+    return n;
+}
+
 mal mal_cons(mal m, mal n) {
     if (!is_list(n)) {
         return mal_exception(mal_str("non-list in mal_cons"));

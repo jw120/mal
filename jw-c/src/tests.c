@@ -10,6 +10,7 @@
 
 #include "minunit.h"
 
+#include "env_test.h"
 #include "map_test.h"
 #include "seq_test.h"
 #include "printer_test.h"
@@ -22,6 +23,7 @@ int asserts_run = 0;
 int tests_run = 0;
 
 const char *run_tests() {
+    mu_run_test(map_test);
     mu_run_test(map_test);
     mu_run_test(printer_test);
     mu_run_test(reader_test);

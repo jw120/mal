@@ -33,6 +33,9 @@ bool list_equals(list_node *, list_node *);
 // return a new list whose head is the given element and whose tail is the given list (which may be NULL)
 list_node *list_cons(mal, list_node *);
 
+// generate a list from an array of mal values
+list_node *array_to_list(size_t size, mal a[]);
+
 // Given a pointer to the last element of a list (or NULL), add the given element and return the new
 // last element
 list_node *list_extend(mal, list_node *n);

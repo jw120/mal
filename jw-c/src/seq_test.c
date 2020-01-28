@@ -1,8 +1,9 @@
-#include <stdio.h>
+// #include <stdio.h>
 
 #include "minunit.h"
 #include "seq_test.h"
 #include "seq.h"
+// #include "printer.h"
 
 const char *seq_test() {
 
@@ -33,6 +34,11 @@ const char *seq_test() {
     mu_assert("n3 not length one", list_count(n3) == 1);
     mu_assert_eq("n3 head value wrong", n3->val, mal_int(3));
     mu_assert("n3 next not null", n3->next == NULL);
+
+    // n2 = [2, 1] from array_to_list
+    mal a[] = { mal_int(2), mal_int(1) };
+    list_node *n2n = array_to_list(2, a);
+    mu_assert_eq("n2 from array", mal_list(n2), mal_list(n2n));
 
     // n3 = 3 : n4 = 3 : 4 : []
     list_node *n4 = list_extend(mal_int(4), n3);
