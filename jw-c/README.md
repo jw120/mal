@@ -1,12 +1,8 @@
-Next for step1
-- Get map to work
-    - Deduplicate keys
-    - Fix map equality (and add tests for map_eq and seq_eq)
+
 - Review and tidy
     - do we need the internal_errors
     - debug levels?
     - more tests?
-- Remove .tag
 
 using only libs builtin on mac
 readline

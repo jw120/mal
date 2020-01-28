@@ -33,6 +33,7 @@ void debug(const char *func, const char * restrict fmt, ...) {
         printf("%16s: ", func);
         vprintf(fmt, args);
         printf("\n");
+        fflush(stdout);
     }
 }
 
@@ -81,9 +82,7 @@ void str_concat(char *buf, const char *source, size_t count) {
 
 // Are both arguments strings that are equal
 bool str_equals(mal a, mal b) {
-    return a.tag == STR &&
-        b.tag == STR &&
-        strcmp(a.s, b.s) == 0;
+    return is_str(a) && is_str(b) && strcmp(a.s, b.s) == 0;
 }
 
 // Remove escape sequences from a string

@@ -21,9 +21,9 @@
 
 // Count the elements in a sequence
 int seq_count(mal m) {
-    if (m.tag == LIST) {
+    if (is_list(m)) {
         return list_count(m.n);
-    } else if (m.tag == VEC) {
+    } else if (is_vec(m)) {
         return vec_count(m.v);
     }
     return 0;
@@ -31,9 +31,9 @@ int seq_count(mal m) {
 
 // Is the sequence empty
 bool seq_empty(mal m) {
-    if (m.tag == LIST) {
+    if (is_list(m)) {
         return list_empty(m.n);
-    } else if (m.tag == VEC) {
+    } else if (is_vec(m)) {
         return vec_empty(m.v);
     }
 
@@ -64,16 +64,16 @@ static bool list_vec_equals(list_node *n, vec *v) {
 
 // Are the two sequences equal
 bool seq_equals(mal x, mal y) {
-    if (x.tag == LIST && y.tag == LIST) {
+    if (is_list(x) && is_list(y)) {
         return list_equals(x.n, y.n);
     }
-    if (x.tag == VEC && y.tag == VEC) {
+    if (is_vec(x) && is_vec(y)) {
         return vec_equals(x.v, y.v);
     }
-    if (x.tag == LIST && y.tag == VEC) {
+    if (is_list(x) && is_vec(y)) {
         return list_vec_equals(x.n, y.v);
     }
-    if (x.tag == VEC && y.tag == LIST) {
+    if (is_vec(x) && is_list(y)) {
         return list_vec_equals(y.n, x.v);
     }
     internal_error("Non-seq passed to seq_equals");

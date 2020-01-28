@@ -126,8 +126,7 @@ static mal read_atom(reader_state *state_ptr) {
     debug("read_atom", "received token %s, length %d", token, token_len);
 
     if (token_len > 0 && is_number(token)) {
-        value.tag = INT;
-        value.i = atoi(token);
+        value = mal_int(atoi(token));
         debug("read_atom", "returning %d", value.i);
         return value;
     }
@@ -197,8 +196,7 @@ static mal read_atom(reader_state *state_ptr) {
     }
 
     if (token_len >= 1) {
-        value.tag = SYM;
-        value.s = checked_malloc(token_len + 1, "SYM in read_atom");
+        value = mal_sym(checked_malloc(token_len + 1, "SYM in read_atom"));
         strncpy((char *)value.s, token, token_len + 1);
         debug("read_atom", "returning sym %s", value.s);
         return value;
