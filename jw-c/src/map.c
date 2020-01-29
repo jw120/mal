@@ -96,6 +96,16 @@ map *dedup(map *m)
   return new_map;
 }
 
+// Create a map with unititialized entries
+map *uninitialized_map(size_t count)
+{
+  map *new_map = checked_malloc(sizeof(map), "uninit_map map");
+  new_map->size = count;
+  new_map->table =
+      checked_malloc(count * sizeof(map_record), "uninit_map table");
+  return new_map;
+}
+
 // create a map from an alternating list of elements [key, val, key, val...]
 map *list_to_map(list_node *n)
 {
@@ -110,10 +120,7 @@ map *list_to_map(list_node *n)
   }
 
   // create the new map
-  map *new_map = checked_malloc(sizeof(map), "mal_map map");
-  new_map->size = list_size / 2;
-  new_map->table =
-      checked_malloc(new_map->size * sizeof(map_record), "mal_map table");
+  map *new_map = uninitialized_map(list_size / 2);
   if (new_map->size == 0)
   {
     debug("list_to_map", "returning empty map");

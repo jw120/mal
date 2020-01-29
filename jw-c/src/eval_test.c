@@ -5,6 +5,7 @@
 #include "minunit.h"
 
 #include "core.h"
+#include "reader.h"
 #include "seq.h"
 
 const char *eval_test()
@@ -27,10 +28,22 @@ const char *eval_test()
   mal expected_1 = mal_list(array_to_list(5, expected_a_1));
   mu_assert_eq("eval_ast list", eval_ast(input_1, e), expected_1);
 
-  // eval does the same as eval_ast on atoms and empty lists
+  // eval_ast applies along a vector
+  mal input_1v = mal_vec(list_to_vec(5, input_1.n));
+  mal expected_1v = mal_vec(list_to_vec(5, expected_1.n));
+  mu_assert_eq("eval_ast vec", eval_ast(input_1v, e), expected_1v);
+
+  // eval_ast applies to values in a hashmap
+  mal input_m = read_str("{:a 3 :b (* 3 4) :c () :d (+ x y)}");
+  mal expected_m = read_str("{:a 3 :b 12 :c () :d 12}");
+  mu_assert_eq("eval_ast map", eval_ast(input_m, e), expected_m);
+
+  // eval does the same as eval_ast on atoms, empty lists, vectors and hashmaps
   mu_assert_eq("eval int", eval(mal_int(2), e), mal_int(2));
   mu_assert_eq("eval ()", eval(mal_list(NULL), e), mal_list(NULL));
   mu_assert_eq("eval sym", eval(mal_sym("x"), e), mal_int(7));
+  mu_assert_eq("eval vec", eval(input_1v, e), expected_1v);
+  mu_assert_eq("eval map", eval(input_m, e), expected_m);
 
   // eval calls a function
   mal input_a_2[] = {mal_sym("+"), mal_int(3), mal_int(1)};

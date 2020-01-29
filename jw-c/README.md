@@ -1,12 +1,10 @@
 Todo
-  - Complete step 2
+  - Tidy
   - Tests for core
-
-
-- Review and tidy
-    - do we need the internal_errors - use assert instead, combined mal_exception/str, no pretty print for exception
-    - debug levels? 1 for mal level, 2 for internal
-    - more tests?
+  - More tests
+  - debug levels? 1 for mal level, 2 for internal. Better util for mal errors
+  - function to show env
+  - do we need the internal_errors - use assert instead, combined mal_exception/str, no pretty print for exception
 
 using only libs builtin on mac
 readline

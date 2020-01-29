@@ -58,5 +58,7 @@ bool vec_equals(vec *, vec *);
 
 // Create a vector of the given size with elements from the given list
 vec *list_to_vec(size_t, list_node *);
+// Create a vector with unititialized entries
+vec *uninitialized_vec(size_t);
 
 #endif

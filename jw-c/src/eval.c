@@ -6,6 +6,7 @@
 
 #include "eval.h"
 
+#include "map.h"
 #include "printer.h"
 #include "seq.h"
 #include "utils.h"
@@ -28,12 +29,32 @@ mal eval_ast(mal ast, env *e)
     list_node *from = ast.n;
     while (from != NULL)
     {
-      to = list_extend(eval_ast(from->val, e), to);
+      to = list_extend(eval(from->val, e), to);
       if (to_head == NULL)
         to_head = to;
       from = from->next;
     }
     return mal_list(to_head);
+  }
+
+  if (is_vec(ast) && !seq_empty(ast))
+  {
+    vec *to = uninitialized_vec(ast.v->size);
+    for (int i = 0; i < ast.v->size; i++)
+      to->buf[i] = eval(ast.v->buf[i], e);
+    return mal_vec(to);
+  }
+
+  if (is_map(ast))
+  {
+    map *to = uninitialized_map(ast.m->size);
+    for (int i = 0; i < ast.m->size; i++)
+    {
+      to->table[i].key = ast.m->table[i].key;
+      to->table[i].is_kw = ast.m->table[i].is_kw;
+      to->table[i].val = eval(ast.m->table[i].val, e);
+    }
+    return mal_map(to);
   }
 
   return ast;
