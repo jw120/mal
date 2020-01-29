@@ -10,63 +10,74 @@
  *
  * mal values are intended to be held on the stack (not via a pointer)
  *
-**/
+ **/
 
 // Forward declaration
 struct list_node;
-typedef struct list_node list_node;
-typedef struct vec vec;
-typedef struct map map;
-typedef struct map_record map_record;
+typedef struct list_node_struct list_node;
+typedef struct vec_struct vec;
+typedef struct map_struct map;
+typedef struct map_record_struct map_record;
+typedef struct mal_struct mal;
+typedef struct env_struct env;
+
+typedef mal fn(list_node *, env *);
 
 enum mal_tag {
-    MISSING, // reader may return a missing value, should not be passed to eval or print
-    EXCEPTION, // an error or thrown by the user
-    TRUE,
-    FALSE,
-    NIL,
-    INT,
-    STR,
-    SYM,
-    KW,
-    LIST,
-    VEC,
-    MAP
+  MISSING, // reader may return a missing value, should not be passed to eval or
+           // print
+  EXCEPTION, // an error or thrown by the user
+  TRUE,
+  FALSE,
+  NIL,
+  INT,
+  STR,
+  SYM,
+  KW,
+  LIST,
+  VEC,
+  MAP,
+  FN
 };
 
 struct mal_struct {
-    enum mal_tag tag;
-    union {
-        struct mal_struct *e; // for EXCEPTION
-        int i; // for INT
-        const char * s; // for STR, SYM AND KEYWORD
-        list_node *n; // for LIST
-        vec *v; // for VEC
-        map *m; // FOR MAP
-    };
-};
-typedef struct mal_struct mal;
-
-struct list_node {
-    mal val;
-    list_node *next;
+  enum mal_tag tag;
+  union {
+    struct mal_struct *e; // for EXCEPTION
+    int i;                // for INT
+    const char *s;        // for STR, SYM AND KEYWORD
+    list_node *n;         // for LIST
+    vec *v;               // for VEC
+    map *m;               // FOR MAP
+    fn *f;                // FOR FN
+  };
 };
 
-struct vec {
-    size_t size;
-    mal *buf;
+struct list_node_struct {
+  mal val;
+  list_node *next;
 };
 
-struct map_record {
-    const char *key;
-    bool is_kw; // is the key a keyword (not just a string)
-    int index; // used to de-duplicate the map (by keeping highest index)
-    mal val;
+struct vec_struct {
+  size_t size;
+  mal *buf;
 };
 
-struct map {
-    size_t size; // size of table (including duplicate keys)
-    map_record *table;
+struct map_record_struct {
+  const char *key;
+  bool is_kw; // is the key a keyword (not just a string)
+  int index;  // used to de-duplicate the map (by keeping highest index)
+  mal val;
+};
+
+struct map_struct {
+  size_t size; // size of table (including duplicate keys)
+  map_record *table;
+};
+
+struct env_struct {
+  map *lookup;
+  struct env_struct *outer;
 };
 
 // Test functions
@@ -84,6 +95,7 @@ bool is_list(const mal);
 bool is_vec(const mal);
 bool is_seq(const mal);
 bool is_map(const mal);
+bool is_fn(const mal);
 bool match_sym(const mal, const char *);
 
 // Constructor functions
@@ -96,10 +108,11 @@ mal mal_int(int);
 mal mal_str(const char *);
 mal mal_sym(const char *);
 mal mal_kw(const char *);
-mal mal_kw(const char*);
+mal mal_kw(const char *);
 mal mal_list(list_node *);
 mal mal_vec(vec *);
 mal mal_map(map *);
+mal mal_fn(fn *);
 
 // Equality
 bool mal_equals(mal, mal);

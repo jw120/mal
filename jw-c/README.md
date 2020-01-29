@@ -1,12 +1,11 @@
 Todo
-    - get array_to_list working (tests in seq_test)
-    - implement env
-    - work on step 2
+  - Complete step 2
+  - Tests for core
 
 
 - Review and tidy
-    - do we need the internal_errors
-    - debug levels?
+    - do we need the internal_errors - use assert instead, combined mal_exception/str, no pretty print for exception
+    - debug levels? 1 for mal level, 2 for internal
     - more tests?
 
 using only libs builtin on mac
