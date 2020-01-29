@@ -9,6 +9,7 @@
  *
  **/
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -22,41 +23,37 @@
 #include "utils.h"
 
 // Regex for mal tokens (given in mal instructions)
-#define TOKEN_REGEX                                                            \
-  "[\\s,]*"                                                                    \
-  "(~@|"                                                                       \
-  "[\\[\\]{}()'`~^@]|"                                                         \
-  "\"(?:\\\\.|[^\\\\\"])*\"?|"                                                 \
-  ";.*|"                                                                       \
+#define TOKEN_REGEX            \
+  "[\\s,]*"                    \
+  "(~@|"                       \
+  "[\\[\\]{}()'`~^@]|"         \
+  "\"(?:\\\\.|[^\\\\\"])*\"?|" \
+  ";.*|"                       \
   "[^\\s\\[\\]{}('\"`,;)]*)"
 #define OVEC_SIZE 6
 
 // Search input_string from offset, returning the next token and the next offset
-const token_result *tokenize(const char *input_string, const int offset) {
+const token_result *tokenize(const char *input_string, const int offset)
+{
 
   debug("tokenize", "called on %s", input_string + offset);
 
   static pcre2_code *token_regexp = NULL;
   static pcre2_match_data *match_data = NULL;
 
-  if (token_regexp == NULL) { // Compile the regexp if has not been done
+  if (token_regexp == NULL)
+  { // Compile the regexp if has not been done
 
     int errornumber;
     size_t erroroffset;
 
     token_regexp =
-        pcre2_compile((PCRE2_SPTR8)TOKEN_REGEX, // Our regex
-                      PCRE2_ZERO_TERMINATED,    // ... which is zero-terminated
-                      0,                        // No options
+        pcre2_compile((PCRE2_SPTR8)TOKEN_REGEX,   // Our regex
+                      PCRE2_ZERO_TERMINATED,      // ... which is zero-terminated
+                      0,                          // No options
                       &errornumber, &erroroffset, // For error return values
                       NULL);                      // Use default compile context
-
-    if (token_regexp == NULL) {
-      PCRE2_UCHAR buffer[256];
-      pcre2_get_error_message(errornumber, buffer, sizeof(buffer));
-      internal_error("PCRE2 compilation failed at offset %d: %s\n",
-                     (int)erroroffset, buffer);
-    }
+    assert(token_regexp != NULL);
 
     // Reserve space for matches that will be returned
     match_data = pcre2_match_data_create_from_pattern(token_regexp, NULL);
@@ -68,15 +65,14 @@ const token_result *tokenize(const char *input_string, const int offset) {
 
   // Nothing to return if no match or a match with no group (which is for
   // whitespace only)
-  if (regexp_result == PCRE2_ERROR_NOMATCH || regexp_result == 1) {
+  if (regexp_result == PCRE2_ERROR_NOMATCH || regexp_result == 1)
+  {
     debug("tokenize", "found nothing");
     return NULL;
   }
 
   // Fail if anyother error or more than one matched group
-  if (regexp_result < 0 || regexp_result > 2) {
-    internal_error("Regexp match failed (return code %d)", regexp_result);
-  }
+  assert(regexp_result == 2);
 
   // Get the matches
   // ovector[0] and ovector[1] are offsets of start and end of whole match
@@ -92,7 +88,8 @@ const token_result *tokenize(const char *input_string, const int offset) {
   token[token_length] = '\0';
   debug("tokenize", "found token '%s', length %d, next is at %d", token,
         token_length, ovector[1]);
-  if (strlen(token) != token_length) {
+  if (strlen(token) != token_length)
+  {
     debug("tokenize", "FAIL token length %d vs token_length %d");
   }
   token_result *result =

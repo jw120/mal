@@ -51,7 +51,7 @@ int main()
   // Set up our environment
   env *repl_env;
   if (mode == FULL)
-    repl_env = create_startup_env();
+    repl_env = core_env();
 
   start_history();
   while (true)

@@ -10,6 +10,7 @@
 
 #include "minunit.h"
 
+#include "core_test.h"
 #include "env_test.h"
 #include "eval_test.h"
 #include "map_test.h"
@@ -25,6 +26,7 @@ int tests_run = 0;
 
 const char *run_tests()
 {
+  mu_run_test(core_test);
   mu_run_test(env_test);
   mu_run_test(eval_test);
   mu_run_test(map_test);

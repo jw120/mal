@@ -4,6 +4,7 @@
  *
  **/
 
+#include <assert.h>
 #include <stdio.h> // stdio has to be before readline/history.h
 
 #include <readline/history.h>
@@ -19,13 +20,12 @@
 
 char *history_filename = NULL;
 
-void start_history() {
+void start_history()
+{
 
   // set the file name for our history file
   const char *home = getenv("HOME");
-  if (home == NULL) {
-    internal_error("Could not find $HOME for history file");
-  }
+  assert(home != NULL);
   history_filename = checked_malloc(strlen(home) + strlen(HISTORY_FILENAME) + 2,
                                     "start_history");
   strncat(history_filename, home, strlen(home));
@@ -35,28 +35,22 @@ void start_history() {
 
   // If the history file exists, read from it
   FILE *fp = fopen(history_filename, "r");
-  if (fp != NULL) {
+  if (fp != NULL)
+  {
     fclose(fp);
     int err = read_history(history_filename);
-    if (err) {
-      internal_error("Error %d reading history file %s", err, history_filename);
-    }
+    assert(err == 0);
   }
 }
 
-void end_history() {
+void end_history()
+{
 
-  if (!history_filename) {
-    internal_error("History filename not set in end_history");
-  }
+  assert(history_filename != NULL);
 
   int err = write_history(history_filename);
-  if (err) {
-    internal_error("Error %d writing history file %d\n", err, history_filename);
-  }
+  assert(err == 0);
+
   err = history_truncate_file(history_filename, HISTORY_MAX_SIZE);
-  if (err) {
-    internal_error("Error %d truncating history file %d\n", err,
-                   history_filename);
-  }
+  assert(err == 0);
 }

@@ -1,16 +1,15 @@
 Todo
-  - Tidy
-  - Tests for core
-  - More tests
+  - combined mal_exception/str
+  - New logic for debug
+  - Tidy - tests for all, comments for all - done core and env
   - debug levels? 1 for mal level, 2 for internal. Better util for mal errors
   - function to show env
-  - do we need the internal_errors - use assert instead, combined mal_exception/str, no pretty print for exception
+  -  no pretty print for exception
 
-using only libs builtin on mac
 readline
 pcre
 using C11 (anonymous unions/structs)
-
+more tests than other versions as c is flaky..
 
 Think about how to manage memory
 - mal atoms all on heap? collections with malloc?

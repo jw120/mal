@@ -4,6 +4,7 @@
  *
  **/
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -94,7 +95,7 @@ bool seq_equals(mal x, mal y)
   {
     return list_vec_equals(y.n, x.v);
   }
-  internal_error("Non-seq passed to seq_equals");
+  assert(0); // Non-seq passed to seq_equals
 }
 
 /**

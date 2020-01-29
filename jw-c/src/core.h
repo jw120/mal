@@ -3,6 +3,6 @@
 
 #include "types.h"
 
-env *create_startup_env();
+env *core_env();
 
 #endif

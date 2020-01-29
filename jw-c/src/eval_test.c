@@ -12,7 +12,7 @@ const char *eval_test()
 {
 
   mal a[] = {mal_sym("x"), mal_int(7), mal_sym("y"), mal_int(5)};
-  env *e = env_new(array_to_list(4, a), create_startup_env());
+  env *e = env_new(array_to_list(4, a), core_env());
 
   // eval_ast preserves atoms and empty lists
   mu_assert_eq("eval_ast int", eval_ast(mal_int(2), e), mal_int(2));
