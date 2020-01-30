@@ -20,6 +20,7 @@
 
 #include "tokenize.h"
 
+#include "debug.h"
 #include "utils.h"
 
 // Regex for mal tokens (given in mal instructions)
@@ -36,7 +37,7 @@
 const token_result *tokenize(const char *input_string, const int offset)
 {
 
-  debug("tokenize", "called on %s", input_string + offset);
+  DEBUG_INTERNAL_FMT("called on %s", input_string + offset);
 
   static pcre2_code *token_regexp = NULL;
   static pcre2_match_data *match_data = NULL;
@@ -67,7 +68,7 @@ const token_result *tokenize(const char *input_string, const int offset)
   // whitespace only)
   if (regexp_result == PCRE2_ERROR_NOMATCH || regexp_result == 1)
   {
-    debug("tokenize", "found nothing");
+    DEBUG_INTERNAL_FMT("found nothing");
     return NULL;
   }
 
@@ -86,15 +87,10 @@ const token_result *tokenize(const char *input_string, const int offset)
       checked_malloc(token_length + 1, "token allocation in tokenize");
   strncpy(token, token_start, token_length);
   token[token_length] = '\0';
-  debug("tokenize", "found token '%s', length %d, next is at %d", token,
-        token_length, ovector[1]);
-  if (strlen(token) != token_length)
-  {
-    debug("tokenize", "FAIL token length %d vs token_length %d");
-  }
   token_result *result =
       checked_malloc(sizeof(token_result), "result allocation in tokenize");
   result->val = token;
   result->next_offset = ovector[1];
+  DEBUG_INTERNAL_FMT("returning %s", result);
   return result;
 }

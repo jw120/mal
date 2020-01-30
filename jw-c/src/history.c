@@ -20,7 +20,8 @@
 
 char *history_filename = NULL;
 
-void start_history()
+// called before history tracking starts, reads history file
+void pre_history()
 {
 
   // set the file name for our history file
@@ -43,7 +44,8 @@ void start_history()
   }
 }
 
-void end_history()
+// called after history tracking finishes, writes history file
+void post_history()
 {
 
   assert(history_filename != NULL);

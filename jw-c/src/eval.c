@@ -6,6 +6,7 @@
 
 #include "eval.h"
 
+#include "debug.h"
 #include "map.h"
 #include "printer.h"
 #include "seq.h"
@@ -14,11 +15,10 @@
 // evaluation function that does not apply
 mal eval_ast(mal ast, env *e)
 {
-  debug("eval_ast", "%s", pr_str(ast, true));
+  DEBUG_INTERNAL_MAL("called with", ast);
 
   if (is_sym(ast))
   {
-    debug("eval_ast", "looking up %s in %p", ast.s, e);
     return env_get(e, ast.s);
   }
 
@@ -63,20 +63,22 @@ mal eval_ast(mal ast, env *e)
 // top-level evaluation function
 mal eval(mal ast, env *e)
 {
-  debug("eval", "%s", pr_str(ast, true));
+  DEBUG_HIGH_MAL("called with", ast);
 
   if (!is_list(ast) || seq_empty(ast))
     return eval_ast(ast, e);
 
   mal evaluated_ast = eval_ast(ast, e);
+  DEBUG_INTERNAL_MAL("after args evaluated have", evaluated_ast);
   if (!is_list(evaluated_ast) || seq_empty(evaluated_ast))
-    return mal_exception(mal_str("List mutatated away in eval"));
+    return mal_exception_str("List mutatated away in eval");
 
   mal head = mal_first(evaluated_ast);
   mal rest = mal_rest(evaluated_ast);
-  debug("eval", "inside ast");
-  debug("eval", "ast %s, head %s, rest %s", pr_str(evaluated_ast, true), pr_str(head, true), pr_str(rest, true));
+  DEBUG_INTERNAL_MAL("head of list to be applied", head);
+  DEBUG_INTERNAL_MAL("rest of list to be applied", rest);
+
   if (!is_fn(head))
-    return mal_exception(mal_str("Not a function"));
+    return mal_exception_str("Not a function");
   return head.f(rest.n, e);
 }

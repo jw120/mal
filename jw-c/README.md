@@ -1,10 +1,8 @@
 Todo
-  - combined mal_exception/str
-  - New logic for debug
-  - Tidy - tests for all, comments for all - done core and env
-  - debug levels? 1 for mal level, 2 for internal. Better util for mal errors
+  - Why does main debug=1 say nothing
+  - Test debug more
   - function to show env
-  -  no pretty print for exception
+  - strncpy and strncomp everywhere
 
 readline
 pcre

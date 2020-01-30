@@ -12,6 +12,7 @@
 #include <stdlib.h>
 
 #include "core.h"
+#include "debug.h"
 #include "eval.h"
 #include "history.h"
 #include "printer.h"
@@ -26,14 +27,11 @@ mal EVAL(mal m, env *e) { return eval(m, e); }
 
 const char *PRINT(mal m) { return pr_str(m, true); }
 
-// Debugging controlled by this global variable
-bool debug_mode;
-
 int main()
 {
 
   // Turn on debug mode if the environment variable is set
-  debug_mode = getenv("DEBUG") != NULL;
+  set_debug_level(getenv("DEBUG"));
 
   // To pass step0 and step 1 tests we need to restrict functionality
   enum
@@ -53,7 +51,7 @@ int main()
   if (mode == FULL)
     repl_env = core_env();
 
-  start_history();
+  pre_history();
   while (true)
   {
     mal m;
@@ -73,6 +71,7 @@ int main()
     case FULL:
     case READ_PRINT:
       m = READ(input);
+      DEBUG_HIGH_FMT("read", m);
       if (!is_missing(m))
       {
         if (mode == FULL)
@@ -84,6 +83,6 @@ int main()
     fflush(stdout);
     free((void *)input);
   }
-  end_history();
+  post_history();
   return 0;
 }

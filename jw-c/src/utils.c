@@ -14,19 +14,6 @@
 
 #include "utils.h"
 
-void debug(const char *func, const char *restrict fmt, ...)
-{
-  if (debug_mode)
-  {
-    va_list args;
-    va_start(args, fmt);
-    printf("%16s: ", func);
-    vprintf(fmt, args);
-    printf("\n");
-    fflush(stdout);
-  }
-}
-
 void *checked_malloc(size_t size, const char *restrict fmt, ...)
 {
   void *ptr = malloc(size);
@@ -46,26 +33,17 @@ void *checked_malloc(size_t size, const char *restrict fmt, ...)
 bool is_number(const char *s)
 {
 
-  debug("is_number", "called with %s", s);
-
   assert(s != NULL);
 
   if (strlen(s) == 0)
-  {
     return false;
-  }
   if (s[0] == '-')
-  {
     return is_number(s + 1);
-  }
   for (const char *p = s; *p; p++)
   {
     if (!isdigit(*p))
-    {
       return false;
-    }
   }
-  debug("is_number", "succeeded");
   return true;
 }
 
@@ -91,9 +69,7 @@ bool str_equals(mal a, mal b)
 mal remove_escapes(mal m)
 {
   if (!is_str(m))
-  {
-    return mal_exception(mal_str("remove_escapes on a non-string"));
-  }
+    return mal_exception_str("remove_escapes on a non-string");
   char *buf = checked_malloc(strlen(m.s) + 1, "remove_escapes");
   bool in_escape = false;
   char *p = buf;
@@ -121,9 +97,7 @@ mal remove_escapes(mal m)
         in_escape = false;
       }
       else
-      {
-        return mal_exception(mal_str("Bad escape sequence"));
-      }
+        return mal_exception_str("Bad escape sequence");
     }
     else
     {
@@ -133,15 +107,11 @@ mal remove_escapes(mal m)
         s++;
       }
       else
-      {
         *p++ = *s++;
-      }
     }
   }
-  if (in_escape)
-  { // trailing slashj or bad escape
-    return mal_exception(mal_str("EOF in escape sequence"));
-  }
+  if (in_escape) // trailing slashj or bad escape
+    return mal_exception_str("EOF in escape sequence");
   *p = *s; // null terminate;
   return mal_str(buf);
 }
@@ -150,9 +120,7 @@ mal remove_escapes(mal m)
 mal add_escapes(mal m)
 {
   if (!is_str(m))
-  {
-    return mal_exception(mal_str("add_escapes on a non-string"));
-  }
+    return mal_exception_str("add_escapes on a non-string");
 
   // need to make one extra char space for every ", \, \n
   const char *s = m.s;
@@ -160,9 +128,7 @@ mal add_escapes(mal m)
   while (*s)
   {
     if (*s == '\\' || *s == '\"' || *s == '\n')
-    {
       extras_count++;
-    }
     s++;
   }
   char *buf = checked_malloc(strlen(m.s) + 1 + extras_count, "add_escapes");
@@ -190,9 +156,7 @@ mal add_escapes(mal m)
       s++;
     }
     else
-    {
       *p++ = *s++;
-    }
   }
   *p = *s; // null terminate;
   return mal_str(buf);

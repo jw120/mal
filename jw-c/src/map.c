@@ -11,6 +11,7 @@
 
 #include "map.h"
 
+#include "debug.h"
 #include "seq.h"
 #include "types.h"
 #include "utils.h"
@@ -21,35 +22,28 @@ int map_record_cmp(void const *lhs, void const *rhs)
 
   map_record const *const l = lhs;
   map_record const *const r = rhs;
-
-  debug("map_record_cmp", "comparing %s %s", l->key, r->key);
+  DEBUG_INTERNAL_FMT("comparing %s %s", l->key, r->key);
 
   int compare_strings = strcmp(l->key, r->key);
   if (compare_strings)
-  {
     return compare_strings;
-  }
   return l->is_kw - r->is_kw;
 }
 
+// ordering on - string, keyword, index
 int map_record_cmp_with_index(void const *lhs, void const *rhs)
 {
 
   map_record const *const l = lhs;
   map_record const *const r = rhs;
-
-  debug("map_record_cmp_with_index", "comparing %s %s", l->key, r->key);
+  DEBUG_INTERNAL_FMT("comparing %s %s", l->key, r->key);
 
   int compare_strings = strcmp(l->key, r->key);
   if (compare_strings)
-  {
     return compare_strings;
-  }
   int compare_kw = l->is_kw - r->is_kw;
   if (compare_kw)
-  {
     return compare_kw;
-  }
   return l->index - r->index;
 }
 
@@ -57,7 +51,7 @@ int map_record_cmp_with_index(void const *lhs, void const *rhs)
 map *dedup(map *m)
 {
 
-  debug("dedup", "map of %d elems", m->size);
+  DEBUG_INTERNAL_FMT("given map of %d elems", m->size);
   qsort(m->table, m->size, sizeof(map_record), map_record_cmp_with_index);
 
   // count the unique elements
@@ -66,7 +60,7 @@ map *dedup(map *m)
   {
     unique_elems += map_record_cmp(m->table + i - 1, m->table + i) != 0;
   }
-  debug("dedup", "%d unique elems", unique_elems);
+  DEBUG_INTERNAL_FMT("%d unique elems", unique_elems);
 
   // create the new map
   map *new_map = checked_malloc(sizeof(map), "dedup map");
@@ -76,19 +70,18 @@ map *dedup(map *m)
 
   // copy over the elemets
   new_map->table[0] = m->table[0];
-  debug("dedup", "copied element with key %s", m->table[0].key);
+  DEBUG_INTERNAL_FMT("copied element with key %s", m->table[0].key);
   int j = 0;
   for (int i = 1; i < m->size; i++)
   {
-    debug("dedup", "loop i=%d j=%d", i, j);
     if (map_record_cmp(m->table + i, new_map->table + j) == 0)
     {
-      debug("dedup", "overwrote element on key %s", m->table[i].key);
+      DEBUG_INTERNAL_FMT("overwrote element on key %s", m->table[i].key);
       new_map->table[j] = m->table[i];
     }
     else
     {
-      debug("dedup", "copied element on key %s", m->table[i].key);
+      DEBUG_INTERNAL_FMT("copied element on key %s", m->table[i].key);
       new_map->table[++j] = m->table[i];
     }
   }
@@ -110,7 +103,7 @@ map *uninitialized_map(size_t count)
 map *list_to_map(list_node *n)
 {
 
-  debug("list_to_map", "called with %d elements", list_count(n));
+  DEBUG_INTERNAL_FMT("called with %d elements", list_count(n));
 
   // list must have an even number of elements
   const int list_size = list_count(n);
@@ -123,7 +116,7 @@ map *list_to_map(list_node *n)
   map *new_map = uninitialized_map(list_size / 2);
   if (new_map->size == 0)
   {
-    debug("list_to_map", "returning empty map");
+    DEBUG_INTERNAL_FMT("returning empty map");
     return new_map;
   }
 
@@ -133,7 +126,7 @@ map *list_to_map(list_node *n)
   {
     if (!is_str(n->val) && !is_kw(n->val) && !is_sym(n->val))
     {
-      debug("list_to_map", "returning NULL as found non-str/kw");
+      DEBUG_INTERNAL_FMT("returning NULL as found non-str/kw");
       return NULL;
     }
     new_map->table[i].key = n->val.s;
@@ -151,55 +144,49 @@ map *list_to_map(list_node *n)
   return dedup_map;
 }
 
+// equality for two maps
 bool map_equals(map *m1, map *m2)
 {
+  DEBUG_INTERNAL_FMT("called on maps of length %d and %d", m1->size, m2->size);
   if (m1->size != m2->size)
-  {
     return false;
-  }
   for (int i = 0; i < m1->size; i++)
   {
     map_record r1 = m1->table[i];
     map_record r2 = m2->table[i];
     if (strcmp(r1.key, r2.key) != 0)
-    {
       return false;
-    }
     if (r1.is_kw != r2.is_kw)
-    {
       return false;
-    }
     if (!mal_equals(r1.val, r2.val))
-    {
       return false;
-    }
   }
   return true;
 }
 
 mal map_get(map *hm, mal m)
 {
+  DEBUG_INTERNAL_MAL("called with", m);
   if (!is_str(m) && !is_kw(m) && !is_sym(m))
-  {
     return mal_nil();
-  }
   map_record key_record = {.key = m.s, .is_kw = is_kw(m)};
   map_record *res = bsearch(&key_record, hm->table, hm->size,
                             sizeof(map_record), map_record_cmp);
-  return res ? res->val : mal_nil();
+  mal ret = res ? res->val : mal_nil();
+  DEBUG_INTERNAL_MAL("returning", ret);
+  return ret;
 }
 
 bool map_contains(map *hm, mal m)
 {
-
+  DEBUG_INTERNAL_MAL2("called with", mal_map(hm), m);
   if (!is_str(m) && !is_kw(m) && !is_sym(m))
-  {
     return false;
-  }
-  debug("map_contains", "looking for %s in %p", m.s, hm);
 
   map_record key_record = {.key = m.s, .is_kw = is_kw(m)};
   map_record *res = bsearch(&key_record, hm->table, hm->size,
                             sizeof(map_record), map_record_cmp);
-  return res != NULL;
+  bool ret = res != NULL;
+  DEBUG_INTERNAL_FMT("returning", ret ? "true" : "false");
+  return ret;
 }

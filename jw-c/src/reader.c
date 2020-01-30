@@ -4,7 +4,7 @@
  *string
  *
  * Operates by tokenizing the input and holding a state which holds the input
- *string, an index into it for the current location and a current token.
+ *s tring, an index into it for the current location and a current token.
  *
  **/
 
@@ -16,6 +16,7 @@
 
 #include "reader.h"
 
+#include "debug.h"
 #include "map.h"
 #include "seq.h"
 #include "tokenize.h"
@@ -53,17 +54,11 @@ static const char *reader_next(reader_state *state_ptr)
   {
     const token_result *next =
         tokenize(state_ptr->input_string, state_ptr->offset);
-    // if (next == NULL) {
-    //     return mal_reader_exception("reader_next got null from tokenize",
-    //     state_ptr);
-    // }
     state_ptr->current = next->val;
     state_ptr->offset = next->next_offset;
   }
   else
-  {
     state_ptr->current = NULL;
-  }
 
   return pre_fetched_current;
 }
@@ -84,27 +79,26 @@ static mal read_extended(reader_state *state_ptr)
   char *closing_char;
   if (match_sym(current, "("))
   {
+    DEBUG_INTERNAL_FMT("list");
     reading_mode = READ_LIST;
     closing_char = ")";
   }
   else if (match_sym(current, "["))
   {
+    DEBUG_INTERNAL_FMT("vec");
     reading_mode = READ_VEC;
     closing_char = "]";
   }
   else if (match_sym(current, "{"))
   {
+    DEBUG_INTERNAL_FMT("map");
     reading_mode = READ_MAP;
     closing_char = "}";
   }
   else
-  {
-    return mal_reader_exception("read_extended called without opener",
-                                state_ptr);
-  }
+    return mal_reader_exception("read_extended no opener", state_ptr);
 
   // Read the elements as a list, keeping a count of the number read
-  debug("read_extended", "started");
   list_node *head = NULL;
   list_node *last = NULL;
   int nodes_count = 0;
@@ -137,9 +131,7 @@ static mal read_extended(reader_state *state_ptr)
   case READ_MAP:
     m = list_to_map(head);
     if (m == NULL)
-    {
-      return mal_exception(mal_str("Map creation failed"));
-    }
+      return mal_exception_str("Map creation failed");
     return mal_map(m);
   }
 }
@@ -151,12 +143,12 @@ static mal read_atom(reader_state *state_ptr)
   const char *const token = reader_next(state_ptr);
   const int token_len = strlen(token);
   mal value;
-  debug("read_atom", "received token %s, length %d", token, token_len);
+  DEBUG_INTERNAL_FMT("received token %s, length %d", token, token_len);
 
   if (token_len > 0 && is_number(token))
   {
     value = mal_int(atoi(token));
-    debug("read_atom", "returning %d", value.i);
+    DEBUG_INTERNAL_FMT("returning int %d", value.i);
     return value;
   }
 
@@ -168,7 +160,7 @@ static mal read_atom(reader_state *state_ptr)
       strncpy(buf, token + 1, token_len - 2);
       buf[token_len - 1] = '\0';
       mal val = remove_escapes(mal_str(buf));
-      debug("read_atom", "returning str %s", val.s);
+      DEBUG_INTERNAL_FMT("returning str %s", val.s);
       return val;
     }
     return mal_reader_exception("unbalanced string quote", state_ptr);
@@ -176,66 +168,66 @@ static mal read_atom(reader_state *state_ptr)
 
   if (token_len >= 2 && strncmp(token, ":", 1) == 0)
   {
-    debug("read_atom", "returning keyword :%s", token + 1);
+    DEBUG_INTERNAL_FMT("returning keyword :%s", token + 1);
     return mal_kw(token + 1);
   }
 
   if (strcmp(token, "true") == 0)
   {
-    debug("read_atom", "returning true");
+    DEBUG_INTERNAL_FMT("returning true");
     return mal_true();
   }
 
   if (strcmp(token, "false") == 0)
   {
-    debug("read_atom", "returning false");
+    DEBUG_INTERNAL_FMT("returning false");
     return mal_false();
   }
 
   if (strcmp(token, "nil") == 0)
   {
-    debug("read_atom", "returning nil");
+    DEBUG_INTERNAL_FMT("returning nil");
     return mal_nil();
   }
 
   if (strcmp(token, "'") == 0)
   {
-    debug("read_atom", "expanding quote");
+    DEBUG_INTERNAL_FMT("expanding quote");
     return mal_cons(mal_sym("quote"),
                     mal_cons(read_form(state_ptr), mal_list(NULL)));
   }
 
   if (strcmp(token, "`") == 0)
   {
-    debug("read_atom", "expanding quasiquote");
+    DEBUG_INTERNAL_FMT("expanding quasiquote");
     return mal_cons(mal_sym("quasiquote"),
                     mal_cons(read_form(state_ptr), mal_list(NULL)));
   }
 
   if (strcmp(token, "~") == 0)
   {
-    debug("read_atom", "expanding unquote");
+    DEBUG_INTERNAL_FMT("expanding unquote");
     return mal_cons(mal_sym("unquote"),
                     mal_cons(read_form(state_ptr), mal_list(NULL)));
   }
 
   if (strcmp(token, "@") == 0)
   {
-    debug("read_atom", "expanding deref");
+    DEBUG_INTERNAL_FMT("expanding deref");
     return mal_cons(mal_sym("deref"),
                     mal_cons(read_form(state_ptr), mal_list(NULL)));
   }
 
   if (strcmp(token, "~@") == 0)
   {
-    debug("read_atom", "expanding spliceunquote");
+    DEBUG_INTERNAL_FMT("expanding spliceunquote");
     return mal_cons(mal_sym("splice-unquote"),
                     mal_cons(read_form(state_ptr), mal_list(NULL)));
   }
 
   if (strcmp(token, "^") == 0)
   {
-    debug("read_atom", "expanding deref");
+    DEBUG_INTERNAL_FMT("expanding deref");
     mal m1 = read_form(state_ptr);
     mal m2 = read_form(state_ptr);
     return mal_cons(mal_sym("with-meta"),
@@ -246,7 +238,7 @@ static mal read_atom(reader_state *state_ptr)
   {
     value = mal_sym(checked_malloc(token_len + 1, "SYM in read_atom"));
     strncpy((char *)value.s, token, token_len + 1);
-    debug("read_atom", "returning sym %s", value.s);
+    DEBUG_INTERNAL_FMT("returning sym %s", value.s);
     return value;
   }
 
@@ -259,18 +251,18 @@ static mal read_form(reader_state *state_ptr)
   const char *next_token = reader_peek(state_ptr);
   if (strcmp(next_token, "") == 0)
   {
-    debug("read_form", "returning missing");
+    DEBUG_INTERNAL_FMT("returning missing");
     return mal_missing();
   }
   if (strcmp(next_token, "(") == 0 || strcmp(next_token, "[") == 0 ||
       strcmp(next_token, "{") == 0)
   {
-    debug("read_form", "starting read_extended");
+    DEBUG_INTERNAL_FMT("starting read_extended");
     return read_extended(state_ptr);
   }
   else
   {
-    debug("read_form", "starting read_atom");
+    DEBUG_INTERNAL_FMT("starting read_atom");
     return read_atom(state_ptr);
   }
 }
@@ -279,7 +271,7 @@ static mal read_form(reader_state *state_ptr)
 mal read_str(const char *input_string)
 {
 
-  debug("read_str", "called on '%s'", input_string);
+  DEBUG_INTERNAL_FMT("called on '%s'", input_string);
 
   static reader_state *state_ptr;
   state_ptr =
@@ -305,5 +297,5 @@ static mal mal_reader_exception(const char *msg, reader_state *state_ptr)
   char *buf = checked_malloc(buf_len + 1, "mal_reader_exception");
   snprintf(buf, buf_len, "%s %s %s", READER_ERROR_MSG, msg,
            state_ptr->input_string + state_ptr->offset);
-  return mal_exception(mal_str(buf));
+  return mal_exception_str(buf);
 }

@@ -1,7 +1,7 @@
 #ifndef HISTORY_H
 #define HISTORY_H
 
-void start_history();
-void end_history();
+void pre_history();
+void post_history();
 
 #endif

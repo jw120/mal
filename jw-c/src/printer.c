@@ -9,6 +9,7 @@
 
 #include "printer.h"
 
+#include "debug.h"
 #include "map.h"
 #include "seq.h"
 #include "utils.h"
@@ -67,7 +68,6 @@ static const char *join_strings(list_node *s, int chars, int elements,
 // Print a list
 static const char *print_list(list_node *input_head, bool print_readably)
 {
-  debug("pr_str", "print_list %p", input_head);
   list_node *string_head = NULL;
   int char_count = 0;
   int element_count = 0;
@@ -79,12 +79,9 @@ static const char *print_list(list_node *input_head, bool print_readably)
     char_count += strlen(s);
     element_count++;
     string_node = list_extend(mal_str(s), string_node);
-    debug("pr_str", "list_extend %s", s);
 
     if (string_head == NULL)
-    {
       string_head = string_node;
-    }
     input_node = input_node->next;
   }
   return join_strings(string_head, char_count, element_count, PRINT_LIST);
@@ -93,7 +90,6 @@ static const char *print_list(list_node *input_head, bool print_readably)
 // Print a map
 static const char *print_map(map *m, bool print_readably)
 {
-  debug("pr_str", "print_map %p", m);
   list_node *string_head = NULL;
   int char_count = 0;
   int element_count = 0;
@@ -106,13 +102,11 @@ static const char *print_map(map *m, bool print_readably)
     char_count += strlen(s1);
     element_count++;
     string_node = list_extend(mal_str(s1), string_node);
-    debug("pr_str", "list_extend %s", s1);
     string_head = (string_head == NULL) ? string_node : string_head;
     const char *s2 = pr_str(m->table[i].val, print_readably);
     char_count += strlen(s2);
     element_count++;
     string_node = list_extend(mal_str(s2), string_node);
-    debug("pr_str", "list_extend %s", s2);
   }
   return join_strings(string_head, char_count, element_count, PRINT_MAP);
 }
@@ -120,11 +114,8 @@ static const char *print_map(map *m, bool print_readably)
 // Print a vector
 static const char *print_vec(vec *v, bool print_readably)
 {
-  debug("pr_str", "print_vec %p", v);
   if (v == NULL)
-  {
     return "[]";
-  }
   list_node *string_head = NULL;
   int char_count = 0;
   int element_count = 0;
@@ -136,9 +127,7 @@ static const char *print_vec(vec *v, bool print_readably)
     element_count++;
     string_node = list_extend(mal_str(s), string_node);
     if (string_head == NULL)
-    {
       string_head = string_node;
-    }
   }
   return join_strings(string_head, char_count, element_count, PRINT_VEC);
 }
@@ -154,7 +143,7 @@ const char *pr_str(mal m, bool print_readably)
   case MISSING:
     return "Internal error - pr_str on a missing value";
   case EXCEPTION:
-    return pr_str(*(m.e), print_readably);
+    return pr_str(*(m.e), false);
   case TRUE:
     return "true";
   case FALSE:
@@ -162,25 +151,27 @@ const char *pr_str(mal m, bool print_readably)
   case NIL:
     return "nil";
   case INT:
-    debug("pr_str", "int %d", m.i);
+    DEBUG_INTERNAL_FMT("int %d", m.i);
     buf_size = 1 + snprintf(NULL, 0, "%d", m.i);
     buf = checked_malloc(buf_size, "pr_str INT");
     snprintf(buf, buf_size, "%d", m.i);
     return buf;
   case STR:
-    debug("pr_str", "str \"%s\"", m.s);
-    mal esc_m = print_readably ? add_escapes(mal_str(m.s)) : m;
+    if (!print_readably)
+      return m.s;
+    DEBUG_INTERNAL_FMT("str \"%s\"", m.s);
+    mal esc_m = add_escapes(mal_str(m.s));
     buf_size = 1 + snprintf(NULL, 0, "\"%s\"", esc_m.s);
     buf = checked_malloc(buf_size, "pr_str STR");
     snprintf(buf, buf_size, "\"%s\"", esc_m.s);
     return buf;
   case SYM:
-    debug("pr_str", "sym %s", m.s);
+    DEBUG_INTERNAL_FMT("sym %s", m.s);
     return m.s;
   case KW:
-    debug("pr_str", "kw :%s", m.s);
+    DEBUG_INTERNAL_FMT("kw :%s", m.s);
     buf_size = 1 + snprintf(NULL, 0, ":%s", m.s);
-    buf = checked_malloc(buf_size, "pr_str KW");
+    buf = checked_malloc(buf_size - 1, "pr_str KW");
     snprintf(buf, buf_size, ":%s", m.s);
     return buf;
   case LIST:

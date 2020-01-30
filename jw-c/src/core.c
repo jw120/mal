@@ -9,6 +9,7 @@
 
 #include "core.h"
 
+#include "debug.h"
 #include "env.h"
 #include "seq.h"
 
@@ -18,7 +19,7 @@ char err_msg[ERR_MSG_LEN + 1];
 // macro to support validation of arguments
 #define ret_if_args_invalid(s) \
   if (s != NULL)               \
-    return mal_exception(mal_str(s));
+    return mal_exception_str(s);
 
 // does the list of arguments passed represent two ints
 static char *validate_2_ints(list_node *n, const char *func_name)
@@ -35,6 +36,7 @@ static char *validate_2_ints(list_node *n, const char *func_name)
 // C implementation of mal +
 mal plus(list_node *n, env *e)
 {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
   ret_if_args_invalid(validate_2_ints(n, __func__));
   return mal_int(n->val.i + n->next->val.i);
 }
@@ -42,6 +44,7 @@ mal plus(list_node *n, env *e)
 // C implementation of mal -
 mal minus(list_node *n, env *e)
 {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
   ret_if_args_invalid(validate_2_ints(n, __func__));
   return mal_int(n->val.i - n->next->val.i);
 }
@@ -49,6 +52,7 @@ mal minus(list_node *n, env *e)
 // C implementation of mal *
 mal times(list_node *n, env *e)
 {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
   ret_if_args_invalid(validate_2_ints(n, __func__));
   return mal_int(n->val.i * n->next->val.i);
 }
@@ -56,9 +60,10 @@ mal times(list_node *n, env *e)
 // C implementation of mal /
 mal divide(list_node *n, env *e)
 {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
   ret_if_args_invalid(validate_2_ints(n, __func__));
   if (n->next->val.i == 0)
-    return mal_exception(mal_str("Divide by zero"));
+    return mal_exception_str("Divide by zero");
 
   return mal_int(n->val.i / n->next->val.i);
 }
@@ -66,7 +71,7 @@ mal divide(list_node *n, env *e)
 // return the core environment, creating it if it does not already exist
 env *core_env()
 {
-
+  DEBUG_INTERNAL_FMT("called");
   const size_t symbol_array_size = 8;
   mal symbol_array[] = {mal_sym("+"), mal_fn(plus), mal_sym("-"),
                         mal_fn(minus), mal_sym("*"), mal_fn(times),
@@ -76,6 +81,9 @@ env *core_env()
   // create the environment if it does not yet exist
   static env *e = NULL;
   if (e == NULL)
+  {
+    DEBUG_INTERNAL_FMT("created new core environment");
     e = env_new(array_to_list(symbol_array_size, symbol_array), NULL);
+  }
   return e;
 }

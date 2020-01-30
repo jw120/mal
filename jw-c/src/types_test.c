@@ -6,10 +6,12 @@
 
 #include "seq.h"
 
-const char *types_test() {
+const char *types_test()
+{
 
   mu_assert("types missing", is_missing(mal_missing()));
   mu_assert("types exception", is_exception(mal_exception(mal_list(NULL))));
+  mu_assert("types exception_str", is_exception(mal_exception_str("hi!")));
   mu_assert("types true", is_true(mal_true()));
   mu_assert("types false", is_false(mal_false()));
   mu_assert("types true bool", is_bool(mal_true()));

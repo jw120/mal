@@ -23,9 +23,10 @@ typedef struct env_struct env;
 
 typedef mal fn(list_node *, env *);
 
-enum mal_tag {
-  MISSING, // reader may return a missing value, should not be passed to eval or
-           // print
+enum mal_tag
+{
+  MISSING,   // reader may return a missing value, should not be passed to eval or
+             // print
   EXCEPTION, // an error or thrown by the user
   TRUE,
   FALSE,
@@ -40,7 +41,8 @@ enum mal_tag {
   FN
 };
 
-struct mal_struct {
+struct mal_struct
+{
   enum mal_tag tag;
   union {
     struct mal_struct *e; // for EXCEPTION
@@ -53,29 +55,34 @@ struct mal_struct {
   };
 };
 
-struct list_node_struct {
+struct list_node_struct
+{
   mal val;
   list_node *next;
 };
 
-struct vec_struct {
+struct vec_struct
+{
   size_t size;
   mal *buf;
 };
 
-struct map_record_struct {
+struct map_record_struct
+{
   const char *key;
   bool is_kw; // is the key a keyword (not just a string)
   int index;  // used to de-duplicate the map (by keeping highest index)
   mal val;
 };
 
-struct map_struct {
+struct map_struct
+{
   size_t size; // size of table (including duplicate keys)
   map_record *table;
 };
 
-struct env_struct {
+struct env_struct
+{
   map *lookup;
   struct env_struct *outer;
 };
@@ -101,6 +108,7 @@ bool match_sym(const mal, const char *);
 // Constructor functions
 mal mal_missing();
 mal mal_exception(mal);
+mal mal_exception_str(const char *s);
 mal mal_true();
 mal mal_false();
 mal mal_nil();

@@ -109,6 +109,15 @@ mal mal_exception(mal m)
   return val;
 }
 
+mal mal_exception_str(const char *s)
+{
+  mal *m_ptr = checked_malloc(sizeof(mal), "mal_exception_str");
+  m_ptr->tag = STR;
+  m_ptr->s = s;
+  mal val = {EXCEPTION, {.e = m_ptr}};
+  return val;
+}
+
 mal mal_true()
 {
   mal val = {TRUE};

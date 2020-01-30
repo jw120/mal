@@ -10,6 +10,7 @@
 
 #include "env.h"
 
+#include "debug.h"
 #include "map.h"
 #include "seq.h"
 #include "utils.h"
@@ -17,15 +18,13 @@
 // creata a new envionment given an alternating sym/val list (NULL if fails)
 env *env_new(list_node *elems, env *outer)
 {
-  debug("env_new", "%d elements and outer %p", list_count(elems), outer);
+  DEBUG_INTERNAL_FMT("called with %d elements and outer %p", list_count(elems), outer);
 
   env *e = checked_malloc(sizeof(env), "env_new");
   e->lookup = list_to_map(elems);
   e->outer = outer;
   if (e->lookup == NULL)
     return NULL;
-
-  debug("env_new", "lookup is %p and outer is %p", e->lookup, e->outer);
 
   return e;
 }
@@ -39,7 +38,7 @@ void env_set(env *e, const char *sym, mal val)
 // Return the environment where the sym is defined (in its our chain) or NULL
 env *env_find(env *e, const char *sym)
 {
-  debug("env_find", "finding %s in %p", sym, e);
+  DEBUG_INTERNAL_FMT("finding %s in %p", sym, e);
   if (e == NULL)
     return NULL;
   if (map_contains(e->lookup, mal_str(sym)))
@@ -52,10 +51,10 @@ env *env_find(env *e, const char *sym)
 // Return the value associtated with the given symbol, exception if not found
 mal env_get(env *e, const char *sym)
 {
-  debug("env_get", "getting %s in %p", sym, e);
+  DEBUG_HIGH_FMT("getting %s", sym);
   env *found_e = env_find(e, sym);
-  debug("env_get", "found %p", found_e);
-  if (found_e == NULL)
-    return mal_exception(mal_str("not found"));
-  return map_get(found_e->lookup, mal_str(sym));
+  DEBUG_INTERNAL_FMT("found %p", found_e);
+  mal ret = found_e == NULL ? mal_exception_str("not found") : map_get(found_e->lookup, mal_str(sym));
+  DEBUG_HIGH_MAL("returning", ret);
+  return ret;
 }
