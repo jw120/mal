@@ -37,5 +37,16 @@ const char *env_test()
   mu_assert_eq("e2 has b", env_get(e2, "b"), mal_int(4));
   mu_assert("e2 get c", is_exception(env_get(e2, "c")));
 
+  // test env_set
+  env_set(e0, "x", mal_int(31));
+  env_set(e1, "x", mal_int(32));
+  env_set(e2, "x", mal_int(33));
+  env_set(e2, "a", mal_int(4));
+  mu_assert_eq("e0 new set", env_get(e0, "x"), mal_int(31));
+  mu_assert_eq("e1 new set", env_get(e1, "x"), mal_int(32));
+  mu_assert_eq("e2 new set", env_get(e2, "x"), mal_int(33));
+  mu_assert_eq("e1 remains", env_get(e1, "a"), mal_int(3));
+  mu_assert_eq("e2 updated", env_get(e2, "a"), mal_int(4));
+
   return 0;
 }

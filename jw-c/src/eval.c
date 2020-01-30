@@ -6,11 +6,29 @@
 
 #include "eval.h"
 
+#include "assert.h"
 #include "debug.h"
+#include "env.h"
 #include "map.h"
 #include "printer.h"
 #include "seq.h"
 #include "utils.h"
+
+mal def_special_form(list_node *n, env *e)
+{
+  DEBUG_INTERNAL_MAL("", mal_list(n));
+  if (!is_sym(n->val) || list_count(n) != 2)
+    return mal_exception_str("Bad arguments to def!");
+  mal evaluated_val = eval(n->next->val, e);
+  if (!is_exception(evaluated_val))
+    env_set(e, n->val.s, evaluated_val);
+  return evaluated_val;
+}
+
+mal let_special_form(list_node *n, env *e)
+{
+  return mal_nil();
+}
 
 // evaluation function that does not apply
 mal eval_ast(mal ast, env *e)
@@ -65,19 +83,35 @@ mal eval(mal ast, env *e)
 {
   DEBUG_HIGH_MAL("", ast);
 
+  if (is_exception(ast))
+    return ast;
+
   if (!is_list(ast) || seq_empty(ast))
     return eval_ast(ast, e);
+
+  // Check for special forms
+  mal head = mal_first(ast);
+  mal rest = mal_rest(ast);
+  assert(is_list(rest));
+  if (mal_equals(head, mal_sym("def!")))
+    return def_special_form(rest.n, e);
+  if (mal_equals(head, mal_sym("def!")))
+    return let_special_form(rest.n, e);
 
   mal evaluated_ast = eval_ast(ast, e);
   DEBUG_INTERNAL_MAL("after args evaluated have", evaluated_ast);
   if (!is_list(evaluated_ast) || seq_empty(evaluated_ast))
     return mal_exception_str("List mutatated away in eval");
 
-  mal head = mal_first(evaluated_ast);
-  mal rest = mal_rest(evaluated_ast);
+  head = mal_first(evaluated_ast);
+  rest = mal_rest(evaluated_ast);
+  assert(is_list(rest));
   DEBUG_INTERNAL_MAL("head of list to be applied", head);
   DEBUG_INTERNAL_MAL("rest of list to be applied", rest);
 
+  // If not a special form, apply the function
+  if (is_exception(head))
+    return head;
   if (!is_fn(head))
     return mal_exception_str("Not a function");
   return head.f(rest.n, e);

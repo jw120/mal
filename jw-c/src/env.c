@@ -7,6 +7,7 @@
  **/
 
 #include <assert.h>
+#include <stdio.h>
 
 #include "env.h"
 
@@ -32,7 +33,9 @@ env *env_new(list_node *elems, env *outer)
 // NYI - set a value in the environment
 void env_set(env *e, const char *sym, mal val)
 {
-  assert(false); // NYI
+  DEBUG_INTERNAL_MAL2("setting", mal_sym(sym), val);
+  assert(e != NULL);
+  map_set(e->lookup, mal_sym(sym), val);
 }
 
 // Return the environment where the sym is defined (in its our chain) or NULL
@@ -48,13 +51,21 @@ env *env_find(env *e, const char *sym)
   return NULL;
 }
 
+#define NOT_FOUND_BUF_SIZE 80
+static char not_found_buf[NOT_FOUND_BUF_SIZE];
+
 // Return the value associtated with the given symbol, exception if not found
 mal env_get(env *e, const char *sym)
 {
   DEBUG_INTERNAL_FMT("getting %s", sym);
   env *found_e = env_find(e, sym);
   DEBUG_INTERNAL_FMT("found %p", found_e);
-  mal ret = found_e == NULL ? mal_exception_str("not found") : map_get(found_e->lookup, mal_str(sym));
+  if (found_e == NULL)
+  {
+    snprintf(not_found_buf, NOT_FOUND_BUF_SIZE, "'%s' not found", sym);
+    return mal_exception_str(not_found_buf);
+  }
+  mal ret = map_get(found_e->lookup, mal_str(sym));
   DEBUG_HIGH_MAL2("", mal_sym(sym), ret);
   return ret;
 }
