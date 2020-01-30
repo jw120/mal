@@ -51,10 +51,10 @@ env *env_find(env *e, const char *sym)
 // Return the value associtated with the given symbol, exception if not found
 mal env_get(env *e, const char *sym)
 {
-  DEBUG_HIGH_FMT("getting %s", sym);
+  DEBUG_INTERNAL_FMT("getting %s", sym);
   env *found_e = env_find(e, sym);
   DEBUG_INTERNAL_FMT("found %p", found_e);
   mal ret = found_e == NULL ? mal_exception_str("not found") : map_get(found_e->lookup, mal_str(sym));
-  DEBUG_HIGH_MAL("returning", ret);
+  DEBUG_HIGH_MAL2("", mal_sym(sym), ret);
   return ret;
 }

@@ -63,7 +63,7 @@ mal eval_ast(mal ast, env *e)
 // top-level evaluation function
 mal eval(mal ast, env *e)
 {
-  DEBUG_HIGH_MAL("called with", ast);
+  DEBUG_HIGH_MAL("", ast);
 
   if (!is_list(ast) || seq_empty(ast))
     return eval_ast(ast, e);

@@ -70,8 +70,9 @@ int main()
       break;
     case FULL:
     case READ_PRINT:
+      DEBUG_HIGH_FMT("input %s", input);
       m = READ(input);
-      DEBUG_HIGH_FMT("read", m);
+      DEBUG_HIGH_MAL("read", m);
       if (!is_missing(m))
       {
         if (mode == FULL)
