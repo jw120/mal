@@ -55,6 +55,8 @@ int main()
   while (true)
   {
     mal m;
+    if (mode == FULL)
+      DEBUG_HIGH_ENV(repl_env);
     const char *input = readline("user> ");
     if (input == NULL)
     { // EOF from ctrl-D

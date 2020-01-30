@@ -58,3 +58,11 @@ mal env_get(env *e, const char *sym)
   DEBUG_HIGH_MAL2("", mal_sym(sym), ret);
   return ret;
 }
+
+/*
+
+env %p (outer=core)  / (outer=NULL) / (outer=%p)
+  +: <function>
+  x: 2
+
+*/

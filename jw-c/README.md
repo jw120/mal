@@ -1,7 +1,4 @@
 Todo
-  - Why does main debug=1 say nothing
-  - Test debug more
-  - function to show env
   - strncpy and strncomp everywhere
 
 readline
