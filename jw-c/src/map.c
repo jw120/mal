@@ -11,6 +11,7 @@
 
 #include "map.h"
 
+#include "assert.h"
 #include "debug.h"
 #include "seq.h"
 #include "types.h"
@@ -164,14 +165,51 @@ bool map_equals(map *m1, map *m2)
   return true;
 }
 
+static map_record *find_record(map *hm, mal m)
+{
+  assert(is_str(m) || is_kw(m) || is_sym(m));
+  map_record key_record = {.key = m.s, .is_kw = is_kw(m)};
+  return bsearch(&key_record, hm->table, hm->size,
+                 sizeof(map_record), map_record_cmp);
+}
+
+void map_set(map *hm, mal key, mal value)
+{
+  DEBUG_INTERNAL_MAL2("called with", key, value);
+  assert(is_str(key) || is_kw(key) || is_sym(key));
+
+  map_record *existing = find_record(hm, key);
+
+  // if key already exists, then just over-write it
+  if (existing != NULL)
+  {
+    existing->val = value;
+    return;
+  }
+
+  // if not, then create a new map with one extra key
+  map *new_hm = uninitialized_map(hm->size + 1);
+  for (int i = 0; i < hm->size; i++)
+  {
+    new_hm->table[i] = hm->table[i];
+  }
+  new_hm->table[hm->size].key = key.s;
+  new_hm->table[hm->size].is_kw = is_kw(key);
+  new_hm->table[hm->size].val = value;
+  new_hm->table[hm->size].index = 0;
+  qsort(new_hm->table, new_hm->size, sizeof(map_record), map_record_cmp);
+
+  // change hm to point to the new table
+  hm->size = new_hm->size;
+  hm->table = new_hm->table;
+}
+
 mal map_get(map *hm, mal m)
 {
   DEBUG_INTERNAL_MAL("called with", m);
   if (!is_str(m) && !is_kw(m) && !is_sym(m))
     return mal_nil();
-  map_record key_record = {.key = m.s, .is_kw = is_kw(m)};
-  map_record *res = bsearch(&key_record, hm->table, hm->size,
-                            sizeof(map_record), map_record_cmp);
+  map_record *res = find_record(hm, m);
   mal ret = res ? res->val : mal_nil();
   DEBUG_INTERNAL_MAL("returning", ret);
   return ret;
@@ -183,9 +221,7 @@ bool map_contains(map *hm, mal m)
   if (!is_str(m) && !is_kw(m) && !is_sym(m))
     return false;
 
-  map_record key_record = {.key = m.s, .is_kw = is_kw(m)};
-  map_record *res = bsearch(&key_record, hm->table, hm->size,
-                            sizeof(map_record), map_record_cmp);
+  map_record *res = find_record(hm, m);
   bool ret = res != NULL;
   DEBUG_INTERNAL_FMT("returning", ret ? "true" : "false");
   return ret;

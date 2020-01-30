@@ -1,5 +1,5 @@
 Todo
-  - strncpy and strncomp everywhere
+  - Step 3
 
 readline
 pcre

@@ -49,13 +49,9 @@ int main(int argc, char **argv)
   const char *result = run_tests();
 
   if (result != 0)
-  {
     printf("%s\n", result);
-  }
   else
-  {
     printf("ALL TESTS PASSED - ");
-  }
   printf("Tested %d assertions in %d tests\n", asserts_run, tests_run);
 
   return result != 0;

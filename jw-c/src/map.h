@@ -5,6 +5,7 @@
 
 bool map_equals(map *, map *);
 mal map_get(map *, mal);
+void map_set(map *, mal, mal);
 bool map_contains(map *, mal);
 
 map *uninitialized_map(size_t);

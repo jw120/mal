@@ -8,7 +8,8 @@
 
 #include "printer.h"
 
-const char *map_test() {
+const char *map_test()
+{
 
   // map with strings
   map *m = list_to_map(
@@ -69,6 +70,14 @@ const char *map_test() {
                           list_cons(mal_kw("cat"), list_cons(m2_vec, NULL))))));
   mu_assert_eq("map_equality m1==m2", m1, m2);
   mu_assert_neq("map_equality m1/=m", m1, mal_map(m));
+
+  // map setting
+  mal a[] = {mal_kw("a"), mal_int(7), mal_kw("b"), mal_int(4)};
+  m = list_to_map(array_to_list(4, a));
+  map_set(m, mal_kw("b"), mal_int(6));
+  mu_assert_eq("map set existing", map_get(m, mal_kw("b")), mal_int(6));
+  map_set(m, mal_kw("c"), mal_int(2));
+  mu_assert_eq("map set new", map_get(m, mal_kw("c")), mal_int(2));
 
   return 0;
 }
