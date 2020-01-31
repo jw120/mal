@@ -15,7 +15,7 @@
 #include "seq.h"
 #include "utils.h"
 
-// Value equality
+// Value equality (does not propogate exceptions)
 bool mal_equals(mal a, mal b)
 {
   switch (a.tag)
@@ -64,6 +64,8 @@ bool is_bool(const mal m) { return m.tag == TRUE || m.tag == FALSE; }
 bool is_true(const mal m) { return m.tag == TRUE; }
 
 bool is_false(const mal m) { return m.tag == FALSE; }
+
+bool is_falsey(const mal m) { return m.tag == FALSE || m.tag == NIL; }
 
 bool is_nil(const mal m) { return m.tag == NIL; }
 
@@ -128,6 +130,11 @@ mal mal_false()
 {
   mal val = {FALSE};
   return val;
+}
+
+mal mal_bool(bool b)
+{
+  return b ? mal_true() : mal_false();
 }
 
 mal mal_nil()

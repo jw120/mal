@@ -1,5 +1,6 @@
 Todo
-  - Step 3
+  - check exceptions propogate everywhere
+  - finish step 4
 
 readline
 pcre

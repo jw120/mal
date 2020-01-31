@@ -1,4 +1,4 @@
-.PHONY: all build clean distclean run test step-test
+.PHONY: all build clean distclean run test step-test run-debug
 
 all: build test step-test
 
@@ -45,6 +45,9 @@ build: $(TARGET_DIR)/mal $(TARGET_DIR)/tests
 run: $(TARGET_DIR)/mal
 	-@$(TARGET_DIR)/mal
 
+run-debug:  $(TARGET_DIR)/mal
+	-@DEBUG=1 $(TARGET_DIR)/mal
+
 test: $(TARGET_DIR)/tests
 	-@$(TARGET_DIR)/tests
 
@@ -53,6 +56,7 @@ step-test: $(TARGET_DIR)/mal
 	-@echo step 1; cd ..; make "test^jw-c^step1" | grep "failing tests"
 	-@echo step 2; cd ..; make "test^jw-c^step2" | grep "failing tests"
 	-@echo step 3; cd ..; make "test^jw-c^step3" | grep "failing tests"
+	-@echo step 4; cd ..; make "test^jw-c^step4" | grep "failing tests"
 
 clean:
 	$(RM) $(BUILD_DIR)/*

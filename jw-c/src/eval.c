@@ -17,10 +17,6 @@
 #include "seq.h"
 #include "utils.h"
 
-#define RETURN_IF_EXCEPTION(x) \
-  if (is_exception(x))         \
-  return x
-
 mal def_special_form(list_node *n, env *e)
 {
   DEBUG_INTERNAL_MAL("", mal_list(n));
@@ -30,6 +26,32 @@ mal def_special_form(list_node *n, env *e)
   RETURN_IF_EXCEPTION(evaluated_val);
   env_set(e, n->val.s, evaluated_val);
   return evaluated_val;
+}
+
+mal do_special_form(list_node *n, env *e)
+{
+  DEBUG_INTERNAL_MAL("", mal_list(n));
+  if (n == NULL)
+    return mal_exception_str("Bad arguments to do");
+  mal ret = mal_exception_str("Internal failure");
+  while (n != NULL) {
+    ret = eval(n->val, e);
+    RETURN_IF_EXCEPTION(ret);
+    n = n->next;
+  }
+  return ret;
+}
+
+mal if_special_form(list_node *n, env *e)
+{
+  DEBUG_INTERNAL_MAL("", mal_list(n));
+  if (n == NULL || list_count(n) < 2 || list_count(n) > 3)
+    return mal_exception_str("Bad arguments to if");
+  mal condition = eval(n->val, e);
+  RETURN_IF_EXCEPTION(condition);
+  if (!is_falsey(condition))
+    return eval(n->next->val, e);
+  return (n->next->next == NULL) ? mal_nil() : eval(n->next->next->val, e);
 }
 
 mal let_special_form(list_node *n, env *e)
@@ -83,6 +105,14 @@ mal let_special_form(list_node *n, env *e)
   mal ret = eval(n->next->val, let_env);
   env_free(let_env);
   return ret;
+}
+
+mal quote_special_form(list_node *n, env *e)
+{
+  DEBUG_INTERNAL_MAL("", mal_list(n));
+  if (list_count(n) != 1)
+    return mal_exception_str("Bad arguments to quote");
+  return n->val;
 }
 
 // evaluation function that does not apply
@@ -153,10 +183,17 @@ mal eval(mal ast, env *e)
   // Check for special forms
   mal head = mal_first(ast);
   mal rest = mal_rest(ast);
+  RETURN_IF_EXCEPTION(head);
   if (mal_equals(head, mal_sym("def!")))
     return def_special_form(rest.n, e);
+  if (mal_equals(head, mal_sym("do")))
+    return do_special_form(rest.n, e);
+  if (mal_equals(head, mal_sym("if")))
+    return if_special_form(rest.n, e);
   if (mal_equals(head, mal_sym("let*")))
     return let_special_form(rest.n, e);
+    if (mal_equals(head, mal_sym("quote")))
+    return quote_special_form(rest.n, e);
 
   // Evaluate all the list elements
   mal evaluated_ast = eval_ast(ast, e);

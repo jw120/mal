@@ -14,6 +14,12 @@ const char *types_test()
   mu_assert("types exception_str", is_exception(mal_exception_str("hi!")));
   mu_assert("types true", is_true(mal_true()));
   mu_assert("types false", is_false(mal_false()));
+  mu_assert("types true bool", is_true(mal_bool(true)));
+  mu_assert("types false bool", is_false(mal_bool(false)));
+  mu_assert("types falsey false", is_falsey(mal_false()));
+  mu_assert("types falsey nil", is_falsey(mal_nil()));
+  mu_assert("types falsey true", !is_falsey(mal_true()));
+  mu_assert("types falsey 33", !is_falsey(mal_int(33)));
   mu_assert("types true bool", is_bool(mal_true()));
   mu_assert("types false bool", is_bool(mal_false()));
   mu_assert("types nil", is_nil(mal_nil()));

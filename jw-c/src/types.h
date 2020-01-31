@@ -93,6 +93,7 @@ bool is_exception(const mal);
 bool is_bool(const mal);
 bool is_true(const mal);
 bool is_false(const mal);
+bool is_falsey(const mal);
 bool is_nil(const mal);
 bool is_int(const mal);
 bool is_str(const mal);
@@ -111,6 +112,7 @@ mal mal_exception(mal);
 mal mal_exception_str(const char *s);
 mal mal_true();
 mal mal_false();
+mal mal_bool(bool);
 mal mal_nil();
 mal mal_int(int);
 mal mal_str(const char *);
@@ -124,5 +126,10 @@ mal mal_fn(fn *);
 
 // Equality
 bool mal_equals(mal, mal);
+
+// Helper macro to propogate exceptions
+#define RETURN_IF_EXCEPTION(x) \
+  if (is_exception(x))         \
+  return x
 
 #endif
