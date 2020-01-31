@@ -24,7 +24,7 @@
 mal def_special_form(list_node *n, env *e)
 {
   DEBUG_INTERNAL_MAL("", mal_list(n));
-  if (!is_sym(n->val) || list_count(n) != 2)
+  if (n == NULL || !is_sym(n->val) || list_count(n) != 2)
     return mal_exception_str("Bad arguments to def!");
   mal evaluated_val = eval(n->next->val, e);
   RETURN_IF_EXCEPTION(evaluated_val);
@@ -34,7 +34,55 @@ mal def_special_form(list_node *n, env *e)
 
 mal let_special_form(list_node *n, env *e)
 {
-  return mal_nil();
+  DEBUG_INTERNAL_MAL("", mal_list(n));
+  if (n == NULL)
+    return mal_exception_str("No arguments to let");
+  RETURN_IF_EXCEPTION(n->val);
+  if (!is_seq(n->val) || list_count(n) != 2)
+    return mal_exception_str("Bad arguments to let");
+  RETURN_IF_EXCEPTION(n->next->val);
+  if (seq_count(n->val) % 2)
+    return mal_exception_str("Odd length argument list in let");
+
+  // Create our new enviornment for the let*
+  env *let_env = env_new(NULL, e);
+
+  // Walk over the binding list or vector adding symbols to the new environment
+  if (is_list(n->val))
+  {
+    list_node *p = n->val.n;
+    while (p != NULL) // walk two nodes at a time
+    {
+      mal sym = p->val;
+      RETURN_IF_EXCEPTION(sym);
+      if (!is_sym(sym))
+        return mal_exception_str("Non-symbol in binding list in let");
+      mal val = p->next->val;
+      mal evaluated_val = eval(val, let_env);
+      RETURN_IF_EXCEPTION(evaluated_val);
+      env_set(let_env, sym.s, evaluated_val);
+      p = p->next->next;
+    }
+  }
+  else
+  {
+    for (int i = 0; i < n->val.v->size; i += 2)
+    {
+      mal sym = n->val.v->buf[i];
+      RETURN_IF_EXCEPTION(sym);
+      if (!is_sym(sym))
+        return mal_exception_str("Non-symbol in binding vector in let");
+      mal val = n->val.v->buf[i + 1];
+      mal evaluated_val = eval(val, let_env);
+      RETURN_IF_EXCEPTION(evaluated_val);
+      env_set(let_env, sym.s, evaluated_val);
+    }
+  }
+
+  DEBUG_HIGH_ENV(let_env);
+  mal ret = eval(n->next->val, let_env);
+  env_free(let_env);
+  return ret;
 }
 
 // evaluation function that does not apply
@@ -107,7 +155,7 @@ mal eval(mal ast, env *e)
   mal rest = mal_rest(ast);
   if (mal_equals(head, mal_sym("def!")))
     return def_special_form(rest.n, e);
-  if (mal_equals(head, mal_sym("def!")))
+  if (mal_equals(head, mal_sym("let*")))
     return let_special_form(rest.n, e);
 
   // Evaluate all the list elements

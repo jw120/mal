@@ -30,6 +30,14 @@ env *env_new(list_node *elems, env *outer)
   return e;
 }
 
+// free an environemtn and its table
+void env_free(env *e)
+{
+  DEBUG_INTERNAL_FMT("called");
+  free(e->lookup);
+  free(e);
+}
+
 // NYI - set a value in the environment
 void env_set(env *e, const char *sym, mal val)
 {

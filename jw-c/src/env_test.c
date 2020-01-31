@@ -48,5 +48,10 @@ const char *env_test()
   mu_assert_eq("e1 remains", env_get(e1, "a"), mal_int(3));
   mu_assert_eq("e2 updated", env_get(e2, "a"), mal_int(4));
 
+  // env_free
+  env_free(e0);
+  env_free(e1);
+  env_free(e2);
+
   return 0;
 }
