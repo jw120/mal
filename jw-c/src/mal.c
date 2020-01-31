@@ -49,7 +49,10 @@ int main()
   // Set up our environment
   env *repl_env;
   if (mode == FULL)
-    repl_env = core_env();
+  {
+    DEBUG_HIGH_ENV(core_env());
+    repl_env = env_new(NULL, core_env());
+  }
 
   pre_history();
   while (true)
@@ -74,9 +77,9 @@ int main()
     case READ_PRINT:
       DEBUG_HIGH_FMT("input %s", input);
       m = READ(input);
-      DEBUG_HIGH_MAL("read", m);
       if (!is_missing(m))
       {
+        DEBUG_HIGH_MAL("read", m);
         if (mode == FULL)
           m = EVAL(m, repl_env);
         puts(PRINT(m));

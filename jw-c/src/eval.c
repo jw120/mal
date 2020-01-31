@@ -2,6 +2,9 @@
  *
  * eval.c - provides the evaluator
  *
+ * Note that we are using an exception tag in mal to simulate exceptions, so
+ * we need to actively look for exception returns from every eval and propogate them
+ *
  **/
 
 #include "eval.h"
@@ -14,14 +17,18 @@
 #include "seq.h"
 #include "utils.h"
 
+#define RETURN_IF_EXCEPTION(x) \
+  if (is_exception(x))         \
+  return x
+
 mal def_special_form(list_node *n, env *e)
 {
   DEBUG_INTERNAL_MAL("", mal_list(n));
   if (!is_sym(n->val) || list_count(n) != 2)
     return mal_exception_str("Bad arguments to def!");
   mal evaluated_val = eval(n->next->val, e);
-  if (!is_exception(evaluated_val))
-    env_set(e, n->val.s, evaluated_val);
+  RETURN_IF_EXCEPTION(evaluated_val);
+  env_set(e, n->val.s, evaluated_val);
   return evaluated_val;
 }
 
@@ -47,7 +54,9 @@ mal eval_ast(mal ast, env *e)
     list_node *from = ast.n;
     while (from != NULL)
     {
-      to = list_extend(eval(from->val, e), to);
+      mal m = eval(from->val, e);
+      RETURN_IF_EXCEPTION(m);
+      to = list_extend(m, to);
       if (to_head == NULL)
         to_head = to;
       from = from->next;
@@ -59,7 +68,11 @@ mal eval_ast(mal ast, env *e)
   {
     vec *to = uninitialized_vec(ast.v->size);
     for (int i = 0; i < ast.v->size; i++)
-      to->buf[i] = eval(ast.v->buf[i], e);
+    {
+      mal m = eval(ast.v->buf[i], e);
+      RETURN_IF_EXCEPTION(m);
+      to->buf[i] = m;
+    }
     return mal_vec(to);
   }
 
@@ -68,9 +81,11 @@ mal eval_ast(mal ast, env *e)
     map *to = uninitialized_map(ast.m->size);
     for (int i = 0; i < ast.m->size; i++)
     {
+      mal m = eval(ast.m->table[i].val, e);
+      RETURN_IF_EXCEPTION(m);
       to->table[i].key = ast.m->table[i].key;
       to->table[i].is_kw = ast.m->table[i].is_kw;
-      to->table[i].val = eval(ast.m->table[i].val, e);
+      to->table[i].val = m;
     }
     return mal_map(to);
   }
@@ -82,9 +97,7 @@ mal eval_ast(mal ast, env *e)
 mal eval(mal ast, env *e)
 {
   DEBUG_HIGH_MAL("", ast);
-
-  if (is_exception(ast))
-    return ast;
+  RETURN_IF_EXCEPTION(ast);
 
   if (!is_list(ast) || seq_empty(ast))
     return eval_ast(ast, e);
@@ -92,26 +105,23 @@ mal eval(mal ast, env *e)
   // Check for special forms
   mal head = mal_first(ast);
   mal rest = mal_rest(ast);
-  assert(is_list(rest));
   if (mal_equals(head, mal_sym("def!")))
     return def_special_form(rest.n, e);
   if (mal_equals(head, mal_sym("def!")))
     return let_special_form(rest.n, e);
 
+  // Evaluate all the list elements
   mal evaluated_ast = eval_ast(ast, e);
+  RETURN_IF_EXCEPTION(evaluated_ast);
   DEBUG_INTERNAL_MAL("after args evaluated have", evaluated_ast);
-  if (!is_list(evaluated_ast) || seq_empty(evaluated_ast))
-    return mal_exception_str("List mutatated away in eval");
 
+  // Apply the function
   head = mal_first(evaluated_ast);
   rest = mal_rest(evaluated_ast);
-  assert(is_list(rest));
   DEBUG_INTERNAL_MAL("head of list to be applied", head);
   DEBUG_INTERNAL_MAL("rest of list to be applied", rest);
-
-  // If not a special form, apply the function
-  if (is_exception(head))
-    return head;
+  // if (is_exception(head))
+  //   return head;
   if (!is_fn(head))
     return mal_exception_str("Not a function");
   return head.f(rest.n, e);

@@ -71,9 +71,18 @@ void debug_env(debug_level level, env *e)
     printf("%x", (unsigned)e & 0xffff);
 
   if (e->outer == NULL)
-    printf(" outer=NULL\n");
+    printf(" (outer=NULL)\n");
   else if (e->outer == core_env())
-    printf(" outer=core\n");
+    printf(" (outer=core)\n");
   else
-    printf(" outer=%x\n", (unsigned)e->outer & 0xffff);
+    printf(" (outer=%x)\n", (unsigned)e->outer & 0xffff);
+
+  assert(e->lookup != NULL);
+  map_record *sym_table = e->lookup->table;
+  size_t sym_table_size = e->lookup->size;
+  for (int i = 0; i < sym_table_size; i++)
+    printf("  %s%s -> %s\n",
+           sym_table[i].is_kw ? ":" : "",
+           sym_table[i].key,
+           pr_str(sym_table[i].val, true));
 }

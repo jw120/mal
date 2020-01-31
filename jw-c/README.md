@@ -1,7 +1,5 @@
 Todo
   - Step 3
-  - Add env symbols printing (and don't overwrite core)
-  - How do we look for exceptions in eval - how do exceptions propogate everywhere
 
 readline
 pcre
