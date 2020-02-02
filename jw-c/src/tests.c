@@ -10,6 +10,8 @@
 
 #include "minunit.h"
 
+#include "debug.h"
+
 #include "core_misc_test.h"
 #include "core_num_test.h"
 #include "core_seq_test.h"
@@ -48,7 +50,8 @@ bool debug_mode;
 int main(int argc, char **argv)
 {
 
-  debug_mode = getenv("DEBUG") != NULL;
+ // Turn on debug mode if the environment variable is set
+  set_debug_level(getenv("DEBUG"));
 
   const char *result = run_tests();
 

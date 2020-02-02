@@ -45,6 +45,7 @@ bool mal_equals(mal a, mal b)
   case MAP:
     return a.tag == b.tag && map_equals(a.m, b.m);
   case FN:
+  case CLOSURE:
     return false;
   }
 }
@@ -86,6 +87,8 @@ bool is_seq(const mal m) { return m.tag == LIST || m.tag == VEC; }
 bool is_map(const mal m) { return m.tag == MAP; }
 
 bool is_fn(const mal m) { return m.tag == FN; }
+
+bool is_closure(const mal m) { return m.tag == CLOSURE; }
 
 bool match_sym(const mal m, const char *s)
 {
@@ -190,6 +193,13 @@ mal mal_fn(fn *f)
   mal val = {FN, {.f = f}};
   return val;
 }
+
+mal mal_closure(closure *c)
+{
+  mal val = {CLOSURE, {.c = c}};
+  return val;
+}
+
 
 // Constants to simplify evaluation
 mal opening_paren = {SYM, {.s = "("}};

@@ -48,10 +48,32 @@ const char *env_test()
   mu_assert_eq("e1 remains", env_get(e1, "a"), mal_int(3));
   mu_assert_eq("e2 updated", env_get(e2, "a"), mal_int(4));
 
+
+  // test env_new2
+  list_node *binds = list_cons(mal_sym("p"), list_cons(mal_sym("q"), NULL));
+  list_node *vals = list_cons(mal_int(7), list_cons(mal_int(6), NULL));
+  env *e3 = env_new2(binds, vals, e2);
+  // printf("e3 %p\n", e3);
+  // printf("e3->lookup %p\n", e3->lookup);
+  // printf("e3->outer %p, e2 %p\n", e3->outer, e2);
+  // printf("e3->lookup->size %u\n", e3->lookup->size);
+  // printf("e3->lookup->table[0].key %s\n", e3->lookup->table[0].key);
+  // printf("e3->lookup->table[0].val.i %d\n", e3->lookup->table[0].val.i);
+  // printf("e3->lookup->table[1].key %s\n", e3->lookup->table[1].key);
+  // printf("e3->lookup->table[1].val.i %d\n", e3->lookup->table[1].val.i);
+
+  mu_assert_eq("e3 a", env_get(e3, "a"), mal_int(4));
+  mu_assert_eq("e3 b", env_get(e3, "b"), mal_int(4));
+  mu_assert_eq("e3 x", env_get(e3, "x"), mal_int(33));
+  mu_assert("e3 y", is_exception(env_get(e3, "y")));
+  mu_assert_eq("e3 p", env_get(e3, "p"), mal_int(7));
+  mu_assert_eq("e3 q", env_get(e3, "q"), mal_int(6));
+
   // env_free
   env_free(e0);
   env_free(e1);
   env_free(e2);
+  env_free(e3);
 
   return 0;
 }

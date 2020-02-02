@@ -79,5 +79,13 @@ const char *map_test()
   map_set(m, mal_kw("c"), mal_int(2));
   mu_assert_eq("map set new", map_get(m, mal_kw("c")), mal_int(2));
 
+  // list2_to_map
+  list_node *binds = list_cons(mal_sym("p"), list_cons(mal_sym("q"), NULL));
+  list_node *vals = list_cons(mal_int(7), list_cons(mal_int(6), NULL));
+  m = list2_to_map(binds, vals);
+  mu_assert_eq("m list2 y", map_get(m, mal_sym("y")), mal_nil());
+  mu_assert_eq("m list2 p", map_get(m, mal_sym("p")), mal_int(7));
+  mu_assert_eq("m list2 q", map_get(m, mal_sym("q")), mal_int(6));
+
   return 0;
 }

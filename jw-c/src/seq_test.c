@@ -149,5 +149,9 @@ const char *seq_test() {
   mu_assert_neq("mv2 == mn3", mv2, mn3);
   mu_assert_neq("mv3 == mn0", mv3, mn0);
 
+  // seq_to_list
+  mu_assert("list(mn2)", list_equals(seq_to_list(mn2), mn2.n));
+  mu_assert("list(mv2)", list_equals(seq_to_list(mv2), mn2.n));
+
   return 0;
 }

@@ -10,5 +10,6 @@ bool map_contains(map *, mal);
 
 map *uninitialized_map(size_t);
 map *list_to_map(list_node *);
+map *list2_to_map(list_node *, list_node *);
 
 #endif

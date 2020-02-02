@@ -42,6 +42,18 @@ mal do_special_form(list_node *n, env *e)
   return ret;
 }
 
+mal fn_special_form(list_node *n, env *e)
+{
+  DEBUG_INTERNAL_MAL("", mal_list(n));
+  if (list_count (n) != 2 || !is_seq(n->val))
+    return mal_exception_str("Bad arguments to fn*");
+  closure * c = checked_malloc(sizeof(closure), "fn*");
+  c -> binds = seq_to_list(n->val);
+  c -> body = n->next->val;
+  c -> e = e;
+  return mal_closure(c);
+}
+
 mal if_special_form(list_node *n, env *e)
 {
   DEBUG_INTERNAL_MAL("", mal_list(n));
@@ -188,11 +200,13 @@ mal eval(mal ast, env *e)
     return def_special_form(rest.n, e);
   if (mal_equals(head, mal_sym("do")))
     return do_special_form(rest.n, e);
+  if (mal_equals(head, mal_sym("fn*")))
+    return fn_special_form(rest.n, e);
   if (mal_equals(head, mal_sym("if")))
     return if_special_form(rest.n, e);
   if (mal_equals(head, mal_sym("let*")))
     return let_special_form(rest.n, e);
-    if (mal_equals(head, mal_sym("quote")))
+  if (mal_equals(head, mal_sym("quote")))
     return quote_special_form(rest.n, e);
 
   // Evaluate all the list elements
@@ -205,9 +219,13 @@ mal eval(mal ast, env *e)
   rest = mal_rest(evaluated_ast);
   DEBUG_INTERNAL_MAL("head of list to be applied", head);
   DEBUG_INTERNAL_MAL("rest of list to be applied", rest);
-  // if (is_exception(head))
-  //   return head;
-  if (!is_fn(head))
-    return mal_exception_str("Not a function");
-  return head.f(rest.n, e);
+  if (is_fn(head)) // C-defined function
+    return head.f(rest.n, e);
+  if (is_closure(head)) { // mal-defined function
+    env *closure_env = env_new2(head.c->binds, rest.n, head.c->e);
+    if (closure_env == NULL)
+      return mal_exception_str("Failed to create closure environment");
+    return eval(head.c->body, closure_env);
+  }
+  return mal_exception_str("Not a function");
 }

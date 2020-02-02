@@ -76,6 +76,18 @@ bool seq_equals(mal x, mal y)
   assert(0); // Non-seq passed to seq_equals
 }
 
+list_node *seq_to_list(mal m)
+{
+  assert(is_list(m) || is_vec(m));
+  if (is_list(m))
+    return m.n;
+  list_node *n = NULL;
+  for (int i = m.v->size -1 ; i >= 0 ; i--) {
+    n = list_cons(m.v->buf[i], n);
+  }
+  return n;
+}
+
 /**
  *
  * List functions

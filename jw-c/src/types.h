@@ -20,6 +20,7 @@ typedef struct map_struct map;
 typedef struct map_record_struct map_record;
 typedef struct mal_struct mal;
 typedef struct env_struct env;
+typedef struct closure_struct closure;
 
 typedef mal fn(list_node *, env *);
 
@@ -38,7 +39,8 @@ enum mal_tag
   LIST,
   VEC,
   MAP,
-  FN
+  FN,       // A C-defined builtin function
+  CLOSURE   // A mal-defined closure
 };
 
 struct mal_struct
@@ -52,6 +54,7 @@ struct mal_struct
     vec *v;               // for VEC
     map *m;               // FOR MAP
     fn *f;                // FOR FN
+    closure *c;           // FOR CLOSURE
   };
 };
 
@@ -87,6 +90,13 @@ struct env_struct
   struct env_struct *outer;
 };
 
+struct closure_struct
+{
+  mal body;
+  list_node *binds;
+  env * e;
+};
+
 // Test functions
 bool is_missing(const mal);
 bool is_exception(const mal);
@@ -104,6 +114,7 @@ bool is_vec(const mal);
 bool is_seq(const mal);
 bool is_map(const mal);
 bool is_fn(const mal);
+bool is_closure(const mal);
 bool match_sym(const mal, const char *);
 
 // Constructor functions
@@ -123,6 +134,7 @@ mal mal_list(list_node *);
 mal mal_vec(vec *);
 mal mal_map(map *);
 mal mal_fn(fn *);
+mal mal_closure(closure *);
 
 // Equality
 bool mal_equals(mal, mal);

@@ -20,6 +20,9 @@ bool seq_empty(mal m);
 // Are the two sequences equal
 bool seq_equals(mal, mal);
 
+// Convert a list or vector to list
+list_node *seq_to_list(mal);
+
 /**
  *
  * List functions

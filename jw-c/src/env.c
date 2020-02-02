@@ -30,6 +30,20 @@ env *env_new(list_node *elems, env *outer)
   return e;
 }
 
+// creata a new envionment given a list of binds and values (NULL if fails)
+env *env_new2(list_node *binds, list_node *vals, env *outer)
+{
+  DEBUG_INTERNAL_FMT("called with outer %p", outer);
+
+  env *e = checked_malloc(sizeof(env), "env_new2");
+  e->lookup = list2_to_map(binds, vals);
+  e->outer = outer;
+  if (e->lookup == NULL)
+    return NULL;
+
+  return e;
+}
+
 // free an environemtn and its table
 void env_free(env *e)
 {
@@ -77,11 +91,3 @@ mal env_get(env *e, const char *sym)
   DEBUG_HIGH_MAL2("", mal_sym(sym), ret);
   return ret;
 }
-
-/*
-
-env %p (outer=core)  / (outer=NULL) / (outer=%p)
-  +: <function>
-  x: 2
-
-*/

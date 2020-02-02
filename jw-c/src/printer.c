@@ -181,6 +181,7 @@ const char *pr_str(mal m, bool print_readably)
   case MAP:
     return print_map(m.m, print_readably);
   case FN:
+  case CLOSURE:
     return "<function>";
   }
 }

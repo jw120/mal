@@ -109,9 +109,7 @@ map *list_to_map(list_node *n)
   // list must have an even number of elements
   const int list_size = list_count(n);
   if (list_size % 2 == 1)
-  {
     return NULL;
-  }
 
   // create the new map
   map *new_map = uninitialized_map(list_size / 2);
@@ -144,6 +142,50 @@ map *list_to_map(list_node *n)
   free(new_map);
   return dedup_map;
 }
+
+// create a map from a list of keys and a list of values
+map *list2_to_map(list_node *keys, list_node *vals)
+{
+  DEBUG_INTERNAL_FMT("started");
+  size_t keys_count = list_count(keys);
+  size_t vals_count = list_count(vals);
+
+  DEBUG_INTERNAL_FMT("called with %d, %d elements", keys_count, vals_count);
+  if (keys_count != vals_count)
+    return NULL;
+
+  // create the new map
+  map *new_map = uninitialized_map(keys_count);
+  if (new_map->size == 0)
+  {
+    DEBUG_INTERNAL_FMT("returning empty map");
+    return new_map;
+  }
+
+  // copy the elements from the list into the table
+  int i = 0;
+  while (keys != NULL && vals != NULL)
+  {
+    if (!is_str(keys->val) && !is_kw(keys->val) && !is_sym(keys->val))
+    {
+      DEBUG_INTERNAL_FMT("returning NULL as found non-str/kw");
+      return NULL;
+    }
+    new_map->table[i].key = keys->val.s;
+    new_map->table[i].is_kw = is_kw(keys->val);
+    new_map->table[i].index = i;
+    new_map->table[i].val = vals->val;
+    keys = keys->next;
+    vals = vals->next;
+    i++;
+  }
+
+  // deduplicate
+  map *dedup_map = dedup(new_map);
+  free(new_map);
+  return dedup_map;
+}
+
 
 // equality for two maps
 bool map_equals(map *m1, map *m2)
