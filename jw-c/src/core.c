@@ -10,6 +10,7 @@
 
 #include "core.h"
 
+#include "core_mal.h"
 #include "core_misc.h"
 #include "core_num.h"
 #include "core_seq.h"
@@ -18,7 +19,6 @@
 #include "env.h"
 #include "printer.h"
 #include "seq.h"
-
 
 // return the core environment, creating it if it does not already exist
 env *core_env()
@@ -33,6 +33,7 @@ env *core_env()
     add_misc(e);
     add_num(e);
     add_seq(e);
+    add_mal(e);
   }
   return e;
 }

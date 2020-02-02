@@ -1,7 +1,6 @@
 Todo
-  - env2 failing first env_test test
-  - check exceptions propogate everywhere
-  - finish step 4
+  - implement & binding
+  - implemet pr-str etc
 
 readline
 pcre

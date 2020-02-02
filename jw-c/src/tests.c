@@ -12,6 +12,7 @@
 
 #include "debug.h"
 
+#include "core_mal_test.h"
 #include "core_misc_test.h"
 #include "core_num_test.h"
 #include "core_seq_test.h"
@@ -30,6 +31,7 @@ int tests_run = 0;
 
 const char *run_tests()
 {
+  mu_run_test(core_mal_test);
   mu_run_test(core_misc_test);
   mu_run_test(core_num_test);
   mu_run_test(core_seq_test);
