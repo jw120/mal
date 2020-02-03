@@ -161,3 +161,28 @@ mal add_escapes(mal m)
   *p = *s; // null terminate;
   return mal_str(buf);
 }
+
+
+// Helper function to concat a list of strings with given separator, opener, closer
+// takes counts of number of strings in the list and number of chars (excluding the separators)
+const char *str_join(list_node *s, int chars, int elements,
+const char *sep, const char *opener, const char *closer)
+{
+
+  int num_sep = elements > 0 ? elements - 1 : 0;
+  int buf_size = 1 + chars + strlen(opener) + strlen(closer) + num_sep * strlen(sep);
+  char *buf = checked_malloc(buf_size, "str_join");
+
+  str_concat(buf, opener, buf_size - 1);
+  while (s != NULL)
+  {
+    str_concat(buf, s->val.s, buf_size - 1);
+    if (s->next != NULL)
+    {
+      str_concat(buf, sep, buf_size - 1);
+    }
+    s = s->next;
+  }
+  str_concat(buf, closer, buf_size - 1);
+  return buf;
+}

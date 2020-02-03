@@ -23,47 +23,7 @@ typedef enum
   PRINT_MAP
 } join_mode;
 
-// Helper function to concat a list of strings with spaces and surround with
-// (..)  [..] {..}
-static const char *join_strings(list_node *s, int chars, int elements,
-                                join_mode mode)
-{
 
-  const char *opener;
-  const char *closer;
-  switch (mode)
-  {
-  case PRINT_LIST:
-    opener = "(";
-    closer = ")";
-    break;
-  case PRINT_VEC:
-    opener = "[";
-    closer = "]";
-    break;
-  case PRINT_MAP:
-    opener = "{";
-    closer = "}";
-    break;
-  }
-
-  int num_spaces = elements > 0 ? elements - 1 : 0;
-  int buf_size = 1 + 2 + chars + num_spaces;
-  char *buf = checked_malloc(buf_size, "join_string");
-
-  str_concat(buf, opener, buf_size - 1);
-  while (s != NULL)
-  {
-    str_concat(buf, s->val.s, buf_size - 1);
-    if (s->next != NULL)
-    {
-      str_concat(buf, " ", buf_size - 1);
-    }
-    s = s->next;
-  }
-  str_concat(buf, closer, buf_size - 1);
-  return buf;
-}
 
 // Print a list
 static const char *print_list(list_node *input_head, bool print_readably)
@@ -84,7 +44,7 @@ static const char *print_list(list_node *input_head, bool print_readably)
       string_head = string_node;
     input_node = input_node->next;
   }
-  return join_strings(string_head, char_count, element_count, PRINT_LIST);
+  return str_join(string_head, char_count, element_count, " ", "(", ")");
 }
 
 // Print a map
@@ -108,7 +68,7 @@ static const char *print_map(map *m, bool print_readably)
     element_count++;
     string_node = list_extend(mal_str(s2), string_node);
   }
-  return join_strings(string_head, char_count, element_count, PRINT_MAP);
+  return str_join(string_head, char_count, element_count, " ", "{", "}");
 }
 
 // Print a vector
@@ -129,7 +89,7 @@ static const char *print_vec(vec *v, bool print_readably)
     if (string_head == NULL)
       string_head = string_node;
   }
-  return join_strings(string_head, char_count, element_count, PRINT_VEC);
+  return str_join(string_head, char_count, element_count, " ", "[", "]");
 }
 
 // return a string representation of the mal value

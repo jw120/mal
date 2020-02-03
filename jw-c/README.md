@@ -1,6 +1,5 @@
 Todo
   - implement & binding
-  - implemet pr-str etc
 
 readline
 pcre
