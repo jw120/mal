@@ -1,5 +1,5 @@
 Todo
-  - implement & binding
+- Tidt step 4
 
 readline
 pcre

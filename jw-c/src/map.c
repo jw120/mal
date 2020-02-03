@@ -144,17 +144,28 @@ map *list_to_map(list_node *n)
 }
 
 // create a map from a list of keys and a list of values
+// supports & syntax
 map *list2_to_map(list_node *keys, list_node *vals)
 {
-  DEBUG_INTERNAL_FMT("started");
-  size_t keys_count = list_count(keys);
-  size_t vals_count = list_count(vals);
+  DEBUG_INTERNAL_FMT("started with keys %p vals %p", keys, vals);
 
-  DEBUG_INTERNAL_FMT("called with %d, %d elements", keys_count, vals_count);
-  if (keys_count != vals_count)
-    return NULL;
+  // Look for a "&" argument (must be one symbol after the &)
+  list_node *n = keys;
+  bool has_ampersand = false;
+  while (n != NULL) {
+    if (mal_equals(n->val, mal_sym("&"))) {
+      if (n->next != NULL && is_sym(n->next->val) && n->next->next == NULL) {
+        has_ampersand = true;
+        break;
+      }
+      return NULL;
+    }
+    n = n->next;
+  }
+  DEBUG_INTERNAL_FMT("& %s", has_ampersand ? "found" : "not found");
 
   // create the new map
+  int keys_count = has_ampersand ? list_count(keys) - 1 : list_count(keys);
   map *new_map = uninitialized_map(keys_count);
   if (new_map->size == 0)
   {
@@ -164,11 +175,21 @@ map *list2_to_map(list_node *keys, list_node *vals)
 
   // copy the elements from the list into the table
   int i = 0;
-  while (keys != NULL && vals != NULL)
+  while (keys != NULL)
   {
     if (!is_str(keys->val) && !is_kw(keys->val) && !is_sym(keys->val))
     {
       DEBUG_INTERNAL_FMT("returning NULL as found non-str/kw");
+      return NULL;
+    }
+    if (mal_equals(keys->val, mal_sym("&"))) {
+      new_map->table[i].key = keys->next->val.s;
+      new_map->table[i].is_kw = is_kw(keys->next->val);
+      new_map->table[i].index = i;
+      new_map->table[i].val = mal_list(vals);
+      break;
+    }
+    if (vals == NULL) {
       return NULL;
     }
     new_map->table[i].key = keys->val.s;
