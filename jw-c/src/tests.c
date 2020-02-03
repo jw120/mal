@@ -29,8 +29,7 @@
 int asserts_run = 0;
 int tests_run = 0;
 
-const char *run_tests()
-{
+const char *run_tests() {
   mu_run_test(core_mal_test);
   mu_run_test(core_misc_test);
   mu_run_test(core_num_test);
@@ -49,10 +48,9 @@ const char *run_tests()
 
 bool debug_mode;
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 
- // Turn on debug mode if the environment variable is set
+  // Turn on debug mode if the environment variable is set
   set_debug_level(getenv("DEBUG"));
 
   const char *result = run_tests();

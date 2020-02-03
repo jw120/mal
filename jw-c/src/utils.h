@@ -12,8 +12,8 @@ bool is_number(const char *);
 
 void *checked_malloc(size_t, const char *restrict, ...);
 void str_concat(char *, const char *, size_t);
-const char *str_join(list_node *s, int chars, int elements,
-const char *sep, const char *opener, const char *closer);
+const char *str_join(list_node *s, int chars, int elements, const char *sep,
+                     const char *opener, const char *closer);
 
 mal add_escapes(mal);
 mal remove_escapes(mal);

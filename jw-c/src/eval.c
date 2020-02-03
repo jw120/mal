@@ -3,7 +3,8 @@
  * eval.c - provides the evaluator
  *
  * Note that we are using an exception tag in mal to simulate exceptions, so
- * we need to actively look for exception returns from every eval and propogate them
+ * we need to actively look for exception returns from every eval and propogate
+ *them
  *
  **/
 
@@ -17,8 +18,7 @@
 #include "seq.h"
 #include "utils.h"
 
-mal def_special_form(list_node *n, env *e)
-{
+mal def_special_form(list_node *n, env *e) {
   DEBUG_INTERNAL_MAL("", mal_list(n));
   if (n == NULL || !is_sym(n->val) || list_count(n) != 2)
     return mal_exception_str("Bad arguments to def!");
@@ -28,8 +28,7 @@ mal def_special_form(list_node *n, env *e)
   return evaluated_val;
 }
 
-mal do_special_form(list_node *n, env *e)
-{
+mal do_special_form(list_node *n, env *e) {
   DEBUG_INTERNAL_MAL("", mal_list(n));
   if (n == NULL)
     return mal_exception_str("Bad arguments to do");
@@ -42,20 +41,18 @@ mal do_special_form(list_node *n, env *e)
   return ret;
 }
 
-mal fn_special_form(list_node *n, env *e)
-{
+mal fn_special_form(list_node *n, env *e) {
   DEBUG_INTERNAL_MAL("", mal_list(n));
-  if (list_count (n) != 2 || !is_seq(n->val))
+  if (list_count(n) != 2 || !is_seq(n->val))
     return mal_exception_str("Bad arguments to fn*");
-  closure * c = checked_malloc(sizeof(closure), "fn*");
-  c -> binds = seq_to_list(n->val);
-  c -> body = n->next->val;
-  c -> e = e;
+  closure *c = checked_malloc(sizeof(closure), "fn*");
+  c->binds = seq_to_list(n->val);
+  c->body = n->next->val;
+  c->e = e;
   return mal_closure(c);
 }
 
-mal if_special_form(list_node *n, env *e)
-{
+mal if_special_form(list_node *n, env *e) {
   DEBUG_INTERNAL_MAL("", mal_list(n));
   if (n == NULL || list_count(n) < 2 || list_count(n) > 3)
     return mal_exception_str("Bad arguments to if");
@@ -66,8 +63,7 @@ mal if_special_form(list_node *n, env *e)
   return (n->next->next == NULL) ? mal_nil() : eval(n->next->next->val, e);
 }
 
-mal let_special_form(list_node *n, env *e)
-{
+mal let_special_form(list_node *n, env *e) {
   DEBUG_INTERNAL_MAL("", mal_list(n));
   if (n == NULL)
     return mal_exception_str("No arguments to let");
@@ -82,8 +78,7 @@ mal let_special_form(list_node *n, env *e)
   env *let_env = env_new(NULL, e);
 
   // Walk over the binding list or vector adding symbols to the new environment
-  if (is_list(n->val))
-  {
+  if (is_list(n->val)) {
     list_node *p = n->val.n;
     while (p != NULL) // walk two nodes at a time
     {
@@ -97,11 +92,8 @@ mal let_special_form(list_node *n, env *e)
       env_set(let_env, sym.s, evaluated_val);
       p = p->next->next;
     }
-  }
-  else
-  {
-    for (int i = 0; i < n->val.v->size; i += 2)
-    {
+  } else {
+    for (int i = 0; i < n->val.v->size; i += 2) {
       mal sym = n->val.v->buf[i];
       RETURN_IF_EXCEPTION(sym);
       if (!is_sym(sym))
@@ -119,8 +111,7 @@ mal let_special_form(list_node *n, env *e)
   return ret;
 }
 
-mal quote_special_form(list_node *n, env *e)
-{
+mal quote_special_form(list_node *n, env *e) {
   DEBUG_INTERNAL_MAL("", mal_list(n));
   if (list_count(n) != 1)
     return mal_exception_str("Bad arguments to quote");
@@ -128,22 +119,18 @@ mal quote_special_form(list_node *n, env *e)
 }
 
 // evaluation function that does not apply
-mal eval_ast(mal ast, env *e)
-{
+mal eval_ast(mal ast, env *e) {
   DEBUG_INTERNAL_MAL("called with", ast);
 
-  if (is_sym(ast))
-  {
+  if (is_sym(ast)) {
     return env_get(e, ast.s);
   }
 
-  if (is_list(ast) && !seq_empty(ast))
-  {
+  if (is_list(ast) && !seq_empty(ast)) {
     list_node *to_head = NULL;
     list_node *to = to_head;
     list_node *from = ast.n;
-    while (from != NULL)
-    {
+    while (from != NULL) {
       mal m = eval(from->val, e);
       RETURN_IF_EXCEPTION(m);
       to = list_extend(m, to);
@@ -154,11 +141,9 @@ mal eval_ast(mal ast, env *e)
     return mal_list(to_head);
   }
 
-  if (is_vec(ast) && !seq_empty(ast))
-  {
+  if (is_vec(ast) && !seq_empty(ast)) {
     vec *to = uninitialized_vec(ast.v->size);
-    for (int i = 0; i < ast.v->size; i++)
-    {
+    for (int i = 0; i < ast.v->size; i++) {
       mal m = eval(ast.v->buf[i], e);
       RETURN_IF_EXCEPTION(m);
       to->buf[i] = m;
@@ -166,11 +151,9 @@ mal eval_ast(mal ast, env *e)
     return mal_vec(to);
   }
 
-  if (is_map(ast))
-  {
+  if (is_map(ast)) {
     map *to = uninitialized_map(ast.m->size);
-    for (int i = 0; i < ast.m->size; i++)
-    {
+    for (int i = 0; i < ast.m->size; i++) {
       mal m = eval(ast.m->table[i].val, e);
       RETURN_IF_EXCEPTION(m);
       to->table[i].key = ast.m->table[i].key;
@@ -184,8 +167,7 @@ mal eval_ast(mal ast, env *e)
 }
 
 // top-level evaluation function
-mal eval(mal ast, env *e)
-{
+mal eval(mal ast, env *e) {
   DEBUG_HIGH_MAL("", ast);
   RETURN_IF_EXCEPTION(ast);
 

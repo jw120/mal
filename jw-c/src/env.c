@@ -17,9 +17,9 @@
 #include "utils.h"
 
 // creata a new envionment given an alternating sym/val list (NULL if fails)
-env *env_new(list_node *elems, env *outer)
-{
-  DEBUG_INTERNAL_FMT("called with %d elements and outer %p", list_count(elems), outer);
+env *env_new(list_node *elems, env *outer) {
+  DEBUG_INTERNAL_FMT("called with %d elements and outer %p", list_count(elems),
+                     outer);
 
   env *e = checked_malloc(sizeof(env), "env_new");
   e->lookup = list_to_map(elems);
@@ -31,8 +31,7 @@ env *env_new(list_node *elems, env *outer)
 }
 
 // creata a new envionment given a list of binds and values (NULL if fails)
-env *env_new2(list_node *binds, list_node *vals, env *outer)
-{
+env *env_new2(list_node *binds, list_node *vals, env *outer) {
   DEBUG_INTERNAL_FMT("called with outer %p", outer);
 
   env *e = checked_malloc(sizeof(env), "env_new2");
@@ -45,24 +44,21 @@ env *env_new2(list_node *binds, list_node *vals, env *outer)
 }
 
 // free an environemtn and its table
-void env_free(env *e)
-{
+void env_free(env *e) {
   DEBUG_INTERNAL_FMT("called");
   free(e->lookup);
   free(e);
 }
 
 // NYI - set a value in the environment
-void env_set(env *e, const char *sym, mal val)
-{
+void env_set(env *e, const char *sym, mal val) {
   DEBUG_INTERNAL_MAL2("setting", mal_sym(sym), val);
   assert(e != NULL);
   map_set(e->lookup, mal_sym(sym), val);
 }
 
 // Return the environment where the sym is defined (in its our chain) or NULL
-env *env_find(env *e, const char *sym)
-{
+env *env_find(env *e, const char *sym) {
   DEBUG_INTERNAL_FMT("finding %s in %p", sym, e);
   if (e == NULL)
     return NULL;
@@ -77,13 +73,11 @@ env *env_find(env *e, const char *sym)
 static char not_found_buf[NOT_FOUND_BUF_SIZE];
 
 // Return the value associtated with the given symbol, exception if not found
-mal env_get(env *e, const char *sym)
-{
+mal env_get(env *e, const char *sym) {
   DEBUG_INTERNAL_FMT("getting %s", sym);
   env *found_e = env_find(e, sym);
   DEBUG_INTERNAL_FMT("found %p", found_e);
-  if (found_e == NULL)
-  {
+  if (found_e == NULL) {
     snprintf(not_found_buf, NOT_FOUND_BUF_SIZE, "'%s' not found", sym);
     return mal_exception_str(not_found_buf);
   }

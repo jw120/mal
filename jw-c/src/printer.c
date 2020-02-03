@@ -16,25 +16,16 @@
 
 #define BUFFER_SIZE_FOR_INT 16
 
-typedef enum
-{
-  PRINT_LIST,
-  PRINT_VEC,
-  PRINT_MAP
-} join_mode;
-
-
+typedef enum { PRINT_LIST, PRINT_VEC, PRINT_MAP } join_mode;
 
 // Print a list
-static const char *print_list(list_node *input_head, bool print_readably)
-{
+static const char *print_list(list_node *input_head, bool print_readably) {
   list_node *string_head = NULL;
   int char_count = 0;
   int element_count = 0;
   list_node *input_node = input_head;
   list_node *string_node = string_head;
-  while (input_node != NULL)
-  {
+  while (input_node != NULL) {
     const char *s = pr_str(input_node->val, print_readably);
     char_count += strlen(s);
     element_count++;
@@ -48,14 +39,12 @@ static const char *print_list(list_node *input_head, bool print_readably)
 }
 
 // Print a map
-static const char *print_map(map *m, bool print_readably)
-{
+static const char *print_map(map *m, bool print_readably) {
   list_node *string_head = NULL;
   int char_count = 0;
   int element_count = 0;
   list_node *string_node = string_head;
-  for (int i = 0; i < m->size; i++)
-  {
+  for (int i = 0; i < m->size; i++) {
     mal key =
         m->table[i].is_kw ? mal_kw(m->table[i].key) : mal_str(m->table[i].key);
     const char *s1 = pr_str(key, print_readably);
@@ -72,16 +61,14 @@ static const char *print_map(map *m, bool print_readably)
 }
 
 // Print a vector
-static const char *print_vec(vec *v, bool print_readably)
-{
+static const char *print_vec(vec *v, bool print_readably) {
   if (v == NULL)
     return "[]";
   list_node *string_head = NULL;
   int char_count = 0;
   int element_count = 0;
   list_node *string_node = string_head;
-  for (int i = 0; i < v->size; i++)
-  {
+  for (int i = 0; i < v->size; i++) {
     const char *s = pr_str(v->buf[i], print_readably);
     char_count += strlen(s);
     element_count++;
@@ -93,13 +80,11 @@ static const char *print_vec(vec *v, bool print_readably)
 }
 
 // return a string representation of the mal value
-const char *pr_str(mal m, bool print_readably)
-{
+const char *pr_str(mal m, bool print_readably) {
   int buf_size;
   char *buf;
 
-  switch (m.tag)
-  {
+  switch (m.tag) {
   case MISSING:
     return "Internal error - pr_str on a missing value";
   case EXCEPTION:

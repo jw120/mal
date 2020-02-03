@@ -1,13 +1,12 @@
-#include "core_num.h"
 #include "core_num_test.h"
+#include "core_num.h"
 #include "minunit.h"
 
 #include "core.h"
 #include "eval.h"
 #include "reader.h"
 
-const char *core_num_test()
-{
+const char *core_num_test() {
   env *e = core_env();
 
   // Basic functionality works for arithmetic
@@ -67,9 +66,11 @@ const char *core_num_test()
   mu_assert("core *  str1 arg", is_exception(eval(read_str("(* \"a\" 4)"), e)));
   mu_assert("core /  str1 arg", is_exception(eval(read_str("(/ \"a\" 4)"), e)));
   mu_assert("core <  str1 arg", is_exception(eval(read_str("(< \"a\" 4)"), e)));
-  mu_assert("core <= str1 arg", is_exception(eval(read_str("(<= \"a\" 4)"), e)));
+  mu_assert("core <= str1 arg",
+            is_exception(eval(read_str("(<= \"a\" 4)"), e)));
   mu_assert("core >  str1 arg", is_exception(eval(read_str("(> \"a\" 4)"), e)));
-  mu_assert("core >= str1 arg", is_exception(eval(read_str("(>= \"a\" 4)"), e)));
+  mu_assert("core >= str1 arg",
+            is_exception(eval(read_str("(>= \"a\" 4)"), e)));
 
   // Exception if a non-integer second arg
   mu_assert("core -  bool2 arg", is_exception(eval(read_str("(- 5 true)"), e)));
@@ -77,13 +78,17 @@ const char *core_num_test()
   mu_assert("core *  bool2 arg", is_exception(eval(read_str("(* 5 true)"), e)));
   mu_assert("core /  bool2 arg", is_exception(eval(read_str("(/ 5 true)"), e)));
   mu_assert("core <  bool2 arg", is_exception(eval(read_str("(< 5 true)"), e)));
-  mu_assert("core <= bool2 arg", is_exception(eval(read_str("(<= 5 true)"), e)));
+  mu_assert("core <= bool2 arg",
+            is_exception(eval(read_str("(<= 5 true)"), e)));
   mu_assert("core >  bool2 arg", is_exception(eval(read_str("(> 5 true)"), e)));
-  mu_assert("core >= bool2 arg", is_exception(eval(read_str("(>= 5 true)"), e)));
+  mu_assert("core >= bool2 arg",
+            is_exception(eval(read_str("(>= 5 true)"), e)));
 
   // Exceptions propogate
-  mu_assert_eq("core + except2", eval(read_str("(+ 2 (/ 3 0))"), e), eval(read_str("(/ 4 0)"), e));
-  mu_assert_eq("core + except1", eval(read_str("(+ (/ 3 0) 2)"), e), eval(read_str("(/ 4 0)"), e));
+  mu_assert_eq("core + except2", eval(read_str("(+ 2 (/ 3 0))"), e),
+               eval(read_str("(/ 4 0)"), e));
+  mu_assert_eq("core + except1", eval(read_str("(+ (/ 3 0) 2)"), e),
+               eval(read_str("(/ 4 0)"), e));
 
   return 0;
 }

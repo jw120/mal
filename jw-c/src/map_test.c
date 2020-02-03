@@ -8,8 +8,7 @@
 
 #include "printer.h"
 
-const char *map_test()
-{
+const char *map_test() {
 
   // map with strings
   map *m = list_to_map(
@@ -88,15 +87,23 @@ const char *map_test()
   mu_assert_eq("m list2 q", map_get(m, mal_sym("q")), mal_int(6));
 
   // list2_to_map with &
-  binds = list_cons(mal_sym("p"), list_cons(mal_sym("&"), list_cons(mal_sym("q"), NULL)));
-  vals = list_cons(mal_int(7), list_cons(mal_int(6), list_cons(mal_int(5), list_cons(mal_int(4), NULL))));
+  binds = list_cons(mal_sym("p"),
+                    list_cons(mal_sym("&"), list_cons(mal_sym("q"), NULL)));
+  vals =
+      list_cons(mal_int(7),
+                list_cons(mal_int(6),
+                          list_cons(mal_int(5), list_cons(mal_int(4), NULL))));
   m = list2_to_map(binds, vals);
   mu_assert_eq("m &list2 y", map_get(m, mal_sym("y")), mal_nil());
   mu_assert_eq("m &list2 p", map_get(m, mal_sym("p")), mal_int(7));
-  mu_assert_eq("m &list2 q", map_get(m, mal_sym("q")), mal_list(list_cons(mal_int(6), list_cons(mal_int(5), list_cons(mal_int(4), NULL)))));
+  mu_assert_eq(
+      "m &list2 q", map_get(m, mal_sym("q")),
+      mal_list(list_cons(mal_int(6),
+                         list_cons(mal_int(5), list_cons(mal_int(4), NULL)))));
 
   // list2_to_map with & and empty following list
-  binds = list_cons(mal_sym("p"), list_cons(mal_sym("&"), list_cons(mal_sym("q"), NULL)));
+  binds = list_cons(mal_sym("p"),
+                    list_cons(mal_sym("&"), list_cons(mal_sym("q"), NULL)));
   vals = list_cons(mal_int(7), NULL);
   m = list2_to_map(binds, vals);
   mu_assert_eq("m &list2 p", map_get(m, mal_sym("p")), mal_int(7));

@@ -23,8 +23,7 @@
 #include "utils.h"
 
 // Reader state - used only within this module
-typedef struct
-{
+typedef struct {
   const char *input_string; // original input string provided to read_str
   int input_length;         // length of input_string
   const char *current;
@@ -37,93 +36,72 @@ static mal read_atom(reader_state *);
 static mal mal_reader_exception(const char *, reader_state *);
 
 // Return the pre-fetched token without advancing it
-static const char *reader_peek(const reader_state *state_ptr)
-{
+static const char *reader_peek(const reader_state *state_ptr) {
   return state_ptr->current == NULL ? "" : state_ptr->current;
 }
 
 // Return the previously fetched token and fetch the next one
-static const char *reader_next(reader_state *state_ptr)
-{
+static const char *reader_next(reader_state *state_ptr) {
 
   // We return this pre-fetched current match
   const char *pre_fetched_current = state_ptr->current;
 
   // Read the next token (if input string is not exhausted) and store as current
-  if (state_ptr->offset < state_ptr->input_length)
-  {
+  if (state_ptr->offset < state_ptr->input_length) {
     const token_result *next =
         tokenize(state_ptr->input_string, state_ptr->offset);
     state_ptr->current = next->val;
     state_ptr->offset = next->next_offset;
-  }
-  else
+  } else
     state_ptr->current = NULL;
 
   return pre_fetched_current;
 }
 
-enum read_type
-{
-  READ_LIST,
-  READ_VEC,
-  READ_MAP
-};
+enum read_type { READ_LIST, READ_VEC, READ_MAP };
 
 // Read a list, vector or map
-static mal read_extended(reader_state *state_ptr)
-{
+static mal read_extended(reader_state *state_ptr) {
 
   mal current = read_atom(state_ptr);
   enum read_type reading_mode;
   char *closing_char;
-  if (match_sym(current, "("))
-  {
+  if (match_sym(current, "(")) {
     DEBUG_INTERNAL_FMT("list");
     reading_mode = READ_LIST;
     closing_char = ")";
-  }
-  else if (match_sym(current, "["))
-  {
+  } else if (match_sym(current, "[")) {
     DEBUG_INTERNAL_FMT("vec");
     reading_mode = READ_VEC;
     closing_char = "]";
-  }
-  else if (match_sym(current, "{"))
-  {
+  } else if (match_sym(current, "{")) {
     DEBUG_INTERNAL_FMT("map");
     reading_mode = READ_MAP;
     closing_char = "}";
-  }
-  else
+  } else
     return mal_reader_exception("read_extended no opener", state_ptr);
 
   // Read the elements as a list, keeping a count of the number read
   list_node *head = NULL;
   list_node *last = NULL;
   int nodes_count = 0;
-  while (true)
-  {
+  while (true) {
     current = read_form(state_ptr);
-    if (match_sym(current, closing_char))
-    {
+    if (match_sym(current, closing_char)) {
       break;
     }
-    if (is_missing(current))
-    {
+    if (is_missing(current)) {
       return mal_reader_exception("EOF in list", state_ptr);
     }
     nodes_count++;
     last = list_extend(current, last);
-    if (head == NULL)
-    {
+    if (head == NULL) {
       head = last;
     }
   }
 
   map *m;
-  switch (reading_mode)
-  {
+  switch (reading_mode) {
   case READ_LIST:
     return mal_list(head);
   case READ_VEC:
@@ -137,25 +115,21 @@ static mal read_extended(reader_state *state_ptr)
 }
 
 // read a non-list
-static mal read_atom(reader_state *state_ptr)
-{
+static mal read_atom(reader_state *state_ptr) {
 
   const char *const token = reader_next(state_ptr);
   const int token_len = strlen(token);
   mal value;
   DEBUG_INTERNAL_FMT("received token %s, length %d", token, token_len);
 
-  if (token_len > 0 && is_number(token))
-  {
+  if (token_len > 0 && is_number(token)) {
     value = mal_int(atoi(token));
     DEBUG_INTERNAL_FMT("returning int %d", value.i);
     return value;
   }
 
-  if (token[0] == '\"')
-  {
-    if (token_len >= 2 && token[token_len - 1] == '\"')
-    {
+  if (token[0] == '\"') {
+    if (token_len >= 2 && token[token_len - 1] == '\"') {
       char *buf = checked_malloc(token_len - 1, "STR in read_atom");
       strncpy(buf, token + 1, token_len - 2);
       buf[token_len - 1] = '\0';
@@ -166,67 +140,57 @@ static mal read_atom(reader_state *state_ptr)
     return mal_reader_exception("unbalanced string quote", state_ptr);
   }
 
-  if (token_len >= 2 && strncmp(token, ":", 1) == 0)
-  {
+  if (token_len >= 2 && strncmp(token, ":", 1) == 0) {
     DEBUG_INTERNAL_FMT("returning keyword :%s", token + 1);
     return mal_kw(token + 1);
   }
 
-  if (strcmp(token, "true") == 0)
-  {
+  if (strcmp(token, "true") == 0) {
     DEBUG_INTERNAL_FMT("returning true");
     return mal_true();
   }
 
-  if (strcmp(token, "false") == 0)
-  {
+  if (strcmp(token, "false") == 0) {
     DEBUG_INTERNAL_FMT("returning false");
     return mal_false();
   }
 
-  if (strcmp(token, "nil") == 0)
-  {
+  if (strcmp(token, "nil") == 0) {
     DEBUG_INTERNAL_FMT("returning nil");
     return mal_nil();
   }
 
-  if (strcmp(token, "'") == 0)
-  {
+  if (strcmp(token, "'") == 0) {
     DEBUG_INTERNAL_FMT("expanding quote");
     return mal_cons(mal_sym("quote"),
                     mal_cons(read_form(state_ptr), mal_list(NULL)));
   }
 
-  if (strcmp(token, "`") == 0)
-  {
+  if (strcmp(token, "`") == 0) {
     DEBUG_INTERNAL_FMT("expanding quasiquote");
     return mal_cons(mal_sym("quasiquote"),
                     mal_cons(read_form(state_ptr), mal_list(NULL)));
   }
 
-  if (strcmp(token, "~") == 0)
-  {
+  if (strcmp(token, "~") == 0) {
     DEBUG_INTERNAL_FMT("expanding unquote");
     return mal_cons(mal_sym("unquote"),
                     mal_cons(read_form(state_ptr), mal_list(NULL)));
   }
 
-  if (strcmp(token, "@") == 0)
-  {
+  if (strcmp(token, "@") == 0) {
     DEBUG_INTERNAL_FMT("expanding deref");
     return mal_cons(mal_sym("deref"),
                     mal_cons(read_form(state_ptr), mal_list(NULL)));
   }
 
-  if (strcmp(token, "~@") == 0)
-  {
+  if (strcmp(token, "~@") == 0) {
     DEBUG_INTERNAL_FMT("expanding spliceunquote");
     return mal_cons(mal_sym("splice-unquote"),
                     mal_cons(read_form(state_ptr), mal_list(NULL)));
   }
 
-  if (strcmp(token, "^") == 0)
-  {
+  if (strcmp(token, "^") == 0) {
     DEBUG_INTERNAL_FMT("expanding deref");
     mal m1 = read_form(state_ptr);
     mal m2 = read_form(state_ptr);
@@ -234,8 +198,7 @@ static mal read_atom(reader_state *state_ptr)
                     mal_cons(m2, mal_cons(m1, mal_list(NULL))));
   }
 
-  if (token_len >= 1)
-  {
+  if (token_len >= 1) {
     value = mal_sym(checked_malloc(token_len + 1, "SYM in read_atom"));
     strncpy((char *)value.s, token, token_len + 1);
     DEBUG_INTERNAL_FMT("returning sym %s", value.s);
@@ -246,30 +209,24 @@ static mal read_atom(reader_state *state_ptr)
                               state_ptr);
 }
 
-static mal read_form(reader_state *state_ptr)
-{
+static mal read_form(reader_state *state_ptr) {
   const char *next_token = reader_peek(state_ptr);
-  if (strcmp(next_token, "") == 0)
-  {
+  if (strcmp(next_token, "") == 0) {
     DEBUG_INTERNAL_FMT("returning missing");
     return mal_missing();
   }
   if (strcmp(next_token, "(") == 0 || strcmp(next_token, "[") == 0 ||
-      strcmp(next_token, "{") == 0)
-  {
+      strcmp(next_token, "{") == 0) {
     DEBUG_INTERNAL_FMT("starting read_extended");
     return read_extended(state_ptr);
-  }
-  else
-  {
+  } else {
     DEBUG_INTERNAL_FMT("starting read_atom");
     return read_atom(state_ptr);
   }
 }
 
 // Top-level
-mal read_str(const char *input_string)
-{
+mal read_str(const char *input_string) {
 
   DEBUG_INTERNAL_FMT("called on '%s'", input_string);
 
@@ -289,8 +246,7 @@ mal read_str(const char *input_string)
 
 #define READER_ERROR_MSG "Reader error:"
 
-static mal mal_reader_exception(const char *msg, reader_state *state_ptr)
-{
+static mal mal_reader_exception(const char *msg, reader_state *state_ptr) {
   const int buf_len = strlen(READER_ERROR_MSG) + strlen(msg) +
                       state_ptr->input_length - state_ptr->offset +
                       2; // two spaces

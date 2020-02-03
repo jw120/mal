@@ -1,5 +1,5 @@
-#include "core_num.h"
 #include "core_misc_test.h"
+#include "core_num.h"
 #include "minunit.h"
 
 #include "core.h"
@@ -9,8 +9,7 @@
 
 #define E(s) eval(read_str(s), e)
 
-const char *core_seq_test()
-{
+const char *core_seq_test() {
   env *e = core_env();
 
   // list

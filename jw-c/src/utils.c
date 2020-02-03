@@ -14,11 +14,9 @@
 
 #include "utils.h"
 
-void *checked_malloc(size_t size, const char *restrict fmt, ...)
-{
+void *checked_malloc(size_t size, const char *restrict fmt, ...) {
   void *ptr = malloc(size);
-  if (ptr == NULL)
-  {
+  if (ptr == NULL) {
     fprintf(stderr, "Malloc failed - ");
     va_list args;
     va_start(args, fmt);
@@ -30,8 +28,7 @@ void *checked_malloc(size_t size, const char *restrict fmt, ...)
   return ptr;
 }
 
-bool is_number(const char *s)
-{
+bool is_number(const char *s) {
 
   assert(s != NULL);
 
@@ -39,8 +36,7 @@ bool is_number(const char *s)
     return false;
   if (s[0] == '-')
     return is_number(s + 1);
-  for (const char *p = s; *p; p++)
-  {
+  for (const char *p = s; *p; p++) {
     if (!isdigit(*p))
       return false;
   }
@@ -50,63 +46,47 @@ bool is_number(const char *s)
 // Concatenates the source string onto the end of the buffer which is
 // already initailized as a null-terminated string. Count is the maximum
 // number of characters to include (excluding the null)
-void str_concat(char *buf, const char *source, size_t count)
-{
-  if (source != NULL && buf != NULL)
-  {
+void str_concat(char *buf, const char *source, size_t count) {
+  if (source != NULL && buf != NULL) {
     int current_len = strlen(buf);
     strncat(buf + current_len, source, count - current_len);
   }
 }
 
 // Are both arguments strings that are equal
-bool str_equals(mal a, mal b)
-{
+bool str_equals(mal a, mal b) {
   return is_str(a) && is_str(b) && strcmp(a.s, b.s) == 0;
 }
 
 // Remove escape sequences from a string
-mal remove_escapes(mal m)
-{
+mal remove_escapes(mal m) {
   if (!is_str(m))
     return mal_exception_str("remove_escapes on a non-string");
   char *buf = checked_malloc(strlen(m.s) + 1, "remove_escapes");
   bool in_escape = false;
   char *p = buf;
   const char *s = m.s;
-  while (*s)
-  {
-    if (in_escape)
-    {
-      if (*s == 'n')
-      {
+  while (*s) {
+    if (in_escape) {
+      if (*s == 'n') {
         *p++ = '\n';
         s++;
         in_escape = false;
-      }
-      else if (*s == '\\')
-      {
+      } else if (*s == '\\') {
         *p++ = '\\';
         s++;
         in_escape = false;
-      }
-      else if (*s == '\"')
-      {
+      } else if (*s == '\"') {
         *p++ = '\"';
         s++;
         in_escape = false;
-      }
-      else
+      } else
         return mal_exception_str("Bad escape sequence");
-    }
-    else
-    {
-      if (*s == '\\')
-      {
+    } else {
+      if (*s == '\\') {
         in_escape = true;
         s++;
-      }
-      else
+      } else
         *p++ = *s++;
     }
   }
@@ -117,16 +97,14 @@ mal remove_escapes(mal m)
 }
 
 // add escape sequences to a string
-mal add_escapes(mal m)
-{
+mal add_escapes(mal m) {
   if (!is_str(m))
     return mal_exception_str("add_escapes on a non-string");
 
   // need to make one extra char space for every ", \, \n
   const char *s = m.s;
   int extras_count = 0;
-  while (*s)
-  {
+  while (*s) {
     if (*s == '\\' || *s == '\"' || *s == '\n')
       extras_count++;
     s++;
@@ -135,50 +113,41 @@ mal add_escapes(mal m)
 
   char *p = buf;
   s = m.s;
-  while (*s)
-  {
-    if (*s == '\\')
-    {
+  while (*s) {
+    if (*s == '\\') {
       *p++ = '\\';
       *p++ = '\\';
       s++;
-    }
-    else if (*s == '\"')
-    {
+    } else if (*s == '\"') {
       *p++ = '\\';
       *p++ = '\"';
       s++;
-    }
-    else if (*s == '\n')
-    {
+    } else if (*s == '\n') {
       *p++ = '\\';
       *p++ = 'n';
       s++;
-    }
-    else
+    } else
       *p++ = *s++;
   }
   *p = *s; // null terminate;
   return mal_str(buf);
 }
 
-
-// Helper function to concat a list of strings with given separator, opener, closer
-// takes counts of number of strings in the list and number of chars (excluding the separators)
-const char *str_join(list_node *s, int chars, int elements,
-const char *sep, const char *opener, const char *closer)
-{
+// Helper function to concat a list of strings with given separator, opener,
+// closer takes counts of number of strings in the list and number of chars
+// (excluding the separators)
+const char *str_join(list_node *s, int chars, int elements, const char *sep,
+                     const char *opener, const char *closer) {
 
   int num_sep = elements > 0 ? elements - 1 : 0;
-  int buf_size = 1 + chars + strlen(opener) + strlen(closer) + num_sep * strlen(sep);
+  int buf_size =
+      1 + chars + strlen(opener) + strlen(closer) + num_sep * strlen(sep);
   char *buf = checked_malloc(buf_size, "str_join");
 
   str_concat(buf, opener, buf_size - 1);
-  while (s != NULL)
-  {
+  while (s != NULL) {
     str_concat(buf, s->val.s, buf_size - 1);
-    if (s->next != NULL)
-    {
+    if (s->next != NULL) {
       str_concat(buf, sep, buf_size - 1);
     }
     s = s->next;

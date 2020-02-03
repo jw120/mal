@@ -6,8 +6,7 @@
 
 #include "seq.h"
 
-const char *env_test()
-{
+const char *env_test() {
 
   // create three environments
   // e0 is empty with no outer
@@ -61,8 +60,10 @@ const char *env_test()
   mu_assert_eq("e3 q", env_get(e3, "q"), mal_int(6));
 
   // test env_new2 with &
-  binds = list_cons(mal_sym("v"), list_cons(mal_sym("&"), list_cons(mal_sym("w"), NULL)));
-  vals = list_cons(mal_int(11), list_cons(mal_int(12), list_cons(mal_int(13), NULL)));
+  binds = list_cons(mal_sym("v"),
+                    list_cons(mal_sym("&"), list_cons(mal_sym("w"), NULL)));
+  vals = list_cons(mal_int(11),
+                   list_cons(mal_int(12), list_cons(mal_int(13), NULL)));
   env *e4 = env_new2(binds, vals, e3);
 
   mu_assert_eq("e4 a", env_get(e4, "a"), mal_int(4));
@@ -72,7 +73,8 @@ const char *env_test()
   mu_assert_eq("e4 p", env_get(e4, "p"), mal_int(7));
   mu_assert_eq("e4 q", env_get(e4, "q"), mal_int(6));
   mu_assert_eq("e4 v", env_get(e4, "v"), mal_int(11));
-  mu_assert_eq("e4 w", env_get(e4, "w"), mal_cons(mal_int(12), mal_cons(mal_int(13), mal_list(NULL))));
+  mu_assert_eq("e4 w", env_get(e4, "w"),
+               mal_cons(mal_int(12), mal_cons(mal_int(13), mal_list(NULL))));
 
   // env_free
   env_free(e0);

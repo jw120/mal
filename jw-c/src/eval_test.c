@@ -8,8 +8,7 @@
 #include "reader.h"
 #include "seq.h"
 
-const char *eval_test()
-{
+const char *eval_test() {
 
   mal a[] = {mal_sym("x"), mal_int(7), mal_sym("y"), mal_int(5)};
   env *e = env_new(array_to_list(4, a), core_env());
@@ -22,8 +21,10 @@ const char *eval_test()
   mu_assert_eq("eval_ast sym", eval_ast(mal_sym("x"), e), mal_int(7));
 
   // eval_ast applies along a list
-  mal input_a_1[] = {mal_sym("y"), mal_int(0), mal_str("abc"), mal_sym("x"), mal_list(NULL)};
-  mal expected_a_1[] = {mal_int(5), mal_int(0), mal_str("abc"), mal_int(7), mal_list(NULL)};
+  mal input_a_1[] = {mal_sym("y"), mal_int(0), mal_str("abc"), mal_sym("x"),
+                     mal_list(NULL)};
+  mal expected_a_1[] = {mal_int(5), mal_int(0), mal_str("abc"), mal_int(7),
+                        mal_list(NULL)};
   mal input_1 = mal_list(array_to_list(5, input_a_1));
   mal expected_1 = mal_list(array_to_list(5, expected_a_1));
   mu_assert_eq("eval_ast list", eval_ast(input_1, e), expected_1);

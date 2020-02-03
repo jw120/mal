@@ -21,8 +21,7 @@
 char *history_filename = NULL;
 
 // called before history tracking starts, reads history file
-void pre_history()
-{
+void pre_history() {
 
   // set the file name for our history file
   const char *home = getenv("HOME");
@@ -36,8 +35,7 @@ void pre_history()
 
   // If the history file exists, read from it
   FILE *fp = fopen(history_filename, "r");
-  if (fp != NULL)
-  {
+  if (fp != NULL) {
     fclose(fp);
     int err = read_history(history_filename);
     assert(err == 0);
@@ -45,8 +43,7 @@ void pre_history()
 }
 
 // called after history tracking finishes, writes history file
-void post_history()
-{
+void post_history() {
 
   assert(history_filename != NULL);
 

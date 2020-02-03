@@ -16,8 +16,7 @@
 static debug_level debug = DEBUG_OFF;
 
 // set the global debugging level
-void set_debug_level(const char *setting)
-{
+void set_debug_level(const char *setting) {
   if (setting == NULL)
     return;
   if (strncmp(setting, "1", 1) == 0)
@@ -27,8 +26,8 @@ void set_debug_level(const char *setting)
 }
 
 // print a debugging message
-void debug_fmt(const char *func, debug_level level, const char *restrict fmt, ...)
-{
+void debug_fmt(const char *func, debug_level level, const char *restrict fmt,
+               ...) {
   if (level > debug)
     return;
   va_list args;
@@ -40,8 +39,7 @@ void debug_fmt(const char *func, debug_level level, const char *restrict fmt, ..
 }
 
 // print a debugging message and a mal value
-void debug_mal(const char *func, debug_level level, const char *msg, mal m)
-{
+void debug_mal(const char *func, debug_level level, const char *msg, mal m) {
   if (level > debug)
     return;
   printf("%16s: %s %s\n", func, msg, pr_str(m, true));
@@ -49,8 +47,8 @@ void debug_mal(const char *func, debug_level level, const char *msg, mal m)
 }
 
 // print a debugging message and two mal values
-void debug_mal2(const char *func, debug_level level, const char *msg, mal m1, mal m2)
-{
+void debug_mal2(const char *func, debug_level level, const char *msg, mal m1,
+                mal m2) {
   if (level > debug)
     return;
   printf("%16s: %s %s %s\n", func, msg, pr_str(m1, true), pr_str(m2, true));
@@ -58,8 +56,7 @@ void debug_mal2(const char *func, debug_level level, const char *msg, mal m1, ma
 }
 
 // Print the environment
-void debug_env(debug_level level, env *e)
-{
+void debug_env(debug_level level, env *e) {
   if (level > debug)
     return;
   assert(e != NULL);
@@ -81,8 +78,6 @@ void debug_env(debug_level level, env *e)
   map_record *sym_table = e->lookup->table;
   size_t sym_table_size = e->lookup->size;
   for (int i = 0; i < sym_table_size; i++)
-    printf("  %s%s -> %s\n",
-           sym_table[i].is_kw ? ":" : "",
-           sym_table[i].key,
+    printf("  %s%s -> %s\n", sym_table[i].is_kw ? ":" : "", sym_table[i].key,
            pr_str(sym_table[i].val, true));
 }

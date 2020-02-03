@@ -21,13 +21,11 @@
 #include "seq.h"
 
 // return the core environment, creating it if it does not already exist
-env *core_env()
-{
+env *core_env() {
 
   // create the environment if it does not yet exist
   static env *e = NULL;
-  if (e == NULL)
-  {
+  if (e == NULL) {
     DEBUG_INTERNAL_FMT("created new core environment");
     e = env_new(NULL, NULL);
     add_misc(e);

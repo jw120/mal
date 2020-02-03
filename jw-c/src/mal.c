@@ -27,19 +27,13 @@ mal EVAL(mal m, env *e) { return eval(m, e); }
 
 const char *PRINT(mal m) { return pr_str(m, true); }
 
-int main()
-{
+int main() {
 
   // Turn on debug mode if the environment variable is set
   set_debug_level(getenv("DEBUG"));
 
   // To pass step0 and step 1 tests we need to restrict functionality
-  enum
-  {
-    ECHO,
-    READ_PRINT,
-    FULL
-  } mode = FULL;
+  enum { ECHO, READ_PRINT, FULL } mode = FULL;
   const char *step = getenv("STEP");
   if (step && strcmp(step, "step0_repl") == 0)
     mode = ECHO;
@@ -48,28 +42,24 @@ int main()
 
   // Set up our environment
   env *repl_env;
-  if (mode == FULL)
-  {
+  if (mode == FULL) {
     DEBUG_HIGH_ENV(core_env());
     repl_env = env_new(NULL, core_env());
   }
 
   pre_history();
-  while (true)
-  {
+  while (true) {
     mal m;
     if (mode == FULL)
       DEBUG_HIGH_ENV(repl_env);
     const char *input = readline("user> ");
-    if (input == NULL)
-    { // EOF from ctrl-D
+    if (input == NULL) { // EOF from ctrl-D
       puts("");
       break;
     }
     add_history(input);
 
-    switch (mode)
-    {
+    switch (mode) {
     case ECHO:
       puts(input);
       break;
@@ -77,8 +67,7 @@ int main()
     case READ_PRINT:
       DEBUG_HIGH_FMT("input %s", input);
       m = READ(input);
-      if (!is_missing(m))
-      {
+      if (!is_missing(m)) {
         DEBUG_HIGH_MAL("read", m);
         if (mode == FULL)
           m = EVAL(m, repl_env);

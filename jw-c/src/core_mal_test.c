@@ -1,13 +1,12 @@
-#include "core_mal.h"
 #include "core_mal_test.h"
+#include "core_mal.h"
 #include "minunit.h"
 
 #include "core.h"
 #include "eval.h"
 #include "reader.h"
 
-const char *core_mal_test()
-{
+const char *core_mal_test() {
   env *e = core_env();
 
   // Tests for not

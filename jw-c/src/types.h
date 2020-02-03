@@ -24,10 +24,9 @@ typedef struct closure_struct closure;
 
 typedef mal fn(list_node *, env *);
 
-enum mal_tag
-{
-  MISSING,   // reader may return a missing value, should not be passed to eval or
-             // print
+enum mal_tag {
+  MISSING, // reader may return a missing value, should not be passed to eval or
+           // print
   EXCEPTION, // an error or thrown by the user
   TRUE,
   FALSE,
@@ -39,12 +38,11 @@ enum mal_tag
   LIST,
   VEC,
   MAP,
-  FN,       // A C-defined builtin function
-  CLOSURE   // A mal-defined closure
+  FN,     // A C-defined builtin function
+  CLOSURE // A mal-defined closure
 };
 
-struct mal_struct
-{
+struct mal_struct {
   enum mal_tag tag;
   union {
     struct mal_struct *e; // for EXCEPTION
@@ -58,43 +56,37 @@ struct mal_struct
   };
 };
 
-struct list_node_struct
-{
+struct list_node_struct {
   mal val;
   list_node *next;
 };
 
-struct vec_struct
-{
+struct vec_struct {
   size_t size;
   mal *buf;
 };
 
-struct map_record_struct
-{
+struct map_record_struct {
   const char *key;
   bool is_kw; // is the key a keyword (not just a string)
   int index;  // used to de-duplicate the map (by keeping highest index)
   mal val;
 };
 
-struct map_struct
-{
+struct map_struct {
   size_t size; // size of table (including duplicate keys)
   map_record *table;
 };
 
-struct env_struct
-{
+struct env_struct {
   map *lookup;
   struct env_struct *outer;
 };
 
-struct closure_struct
-{
+struct closure_struct {
   mal body;
   list_node *binds;
-  env * e;
+  env *e;
 };
 
 // Test functions
@@ -140,8 +132,8 @@ mal mal_closure(closure *);
 bool mal_equals(mal, mal);
 
 // Helper macro to propogate exceptions
-#define RETURN_IF_EXCEPTION(x) \
-  if (is_exception(x))         \
+#define RETURN_IF_EXCEPTION(x)                                                 \
+  if (is_exception(x))                                                         \
   return x
 
 #endif

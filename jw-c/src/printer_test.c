@@ -7,8 +7,7 @@
 #include "map.h"
 #include "seq.h"
 
-const char *printer_test()
-{
+const char *printer_test() {
 
   mal e = mal_exception_str("bad");
   mal m = mal_list(list_cons(

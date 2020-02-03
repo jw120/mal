@@ -16,10 +16,8 @@
 #include "utils.h"
 
 // Value equality (does not propogate exceptions)
-bool mal_equals(mal a, mal b)
-{
-  switch (a.tag)
-  {
+bool mal_equals(mal a, mal b) {
+  switch (a.tag) {
   case MISSING:
     assert(0); // Missing tag in mal_equals
     return false;
@@ -37,8 +35,7 @@ bool mal_equals(mal a, mal b)
     return a.tag == b.tag && strcmp(a.s, b.s) == 0;
   case LIST:
   case VEC:
-    if (b.tag == LIST || b.tag == VEC)
-    {
+    if (b.tag == LIST || b.tag == VEC) {
       return seq_equals(a, b);
     }
     return false;
@@ -90,8 +87,7 @@ bool is_fn(const mal m) { return m.tag == FN; }
 
 bool is_closure(const mal m) { return m.tag == CLOSURE; }
 
-bool match_sym(const mal m, const char *s)
-{
+bool match_sym(const mal m, const char *s) {
   return m.tag == SYM && strcmp(m.s, s) == 0;
 }
 
@@ -100,22 +96,19 @@ bool match_sym(const mal m, const char *s)
  *
  */
 
-mal mal_missing()
-{
+mal mal_missing() {
   mal val = {MISSING};
   return val;
 }
 
-mal mal_exception(mal m)
-{
+mal mal_exception(mal m) {
   mal *m_ptr = checked_malloc(sizeof(mal), "mal_exception");
   *m_ptr = m;
   mal val = {EXCEPTION, {.e = m_ptr}};
   return val;
 }
 
-mal mal_exception_str(const char *s)
-{
+mal mal_exception_str(const char *s) {
   mal *m_ptr = checked_malloc(sizeof(mal), "mal_exception_str");
   m_ptr->tag = STR;
   m_ptr->s = s;
@@ -123,83 +116,67 @@ mal mal_exception_str(const char *s)
   return val;
 }
 
-mal mal_true()
-{
+mal mal_true() {
   mal val = {TRUE};
   return val;
 }
 
-mal mal_false()
-{
+mal mal_false() {
   mal val = {FALSE};
   return val;
 }
 
-mal mal_bool(bool b)
-{
-  return b ? mal_true() : mal_false();
-}
+mal mal_bool(bool b) { return b ? mal_true() : mal_false(); }
 
-mal mal_nil()
-{
+mal mal_nil() {
   mal val = {NIL};
   return val;
 }
 
-mal mal_int(int i)
-{
+mal mal_int(int i) {
   mal val = {INT, {.i = i}};
   return val;
 }
 
-mal mal_str(const char *s)
-{
+mal mal_str(const char *s) {
   mal val = {STR, {.s = s}};
   return val;
 }
 
-mal mal_sym(const char *s)
-{
+mal mal_sym(const char *s) {
   mal val = {SYM, {.s = s}};
   return val;
 }
 
-mal mal_kw(const char *s)
-{
+mal mal_kw(const char *s) {
   mal val = {KW, {.s = s}};
   return val;
 }
 
-mal mal_list(list_node *n)
-{
+mal mal_list(list_node *n) {
   mal val = {LIST, {.n = n}};
   return val;
 }
 
-mal mal_vec(vec *v)
-{
+mal mal_vec(vec *v) {
   mal val = {VEC, {.v = v}};
   return val;
 }
 
-mal mal_map(map *m)
-{
+mal mal_map(map *m) {
   mal val = {MAP, {.m = m}};
   return val;
 }
 
-mal mal_fn(fn *f)
-{
+mal mal_fn(fn *f) {
   mal val = {FN, {.f = f}};
   return val;
 }
 
-mal mal_closure(closure *c)
-{
+mal mal_closure(closure *c) {
   mal val = {CLOSURE, {.c = c}};
   return val;
 }
-
 
 // Constants to simplify evaluation
 mal opening_paren = {SYM, {.s = "("}};

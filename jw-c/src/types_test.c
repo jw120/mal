@@ -6,8 +6,7 @@
 
 #include "seq.h"
 
-const char *types_test()
-{
+const char *types_test() {
 
   mu_assert("types missing", is_missing(mal_missing()));
   mu_assert("types exception", is_exception(mal_exception(mal_list(NULL))));
