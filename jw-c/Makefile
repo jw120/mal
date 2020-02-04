@@ -1,4 +1,4 @@
-.PHONY: all build clean distclean run test step-test run-debug
+.PHONY: all build clean distclean format run test step-test run-debug
 
 all: build test step-test
 
@@ -57,10 +57,15 @@ step-test: $(TARGET_DIR)/mal
 	-@echo step 2; cd ..; make "test^jw-c^step2" | grep "failing tests"
 	-@echo step 3; cd ..; make "test^jw-c^step3" | grep "failing tests"
 	-@echo step 4; cd ..; make "test^jw-c^step4" | grep "failing tests"
+	-@echo step 5; cd ..; make "test^jw-c^step5" | grep "failing tests"
+
 
 clean:
 	$(RM) $(BUILD_DIR)/*
 
 distclean: clean
 	$(RM) $(TARGET_DIR)/*
+
+format:
+	clang-format -i src/*.c src/*.h
 

@@ -32,7 +32,7 @@ int main() {
   // Turn on debug mode if the environment variable is set
   set_debug_level(getenv("DEBUG"));
 
-  // To pass step0 and step 1 tests we need to restrict functionality
+  // To pass step 0 and step 1 tests we need to restrict functionality
   enum { ECHO, READ_PRINT, FULL } mode = FULL;
   const char *step = getenv("STEP");
   if (step && strcmp(step, "step0_repl") == 0)

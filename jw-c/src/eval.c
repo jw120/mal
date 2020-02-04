@@ -33,12 +33,12 @@ mal do_special_form(list_node *n, env *e) {
   if (n == NULL)
     return mal_exception_str("Bad arguments to do");
   mal ret = mal_exception_str("Internal failure");
-  while (n != NULL) {
+  while (n != NULL && n->next != NULL) {
     ret = eval(n->val, e);
     RETURN_IF_EXCEPTION(ret);
     n = n->next;
   }
-  return ret;
+  return n->val; // last value passed back for TCO
 }
 
 mal fn_special_form(list_node *n, env *e) {
@@ -59,11 +59,11 @@ mal if_special_form(list_node *n, env *e) {
   mal condition = eval(n->val, e);
   RETURN_IF_EXCEPTION(condition);
   if (!is_falsey(condition))
-    return eval(n->next->val, e);
-  return (n->next->next == NULL) ? mal_nil() : eval(n->next->next->val, e);
+    return n->next->val; // for TCO
+  return (n->next->next == NULL) ? mal_nil() : n->next->next->val;
 }
 
-mal let_special_form(list_node *n, env *e) {
+mal let_special_form(list_node *n, env **eptr) {
   DEBUG_INTERNAL_MAL("", mal_list(n));
   if (n == NULL)
     return mal_exception_str("No arguments to let");
@@ -75,7 +75,7 @@ mal let_special_form(list_node *n, env *e) {
     return mal_exception_str("Odd length argument list in let");
 
   // Create our new enviornment for the let*
-  env *let_env = env_new(NULL, e);
+  *eptr = env_new(NULL, *eptr);
 
   // Walk over the binding list or vector adding symbols to the new environment
   if (is_list(n->val)) {
@@ -87,9 +87,9 @@ mal let_special_form(list_node *n, env *e) {
       if (!is_sym(sym))
         return mal_exception_str("Non-symbol in binding list in let");
       mal val = p->next->val;
-      mal evaluated_val = eval(val, let_env);
+      mal evaluated_val = eval(val, *eptr);
       RETURN_IF_EXCEPTION(evaluated_val);
-      env_set(let_env, sym.s, evaluated_val);
+      env_set(*eptr, sym.s, evaluated_val);
       p = p->next->next;
     }
   } else {
@@ -99,16 +99,13 @@ mal let_special_form(list_node *n, env *e) {
       if (!is_sym(sym))
         return mal_exception_str("Non-symbol in binding vector in let");
       mal val = n->val.v->buf[i + 1];
-      mal evaluated_val = eval(val, let_env);
+      mal evaluated_val = eval(val, *eptr);
       RETURN_IF_EXCEPTION(evaluated_val);
-      env_set(let_env, sym.s, evaluated_val);
+      env_set(*eptr, sym.s, evaluated_val);
     }
   }
 
-  DEBUG_HIGH_ENV(let_env);
-  mal ret = eval(n->next->val, let_env);
-  env_free(let_env);
-  return ret;
+  return n->next->val;
 }
 
 mal quote_special_form(list_node *n, env *e) {
@@ -171,43 +168,54 @@ mal eval(mal ast, env *e) {
   DEBUG_HIGH_MAL("", ast);
   RETURN_IF_EXCEPTION(ast);
 
-  if (!is_list(ast) || seq_empty(ast))
-    return eval_ast(ast, e);
+  while (true) { // loop to enable TCO
 
-  // Check for special forms
-  mal head = mal_first(ast);
-  mal rest = mal_rest(ast);
-  RETURN_IF_EXCEPTION(head);
-  if (mal_equals(head, mal_sym("def!")))
-    return def_special_form(rest.n, e);
-  if (mal_equals(head, mal_sym("do")))
-    return do_special_form(rest.n, e);
-  if (mal_equals(head, mal_sym("fn*")))
-    return fn_special_form(rest.n, e);
-  if (mal_equals(head, mal_sym("if")))
-    return if_special_form(rest.n, e);
-  if (mal_equals(head, mal_sym("let*")))
-    return let_special_form(rest.n, e);
-  if (mal_equals(head, mal_sym("quote")))
-    return quote_special_form(rest.n, e);
+    if (!is_list(ast) || seq_empty(ast))
+      return eval_ast(ast, e);
 
-  // Evaluate all the list elements
-  mal evaluated_ast = eval_ast(ast, e);
-  RETURN_IF_EXCEPTION(evaluated_ast);
-  DEBUG_INTERNAL_MAL("after args evaluated have", evaluated_ast);
+    // Check for special forms
+    mal head = mal_first(ast);
+    mal rest = mal_rest(ast);
+    RETURN_IF_EXCEPTION(head);
+    if (mal_equals(head, mal_sym("def!")))
+      return def_special_form(rest.n, e);
+    if (mal_equals(head, mal_sym("do"))) {
+      ast = do_special_form(rest.n, e);
+      continue;
+    }
+    if (mal_equals(head, mal_sym("fn*")))
+      return fn_special_form(rest.n, e);
+    if (mal_equals(head, mal_sym("if"))) {
+      ast = if_special_form(rest.n, e);
+      continue;
+    }
+    if (mal_equals(head, mal_sym("let*"))) {
+      ast = let_special_form(rest.n, &e);
+      continue;
+    }
+    if (mal_equals(head, mal_sym("quote")))
+      return quote_special_form(rest.n, e);
 
-  // Apply the function
-  head = mal_first(evaluated_ast);
-  rest = mal_rest(evaluated_ast);
-  DEBUG_INTERNAL_MAL("head of list to be applied", head);
-  DEBUG_INTERNAL_MAL("rest of list to be applied", rest);
-  if (is_fn(head)) // C-defined function
-    return head.f(rest.n, e);
-  if (is_closure(head)) { // mal-defined function
-    env *closure_env = env_new2(head.c->binds, rest.n, head.c->e);
-    if (closure_env == NULL)
-      return mal_exception_str("Failed to create closure environment");
-    return eval(head.c->body, closure_env);
+    // Evaluate all the list elements
+    mal evaluated_ast = eval_ast(ast, e);
+    RETURN_IF_EXCEPTION(evaluated_ast);
+    DEBUG_INTERNAL_MAL("after args evaluated have", evaluated_ast);
+
+    // Apply the function
+    head = mal_first(evaluated_ast);
+    rest = mal_rest(evaluated_ast);
+    DEBUG_INTERNAL_MAL("head of list to be applied", head);
+    DEBUG_INTERNAL_MAL("rest of list to be applied", rest);
+    if (is_fn(head)) // C-defined function
+      return head.f(rest.n, e);
+    if (is_closure(head)) { // mal-defined function
+      env *closure_env = env_new2(head.c->binds, rest.n, head.c->e);
+      if (closure_env == NULL)
+        return mal_exception_str("Failed to create closure environment");
+      e = closure_env;
+      ast = head.c->body;
+      continue; // TCO
+    }
+    return mal_exception_str("Not a function");
   }
-  return mal_exception_str("Not a function");
 }
