@@ -4,6 +4,7 @@
  *
  **/
 
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -12,6 +13,7 @@
 #include "debug.h"
 #include "env.h"
 #include "printer.h"
+#include "reader.h"
 #include "seq.h"
 #include "utils.h"
 
@@ -77,6 +79,31 @@ mal println(list_node *n, env *e) {
   return mal_nil();
 }
 
+// C implementation of mal read-string
+mal read_string(list_node *n, env *e) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) != 1 || !is_str(n->val))
+    return mal_exception_str("Bad arguments to read-string");
+  return read_str(n->val.s);
+}
+
+#define SLURP_BUFFER_SIZE 65536
+
+// C implementation of mal slurp
+mal slurp(list_node *n, env *e) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) != 1 || !is_str(n->val))
+    return mal_exception_str("Bad arguments to slurp");
+  FILE *fp = fopen(n->val.s, "r");
+  if (fp == NULL)
+    return mal_exception_str(strerror(errno));
+  char *buf = checked_malloc(SLURP_BUFFER_SIZE, "slurp");
+  fread(buf, 1, SLURP_BUFFER_SIZE, fp);
+  if (feof(fp))
+    return mal_str(buf);
+  return mal_exception_str("fread error in slurp");
+}
+
 // add misc core functions to the environment
 void add_misc(env *e) {
   env_set(e, "prn", mal_fn(prn));
@@ -84,4 +111,6 @@ void add_misc(env *e) {
   env_set(e, "str", mal_fn(mal_fn_str));
   env_set(e, "println", mal_fn(println));
   env_set(e, "=", mal_fn(equals));
+  env_set(e, "read-string", mal_fn(read_string));
+  env_set(e, "slurp", mal_fn(slurp));
 }

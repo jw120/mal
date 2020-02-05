@@ -78,7 +78,8 @@ mal env_get(env *e, const char *sym) {
   env *found_e = env_find(e, sym);
   DEBUG_INTERNAL_FMT("found %p", found_e);
   if (found_e == NULL) {
-    snprintf(not_found_buf, NOT_FOUND_BUF_SIZE, "'%s' not found", sym);
+    snprintf(not_found_buf, NOT_FOUND_BUF_SIZE, "'%s' not found in %x", sym,
+             (unsigned)e & 0xffff);
     return mal_exception_str(not_found_buf);
   }
   mal ret = map_get(found_e->lookup, mal_str(sym));

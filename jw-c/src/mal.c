@@ -17,15 +17,26 @@
 #include "history.h"
 #include "printer.h"
 #include "reader.h"
+#include "seq.h"
 #include "utils.h"
 
 #define INPUT_BUFFER_SIZE 200
+
+env *repl_env;
 
 mal READ(const char *s) { return read_str(s); }
 
 mal EVAL(mal m, env *e) { return eval(m, e); }
 
 const char *PRINT(mal m) { return pr_str(m, true); }
+
+// C implementation of mal eval
+mal mal_eval(list_node *n, env *e) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) != 1)
+    return mal_exception_str("Bad arguments to eval");
+  return EVAL(n->val, repl_env);
+}
 
 int main() {
 
@@ -41,9 +52,9 @@ int main() {
     mode = READ_PRINT;
 
   // Set up our environment
-  env *repl_env;
   if (mode == FULL) {
     DEBUG_HIGH_ENV(core_env());
+    env_set(core_env(), "eval", mal_fn(mal_eval));
     repl_env = env_new(NULL, core_env());
   }
 

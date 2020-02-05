@@ -4,13 +4,14 @@
  *
  **/
 
-#include <assert.h>
 #include <stdio.h> // stdio has to be before readline/history.h
 
+#include <assert.h>
 #include <readline/history.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "debug.h"
 #include "history.h"
 
 #include "utils.h"
@@ -33,13 +34,12 @@ void pre_history() {
   strncat(history_filename + strlen(home) + 1, HISTORY_FILENAME,
           strlen(HISTORY_FILENAME) + 1);
 
-  // If the history file exists, read from it
-  FILE *fp = fopen(history_filename, "r");
-  if (fp != NULL) {
-    fclose(fp);
-    int err = read_history(history_filename);
-    assert(err == 0);
-  }
+  int history_errno = read_history(history_filename);
+  if (history_errno == 0)
+    DEBUG_INTERNAL_FMT("History file %s read OK\n", history_filename);
+  else
+    DEBUG_INTERNAL_FMT("History file %s read failed, error %d\n",
+                       history_filename, history_errno);
 }
 
 // called after history tracking finishes, writes history file

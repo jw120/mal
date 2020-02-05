@@ -22,5 +22,9 @@ const char *core_misc_test() {
   mu_assert_eq("core = except1", eval(read_str("(= (/ 3 0) 2)"), e),
                eval(read_str("(/ 4 0)"), e));
 
+  // read-string
+  const char *s = "(read-string \"22\")";
+  mu_assert_eq("core read-string 22", eval(read_str(s), e), mal_int(22));
+
   return 0;
 }

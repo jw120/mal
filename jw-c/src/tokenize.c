@@ -36,6 +36,7 @@
 // Search input_string from offset, returning the next token and the next offset
 const token_result *tokenize(const char *input_string, const int offset) {
 
+  DEBUG_INTERNAL_FMT("called");
   DEBUG_INTERNAL_FMT("called on %s", input_string + offset);
 
   static pcre2_code *token_regexp = NULL;

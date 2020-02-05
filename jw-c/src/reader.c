@@ -43,6 +43,14 @@ static const char *reader_peek(const reader_state *state_ptr) {
 // Return the previously fetched token and fetch the next one
 static const char *reader_next(reader_state *state_ptr) {
 
+  DEBUG_INTERNAL_FMT("called with state_ptr %p", state_ptr);
+  DEBUG_INTERNAL_FMT("called with state_ptr->input_string %s",
+                     state_ptr->input_string);
+  DEBUG_INTERNAL_FMT("called with state_ptr->input_length %d",
+                     state_ptr->input_length);
+  DEBUG_INTERNAL_FMT("called with state_ptr->current %p", state_ptr->current);
+  DEBUG_INTERNAL_FMT("called with state_ptr->offset %p", state_ptr->offset);
+
   // We return this pre-fetched current match
   const char *pre_fetched_current = state_ptr->current;
 
@@ -117,7 +125,11 @@ static mal read_extended(reader_state *state_ptr) {
 // read a non-list
 static mal read_atom(reader_state *state_ptr) {
 
+  DEBUG_INTERNAL_FMT("top of loop");
   const char *const token = reader_next(state_ptr);
+  if (token == NULL) {
+    return mal_missing(); // EOF
+  }
   const int token_len = strlen(token);
   mal value;
   DEBUG_INTERNAL_FMT("received token %s, length %d", token, token_len);
@@ -210,18 +222,27 @@ static mal read_atom(reader_state *state_ptr) {
 }
 
 static mal read_form(reader_state *state_ptr) {
-  const char *next_token = reader_peek(state_ptr);
-  if (strcmp(next_token, "") == 0) {
-    DEBUG_INTERNAL_FMT("returning missing");
-    return mal_missing();
-  }
-  if (strcmp(next_token, "(") == 0 || strcmp(next_token, "[") == 0 ||
-      strcmp(next_token, "{") == 0) {
-    DEBUG_INTERNAL_FMT("starting read_extended");
-    return read_extended(state_ptr);
-  } else {
-    DEBUG_INTERNAL_FMT("starting read_atom");
-    return read_atom(state_ptr);
+
+  while (true) { // loop to skip over comments
+
+    const char *next_token = reader_peek(state_ptr);
+    if (strcmp(next_token, "") == 0) {
+      DEBUG_INTERNAL_FMT("returning missing");
+      return mal_missing();
+    }
+    if (next_token[0] == ';') {
+      DEBUG_INTERNAL_FMT("read comment");
+      reader_next(state_ptr);
+      continue;
+    }
+    if (strcmp(next_token, "(") == 0 || strcmp(next_token, "[") == 0 ||
+        strcmp(next_token, "{") == 0) {
+      DEBUG_INTERNAL_FMT("starting read_extended");
+      return read_extended(state_ptr);
+    } else {
+      DEBUG_INTERNAL_FMT("starting read_atom");
+      return read_atom(state_ptr);
+    }
   }
 }
 

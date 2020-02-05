@@ -42,7 +42,14 @@ mal do_special_form(list_node *n, env *e) {
 }
 
 mal fn_special_form(list_node *n, env *e) {
+  DEBUG_INTERNAL_FMT("hi1");
+
   DEBUG_INTERNAL_MAL("", mal_list(n));
+  DEBUG_INTERNAL_FMT("hi2");
+
+  DEBUG_INTERNAL_FMT("count %d, seq(head) %d", list_count(n), n->val.tag);
+  DEBUG_INTERNAL_FMT("hi3");
+
   if (list_count(n) != 2 || !is_seq(n->val))
     return mal_exception_str("Bad arguments to fn*");
   closure *c = checked_malloc(sizeof(closure), "fn*");
@@ -165,10 +172,11 @@ mal eval_ast(mal ast, env *e) {
 
 // top-level evaluation function
 mal eval(mal ast, env *e) {
-  DEBUG_HIGH_MAL("", ast);
-  RETURN_IF_EXCEPTION(ast);
 
   while (true) { // loop to enable TCO
+    DEBUG_HIGH_MAL("", ast);
+    RETURN_IF_EXCEPTION(ast);
+    DEBUG_HIGH_ENV(e);
 
     if (!is_list(ast) || seq_empty(ast))
       return eval_ast(ast, e);
