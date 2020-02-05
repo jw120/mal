@@ -38,8 +38,9 @@ enum mal_tag {
   LIST,
   VEC,
   MAP,
-  FN,     // A C-defined builtin function
-  CLOSURE // A mal-defined closure
+  FN,      // A C-defined builtin function
+  CLOSURE, // A mal-defined closure
+  ATOM
 };
 
 struct mal_struct {
@@ -53,6 +54,7 @@ struct mal_struct {
     map *m;               // FOR MAP
     fn *f;                // FOR FN
     closure *c;           // FOR CLOSURE
+    mal *a;               // FOR ATOM
   };
 };
 
