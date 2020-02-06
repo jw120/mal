@@ -79,10 +79,14 @@ static const char *print_vec(vec *v, bool print_readably) {
   return str_join(string_head, char_count, element_count, " ", "[", "]");
 }
 
+#define ATOM_PREFIX "(atom "
+#define ATOM_SUFFIX ")"
+
 // return a string representation of the mal value
 const char *pr_str(mal m, bool print_readably) {
   int buf_size;
   char *buf;
+  const char *buf2;
 
   switch (m.tag) {
   case MISSING:
@@ -128,5 +132,11 @@ const char *pr_str(mal m, bool print_readably) {
   case FN:
   case CLOSURE:
     return "<function>";
+  case ATOM:
+    buf2 = pr_str(**m.a, print_readably);
+    buf_size = strlen(ATOM_PREFIX) + strlen(buf2) + strlen(ATOM_SUFFIX) + 1;
+    buf = checked_malloc(buf_size, "pr_str atom");
+    snprintf(buf, buf_size, "%s%s%s", ATOM_PREFIX, buf2, ATOM_SUFFIX);
+    return buf;
   }
 }

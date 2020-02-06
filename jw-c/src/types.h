@@ -46,15 +46,15 @@ enum mal_tag {
 struct mal_struct {
   enum mal_tag tag;
   union {
-    struct mal_struct *e; // for EXCEPTION
-    int i;                // for INT
-    const char *s;        // for STR, SYM AND KEYWORD
-    list_node *n;         // for LIST
-    vec *v;               // for VEC
-    map *m;               // FOR MAP
-    fn *f;                // FOR FN
-    closure *c;           // FOR CLOSURE
-    mal *a;               // FOR ATOM
+    struct mal_struct *e;  // for EXCEPTION
+    int i;                 // for INT
+    const char *s;         // for STR, SYM AND KEYWORD
+    list_node *n;          // for LIST
+    vec *v;                // for VEC
+    map *m;                // FOR MAP
+    fn *f;                 // FOR FN
+    closure *c;            // FOR CLOSURE
+    struct mal_struct **a; // FOR ATOM
   };
 };
 
@@ -109,6 +109,7 @@ bool is_seq(const mal);
 bool is_map(const mal);
 bool is_fn(const mal);
 bool is_closure(const mal);
+bool is_atom(const mal);
 bool match_sym(const mal, const char *);
 
 // Constructor functions
@@ -129,6 +130,7 @@ mal mal_vec(vec *);
 mal mal_map(map *);
 mal mal_fn(fn *);
 mal mal_closure(closure *);
+mal mal_atom(mal);
 
 // Equality
 bool mal_equals(mal, mal);

@@ -37,6 +37,7 @@ const char *printer_test() {
   mu_assert_str("pr_str list", pr_str(m, true), "(plus 4 5)");
   mu_assert_str("pr_str vec", pr_str(v, true), "[plus 4 5]");
   mu_assert_str("pr_str map", pr_str(hm_map, true), "{\"a\" 1 \"last\" true}");
+  mu_assert_str("pr_str atom", pr_str(mal_atom(mal_int(3)), true), "(atom 3)");
 
   return 0;
 }

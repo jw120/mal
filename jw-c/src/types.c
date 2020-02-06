@@ -44,6 +44,8 @@ bool mal_equals(mal a, mal b) {
   case FN:
   case CLOSURE:
     return false;
+  case ATOM:
+    return a.tag == b.tag && mal_equals(**a.a, **b.a);
   }
 }
 
@@ -86,6 +88,8 @@ bool is_map(const mal m) { return m.tag == MAP; }
 bool is_fn(const mal m) { return m.tag == FN; }
 
 bool is_closure(const mal m) { return m.tag == CLOSURE; }
+
+bool is_atom(const mal m) { return m.tag == ATOM; }
 
 bool match_sym(const mal m, const char *s) {
   return m.tag == SYM && strcmp(m.s, s) == 0;
@@ -175,6 +179,15 @@ mal mal_fn(fn *f) {
 
 mal mal_closure(closure *c) {
   mal val = {CLOSURE, {.c = c}};
+  return val;
+}
+
+mal mal_atom(mal m) {
+  mal *m_ptr = checked_malloc(sizeof(mal), "mal_exception m_ptr");
+  mal **m_ptr_ptr = checked_malloc(sizeof(mal *), "mal_exception m_ptr_ptr");
+  *m_ptr = m;
+  *m_ptr_ptr = m_ptr;
+  mal val = {ATOM, {.a = m_ptr_ptr}};
   return val;
 }
 
