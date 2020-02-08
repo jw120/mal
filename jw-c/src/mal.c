@@ -38,7 +38,62 @@ mal mal_eval(list_node *n, env *e) {
   return EVAL(n->val, repl_env);
 }
 
-int main() {
+#define ARGV_NAME "*ARGV*"
+
+void setup_mal_argv(int count, char *args[], env *e) {
+
+  DEBUG_INTERNAL_FMT("adding argv with %d args", count);
+  list_node *args_list_head = NULL;
+  list_node *n = NULL;
+
+  for (int i = 0; i < count; i++) {
+    n = list_extend(mal_str(args[i]), n);
+    if (args_list_head == NULL)
+      args_list_head = n;
+  }
+  mal mal_args = mal_list(args_list_head); // (arg1 arg2 arg3)
+  DEBUG_INTERNAL_MAL("eval args", mal_args);
+  mal quoted_args =
+      mal_cons(mal_sym("quote"), mal_cons(mal_args, mal_list(NULL)));
+  DEBUG_INTERNAL_MAL("eval quoted_args", quoted_args);
+  mal command = mal_cons(
+      mal_sym("def!"),
+      mal_cons(mal_sym(ARGV_NAME), mal_cons(quoted_args, mal_list(NULL))));
+  DEBUG_INTERNAL_MAL("eval", command);
+  mal ret = EVAL(command, e);
+  DEBUG_INTERNAL_MAL("eval ret", ret);
+  if (is_exception(ret)) {
+    PRINT(ret);
+    exit(EXIT_FAILURE);
+  }
+}
+
+// (a b c) = a : b : c : []
+// (a (b c)) = a : (b : c : [])
+
+#define LOAD_FILE_PREFIX "(load-file \""
+#define LOAD_FILE_SUFFIX "\")"
+
+mal load_file(char *filename, env *e) {
+
+  DEBUG_INTERNAL_FMT("loading file %s", filename);
+  size_t buf_size = strlen(LOAD_FILE_PREFIX) + strlen(filename) +
+                    strlen(LOAD_FILE_SUFFIX) + 1;
+  char *buf = checked_malloc(buf_size, "load_file filename");
+  strncpy(buf, LOAD_FILE_PREFIX, buf_size);
+  strncat(buf, filename, buf_size);
+  strncat(buf, LOAD_FILE_SUFFIX, buf_size);
+  DEBUG_INTERNAL_FMT("read-eval  %s", buf);
+
+  mal ret = EVAL(READ(buf), e);
+  if (is_exception(ret)) {
+    PRINT(ret);
+    exit(EXIT_FAILURE);
+  }
+  return ret;
+}
+
+int main(int argc, char *argv[]) {
 
   // Turn on debug mode if the environment variable is set
   set_debug_level(getenv("DEBUG"));
@@ -56,6 +111,20 @@ int main() {
     DEBUG_HIGH_ENV(core_env());
     env_set(core_env(), "eval", mal_fn(mal_eval));
     repl_env = env_new(NULL, core_env());
+    env_set(repl_env, ARGV_NAME, mal_list(NULL));
+
+    if (argc > 1) {
+      DEBUG_INTERNAL_FMT("calling setup_mal_argv");
+      setup_mal_argv(argc - 2, argv + 2, repl_env);
+      DEBUG_INTERNAL_FMT("calling load-file");
+      mal ret = load_file(argv[1], repl_env);
+      if (is_exception(ret)) {
+        printf("Failed in loading file %s", argv[0]);
+        PRINT(ret);
+        return EXIT_FAILURE;
+      }
+      return EXIT_SUCCESS;
+    }
   }
 
   pre_history();
@@ -90,5 +159,5 @@ int main() {
     free((void *)input);
   }
   post_history();
-  return 0;
+  return EXIT_SUCCESS;
 }

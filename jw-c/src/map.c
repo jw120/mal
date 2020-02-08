@@ -22,7 +22,7 @@ int map_record_cmp(void const *lhs, void const *rhs) {
 
   map_record const *const l = lhs;
   map_record const *const r = rhs;
-  DEBUG_INTERNAL_FMT("comparing %s %s", l->key, r->key);
+  // DEBUG_INTERNAL_FMT("comparing %s %s", l->key, r->key);
 
   int compare_strings = strcmp(l->key, r->key);
   if (compare_strings)
@@ -35,7 +35,7 @@ int map_record_cmp_with_index(void const *lhs, void const *rhs) {
 
   map_record const *const l = lhs;
   map_record const *const r = rhs;
-  DEBUG_INTERNAL_FMT("comparing %s %s", l->key, r->key);
+  // DEBUG_INTERNAL_FMT("comparing %s %s", l->key, r->key);
 
   int compare_strings = strcmp(l->key, r->key);
   if (compare_strings)
@@ -228,6 +228,7 @@ void map_set(map *hm, mal key, mal value) {
   }
 
   // if not, then create a new map with one extra key
+  DEBUG_INTERNAL_FMT("adding one key");
   map *new_hm = uninitialized_map(hm->size + 1);
   for (int i = 0; i < hm->size; i++) {
     new_hm->table[i] = hm->table[i];
