@@ -176,6 +176,8 @@ mal mal_rest(mal m) {
   return mal_exception_str("non-sequence in mal_first");
 }
 
+bool is_pair(mal m) { return is_list(m) && list_count(m.n) > 0; }
+
 // Given a pointer to the last element of a list (or NULL), add the given
 // element and return the new last element
 list_node *list_extend(mal m, list_node *n) {

@@ -115,11 +115,41 @@ mal let_special_form(list_node *n, env **eptr) {
   return n->next->val;
 }
 
-mal quote_special_form(list_node *n, env *e) {
-  DEBUG_INTERNAL_MAL("", mal_list(n));
-  if (list_count(n) != 1)
-    return mal_exception_str("Bad arguments to quote");
-  return n->val;
+mal quasiquote(mal ast) {
+  DEBUG_INTERNAL_MAL("", ast);
+
+  // a non-list (or empty list) is just quoted
+  if (!is_pair(ast))
+    return mal_cons(mal_sym("quote"), mal_cons(ast, mal_list(NULL)));
+
+  // if a list then we work with the head (ast_head) and recurse onto ast_rest
+  mal ast_head = ast.n->val;
+  mal ast_rest = mal_list(ast.n->next);
+  DEBUG_INTERNAL_MAL("ast_head is", ast_head);
+  DEBUG_INTERNAL_MAL("ast_rest is", ast_rest);
+
+  // unquote
+  if (mal_equals(ast_head, mal_sym("unquote"))) {
+    if (ast.n->next == NULL)
+      return mal_exception_str("Unquote of nothing");
+    return ast.n->next->val;
+  }
+
+  // splice-unquote the element wiht concat
+  if (is_pair(ast_head)) {
+    mal ast_head_head = ast_head.n->val;
+    mal ast_head_second = ast_head.n->next->val;
+    if (mal_equals(ast_head_head, mal_sym("splice-unquote"))) {
+      return mal_cons(mal_sym("concat"),
+                      mal_cons(ast_head_second,
+                               mal_cons(quasiquote(ast_rest), mal_list(NULL))));
+    }
+  }
+
+  // or else just cons the element
+  return mal_cons(mal_sym("cons"),
+                  mal_cons(quasiquote(ast_head),
+                           mal_cons(quasiquote(ast_rest), mal_list(NULL))));
 }
 
 // evaluation function that does not apply
@@ -201,8 +231,17 @@ mal eval(mal ast, env *e) {
       ast = let_special_form(rest.n, &e);
       continue;
     }
-    if (mal_equals(head, mal_sym("quote")))
-      return quote_special_form(rest.n, e);
+    if (mal_equals(head, mal_sym("quasiquote"))) {
+      if (list_count(rest.n) != 1)
+        return mal_exception_str("Bad arguments to quasiquote");
+      ast = quasiquote(rest.n->val);
+      continue;
+    }
+    if (mal_equals(head, mal_sym("quote"))) {
+      if (list_count(rest.n) != 1)
+        return mal_exception_str("Bad arguments to quote");
+      return rest.n->val;
+    }
 
     // Evaluate all the list elements
     mal evaluated_ast = eval_ast(ast, e);

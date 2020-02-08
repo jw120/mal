@@ -49,6 +49,9 @@ mal mal_cons(mal, mal);
 mal mal_first(mal);
 mal mal_rest(mal);
 
+// Helper function for quasiquote - is this a non-empty list
+bool is_pair(mal m);
+
 /**
  *
  * Vector functions
