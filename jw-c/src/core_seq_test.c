@@ -39,5 +39,45 @@ const char *core_seq_test() {
   mu_assert_eq("count nil", E("(count nil)"), mal_int(0));
   mu_assert_eq("count 44", E("(count 44)"), mal_int(0));
 
+  // cons
+  mu_assert_eq(
+      "cons 1 (2 3)", E("(cons 1 '(2 3))"),
+      mal_cons(mal_int(1),
+               mal_cons(mal_int(2), mal_cons(mal_int(3), mal_list(NULL)))));
+  mu_assert_eq("cons 1 ()", E("(cons 1 ())"),
+               mal_cons(mal_int(1), mal_list(NULL)));
+  mu_assert_eq(
+      "cons 1 [2 3]", E("(cons 1 [2 3])"),
+      mal_cons(mal_int(1),
+               mal_cons(mal_int(2), mal_cons(mal_int(3), mal_list(NULL)))));
+  mu_assert_eq("cons 1 []", E("(cons 1 [])"),
+               mal_cons(mal_int(1), mal_list(NULL)));
+
+  // concat
+  E("(def! a ())");
+  E("(def! b '(1))");
+  E("(def! c '(2 3))");
+  E("(def! d '(5 6 7))");
+  mal a = mal_list(NULL);
+  mal ab = mal_cons(mal_int(1), mal_list(NULL));
+  mal bc = mal_cons(mal_int(1),
+                    mal_cons(mal_int(2), mal_cons(mal_int(3), mal_list(NULL))));
+  mal bcd = mal_cons(
+      mal_int(1),
+      mal_cons(
+          mal_int(2),
+          mal_cons(mal_int(3),
+                   mal_cons(mal_int(5),
+                            mal_cons(mal_int(6),
+                                     mal_cons(mal_int(7), mal_list(NULL)))))));
+  mu_assert_eq("concat ", E("(concat)"), mal_list(NULL));
+  mu_assert_eq("concat a", E("(concat a)"), a);
+  mu_assert_eq("concat ab", E("(concat a b)"), ab);
+  mu_assert_eq("concat abc", E("(concat b c)"), bc);
+  mu_assert_eq("concat bc", E("(concat b c)"), bc);
+  mu_assert_eq("concat bcd", E("(concat b c d)"), bcd);
+  mu_assert_eq("concat bcda", E("(concat b c d a)"), bcd);
+  mu_assert_eq("concat vec bcda", E("(concat [1] [2 3] [5 6 7] [])"), bcd);
+
   return 0;
 }
