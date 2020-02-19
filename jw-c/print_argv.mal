@@ -1,4 +1,0 @@
-; Used by the run_argv_test.sh test harness
-(prn "starting")
-(prn *ARGV*)
-(prn "done")

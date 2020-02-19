@@ -39,7 +39,7 @@ enum mal_tag {
   VEC,
   MAP,
   FN,      // A C-defined builtin function
-  CLOSURE, // A mal-defined closure
+  CLOSURE, // A mal-defined closure (or macro)
   ATOM
 };
 
@@ -89,6 +89,7 @@ struct closure_struct {
   mal body;
   list_node *binds;
   env *e;
+  bool is_macro;
 };
 
 // Test functions

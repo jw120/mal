@@ -1,5 +1,5 @@
 Todo
-
+* Review code and prep for step 8 - macros
 
 
 readline

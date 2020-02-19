@@ -56,6 +56,7 @@ mal fn_special_form(list_node *n, env *e) {
   c->binds = seq_to_list(n->val);
   c->body = n->next->val;
   c->e = e;
+  c->is_macro = false;
   return mal_closure(c);
 }
 
