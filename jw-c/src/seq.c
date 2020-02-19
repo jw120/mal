@@ -138,6 +138,7 @@ mal mal_cons(mal m, mal n) {
 }
 
 mal mal_first(mal m) {
+  DEBUG_HIGH_MAL("called with", m);
   if (is_list(m)) {
     if (m.n == NULL)
       return mal_nil();
@@ -153,30 +154,24 @@ mal mal_first(mal m) {
   return mal_exception_str("non-sequence in mal_first");
 }
 
-static list_node *vec_to_list(size_t size, mal *buf) {
-  list_node *p = NULL;
-  for (int i = size; i >= 0; i--)
-    p = list_cons(buf[i], p);
-  return p;
-}
-
 mal mal_rest(mal m) {
+  DEBUG_HIGH_MAL("called with", m);
   if (is_list(m)) {
     if (m.n == NULL)
       return mal_list(NULL);
     return mal_list(m.n->next);
   }
   if (is_vec(m)) {
-    if (m.v == NULL || m.v->size == 0)
+    if (m.v == NULL || m.v->size < 2)
       return mal_list(NULL);
-    return mal_list(vec_to_list(m.v->size - 1, m.v->buf + 1));
+    return mal_rest(mal_list(array_to_list(m.v->size, m.v->buf)));
   }
   if (is_nil(m))
     return mal_list(NULL);
   return mal_exception_str("non-sequence in mal_first");
 }
 
-bool is_pair(mal m) { return is_list(m) && list_count(m.n) > 0; }
+bool is_pair(mal m) { return is_seq(m) && seq_count(m) > 0; }
 
 // Given a pointer to the last element of a list (or NULL), add the given
 // element and return the new last element

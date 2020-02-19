@@ -118,22 +118,23 @@ mal let_special_form(list_node *n, env **eptr) {
 mal quasiquote(mal ast) {
   DEBUG_INTERNAL_MAL("", ast);
 
-  // a non-list (or empty list) is just quoted
+  // a non-sequence (or empty sequence) is just quoted
   if (!is_pair(ast))
     return mal_cons(mal_sym("quote"), mal_cons(ast, mal_list(NULL)));
 
-  // if a list then we work with the head (ast_head) and recurse onto ast_rest
-  mal ast_head = ast.n->val;
-  mal ast_rest = mal_list(ast.n->next);
+  // if a list then we work with the head (ast_head)
+  mal ast_head = mal_first(ast);
   DEBUG_INTERNAL_MAL("ast_head is", ast_head);
-  DEBUG_INTERNAL_MAL("ast_rest is", ast_rest);
 
   // unquote
   if (mal_equals(ast_head, mal_sym("unquote"))) {
-    if (ast.n->next == NULL)
-      return mal_exception_str("Unquote of nothing");
-    return ast.n->next->val;
+    if (seq_count(ast) != 2)
+      return mal_exception_str("Bad arguments to unquote");
+    return is_list(ast) ? ast.n->next->val : ast.v->buf[1];
   }
+
+  mal ast_rest = mal_rest(ast);
+  DEBUG_INTERNAL_MAL("ast_rest is", ast_rest);
 
   // splice-unquote the element wiht concat
   if (is_pair(ast_head)) {

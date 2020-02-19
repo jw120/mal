@@ -79,5 +79,25 @@ const char *core_seq_test() {
   mu_assert_eq("concat bcda", E("(concat b c d a)"), bcd);
   mu_assert_eq("concat vec bcda", E("(concat [1] [2 3] [5 6 7] [])"), bcd);
 
+  // first
+  mu_assert_eq("first ()", E("(first ())"), mal_nil());
+  mu_assert_eq("first nil", E("(first nil)"), mal_nil());
+  mu_assert_eq("first (1)", E("(first '(1))"), mal_int(1));
+  mu_assert_eq("first (2 3 4)", E("(first '(2 3 4))"), mal_int(2));
+  mu_assert_eq("first []", E("(first [])"), mal_nil());
+  mu_assert_eq("first [1]", E("(first [1])"), mal_int(1));
+  mu_assert_eq("first [2 3 4]", E("(first [2 3 4])"), mal_int(2));
+
+  // rest
+  mu_assert_eq("rest ()", E("(rest ())"), mal_list(NULL));
+  mu_assert_eq("rest nil", E("(rest nil)"), mal_list(NULL));
+  mu_assert_eq("rest (1)", E("(rest '(1))"), mal_list(NULL));
+  mu_assert_eq("rest (2 3 4)", E("(rest '(2 3 4))"),
+               mal_cons(mal_int(3), mal_cons(mal_int(4), mal_list(NULL))));
+  mu_assert_eq("rest []", E("(rest [])"), mal_list(NULL));
+  mu_assert_eq("rest [1]", E("(rest [1])"), mal_list(NULL));
+  mu_assert_eq("rest [2 3 4]", E("(rest [2 3 4])"),
+               mal_cons(mal_int(3), mal_cons(mal_int(4), mal_list(NULL))));
+
   return 0;
 }

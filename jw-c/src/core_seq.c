@@ -80,6 +80,22 @@ mal core_concat(list_node *n, env *e) {
   return mal_list(new_head);
 }
 
+// C implementation of mal first
+mal core_first(list_node *n, env *e) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) != 1)
+    return mal_exception_str("Bad arguments to first");
+  return mal_first(n->val);
+}
+
+// C implementation of mal rest
+mal core_rest(list_node *n, env *e) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) != 1)
+    return mal_exception_str("Bad arguments to rest");
+  return mal_rest(n->val);
+}
+
 // add sequence-related core functions to the environment
 void add_seq(env *e) {
   env_set(e, "list", mal_fn(list));
@@ -88,4 +104,6 @@ void add_seq(env *e) {
   env_set(e, "count", mal_fn(count));
   env_set(e, "cons", mal_fn(core_cons));
   env_set(e, "concat", mal_fn(core_concat));
+  env_set(e, "first", mal_fn(core_first));
+  env_set(e, "rest", mal_fn(core_rest));
 }
