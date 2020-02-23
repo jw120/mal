@@ -95,7 +95,7 @@ IMPLS = ada ada.2 awk bash basic bbc-basic c chuck clojure coffee common-lisp cp
 	matlab miniMAL nasm nim objc objpascal ocaml perl perl6 php picolisp pike plpgsql \
 	plsql powershell ps python python.2 r racket rexx rpython ruby rust scala scheme skew \
 	swift swift3 swift4 tcl ts vala vb vhdl vimscript wasm wren yorick \
-	jw-haskell jw-python jw-c
+	jw-haskell jw-python jw-c jw-racket
 
 EXTENSION = .mal
 
@@ -266,6 +266,7 @@ wasm_STEP_TO_PROG =    wasm/$($(1)).$(if $(filter lucet,$(wasm_MODE)),so,wasm)
 wren_STEP_TO_PROG =    wren/$($(1)).wren
 yorick_STEP_TO_PROG =  yorick/$($(1)).i
 jw-haskell_STEP_TO_PROG = jw-haskell/app/$($(1)).hs
+jw-python_STEP_TO_PROG = jw-python/src/$($(1)).rkt
 jw-python_STEP_TO_PROG = jw-python/src/$($(1)).py
 jw-c_STEP_TO_PROG = jw-c/src/$($(1)).c
 
