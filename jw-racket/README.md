@@ -1,8 +1,7 @@
 ## TODO
 
-* Step 1 - fix read_list (recursive?)
+* Make reader through an exception for mal-formed input which we catch
 * Readline history file
-
 
 ## Notes
 
