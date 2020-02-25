@@ -3,6 +3,8 @@
 (provide (contract-out
           [read_string (-> string? any/c)]))
 
+(require "exceptions.rkt")
+
 ;; top-level reading function which we export. Sets up reader and hands over to read_form
 (define (read_string s)
   (read_form (new token-reader% [target-string s])))
@@ -38,13 +40,13 @@
 ;; read a list
 (define (read_list r)
   (unless (equal? (send r next-token) "(")
-    (error "no opening paren in read_list"))
+    (raise-mal-fail "no opening paren in read_list"))
   (read-forms-until ")" r))
 
 ;; read a vector
 (define (read_vector r)
   (unless (equal? (send r next-token) "[")
-    (error "no opening bracker in read_vector"))
+    (raise-mal-fail "no opening bracker in read_vector"))
   (vector->immutable-vector
    (list->vector
     (read-forms-until "]" r))))
@@ -54,14 +56,14 @@
   (let ([next-form (read_form r)])
     (cond
       [(equal? next-form end-token) '()]
-      [(equal? next-form "") (error "EOF in read-forms-until")]
+      [(equal? next-form "") (raise-mal-read "EOF found reading list or vector")]
       [else (cons next-form (read-forms-until end-token r))])))
 
 ;; read an atom
 (define (read_atom r)
   (define t (send r next-token))
   (match t
-    ["" (error "Unexpected EOF in read_atom")]
+    ["" (raise-mal-fail "Unexpected EOF in read_atom")]
     [(regexp #px"^[\\[\\]{}()'`~^@]") t] ; single-character token (returned as a string)
     ["~@" t] ; two-charcter token (as a string)
     ["true" #t]

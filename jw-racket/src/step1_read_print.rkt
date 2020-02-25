@@ -1,6 +1,6 @@
 #lang racket
 (require readline readline/readline)
-(require "printer.rkt" "reader.rkt") 
+(require "exceptions.rkt" "printer.rkt" "reader.rkt") 
 
 (define (READ s) (read_string s))
 
@@ -8,7 +8,9 @@
 
 (define (PRINT s) (pr_str s))
 
-(define (rep s) (PRINT (EVAL (READ s))))
+(define (rep s)
+  (with-handlers ([exn:mal:read? (lambda (exn) (displayln (exn-message exn)))])
+    (PRINT (EVAL (READ s)))))
 
 (define (repl)
     (define s (readline "user> "))
