@@ -32,7 +32,7 @@
 ;; top-level internal function to read from our reader
 (define (read_form r)
   (match (send r peek-token)
-    ["" ""]
+    ["" (raise-mal-empty)]
     ["(" (read_list r)]
     ["[" (read_vector r)]
     [_ (read_atom r)]))
@@ -53,23 +53,31 @@
 
 ;; read a list of forms until (but not including) the given token
 (define (read-forms-until end-token r)
-  (let ([next-form (read_form r)])
-    (cond
-      [(equal? next-form end-token) '()]
-      [(equal? next-form "") (raise-mal-read "EOF found reading list or vector")]
-      [else (cons next-form (read-forms-until end-token r))])))
+  (with-handlers ([exn:mal:empty? (λ (exn) (raise-mal-read "EOF found reading list or vector"))])
+    (let ([next-form (read_form r)])
+      (cond
+        [(equal? next-form end-token) '()]
+        [else (cons next-form (read-forms-until end-token r))]))))
 
 ;; read an atom
 (define (read_atom r)
   (define t (send r next-token))
   (match t
     ["" (raise-mal-fail "Unexpected EOF in read_atom")]
-    [(regexp #px"^[\\[\\]{}()'`~^@]") t] ; single-character token (returned as a string)
-    ["~@" t] ; two-charcter token (as a string)
     ["true" #t]
     ["false" #f]
     ["nil" 'nil]
-    [(regexp #px"^[[:digit:]]+$") (string->number t)] ; number
+    ["'" (list 'quote (read_form r))]
+    ["`" (list 'quasiquote (read_form r))]
+    ["~" (list 'unquote (read_form r))]
+    ["^"
+     (let* ([x (read_form r)]
+            [y (read_form r)])
+       (list 'with-meta y x))]
+    ["@" (list 'deref (read_form r))]
+    ["~@" (list 'splice-unquote (read_form r))]
+    [(regexp #px"^[{}()\\[\\]]") t] ; tokens for delimiters (returned as strings)
+    [(regexp #px"^-?[[:digit:]]+$") (string->number t)] ; number
     [(regexp #rx"^\\\".*\\\"$") (substring t 1 (- (string-length t) 1))] ; quoted string
+    [(regexp #rx"^\\\".*$") (raise-mal-read "EOF reading string")]
     [_ (string->symbol t)])) ; anything else is a symbol
-  

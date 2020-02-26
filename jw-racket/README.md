@@ -1,7 +1,7 @@
 ## TODO
 
-* Make reader through an exception for mal-formed input which we catch
-* How to single empty input - an exception?
+* Finish step 1
+* Add more tests for reader
 * Readline history file
 
 ## Notes
