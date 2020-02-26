@@ -9,8 +9,6 @@
 (define (read_string s)
   (read-form (new token-reader% [target-string s])))
 
-;; regexp for our tokens
-(define mal-regexp #px"[\\s,]*(~@|[]\\[{}()'`~^@]|\"(?:\\\\.|[^\\\\\"])*\"?|;.*|[^\\s\\[\\]{}('\"`,;)]*)")
 
 ;; class for stateful reader object
 (define token-reader%
@@ -86,7 +84,15 @@
     ["~@" (list 'splice-unquote (read-form r))]
     [(regexp #px"^[{}()\\[\\]]") t] ; tokens for delimiters (returned as strings)
     [(regexp #px"^-?[[:digit:]]+$") (string->number t)] ; number
-    [(regexp #rx"^\\\".*\\\"$") (substring t 1 (- (string-length t) 1))] ; quoted string
+    [(regexp #rx"^\\\".*\\\"$") (remove-escapes (substring t 1 (- (string-length t) 1)))] ; quoted string
     [(regexp #rx"^\\\".*$") (raise-mal-read "EOF reading string")]
     [(regexp #rx"^:.+$")  (string->keyword (substring t 1))] ; keyword
     [_ (string->symbol t)])) ; anything else is a symbol
+
+(define (remove-escapes s)
+    (let*   (   [s1 (string-replace s "\\\"" "\"")]
+                [s2 (string-replace s1 "\\n" "\n")])
+            (string-replace s2 "\\\\" "\\")))
+
+;; regexp for our tokens (at end of file to avoid confusing our editors highlighting)
+(define mal-regexp #px"[\\s,]*(~@|[]\\[{}()'`~^@]|\"(?:\\\\.|[^\\\\\"])*\"?|;.*|[^\\s\\[\\]{}('\"`,;)]*)")
