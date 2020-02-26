@@ -1,7 +1,6 @@
 ## TODO
 
 * Finish step 1
-* Add more tests for reader
 * Readline history file
 
 ## Notes
