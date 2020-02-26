@@ -3,7 +3,7 @@
 (provide (contract-out
           [read_string (-> string? any/c)]))
 
-(require "exceptions.rkt")
+(require "exceptions.rkt" "utils.rkt")
 
 ;; top-level reading function which we export. Sets up reader and hands over to read-form
 (define (read_string s)
@@ -54,8 +54,7 @@
 (define (read-hash-map r)
   (unless (equal? (send r next-token) "{")
     (raise-mal-fail "no opening brace in read-hash-map"))
-  (apply hash
-         (read-forms-until "}" r)))
+  (apply hash (read-forms-until "}" r)))
 
 ;; read a list of forms until (but not including) the given token
 (define (read-forms-until end-token r)
@@ -88,11 +87,6 @@
     [(regexp #rx"^\\\".*$") (raise-mal-read "EOF reading string")]
     [(regexp #rx"^:.+$")  (string->keyword (substring t 1))] ; keyword
     [_ (string->symbol t)])) ; anything else is a symbol
-
-(define (remove-escapes s)
-    (let*   (   [s1 (string-replace s "\\\"" "\"")]
-                [s2 (string-replace s1 "\\n" "\n")])
-            (string-replace s2 "\\\\" "\\")))
 
 ;; regexp for our tokens (at end of file to avoid confusing our editors highlighting)
 (define mal-regexp #px"[\\s,]*(~@|[]\\[{}()'`~^@]|\"(?:\\\\.|[^\\\\\"])*\"?|;.*|[^\\s\\[\\]{}('\"`,;)]*)")

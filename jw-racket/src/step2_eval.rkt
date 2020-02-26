@@ -8,12 +8,18 @@
   (cond
     [(not (list? ast)) (eval_ast ast env)]
     [(null? ast) ast]
-    [else ((eval_ast ast env))]))
-
+    [else
+     (let* ([evaluated-ast (eval_ast ast env)]
+            [head (car evaluated-ast)]
+            [args (cdr evaluated-ast)])
+       (apply head args))]))
+       
 (define (eval_ast ast env)
   (cond
-    [(symbol? ast) (hash-ref env ast (raise-mal-eval (format "Symbol ~a not found" ast)))]
+    [(symbol? ast) (hash-ref env ast (λ () (raise-mal-eval (format "Symbol ~a not found" ast))))]
     [(list? ast) (map (λ (x) (EVAL x env)) ast)]
+    [(vector? ast) (vector-map (λ (x) (EVAL x env)) ast)]
+    [(hash? ast) (make-immutable-hash (map (λ (k) (cons k (EVAL (hash-ref ast k) env))) (hash-keys ast)))]
     [else ast]))
 
 (define (PRINT s) (pr_str s #t))

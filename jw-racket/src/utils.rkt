@@ -22,16 +22,13 @@
         (for/fold ([acc ""]
                    [in-escape #f])
                   ([ch (in-string s)])
-          (if in-escape
-              (let ([next-str (match ch
-                                [#\n "\n"]
-                                [#\" "\""]
-                                [#\\ "\\"]
-                                [x (raise-mal-read (format "Unknown escape ~a in remove-escapes" x))])])
-                (values (string-append acc next-str) #f))
-              (if (equal? ch #\\)
-                  (values acc #t)
-                  (values (string-append acc (string ch)) #f))))])
-    (if still-in-escape
-        (raise-mal-read "Escape unbalanced in remove-escapes")
-        result)))
+          (match (list in-escape ch)
+            [(list #t #\n) (values (string-append acc "\n") #f)]
+            [(list #t #\") (values (string-append acc "\"") #f)]
+            [(list #t #\\) (values (string-append acc "\\") #f)]
+            [(list #t x) (raise-mal-read (format "Unknown escape ~a in remove-escapes" ch))]
+            [(list #f #\\) (values acc #t)]
+            [(list #f x) (values (string-append acc (string ch)) #f)]))])
+    (when still-in-escape (raise-mal-read "Escape unbalanced in remove-escapes"))
+    result))
+  

@@ -1,6 +1,5 @@
 ## TODO
 
-* Finish step 1
 * Readline history file
 
 ## Notes

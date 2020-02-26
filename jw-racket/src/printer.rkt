@@ -3,7 +3,7 @@
 (provide (contract-out
           [pr_str (-> any/c boolean? string?)]))
 
-(require "exceptions.rkt")
+(require "exceptions.rkt" "utils.rkt")
 
 (define (pr_str val print_readably)
   (cond
@@ -23,8 +23,3 @@
         opener
         (string-join (map (lambda (x) (pr_str x print_readably)) elements))
         closer))
-
-(define (add-escapes s)
-    (let*   (   [s1 (string-replace s "\\" "\\\\")]
-                [s2 (string-replace s1 "\n" "\\n")])
-            (string-replace s2 "\"" "\\\"")))
