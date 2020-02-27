@@ -31,7 +31,16 @@
     val))
 
 (define (let-special-form args env)
-  0)
+  (unless (and (equal? 2 (length args)) (list? (car args)))
+    (raise-mal-eval "Bad arguments to let*"))
+  (let ([binding-list (car args)]
+        [val (cadr args)]
+        [let-env (new env% [initial-outer env])])
+    (for ([bind binding-list])
+      (unless (and (list? bind) (equal? 2 (length bind)) (symbol? (car bind)))
+        (raise-mal-eval (format "Bad bind in let*: ~a" bind)))
+      (send let-env set (car bind) (EVAL (cadr bind) let-env)))
+    (EVAL val let-env)))
 
 (define (eval_ast ast env)
   (cond
@@ -53,4 +62,3 @@
 (send repl_env set '/ /)
 
 (repl (λ (s) (rep s repl_env)))
-      

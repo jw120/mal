@@ -2,7 +2,7 @@
 
 all: test step-test
 
-CURRENT_STEP = step3_eval.rkt
+CURRENT_STEP = step3_env.rkt
 TEST_RUNNER = tests.rkt
 
 RKT=racket
