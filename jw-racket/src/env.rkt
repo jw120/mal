@@ -21,5 +21,5 @@
     (define/public (get key)
       (cond
         [(hash-has-key? data key) (hash-ref data key)]
-        [(equal? outer #f) (raise-mal-eval (format "Cannot find ~a in hash map" key))]
+        [(equal? outer #f) (raise-mal-eval (format "~a not found" key))]
         [else  (send outer get key)]))))
