@@ -12,7 +12,7 @@
 
    (let*
        ([top (new env%)]
-        [sub (new env% [initial-outer top])])
+        [sub (new env% [outer top])])
      (send top set "a" 2)
      (send top set "b" 3)
      (send sub set "a" 5)

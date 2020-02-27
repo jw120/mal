@@ -7,19 +7,19 @@
 ;; class for environments
 (define env%
   (class object%
-    (init [initial-outer #f])
+    (init [outer #f])
     (define data (make-hash)) ; mutable hash
-    (define outer initial-outer)
+    (define my-outer outer)
     (super-new)
     (define/public (set key val)
       (hash-set! data key val))
     (define/public (find key)
       (cond
         [(hash-has-key? data key) this]
-        [(equal? outer #f) outer]
-        [else (send outer find key)]))
+        [(equal? my-outer #f) my-outer]
+        [else (send my-outer find key)]))
     (define/public (get key)
       (cond
         [(hash-has-key? data key) (hash-ref data key)]
-        [(equal? outer #f) (raise-mal-eval (format "~a not found" key))]
-        [else  (send outer get key)]))))
+        [(equal? my-outer #f) (raise-mal-eval (format "~a not found" key))]
+        [else  (send my-outer get key)]))))

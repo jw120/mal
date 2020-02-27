@@ -1,6 +1,6 @@
 #lang racket
 (require readline readline/readline)
-(require "env.rkt" "exceptions.rkt" "printer.rkt" "reader.rkt" "repl.rkt")
+(require "env.rkt" "exceptions.rkt" "printer.rkt" "reader.rkt" "repl.rkt" "utils.rkt")
 
 (define (READ s) (read_string s))
 
@@ -31,17 +31,22 @@
     val))
 
 (define (let-special-form args env)
-  (unless (and (equal? 2 (length args)) (list? (car args)))
+  (unless (and (equal? 2 (length args)) (list-or-vector? (car args)))
     (raise-mal-eval "Bad arguments to let*"))
-  (let ([binding-list (car args)]
+  (let ([binding-list (list-or-vector->list (car args))]
         [val (cadr args)]
-        [let-env (new env% [initial-outer env])])
-    (for ([bind binding-list])
-      (unless (and (list? bind) (equal? 2 (length bind)) (symbol? (car bind)))
-        (raise-mal-eval (format "Bad bind in let*: ~a" bind)))
-      (send let-env set (car bind) (EVAL (cadr bind) let-env)))
+        [let-env (new env% [outer env])])
+    (bind-alternating-list let-env binding-list)
     (EVAL val let-env)))
 
+; Helper function: bind the elements in alternating (sym val sym val) list to the environment
+(define (bind-alternating-list env lst)
+  (unless (empty? lst)
+    (when (empty? (cdr lst))
+      (raise-mal-eval (format "Bad bind in let*: ~a" (car lst))))
+    (send env set (car lst) (EVAL (cadr lst) env))
+    (bind-alternating-list env (cddr lst))))
+  
 (define (eval_ast ast env)
   (cond
     [(symbol? ast) (send env get ast)]

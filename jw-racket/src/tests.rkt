@@ -7,10 +7,14 @@
 
 (require rackunit/text-ui)
 
+(define (run tests label)
+  (printf "~a: " label)
+  (run-tests tests))
+
 (define number-of-failed-tests
   (+
-   (run-tests env-tests 'verbose)
-   (run-tests reader-tests 'verbose)
-   (run-tests utils-tests 'verbose)))
+   (run env-tests "env")
+   (run reader-tests "reader")
+   (run utils-tests "utils")))
 
-(when (equal? number-of-failed-tests 0) (displayln "OK"))
+(exit (if (equal? number-of-failed-tests 0) 0 1))

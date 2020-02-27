@@ -13,13 +13,13 @@ run:
 	-@$(RKT) $(SRC_DIR)/$(CURRENT_STEP)
 
 test:
-	-@$(RKT) $(SRC_DIR)/$(TEST_RUNNER)
+	@$(RKT) $(SRC_DIR)/$(TEST_RUNNER)
 
 step-test:
-	-@echo step 0; cd ..; make "test^jw-racket^step0" | grep "failing tests"
-	-@echo step 1; cd ..; make "test^jw-racket^step1" | grep "failing tests"
-	-@echo step 2; cd ..; make "test^jw-racket^step2" | grep "failing tests"
-	-@echo step 3; cd ..; make "test^jw-racket^step3" | grep "failing tests"
+	@echo step 0; cd ..; make "test^jw-racket^step0" | grep "failing tests"
+	@echo step 1; cd ..; make "test^jw-racket^step1" | grep "failing tests"
+	@echo step 2; cd ..; make "test^jw-racket^step2" | grep "failing tests"
+	@echo step 3; cd ..; make "test^jw-racket^step3" | grep "failing tests"
 
 clean:
 	$(RM) $(COMPILE_DIR)/*

@@ -2,7 +2,9 @@
 
 (provide (contract-out
           [add-escapes (-> string? string?)]
-          [remove-escapes (-> string? string?)]))
+          [remove-escapes (-> string? string?)]
+          [list-or-vector? (-> any/c boolean?)]
+          [list-or-vector->list (-> list-or-vector? list?)]))
 
 (require "exceptions.rkt")
 
@@ -31,4 +33,14 @@
             [(list #f x) (values (string-append acc (string ch)) #f)]))])
     (when still-in-escape (raise-mal-read "Escape unbalanced in remove-escapes"))
     result))
-  
+
+; Helper function: is the element a list or vector
+(define (list-or-vector? x)
+  (or (list? x) (vector? x)))
+
+; Helper function: convert list or vector to a list
+(define (list-or-vector->list x)
+  (cond
+    [(list? x) x]
+    [(vector? x) (vector->list x)]
+    [else (raise-mal-eval "Bad input to list-or-vector->list")]))
