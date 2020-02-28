@@ -1,12 +1,18 @@
 #lang racket
 
-(provide (contract-out
+(provide nil
+         (contract-out
+          [nil? (-> any/c boolean?)]
           [add-escapes (-> string? string?)]
           [remove-escapes (-> string? string?)]
           [list-or-vector? (-> any/c boolean?)]
           [list-or-vector->list (-> list-or-vector? list?)]))
 
 (require "exceptions.rkt")
+
+;; Racket has no nil (just #f and '() which is null), we create one here
+(define nil (string->uninterned-symbol "nil"))
+(define (nil? x) (eq? x nil))
 
 (define (add-escapes s)
   (list->string

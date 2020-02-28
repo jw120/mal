@@ -1,6 +1,6 @@
 #lang racket
 (require readline readline/readline)
-(require "env.rkt" "exceptions.rkt" "printer.rkt" "reader.rkt" "repl.rkt" "utils.rkt")
+(require "core.rkt" "env.rkt" "exceptions.rkt" "printer.rkt" "reader.rkt" "repl.rkt" "utils.rkt")
 
 (define (READ s) (read_string s))
 
@@ -13,6 +13,9 @@
            [args (cdr ast)])
        (match head
          ['def! (def-special-form args env)]
+         ['do (do-special-form args env)]
+         ['fn* (fn-special-form args env)]
+         ['if (if-special-form args env)]
          ['let* (let-special-form args env)]
          [else 
           (let* ([evaluated-ast (eval_ast ast env)]
@@ -30,6 +33,23 @@
     (send env set sym val)
     val))
 
+(define (do-special-form args env)
+  (when (empty? args)
+    (raise-mal-eval "No arguments to do"))
+  (for/last ([a args])
+    (EVAL a env)))
+
+(define (fn-special-form args env)
+  'NYI)
+
+(define (if-special-form args env)
+  (unless (or (equal? (length args) 2) (equal? (length args) 3))
+    (raise-mal-eval "Bad arguments to if"))
+  (define test-value (EVAL (first args) env))
+  (if (or (equal? test-value 'nil) (equal? test-value #f))
+      (if (equal? (length args) 2) 'nil (EVAL (third args) env))
+      (EVAL (second args) env)))
+
 (define (let-special-form args env)
   (unless (and (equal? 2 (length args)) (list-or-vector? (car args)))
     (raise-mal-eval "Bad arguments to let*"))
@@ -41,6 +61,8 @@
   
 (define (eval_ast ast env)
   (cond
+    [(nil? ast) ast]
+    ((boolean? ast) ast)
     [(symbol? ast) (send env get ast)]
     [(list? ast) (map (λ (x) (EVAL x env)) ast)]
     [(vector? ast) (vector-map (λ (x) (EVAL x env)) ast)]
@@ -53,9 +75,8 @@
   (PRINT (EVAL (READ s) env)))
 
 (define repl_env (new env%))
-(send repl_env set '+ +)
-(send repl_env set '- -)
-(send repl_env set '* *)
-(send repl_env set '/ /)
+(for ([binding-pair ns])
+  (send repl_env set (car binding-pair) (cdr binding-pair)))
+(rep "(def! not (fn* (a) (if a false true)))" repl_env)
 
 (repl (λ (s) (rep s repl_env)))

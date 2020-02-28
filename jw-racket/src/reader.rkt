@@ -71,7 +71,7 @@
     ["" (raise-mal-fail "Unexpected EOF in read-atom")]
     ["true" #t]
     ["false" #f]
-    ["nil" 'nil]
+    ["nil" nil]
     ["'" (list 'quote (read-form r))]
     ["`" (list 'quasiquote (read-form r))]
     ["~" (list 'unquote (read-form r))]

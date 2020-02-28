@@ -2,7 +2,7 @@
 
 all: test step-test
 
-CURRENT_STEP = step3_env.rkt
+CURRENT_STEP = step4_if_fn_do.rkt
 TEST_RUNNER = tests.rkt
 
 RKT=racket
@@ -20,6 +20,7 @@ step-test:
 	@echo step 1; cd ..; make "test^jw-racket^step1" | grep "failing tests"
 	@echo step 2; cd ..; make "test^jw-racket^step2" | grep "failing tests"
 	@echo step 3; cd ..; make "test^jw-racket^step3" | grep "failing tests"
+	@echo step 4; cd ..; make "test^jw-racket^step4" | grep "failing tests"
 
 clean:
 	$(RM) $(COMPILE_DIR)/*
