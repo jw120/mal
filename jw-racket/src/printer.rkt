@@ -7,7 +7,9 @@
 
 (define (pr_str val print_readably)
   (cond
-    [(string? val) (string-append "\"" (if print_readably (add-escapes val) val) "\"")]
+    [(string? val) (if print_readably
+                       (string-append "\"" (add-escapes val) "\"")
+                       val)]
     [(number? val) (number->string val)]
     [(symbol? val) (symbol->string val)]
     [(keyword? val) (string-append ":" (keyword->string val))]

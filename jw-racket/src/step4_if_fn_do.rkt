@@ -40,14 +40,14 @@
     (EVAL a env)))
 
 (define (fn-special-form args env)
-  'NYI)
+  'NYI-fn)
 
 (define (if-special-form args env)
   (unless (or (equal? (length args) 2) (equal? (length args) 3))
     (raise-mal-eval "Bad arguments to if"))
   (define test-value (EVAL (first args) env))
-  (if (or (equal? test-value 'nil) (equal? test-value #f))
-      (if (equal? (length args) 2) 'nil (EVAL (third args) env))
+  (if (or (equal? test-value nil) (equal? test-value #f))
+      (if (equal? (length args) 2) nil (EVAL (third args) env))
       (EVAL (second args) env)))
 
 (define (let-special-form args env)
