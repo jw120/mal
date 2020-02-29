@@ -1,9 +1,13 @@
-#lang racket
+#lang racket/base
+
+(require racket/contract/base
+         racket/list
+         racket/string
+         "exceptions.rkt"
+         "utils.rkt")
 
 (provide (contract-out
           [pr_str (-> any/c boolean? string?)]))
-
-(require "exceptions.rkt" "utils.rkt")
 
 (define (pr_str val print_readably)
   (cond

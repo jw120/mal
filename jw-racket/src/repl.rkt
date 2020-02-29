@@ -1,10 +1,11 @@
-#lang racket
+#lang racket/base
+
+(require racket/contract/base
+         readline/readline
+         "exceptions.rkt")
 
 (provide (contract-out
           [repl (-> (-> string? string?) void?)]))
-
-(require readline readline/readline)
-(require "exceptions.rkt") 
 
 ;; Implements our repl given the read-eval-print function
 (define (repl rep-function)

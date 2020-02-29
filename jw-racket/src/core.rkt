@@ -1,8 +1,13 @@
-#lang racket
+#lang racket/base
 
 (provide ns)
 
-(require "printer.rkt" "utils.rkt")
+(require racket/list
+         racket/match
+         racket/string
+         racket/vector
+         "printer.rkt"
+         "utils.rkt")
 
 ; function for mal = (version of equal? that treats lists and vectors as equivalent)
 (define (mal-equal? x y)

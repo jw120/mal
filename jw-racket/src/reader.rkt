@@ -1,9 +1,14 @@
-#lang racket
+#lang racket/base
+
+(require racket/class
+         racket/contract/base
+         racket/match
+         "exceptions.rkt"
+         "utils.rkt")
 
 (provide (contract-out
           [read_string (-> string? any/c)]))
 
-(require "exceptions.rkt" "utils.rkt")
 
 ;; top-level reading function which we export. Sets up reader and hands over to read-form
 (define (read_string s)
@@ -90,3 +95,53 @@
 
 ;; regexp for our tokens (at end of file to avoid confusing our editors highlighting)
 (define mal-regexp #px"[\\s,]*(~@|[]\\[{}()'`~^@]|\"(?:\\\\.|[^\\\\\"])*\"?|;.*|[^\\s\\[\\]{}('\"`,;)]*)")
+
+
+(module+ test
+  (require rackunit)
+
+   ; empty input gives exceptions
+   (check-exn exn:mal:empty? (λ () (read_string "")) "Empty string")
+   (check-exn exn:mal:empty? (λ () (read_string "  ")) "White space")
+
+   ; sequences
+   (check-equal? (read_string "(1 2 3)") '(1 2 3) "List")
+   (check-equal? (read_string "()") '() "Empty list")
+   (check-equal? (read_string "[1 2 3]") #(1 2 3) "Vector")
+   (check-equal? (read_string "[1,2,4]") #(1 2 4) "Vector with commas")
+   (check-equal? (read_string "[]") #() "Empty vector")
+   (check-equal? (read_string "(1 (2 3))") '(1 (2 3)) "List of lists")
+   (check-equal? (read_string "(()())") '(()()) "Empty list of empty lists")
+   (check-equal? (read_string "{ \"a\" 1 \"bb\" 2}") #hash(("a" . 1) ("bb" . 2)) "Hash map")
+   (check-equal? (read_string "(()())") '(()()) "Empty hash map")
+   (check-exn exn:mal:read? (λ () (read_string "(1 2")) "Unterminated list")
+   (check-exn exn:mal:read? (λ () (read_string "(1 2]")) "Wrongly terminated list")
+   (check-exn exn:mal:read? (λ () (read_string "[1 2")) "Unterminated vector")
+   (check-exn exn:mal:read? (λ () (read_string "{1 2")) "Unterminated hash map")
+
+   ; strings
+   (check-equal? (read_string "\"pq\"") "pq" "String")
+   (check-equal? (read_string "\"\"") "" "Empty string")
+   (check-exn exn:mal:read? (λ () (read_string "\"abc")) "Unterminated string")
+
+   ; numbers
+   (check-equal? (read_string "123") 123 "Number")
+   (check-equal? (read_string "-45") -45 "Negative number")
+
+   ; special symbols
+   (check-equal? (read_string "'pqr") ''pqr "Quote")
+   (check-equal? (read_string "`pqr") '`pqr "Quasiquote")
+   (check-equal? (read_string "~pqr") ',pqr "Unquote")
+   (check-equal? (read_string "^pqr abc") '(with-meta abc pqr) "With-meta")
+   (check-equal? (read_string "@pqr") '(deref pqr) "Deref")
+   (check-equal? (read_string "~@pqr") '(splice-unquote pqr) "Splice-unquote")
+
+   ; keyword
+   (check-equal? (read_string ":pqr") '#:pqr "Keyword")
+
+   ; symbol
+   (check-equal? (read_string "pqr") 'pqr "Symbol")
+   (check-equal? (read_string "true") #t "Symbol")
+   (check-equal? (read_string "false") #f "Symbol")
+   (check-equal? (read_string "nil") nil "Symbol")
+   )
