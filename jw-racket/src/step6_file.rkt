@@ -92,6 +92,8 @@
 (define repl_env (new env%))
 (for ([binding-pair ns])
   (send repl_env set (car binding-pair) (cdr binding-pair)))
+(send repl_env set 'eval (λ (ast) (EVAL ast repl_env)))
 (rep "(def! not (fn* (a) (if a false true)))" repl_env)
+(rep "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\\nnil)\")))))" repl_env)
 
 (repl (λ (s) (rep s repl_env)))

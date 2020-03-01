@@ -23,6 +23,7 @@
     [(list? val) (pr_sequence "(" ")" val print_readably)]
     [(hash? val) (pr_sequence "{" "}" (flatten (hash->list val)) print_readably)]
     [(vector? val) (pr_sequence "[" "]" (vector->list val) print_readably)]
+    [(box? val) (string-join (list "(atom " (pr_str (unbox val) print_readably) ")") "")]
     [(procedure? val) "#<procedure>"]
     [else (raise-mal-fail (format "Unknown in print: ~a" val))]))
 
