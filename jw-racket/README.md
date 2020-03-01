@@ -1,6 +1,6 @@
 ## TODO
 
-Put tests into (module+ test? as suggested in beautiful racket
+* Distinguish EOF from a comment in reader (eof value?)
 
 * Defined a nil object. In Racket we have null which is the empty list and #f. Mal has '() and nil and #f all different.
 

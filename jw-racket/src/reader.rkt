@@ -11,9 +11,12 @@
 
 
 ;; top-level reading function which we export. Sets up reader and hands over to read-form
+;; If no input (or just space/comment raise the empty exception
 (define (read_string s)
-  (read-form (new token-reader% [target-string s])))
-
+  (let ([f (read-form (new token-reader% [target-string s]))])
+    (when (or (equal? f eof) (equal? f ""))
+      (raise-mal-empty))
+    f))
 
 ;; class for stateful reader object
 (define token-reader%
@@ -23,10 +26,14 @@
     (define current-string target-string)
     (super-new)
     (define/private (get-token advance-pos?)
-      (match (regexp-match-positions mal-regexp current-string current-pos)
-        [(list (cons whole-start whole-end) (cons group-start group-end))
-         (when advance-pos? (set! current-pos group-end))
-         (substring current-string group-start group-end)]))
+      (cond
+        [(>= current-pos (string-length current-string))
+         eof]
+        [else
+         (match (regexp-match-positions mal-regexp current-string current-pos)
+           [(list (cons whole-start whole-end) (cons group-start group-end))
+            (when advance-pos? (set! current-pos group-end))
+            (substring current-string group-start group-end)])]))
     (define/public (next-token)
       (get-token #t))
     (define/public (peek-token)
@@ -35,7 +42,6 @@
 ;; top-level internal function to read from our reader
 (define (read-form r)
   (match (send r peek-token)
-    ["" (raise-mal-empty)]
     ["(" (read-list r)]
     ["[" (read-vector r)]
     ["{" (read-hash-map r)]
@@ -63,17 +69,18 @@
 
 ;; read a list of forms until (but not including) the given token
 (define (read-forms-until end-token r)
-  (with-handlers ([exn:mal:empty? (λ (exn) (raise-mal-read "EOF found reading list or vector"))])
-    (let ([next-form (read-form r)])
-      (cond
-        [(equal? next-form end-token) '()]
-        [else (cons next-form (read-forms-until end-token r))]))))
+  (let ([next-form (read-form r)])
+    (cond
+      [(equal? next-form end-token) '()]
+      [(eof-object? next-form) (raise-mal-read "EOF found reading list or vector")]
+      [(equal? next-form "")  (read-forms-until end-token r)]
+      [else (cons next-form (read-forms-until end-token r))])))
 
 ;; read an atom
 (define (read-atom r)
   (define t (send r next-token))
   (match t
-    ["" (raise-mal-fail "Unexpected EOF in read-atom")]
+    ["" ""]
     ["true" #t]
     ["false" #f]
     ["nil" nil]
@@ -91,7 +98,7 @@
     [(regexp #rx"^\\\".*\\\"$") (remove-escapes (substring t 1 (- (string-length t) 1)))] ; quoted string
     [(regexp #rx"^\\\".*$") (raise-mal-read "EOF reading string")]
     [(regexp #rx"^:.+$")  (string->keyword (substring t 1))] ; keyword
-    [_ (string->symbol t)])) ; anything else is a symbol
+    [_ (if (eof-object? t) t (string->symbol t))])) ; anything else is EOF or a symbol
 
 ;; regexp for our tokens (at end of file to avoid confusing our editors highlighting)
 (define mal-regexp #px"[\\s,]*(~@|[]\\[{}()'`~^@]|\"(?:\\\\.|[^\\\\\"])*\"?|;.*|[^\\s\\[\\]{}('\"`,;)]*)")
@@ -118,6 +125,9 @@
    (check-exn exn:mal:read? (λ () (read_string "(1 2]")) "Wrongly terminated list")
    (check-exn exn:mal:read? (λ () (read_string "[1 2")) "Unterminated vector")
    (check-exn exn:mal:read? (λ () (read_string "{1 2")) "Unterminated hash map")
+
+   ; List with comment inside
+;   (check-equal? (read_string "(1 2 ;comment\n3)") '(1 2 3) "List with comment")
 
    ; strings
    (check-equal? (read_string "\"pq\"") "pq" "String")

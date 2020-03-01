@@ -86,14 +86,28 @@
 
 (define (PRINT s) (pr_str s #t))
 
-(define (rep s env)
-  (PRINT (EVAL (READ s) env)))
-
 (define repl_env (new env%))
+(define (rep s) (PRINT (EVAL (READ s) repl_env)))
+
+; Add bindings from ns (from core)
 (for ([binding-pair ns])
   (send repl_env set (car binding-pair) (cdr binding-pair)))
-(send repl_env set 'eval (λ (ast) (EVAL ast repl_env)))
-(rep "(def! not (fn* (a) (if a false true)))" repl_env)
-(rep "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\\nnil)\")))))" repl_env)
 
-(repl (λ (s) (rep s repl_env)))
+; Add additonal bindings
+(send repl_env set 'eval (λ (ast) (EVAL ast repl_env)))
+(send repl_env set '*ARGV* '())
+
+; Add mal-defined functions
+(define mal-defs
+  '("(def! not (fn* (a) (if a false true)))"
+    "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\\nnil)\")))))"))
+(for ([d mal-defs])
+  (rep d))
+
+; Either start the repl or load the given file
+(cond
+  [(vector-empty? (current-command-line-arguments))
+   (repl rep)]
+  [else
+   (send repl_env set '*ARGV* (vector->list (vector-drop (current-command-line-arguments) 1)))
+   (rep (format "(load-file ~s)" (vector-ref (current-command-line-arguments) 0)))])
