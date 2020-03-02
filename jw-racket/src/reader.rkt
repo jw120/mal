@@ -9,12 +9,17 @@
 (provide (contract-out
           [read_string (-> string? any/c)]))
 
+; We use the symbols eof (defined by system) and white-space (defined here)
+; to match inside this file (end of input and spaces/comments respectively)
+; They are converted to the empty exception in read_string
+(define white-space (string->uninterned-symbol "white-space"))
 
 ;; top-level reading function which we export. Sets up reader and hands over to read-form
 ;; If no input (or just space/comment raise the empty exception
 (define (read_string s)
+;  (read-form (new token-reader% [target-string s])))
   (let ([f (read-form (new token-reader% [target-string s]))])
-    (when (or (equal? f eof) (equal? f ""))
+    (when (or (eof-object? f) (equal? white-space f))
       (raise-mal-empty))
     f))
 
@@ -30,10 +35,23 @@
         [(>= current-pos (string-length current-string))
          eof]
         [else
-         (match (regexp-match-positions mal-regexp current-string current-pos)
-           [(list (cons whole-start whole-end) (cons group-start group-end))
-            (when advance-pos? (set! current-pos group-end))
-            (substring current-string group-start group-end)])]))
+;         (printf "matching ~a ~a\n" current-string current-pos)
+         (let ([match-list (regexp-match-positions mal-regexp current-string current-pos)])
+;           (printf "match-list ~a\n" match-list)
+           (cond
+;             [(equal? #f match-list)
+;              (raise-mal-fail "No match for mal-regexp")]
+;             [(equal? 1 (length match-list)) ; No group-match means only white-space
+;              (when advance-pos? (set! current-pos (string-length current-string)))
+;              white-space]
+             [(equal? 2 (length match-list)) ; Whole and group-matches
+              (define group-start (caadr match-list))
+              (define group-end (cdadr match-list))
+              (when advance-pos? (set! current-pos group-end))
+              (if (equal? group-start group-end) ; Zero-length match (i.e., nothing except whitespace)
+                  white-space
+                  (substring current-string group-start group-end))]
+             [else (raise-mal-fail "Unexpected in matching mal-regexp")]))]))
     (define/public (next-token)
       (get-token #t))
     (define/public (peek-token)
@@ -73,14 +91,13 @@
     (cond
       [(equal? next-form end-token) '()]
       [(eof-object? next-form) (raise-mal-read "EOF found reading list or vector")]
-      [(equal? next-form "")  (read-forms-until end-token r)]
+      [(equal? next-form white-space)  (read-forms-until end-token r)]
       [else (cons next-form (read-forms-until end-token r))])))
 
 ;; read an atom
 (define (read-atom r)
   (define t (send r next-token))
   (match t
-    ["" ""]
     ["true" #t]
     ["false" #f]
     ["nil" nil]
@@ -98,14 +115,25 @@
     [(regexp #rx"^\\\".*\\\"$") (remove-escapes (substring t 1 (- (string-length t) 1)))] ; quoted string
     [(regexp #rx"^\\\".*$") (raise-mal-read "EOF reading string")]
     [(regexp #rx"^:.+$")  (string->keyword (substring t 1))] ; keyword
-    [_ (if (eof-object? t) t (string->symbol t))])) ; anything else is EOF or a symbol
+    [(regexp #rx"^;") white-space] ; comment
+    [_ (cond
+         [(eof-object? t) t]
+         [(equal? t white-space) t]
+         [else (string->symbol t)])]))
 
 ;; regexp for our tokens (at end of file to avoid confusing our editors highlighting)
-(define mal-regexp #px"[\\s,]*(~@|[]\\[{}()'`~^@]|\"(?:\\\\.|[^\\\\\"])*\"?|;.*|[^\\s\\[\\]{}('\"`,;)]*)")
+(define mal-regexp #px"[\\s,]*(~@|[]\\[{}()'`~^@]|\"(?:\\\\.|[^\\\\\"])*\"?|;[^\n]*|[^\\s\\[\\]{}('\"`,;)]*)")
+
+;(equal? (regexp-match-positions mal-regexp "  ") '((0 . 2)))
+;(equal? (regexp-match-positions mal-regexp "234 ") '((0 . 3)))
+;(regexp-match-positions mal-regexp "234    ")
+;(regexp-match-positions mal-regexp ";ab\ncd ")
+
 
 
 (module+ test
-  (require rackunit)
+  (require rackunit rackunit/text-ui)
+  (run-tests (test-suite "Reader tests"
 
    ; empty input gives exceptions
    (check-exn exn:mal:empty? (λ () (read_string "")) "Empty string")
@@ -127,7 +155,7 @@
    (check-exn exn:mal:read? (λ () (read_string "{1 2")) "Unterminated hash map")
 
    ; List with comment inside
-;   (check-equal? (read_string "(1 2 ;comment\n3)") '(1 2 3) "List with comment")
+   (check-equal? (read_string "(1 2 ;comment\n3)") '(1 2 3) "List with comment")
 
    ; strings
    (check-equal? (read_string "\"pq\"") "pq" "String")
@@ -154,4 +182,4 @@
    (check-equal? (read_string "true") #t "Symbol")
    (check-equal? (read_string "false") #f "Symbol")
    (check-equal? (read_string "nil") nil "Symbol")
-   )
+   )))
