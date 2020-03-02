@@ -45,6 +45,8 @@
                     [(vector? x) (vector-length x)]
                     [(nil? x) 0]
                     [else (length x)])))
+   (cons 'cons (lambda (x y) (cons x (list-or-vector->list y))))
+   (cons 'concat (lambda args (apply append (map list-or-vector->list args))))
 
    ; I/O
    (cons 'read-string read_string)
