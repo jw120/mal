@@ -1,10 +1,8 @@
 ## TODO
 
-* Check env tests working
-* Tidy reader file. Make multi-line regexp
-* Check nothing useful commented out anywhere
 
 * Defined a nil object. In Racket we have null which is the empty list and #f. Mal has '() and nil and #f all different.
+* Similar for whitespace
 
 * Readline history file
 * Not error checking agruments - rely on racket exceptions

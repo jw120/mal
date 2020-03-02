@@ -70,6 +70,6 @@
     (check-equal? (send sub find "c") sub "Find sub sub c")
     (check-equal? (send sub find "d") #f "Find sub sub missing")
 
-;    (check-equal? (send amp get "a") 1 "Ampersand first")
-    ;    (check-equal? (send amp get "b") '(2 3 4) "Ampersand rest")
+    (check-equal? (send amp get 'a) 1 "Ampersand first")
+    (check-equal? (send amp get 'b) '(2 3 4) "Ampersand rest")
     ))

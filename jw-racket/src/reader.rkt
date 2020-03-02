@@ -3,6 +3,7 @@
 (require racket/class
          racket/contract/base
          racket/match
+         racket/string
          "exceptions.rkt"
          "utils.rkt")
 
@@ -17,7 +18,6 @@
 ;; top-level reading function which we export. Sets up reader and hands over to read-form
 ;; If no input (or just space/comment raise the empty exception
 (define (read_string s)
-;  (read-form (new token-reader% [target-string s])))
   (let ([f (read-form (new token-reader% [target-string s]))])
     (when (or (eof-object? f) (equal? white-space f))
       (raise-mal-empty))
@@ -35,23 +35,15 @@
         [(>= current-pos (string-length current-string))
          eof]
         [else
-;         (printf "matching ~a ~a\n" current-string current-pos)
          (let ([match-list (regexp-match-positions mal-regexp current-string current-pos)])
-;           (printf "match-list ~a\n" match-list)
-           (cond
-;             [(equal? #f match-list)
-;              (raise-mal-fail "No match for mal-regexp")]
-;             [(equal? 1 (length match-list)) ; No group-match means only white-space
-;              (when advance-pos? (set! current-pos (string-length current-string)))
-;              white-space]
-             [(equal? 2 (length match-list)) ; Whole and group-matches
-              (define group-start (caadr match-list))
-              (define group-end (cdadr match-list))
-              (when advance-pos? (set! current-pos group-end))
-              (if (equal? group-start group-end) ; Zero-length match (i.e., nothing except whitespace)
-                  white-space
-                  (substring current-string group-start group-end))]
-             [else (raise-mal-fail "Unexpected in matching mal-regexp")]))]))
+           (unless (equal? 2 (length match-list))
+             (raise-mal-fail "Unexpected in matching mal-regexp"))
+           (define group-start (caadr match-list))
+           (define group-end (cdadr match-list))
+           (when advance-pos? (set! current-pos group-end))
+           (if (equal? group-start group-end) ; Zero-length match (i.e., nothing except whitespace)
+               white-space
+               (substring current-string group-start group-end)))]))
     (define/public (next-token)
       (get-token #t))
     (define/public (peek-token)
@@ -122,22 +114,27 @@
          [else (string->symbol t)])]))
 
 ;; regexp for our tokens (at end of file to avoid confusing our editors highlighting)
-(define mal-regexp #px"[\\s,]*(~@|[]\\[{}()'`~^@]|\"(?:\\\\.|[^\\\\\"])*\"?|;[^\n]*|[^\\s\\[\\]{}('\"`,;)]*)")
-
-;(equal? (regexp-match-positions mal-regexp "  ") '((0 . 2)))
-;(equal? (regexp-match-positions mal-regexp "234 ") '((0 . 3)))
-;(regexp-match-positions mal-regexp "234    ")
-;(regexp-match-positions mal-regexp ";ab\ncd ")
-
-
+(define mal-regexp
+  (pregexp
+   (string-append
+    "[\\s,]*" ; leading white-space (including commas) skipped (as outside of regexp group)
+    "("       ; regexp group used to match tokens
+    (string-join
+     '("~@"                        ; two-character token
+       "[]\\[{}()'`~^@]"           ; one-character tokens
+       "\"(?:\\\\.|[^\\\\\"])*\"?" ; quoted-string
+       ";[^\n]*"                   ; comment
+       "[^\\s\\[\\]{}('\"`,;)]*")  ; string of non-special characters
+     "|")
+    ")")))
 
 (module+ test
-  (require rackunit rackunit/text-ui)
-  (run-tests (test-suite "Reader tests"
+  (require rackunit)
 
    ; empty input gives exceptions
    (check-exn exn:mal:empty? (λ () (read_string "")) "Empty string")
    (check-exn exn:mal:empty? (λ () (read_string "  ")) "White space")
+   (check-exn exn:mal:empty? (λ () (read_string ";qqq")) "Comment only")
 
    ; sequences
    (check-equal? (read_string "(1 2 3)") '(1 2 3) "List")
@@ -182,4 +179,9 @@
    (check-equal? (read_string "true") #t "Symbol")
    (check-equal? (read_string "false") #f "Symbol")
    (check-equal? (read_string "nil") nil "Symbol")
-   )))
+
+   ; Correctly handle comment then atom
+   (define r (new token-reader% [target-string ";comment\n21"]))
+   (check-equal? (read-form r) white-space "Comment then number - comment")
+   (check-equal? (read-form r) 21 "Comment then number - number")
+   )
