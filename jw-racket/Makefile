@@ -2,7 +2,7 @@
 
 all: test step-test
 
-CURRENT_STEP = step8_macros.rkt
+CURRENT_STEP = step9_try.rkt
 TEST_RUNNER = tests.rkt
 
 RKT=racket
@@ -27,6 +27,7 @@ step-test:
 	@echo step 6; cd ..; make "test^jw-racket^step6" | grep "failing tests"
 	@echo step 7; cd ..; make "test^jw-racket^step7" | grep "failing tests"
 	@echo step 8; cd ..; make "test^jw-racket^step8" | grep "failing tests"
+	@echo step 9; cd ..; make "test^jw-racket^step9" | grep "failing tests"
 
 clean:
 	$(RM) $(COMPILE_DIR)/*

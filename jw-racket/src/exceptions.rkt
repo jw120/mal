@@ -6,14 +6,16 @@
           [raise-mal-empty (-> void?)]
           [raise-mal-eval (-> string? void?)]
           [raise-mal-fail (-> string? void?)]
-          [raise-mal-read (-> string? void?)])
+          [raise-mal-read (-> string? void?)]
+          [raise-mal-throw (-> any/c void?)])
          (struct-out exn:mal)
          (struct-out exn:mal:empty)
          (struct-out exn:mal:eval)
          (struct-out exn:mal:fail)
+         (struct-out exn:mal:throw)
          (struct-out exn:mal:read))
 
-;; out top-level exception (not raised directly)
+;; our top-level exception (not raised directly)
 (struct exn:mal exn ()) ; subtype of `exn`
 
 ;; exceptions raised when no input is provided
@@ -35,3 +37,8 @@
 (struct exn:mal:read exn:mal ()) ; subtype of `exn:mal`
 (define (raise-mal-read msg)
   (raise (exn:mal:read msg (current-continuation-marks))))
+
+;; exceptions thrown from mal throw
+(struct exn:mal:throw exn:mal (thrown-value)) ; subtype of `exn:mal`
+(define (raise-mal-throw val)
+  (raise (exn:mal:throw "Thrown exception" (current-continuation-marks) val)))

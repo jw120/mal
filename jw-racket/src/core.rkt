@@ -98,4 +98,13 @@
                          (set-box! atom new-val)
                          new-val)))
 
+   ; Misc
+   (cons 'apply apply)
+   (cons 'map map)
+   (cons 'throw raise-mal-throw)
+   (cons 'nil? nil?)
+   (cons 'true? (lambda (x) (equal? x #t)))
+   (cons 'false? (lambda (x) (equal? x #f)))
+   (cons 'symbol? symbol?)
+
    ))

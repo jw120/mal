@@ -2,7 +2,8 @@
 
 (require racket/contract/base
          readline/readline
-         "exceptions.rkt")
+         "exceptions.rkt"
+         "printer.rkt")
 
 (provide (contract-out
           [repl (-> (-> string? string?) void?)]))
@@ -20,6 +21,7 @@
                (;;;[exn:break? (λ (exn) (displayln "Break") (exit))] ; Does not seem to work
                 [exn:mal:empty? void]
                 [exn:mal:fail? (λ (exn) (raise exn))]
+                [exn:mal:throw? (λ (exn) (printf "Exception: ~a\n" (pr_str (exn:mal:throw-thrown-value exn) #t)))]
                 [exn:mal? (λ (exn) (displayln (exn-message exn)))])
              (displayln (rep-function s)))])
         (repl rep-function))))
