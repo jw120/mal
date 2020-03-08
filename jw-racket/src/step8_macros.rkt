@@ -143,7 +143,7 @@
   (if (is-macro-call ast env)
       (let ([macro-func (send env get (car ast))]
             [args (cdr ast)])
-        (macro-expand ((func-closure macro-func) args) env))
+        (macro-expand (apply (func-closure macro-func) args) env))
       ast))
 
 (define (PRINT s) (pr_str s #t))

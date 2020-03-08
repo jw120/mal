@@ -12,7 +12,7 @@
 (require "exceptions.rkt")
 
 ;; Define our function type here
-(struct func (is-macro closure))
+(struct func (is-macro closure) #:transparent)
 
 ;; Racket has no nil (just #f and '() which is null), we create one here
 (define nil (string->uninterned-symbol "nil"))

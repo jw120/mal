@@ -61,14 +61,16 @@
                   [else (raise-mal-eval "Bad argument to nth")])))
    (cons 'first (lambda (s)
                   (cond
+                    [(nil? s) nil]
                     [(vector? s) (if (vector-empty? s) nil (vector-ref s 0))]
                     [(list? s) (if (null? s) nil (first s))]
                     [else (raise-mal-eval "Bad argument to first")])))
    (cons 'rest  (lambda (s)
-                  (if (list-or-vector? s)
-                      (let ([lv (list-or-vector->list s)])
-                        (if (null? lv) '() (cdr lv)))
-                      (raise-mal-eval "Bad argument to rest"))))
+                  (cond
+                    [(nil? s) '()]
+                    [(vector? s) (if (vector-empty? s) '() (vector->list (vector-drop s 1)))]
+                    [(list? s) (if (null? s) '() (cdr s))]
+                    [else (raise-mal-eval "Bad argument to rest")])))
 
    ; I/O
    (cons 'read-string read_string)
