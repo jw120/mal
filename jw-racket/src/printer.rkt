@@ -25,6 +25,7 @@
     [(vector? val) (pr_sequence "[" "]" (vector->list val) print_readably)]
     [(box? val) (string-join (list "(atom " (pr_str (unbox val) print_readably) ")") "")]
     [(procedure? val) "#<procedure>"]
+    [(func? val) "#<function>"]
     [else (raise-mal-fail (format "Unknown in print: ~a" val))]))
 
 (define (pr_sequence opener closer elements print_readably)

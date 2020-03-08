@@ -19,23 +19,29 @@
     [(not (list? ast)) (eval_ast ast env)]
     [(null? ast) ast]
     [else
-     (let ([head (car ast)]
-           [args (cdr ast)])
-       (match head
-         ['def! (def-special-form args env)]
-         ['do (do-special-form args env)]
-         ['fn* (fn-special-form args env)]
-         ['if (if-special-form args env)]
-         ['let* (let-special-form args env)]
-         ['quasiquote (EVAL (mal-quasi-quote (car args)) env)]
-         ['quote (quote-special-form args env)]
-         [else
-          (let* ([evaluated-ast (eval_ast ast env)]
-                 [evaluated-head (car evaluated-ast)]
-                 [evaluated-args (cdr evaluated-ast)])
-            (cond
-              [(procedure? evaluated-head) (apply evaluated-head evaluated-args)]
-              [else (raise-mal-eval "Cannot apply non-procedure")]))]))]))
+     (define expanded-ast (macro-expand ast env))
+     (if (or (not (list? expanded-ast)) (null? expanded-ast))
+         (eval_ast expanded-ast env)
+         (let ([head (car expanded-ast)]
+               [args (cdr expanded-ast)])
+           (match head
+             ['def! (def-special-form args env)]
+             ['defmacro! (defmacro-special-form args env)]
+             ['do (do-special-form args env)]
+             ['fn* (fn-special-form args env)]
+             ['if (if-special-form args env)]
+             ['let* (let-special-form args env)]
+             ['macroexpand (macroexpand-special-form args env)]
+             ['quasiquote (EVAL (mal-quasi-quote (car args)) env)]
+             ['quote (quote-special-form args env)]
+             [else
+              (let* ([evaluated-ast (eval_ast expanded-ast env)]
+                     [evaluated-head (car evaluated-ast)]
+                     [evaluated-args (cdr evaluated-ast)])
+                (cond
+                  [(procedure? evaluated-head) (apply evaluated-head evaluated-args)]
+                  [(func? evaluated-head) (apply (func-closure evaluated-head) evaluated-args)]
+                  [else (raise-mal-eval "Cannot apply non-procedure")]))])))]))
 
 (define (def-special-form args env)
   (unless (and (equal? 2 (length args)) (symbol? (car args)))
@@ -44,6 +50,17 @@
         [val (EVAL (cadr args) env)])
     (send env set sym val)
     val))
+
+(define (defmacro-special-form args env)
+  (unless (and (equal? 2 (length args)) (symbol? (car args)))
+    (raise-mal-eval "Bad arguments to defmacro!"))
+  (let ([sym (car args)]
+        [val (EVAL (cadr args) env)])
+    (unless (func? val)
+      (raise-mal-eval "Bad value for defmacro!"))
+    (let ([macro-val (struct-copy func val [is-macro #t])])
+      (send env set sym macro-val)
+      macro-val)))
 
 (define (do-special-form args env)
   (when (empty? args)
@@ -54,9 +71,11 @@
 (define (fn-special-form args env)
   (match args
     [(list fn-binds fn-val)
-     (lambda closure-args
-       (let ([closure-env (new env% [outer env] [binds (list-or-vector->list fn-binds)] [exprs closure-args])])
-         (EVAL fn-val closure-env)))]
+     (func
+      #f
+      (lambda closure-args
+        (let ([closure-env (new env% [outer env] [binds (list-or-vector->list fn-binds)] [exprs closure-args])])
+          (EVAL fn-val closure-env))))]
     [_ (raise-mal-eval "Bad arguments to fn*")]))
 
 (define (if-special-form args env)
@@ -75,6 +94,11 @@
         [let-env (new env% [outer env])])
     (send let-env bind-alternating-list binding-list EVAL)
     (EVAL val let-env)))
+
+(define (macroexpand-special-form args env)
+  (unless (equal? 1 (length args))
+    (raise-mal-eval "Bad arguments to macroexpand"))
+  (macro-expand (car args) env))
 
 (define (quote-special-form args env)
   (when (empty? args)
@@ -105,6 +129,23 @@
               [else
                (list 'cons (mal-quasi-quote head) (mal-quasi-quote rest))]))]))
 
+
+(define (is-macro-call ast env)
+  (cond
+    [(and (list? ast) (symbol? (car ast)) (send env find (car ast)))
+     (let ([val (send env get (car ast))])
+       (and
+        (func? val)
+        (func-is-macro val)))]
+    [else #f]))
+
+(define (macro-expand ast env)
+  (if (is-macro-call ast env)
+      (let ([macro-func (send env get (car ast))]
+            [args (cdr ast)])
+        (macro-expand ((func-closure macro-func) args) env))
+      ast))
+
 (define (PRINT s) (pr_str s #t))
 
 (define repl_env (new env%))
@@ -121,7 +162,9 @@
 ; Add mal-defined functions
 (define mal-defs
   '("(def! not (fn* (a) (if a false true)))"
-    "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\\nnil)\")))))"))
+    "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\\nnil)\")))))"
+    "(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) (cons 'cond (rest (rest xs)))))))"))
+
 (for ([d mal-defs])
   (rep d))
 

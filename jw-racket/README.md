@@ -1,5 +1,6 @@
 ## TODO
 
+* Decide how much to error check functions vs relying on underlying Racket exceptionsst
 
 * Defined a nil object. In Racket we have null which is the empty list and #f. Mal has '() and nil and #f all different.
 * Similar for whitespace

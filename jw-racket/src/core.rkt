@@ -7,6 +7,7 @@
          racket/match
          racket/string
          racket/vector
+         "exceptions.rkt"
          "printer.rkt"
          "reader.rkt"
          "utils.rkt")
@@ -47,6 +48,27 @@
                     [else (length x)])))
    (cons 'cons (lambda (x y) (cons x (list-or-vector->list y))))
    (cons 'concat (lambda args (apply append (map list-or-vector->list args))))
+   (cons 'nth (lambda (s n)
+                (cond
+                  [(vector? s)
+                   (when (or (< n 0) (>= n (vector-length s)))
+                     (raise-mal-eval "Vector nth index out of bounds"))
+                   (vector-ref s n)]
+                  [(list? s)
+                   (when (or (< n 0) (>= n (length s)))
+                     (raise-mal-eval "List nth index out of bounds"))
+                   (list-ref s n)]
+                  [else (raise-mal-eval "Bad argument to nth")])))
+   (cons 'first (lambda (s)
+                  (cond
+                    [(vector? s) (if (vector-empty? s) nil (vector-ref s 0))]
+                    [(list? s) (if (null? s) nil (first s))]
+                    [else (raise-mal-eval "Bad argument to first")])))
+   (cons 'rest  (lambda (s)
+                  (if (list-or-vector? s)
+                      (let ([lv (list-or-vector->list s)])
+                        (if (null? lv) '() (cdr lv)))
+                      (raise-mal-eval "Bad argument to rest"))))
 
    ; I/O
    (cons 'read-string read_string)
