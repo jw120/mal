@@ -107,16 +107,19 @@
   (car args))
 
 (define (try-special-form args env)
-  (unless (equal? 2 (length args))
-    (raise-mal-eval "Bad arguments to try"))
-  (define (handle-mal-exception e)
-    (match (second args)
-      [(list 'catch* catch-var catch-expr)
-       (define catch-env (new env% [outer env] [binds (list catch-var)] [exprs (list e)]))
-       (EVAL catch-expr catch-env)]
-      [else (raise-mal-eval "Bad catch* block")]))
-  (with-handlers ([exn:mal? handle-mal-exception])
-    (EVAL (car args) env)))
+  (case (length args)
+    [(1) (EVAL (car args) env)] ; try without catch is just eval
+    [(2)
+     (define (handle-mal-exception e)
+       (match (second args)
+         [(list 'catch* catch-var catch-expr)
+          (define exception-value (if (exn:mal:throw? e) (exn:mal:throw-thrown-value e) (exn-message e)))
+          (define catch-env (new env% [outer env] [binds (list catch-var)] [exprs (list exception-value)]))
+          (EVAL catch-expr catch-env)]
+         [else (raise-mal-eval "Bad catch* block")]))
+     (with-handlers ([exn:mal? handle-mal-exception])
+       (EVAL (car args) env))]
+    [else (raise-mal-eval "Bad arguments to try*")]))
 
 (define (eval_ast ast env)
   (cond

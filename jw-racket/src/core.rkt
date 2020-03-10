@@ -3,6 +3,7 @@
 (provide ns)
 
 (require racket/file
+         racket/hash
          racket/list
          racket/match
          racket/string
@@ -20,8 +21,16 @@
     [(list (cons _ _) '())  #f]
     [(list (cons xh xt) (cons yh yt)) (and (mal-equal? xh yh) (mal-equal? xt yt))]
     [_ (cond
-            [(and (list-or-vector? x) (list-or-vector? y)) (mal-equal? (list-or-vector->list x) (list-or-vector->list y))]
-            [else (equal? x y)])]))
+         [(and (list-or-vector? x) (list-or-vector? y))
+          (mal-equal? (list-or-vector->list x) (list-or-vector->list y))]
+         [(and (hash? x) (hash? y))
+          (and
+           (equal? (hash-count x) (hash-count y))
+           (for/and ([k (hash-keys x)])
+             (and
+              (hash-has-key? y k)
+              (mal-equal? (hash-ref x k) (hash-ref y k)))))]
+         [else (equal? x y)])]))
 
 (define ns
   (list
@@ -71,6 +80,21 @@
                     [(vector? s) (if (vector-empty? s) '() (vector->list (vector-drop s 1)))]
                     [(list? s) (if (null? s) '() (cdr s))]
                     [else (raise-mal-eval "Bad argument to rest")])))
+   (cons 'vector vector-immutable)
+   (cons 'vector? vector?)
+   (cons 'sequential? list-or-vector?)
+
+   ; Hash maps
+   (cons 'hash-map hash)
+   (cons 'map? hash?)
+   (cons 'keys hash-keys)
+   (cons 'vals hash-values)
+   (cons 'contains? hash-has-key?)
+   (cons 'get (lambda (hm k) (if (nil? hm) nil (hash-ref hm k nil))))
+   (cons 'assoc (lambda args
+                  (hash-union (car args) (apply hash (cdr args)) #:combine/key (lambda (k v1 v2) v2))))
+   (cons 'dissoc (lambda args
+         (for/fold ([hm (car args)]) ([k (cdr args)]) (hash-remove hm k))))
 
    ; I/O
    (cons 'read-string read_string)
@@ -99,12 +123,35 @@
                          new-val)))
 
    ; Misc
-   (cons 'apply apply)
-   (cons 'map map)
+   (cons 'apply (lambda args
+                  (when (< (length args) 2)
+                    (raise-mal-eval "Bad args for apply"))
+                  (define apply-proc
+                    (cond
+                      [(procedure? (car args)) (car args)]
+                      [(func? (car args)) (func-closure (car args))]
+                      [else (raise-mal-eval "Bad args for apply")]))
+                  (define middle-args (drop-right (cdr args) 1))
+                  (define last-arg (last args))
+                  (define apply-args (append middle-args
+                                             (if (list-or-vector? last-arg)
+                                                 (list-or-vector->list last-arg)
+                                                 (list last-arg))))
+                  (apply apply-proc apply-args)))
+   (cons 'map (lambda (f xs)
+                (define map-proc
+                    (cond
+                      [(procedure? f) f]
+                      [(func? f) (func-closure f)]
+                      [else (raise-mal-eval "Bad args for apply")]))
+                (map map-proc (list-or-vector->list xs))))
    (cons 'throw raise-mal-throw)
    (cons 'nil? nil?)
    (cons 'true? (lambda (x) (equal? x #t)))
    (cons 'false? (lambda (x) (equal? x #f)))
    (cons 'symbol? symbol?)
+   (cons 'symbol string->symbol)
+   (cons 'keyword? keyword?)
+   (cons 'keyword (lambda (x) (if (keyword? x) x (string->keyword x))))
 
    ))
