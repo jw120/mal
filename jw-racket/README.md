@@ -2,7 +2,7 @@
 
 * Decide how much to error check functions vs relying on underlying Racket exceptionsst
 
-* Not implemented - meta data for lists and vectors (just done for functions)
+* Not implemented - meta data for lists/vectors/hash-maps/atoms (just done for functions)
 
 * Defined a nil object. In Racket we have null which is the empty list and #f. Mal has '() and nil and #f all different.
 * Similar for whitespace

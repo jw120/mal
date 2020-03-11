@@ -180,8 +180,14 @@
    (cons 'macro? (lambda (x) (and (func? x) (func-is-macro? x))))
    (cons '*host-language* "jw-racket")
    (cons 'time-ms (λ args (raise-mal-throw "NYI")))
-   (cons 'meta (λ args (raise-mal-throw "NYI")))
-   (cons 'with-meta (λ args (raise-mal-throw "NYI")))
+   (cons 'meta (λ (x) (cond
+                        [(func? x) (func-meta x)]
+                        [(procedure? x) nil]
+                        [else (raise-mal-eval "meta not implemented for non-functions")])))
+   (cons 'with-meta (λ (x y) (cond
+                               [(func? x) (func (func-is-macro? x) (func-closure x) y)]
+                               [(procedure? x) (func #f x y)]
+                               [else (raise-mal-eval "with-meta not implemented for non-functions")])))
    (cons 'time-ms (λ args (round (current-inexact-milliseconds))))
 
    ))
