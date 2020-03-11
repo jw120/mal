@@ -75,7 +75,8 @@
       #f
       (lambda closure-args
         (let ([closure-env (new env% [outer env] [binds (list-or-vector->list fn-binds)] [exprs closure-args])])
-          (EVAL fn-val closure-env))))]
+          (EVAL fn-val closure-env)))
+      nil)]
     [_ (raise-mal-eval "Bad arguments to fn*")]))
 
 (define (if-special-form args env)

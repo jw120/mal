@@ -138,8 +138,12 @@
    (cons 'reset! (λ (atom val)
                    (set-box! atom val)
                    val))
-   (cons 'swap! (λ (atom func . other-args)
-                       (let ([new-val (apply func (cons (unbox atom) other-args))])
+   (cons 'swap! (λ (atom f . other-args)
+                  (let* ([closure (cond
+                                   [(procedure? f) f]
+                                   [(func? f) (func-closure f)]
+                                   [else (raise-mal-eval "Expected a function for swap!")])]
+                        [new-val (apply closure (cons (unbox atom) other-args))])
                          (set-box! atom new-val)
                          new-val)))
 
@@ -170,7 +174,7 @@
    (cons 'nil? nil?)
    (cons 'true? (lambda (x) (equal? x #t)))
    (cons 'false? (lambda (x) (equal? x #f)))
-   (cons 'symbol? symbol?)
+   (cons 'symbol? (lambda (x) (and (symbol? x) (not (nil? x))))) ; Our nil is a symbol
    (cons 'symbol string->symbol)
    (cons 'keyword? keyword?)
    (cons 'keyword (lambda (x) (if (keyword? x) x (string->keyword x))))

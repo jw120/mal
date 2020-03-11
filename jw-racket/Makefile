@@ -1,6 +1,6 @@
-.PHONY: all clean distclean run test step-test
+.PHONY: all clean distclean run test step-test self-host-test
 
-all: test step-test
+all: test step-test self-host-test
 
 CURRENT_STEP = stepA_mal.rkt
 TEST_RUNNER = tests.rkt
@@ -28,7 +28,10 @@ step-test:
 	@echo step 7; cd ..; make "test^jw-racket^step7" | grep "failing tests"
 	@echo step 8; cd ..; make "test^jw-racket^step8" | grep "failing tests"
 	@echo step 9; cd ..; make "test^jw-racket^step9" | grep "failing tests"
-	@echo step A; cd ..; make "test^jw-racket^stepA" | grep "failing tests"
+	@echo step A - expect 15 soft failures; cd ..; make "test^jw-racket^stepA" | grep "failing tests"
+
+self-host-test:
+	@echo self-host; cd ..; make MAL_IMPL=jw-racket "test^mal" | grep "TEST RESULTS\|failing tests"
 
 clean:
 	$(RM) $(COMPILE_DIR)/*

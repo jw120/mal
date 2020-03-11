@@ -1,16 +1,7 @@
-## TODO
-
-* Decide how much to error check functions vs relying on underlying Racket exceptionsst
+* Some error checking but rely on underlying racket to catch most invalid arguments
 
 * Not implemented - meta data for lists/vectors/hash-maps/atoms (just done for functions)
 
 * Defined a nil object. In Racket we have null which is the empty list and #f. Mal has '() and nil and #f all different.
-* Similar for whitespace
 
-* Readline history file
-* Not error checking agruments - rely on racket exceptions
-* Contracts on class methods? Contracts on other provides?
-
-## Notes
-
-* Using racket as a normal implementation (later try translating mal to racket with #lang)
+* Does not save readline history file
