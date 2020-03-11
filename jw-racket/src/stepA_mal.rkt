@@ -34,6 +34,7 @@
              ['macroexpand (macroexpand-special-form args env)]
              ['quasiquote (EVAL (mal-quasi-quote (car args)) env)]
              ['quote (quote-special-form args env)]
+             ['try* (try-special-form args env)]
              [else
               (let* ([evaluated-ast (eval_ast expanded-ast env)]
                      [evaluated-head (car evaluated-ast)]
@@ -105,6 +106,21 @@
     (raise-mal-eval "No arguments to quote"))
   (car args))
 
+(define (try-special-form args env)
+  (case (length args)
+    [(1) (EVAL (car args) env)] ; try without catch is just eval
+    [(2)
+     (define (handle-mal-exception e)
+       (match (second args)
+         [(list 'catch* catch-var catch-expr)
+          (define exception-value (if (exn:mal:throw? e) (exn:mal:throw-thrown-value e) (exn-message e)))
+          (define catch-env (new env% [outer env] [binds (list catch-var)] [exprs (list exception-value)]))
+          (EVAL catch-expr catch-env)]
+         [else (raise-mal-eval "Bad catch* block")]))
+     (with-handlers ([exn:mal? handle-mal-exception])
+       (EVAL (car args) env))]
+    [else (raise-mal-eval "Bad arguments to try*")]))
+
 (define (eval_ast ast env)
   (cond
     [(nil? ast) ast]
@@ -171,6 +187,7 @@
 ; Either start the repl or load the given file
 (cond
   [(vector-empty? (current-command-line-arguments))
+   (rep "(println (str \"Mal [\" *host-language* \"]\"))")
    (repl rep)]
   [else
    (send repl_env set '*ARGV* (vector->list (vector-drop (current-command-line-arguments) 1)))

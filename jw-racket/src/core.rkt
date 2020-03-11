@@ -8,6 +8,7 @@
          racket/match
          racket/string
          racket/vector
+         readline/readline
          "exceptions.rkt"
          "printer.rkt"
          "reader.rkt"
@@ -83,6 +84,23 @@
    (cons 'vector vector-immutable)
    (cons 'vector? vector?)
    (cons 'sequential? list-or-vector?)
+   (cons 'seq (lambda (x)
+                (cond
+                  [(list? x) (if (empty? x) nil x)]
+                  [(vector? x) (if (vector-empty? x) nil (vector->list x))]
+                  [(non-empty-string? x) (cdr (drop-right (string-split x "") 1))]
+                  [(equal? "" x) nil]
+                  [(nil? x) nil]
+                  [else raise-mal-eval "Bad argument to seq"])))
+   (cons 'conj (lambda args
+                 (when (< (length args) 2)
+                   (raise-mal-eval "Bad arguments to conj"))
+                 (define collection (car args))
+                 (define adds (cdr args))
+                 (cond
+                   [(list? collection) (append (reverse adds) collection)]
+                   [(vector? collection) (vector-append collection (list->vector adds))]
+                   [else (raise-mal-eval "Bad collection type for conj")])))
 
    ; Hash maps
    (cons 'hash-map hash)
@@ -99,6 +117,9 @@
    ; I/O
    (cons 'read-string read_string)
    (cons 'slurp file->string)
+   (cons 'readline (lambda (prompt)
+                     (let ([s (readline prompt)])
+                       (if (eof-object? s) nil s))))
    (cons 'prn (lambda args
                 (displayln (string-join (map (lambda (x) (pr_str x #t)) args) " "))
                 nil))
@@ -153,5 +174,14 @@
    (cons 'symbol string->symbol)
    (cons 'keyword? keyword?)
    (cons 'keyword (lambda (x) (if (keyword? x) x (string->keyword x))))
+   (cons 'string? string?)
+   (cons 'number? number?)
+   (cons 'fn? (lambda (x) (or (procedure? x) (and (func? x) (not (func-is-macro? x))))))
+   (cons 'macro? (lambda (x) (and (func? x) (func-is-macro? x))))
+   (cons '*host-language* "jw-racket")
+   (cons 'time-ms (λ args (raise-mal-throw "NYI")))
+   (cons 'meta (λ args (raise-mal-throw "NYI")))
+   (cons 'with-meta (λ args (raise-mal-throw "NYI")))
+   (cons 'time-ms (λ args (round (current-inexact-milliseconds))))
 
    ))

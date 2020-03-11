@@ -59,7 +59,7 @@
         [val (EVAL (cadr args) env)])
     (unless (func? val)
       (raise-mal-eval "Bad value for defmacro!"))
-    (let ([macro-val (struct-copy func val [is-macro #t])])
+    (let ([macro-val (struct-copy func val [is-macro? #t])])
       (send env set sym macro-val)
       macro-val)))
 
@@ -152,7 +152,7 @@
      (let ([val (send env get (car ast))])
        (and
         (func? val)
-        (func-is-macro val)))]
+        (func-is-macro? val)))]
     [else #f]))
 
 (define (macro-expand ast env)

@@ -2,7 +2,7 @@
 
 (provide nil
          (contract-out
-          [struct func ((is-macro boolean?) (closure procedure?))]
+          [struct func ((is-macro? boolean?) (closure procedure?))]
           [nil? (-> any/c boolean?)]
           [add-escapes (-> string? string?)]
           [remove-escapes (-> string? string?)]
@@ -12,7 +12,7 @@
 (require "exceptions.rkt")
 
 ;; Define our function type here
-(struct func (is-macro closure) #:transparent)
+(struct func (is-macro? closure) #:transparent)
 
 ;; Racket has no nil (just #f and '() which is null), we create one here
 (define nil (string->uninterned-symbol "nil"))
