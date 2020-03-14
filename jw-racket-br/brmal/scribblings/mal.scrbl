@@ -1,10 +1,10 @@
 #lang scribble/manual
-@require[@for-label[mal
+@require[@for-label[brmal
                     racket/base]]
 
 @title{mal}
 @author{jp03326}
 
-@defmodule[mal]
+@defmodule[brmal]
 
 Package Description Here
