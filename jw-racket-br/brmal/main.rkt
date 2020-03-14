@@ -1,6 +1,19 @@
-#lang br
+#lang racket/base
 
 ; Boot module for brmal language
+
+(require brmal/core)
+
+(provide (all-from-out brmal/core)
+         #%app
+         #%top-interaction
+         #%top
+         #%app
+         #%datum)
+
+(define-syntax-rule (my-module-begin SEXP)
+  #'(#%module-begin ;; from brmal
+     SEXP))
 
 ; Reader module provdes read-syntax based on parse and tokenize
 (module reader br
