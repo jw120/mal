@@ -9,21 +9,21 @@
          #%top-interaction
          #%top
          #%app
-         banner
+;;         banner
          #%datum)
 
-(define-syntax-rule (my-module-begin SEXP)
-  #'(#%module-begin ;; from brmal
-     SEXP))
+;; (define-syntax-rule (my-module-begin SEXP)
+;;   #'(#%module-begin ;; from brmal
+;;      SEXP))
 
-(current-prompt-read
- (let ([old-prompt-read (current-prompt-read)])
-   (lambda () (display "user") (flush-output) (old-prompt-read))))
+;; (current-prompt-read
+;;  (let ([old-prompt-read (current-prompt-read)])
+;;    (lambda () (display "user") (flush-output) (old-prompt-read))))
 
-(define (banner)
-  "MAL\n")
+;; (define (banner)
+;;   "MAL\n")
 
-(displayln "In brmal/main")
+;; (displayln "In brmal/main")
 
 ;(define (margrave-repl-prompt-read)
 ;  (display "Margrave> ") (flush-output)

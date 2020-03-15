@@ -15,6 +15,11 @@
 
 (define-macro (my-module-begin SEXP)
   #'(#%module-begin ;; from brmal
+;     (module configure-runtime racket/base
+;       (displayln "In mb1")
+;       (require brmal/setup)
+;       (do-setup!))
+;     (displayln "In mb2")
      SEXP))
 
 (define-macro (mal-expr EXPR) #'EXPR)
