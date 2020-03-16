@@ -31,6 +31,8 @@
     (token 'STRING (trim-ends "\"" lexeme "\""))]
    [(:: "\"" (:* (:or escaped-char not-double-quote)))
     (token 'UNTERMINATED-STRING lexeme)]
+   [(:: ":" (:+ ordinary-char))
+    (token 'KEYWORD (substring lexeme 1))]
    [(:+ ordinary-char)
     (token 'SYMBOL (string->symbol lexeme))]))
 
@@ -56,6 +58,7 @@
   (check-equal? (mal-lex-tv "-34") '((INTEGER -34)))
   (check-equal? (mal-lex-tv ";comment\n") '((COMMENT "comment")))
   (check-equal? (mal-lex-tv "abc") '((SYMBOL abc)))
+  (check-equal? (mal-lex-tv ":abc") '((KEYWORD abc)))
   (check-equal? (mal-lex-tv "\"xyz\"") '((STRING "xyz")))
   (check-equal? (mal-lex-tv "\"p\\\"q\"") '((STRING "p\\\"q")))
   (check-equal? (mal-lex-tv "\"sdf") '((UNTERMINATED-STRING "\"sdf")))
@@ -64,4 +67,5 @@
   (check-equal? (mal-lex-tv "22\n\n") '((INTEGER 22) (WHITE "\n\n")))
   (check-equal? (mal-lex-tv ";a\n34;b\n;c\n") '((COMMENT "a") (INTEGER 34) (COMMENT "b") (COMMENT "c")))
 
+  (check-equal? (mal-lex-tv "{:a (+ 7 8)}") '())
   )

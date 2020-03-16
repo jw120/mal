@@ -2,6 +2,7 @@
 
 (require brmal/core
          brmal/parser
+         brmal/printer
          brmal/tokenizer
          readline/readline)
 
@@ -17,6 +18,6 @@
      (with-handlers
        ([exn:fail? (λ (exn) (displayln (exn-message exn)))])
        (define input-evaluated (eval input-parsed mal-namespace))
-       (displayln input-evaluated))
+       (displayln (pr_str input-evaluated #t)))
      (repl)]))
 (repl)
