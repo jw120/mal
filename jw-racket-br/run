@@ -1,3 +1,2 @@
 #!/bin/bash
-racket --repl -I brmal "${@}"
-    #| grep -v '^Welcome to Racket v'
+racket brmal/repl.rkt "${@}"
