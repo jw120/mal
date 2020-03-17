@@ -2,16 +2,8 @@
 
 (require brmal/exceptions)
 
-(provide + - / *          (all-defined-out)
+(provide + - / * define          (all-defined-out)
 )
-
-;;(define-macro (mal-expr EXPR) #'EXPR)
-;;(define-macro (mal-list EXPR ...) #'(EXPR ...))
-;;(define-macro (mal-vec EXPR ...) #'(vector EXPR ...))
-;;(define-macro (mal-map EXPR ...) #'(hash-map EXPR ...))
-;;(define-macro (mal-special SPECIAL) #'SPECIAL)
-;(define-macro (mal-sym SYM) #'SYM)
-;;(define-macro (mal-error ERR) #'ERR)
 
 (define keyword-prefix "\u029e")
 
@@ -39,3 +31,5 @@
     [(equal? open "[") (raise-mal-read "EOF found parsing a vector")]
     [(equal? open "{") (raise-mal-read "EOF found parsing a hash-map")]
     [else (raise-mal-read "EOF found parsing a string")]))
+
+(define-syntax-rule (def! a b) (define a b))
