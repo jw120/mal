@@ -1,2 +1,14 @@
 #!/bin/bash
-racket brmal/repl.rkt "${@}"
+
+case $STEP in
+
+    step0_repl )
+	racket step0_repl.rkt "${@}"
+	;;
+    step1_read_print )
+	racket step1_read_print.rkt "${@}"
+	;;
+    *)
+	racket brmal/repl.rkt "${@}"
+	;;
+esac

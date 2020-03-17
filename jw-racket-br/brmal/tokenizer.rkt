@@ -2,7 +2,7 @@
 
 ; Simple lexer based on the regexp given in the mal instructions
 
-(provide make-tokenizer)
+(provide make-tokenizer mal-lexer)
 
 (require brag/support)
 

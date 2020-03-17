@@ -3,7 +3,9 @@
 ; Parser for the mal language
 
 mal-expr:  INTEGER | STRING |
-           mal-special | mal-sym | mal-keyword | mal-list | mal-vec | mal-map | mal-error
+mal-special1 | mal-sym | mal-keyword |
+mal-list | mal-vec | mal-map |
+mal-error-eof
 
 mal-list: /OPEN-PAREN mal-expr* /CLOSE-PAREN
 
@@ -13,8 +15,8 @@ mal-map: /OPEN-CURLY mal-expr* /CLOSE-CURLY
 
 mal-keyword: KEYWORD
 
-mal-special: SPECIAL
+mal-special1: SPECIAL mal-expr
 
 mal-sym: SYMBOL
 
-mal-error: UNTERMINATED-STRING
+mal-error-eof: UNTERMINATED-STRING | OPEN-PAREN mal-expr* | OPEN-SQUARE mal-expr* | OPEN-CURLY mal-expr*

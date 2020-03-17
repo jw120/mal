@@ -23,6 +23,7 @@ Implementation
 
 Todo
 - Stop using #lang br
+- Trim exceptions
 
 raco pkg install --auto beautiful-racket
 

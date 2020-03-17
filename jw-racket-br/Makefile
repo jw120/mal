@@ -20,8 +20,8 @@ run:
 #	@$(RACO_TEST) $(FILES_WITH_TESTS)
 
 step-test:
-#@echo step 0; cd ..; make "test^jw-racket-br^step0" | grep "failing tests"
-#@echo step 1; cd ..; make "test^jw-racket-br^step1" | grep "failing tests"
+	@echo step 0; cd ..; make "test^jw-racket-br^step0" | grep "failing tests"
+	@echo step 1; cd ..; make "test^jw-racket-br^step1" | grep "failing tests"
 	@echo step 2; cd ..; make "test^jw-racket-br^step2" | grep "failing tests"
 #@echo step 3; cd ..; make "test^jw-racket-br^step3" | grep "failing tests"
 #@echo step 4; cd ..; make "test^jw-racket-br^step4" | grep "failing tests"
