@@ -6,7 +6,7 @@ case $STEP in
 	racket step0_repl.rkt "${@}"
 	;;
     step1_read_print )
-	racket step1_read_print.rkt "${@}"
+	racket ../jw-racket/src/step1_read_print.rkt "${@}"
 	;;
     *)
 	racket brmal/repl.rkt "${@}"
