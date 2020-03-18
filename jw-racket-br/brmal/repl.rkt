@@ -17,9 +17,9 @@
      (displayln "")] ; On Ctrl-D, clean up by printing a newline
     [else
      (define input-tokens (apply-lexer mal-lexer input-string))
-;;     (printf "tokens: ~a\n" input-tokens)
+     (printf "tokens: ~a\n" input-tokens)
      (define input-parsed (parse-to-datum (make-tokenizer (open-input-string input-string))))
-;;     (printf "parsed: ~a\n" input-parsed)
+     (printf "parsed: ~a\n" input-parsed)
      (with-handlers
        ([exn:mal:read? (λ (exn) (displayln (exn-message exn)))]
        [exn:fail? (λ (exn) (displayln (exn-message exn)))])
