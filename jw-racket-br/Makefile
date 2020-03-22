@@ -14,7 +14,7 @@ COMPILE_DIR := ./brmal/compiled
 #FILES_WITH_TESTS := src/env.rkt src/reader.rkt src/utils.rkt
 
 run:
-	-@$(RKT) $(REPL_RKT)
+	-@$(RKT) $(REPL_RKT) -d
 
 #test:
 #	@$(RACO_TEST) $(FILES_WITH_TESTS)

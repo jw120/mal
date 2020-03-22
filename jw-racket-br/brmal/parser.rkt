@@ -4,8 +4,11 @@
 
 mal-expr:  INTEGER | STRING |
 mal-special1 | mal-sym | mal-keyword |
+mal-def! |
 mal-list | mal-vec | mal-map |
 mal-error-eof
+
+mal-def!: /OPEN-PAREN DEF! mal-expr* /CLOSE-PAREN
 
 mal-list: /OPEN-PAREN mal-expr* /CLOSE-PAREN
 

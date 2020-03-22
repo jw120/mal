@@ -1,42 +1,53 @@
 #lang racket
 
-(require brmal/exceptions)
+(require (for-syntax syntax/parse  brmal/exceptions))
 
 (provide + - / * define        (all-defined-out)
 )
 
 (define keyword-prefix "\u029e")
 
-(define-syntax-rule (mal-expr x) x)
-(define-syntax-rule (mal-vec x ...) (vector-immutable x ...))
-(define-syntax-rule (mal-map x ...) (hash x ...))
-(define-syntax-rule (mal-special1 s x)
-  (cond
-    [(equal? s "'") `x]
-    [(equal? s "`") `x]
-    [(equal? s "~") ~x]
-    [(equal? s "^") ^x]
-    [(equal? s "@") @x]
-    [(equal? s "~@") ~@x]
-    [else (raise-mal-fail "unknown special in special1")]))
-(define-syntax-rule (mal-sym s) s)
-(define-syntax-rule (mal-keyword s) (string-append-immutable keyword-prefix s))
-(define-syntax mal-list
-  (syntax-rules ()
-    [(mal-list) '()]
-    [(mal-list x ...) (x ...)]))
-(define-syntax-rule (mal-error-eof open x ...)
-  (cond
-    [(equal? open "(") (raise-mal-read "EOF found parsing a list")]
-    [(equal? open "[") (raise-mal-read "EOF found parsing a vector")]
-    [(equal? open "{") (raise-mal-read "EOF found parsing a hash-map")]
-    [else (raise-mal-read "EOF found parsing a string")]))
+(define-syntax (mal-expr stx)
+  (syntax-parse stx
+    [(_ x:expr) #'x]))
 
-;;(define (def! x y) (define x y))
+(define-syntax (mal-def! stx)
+  (syntax-parse stx
+    [(_ (~datum "def!") a:expr b:expr) #'(begin (define a b) b)]))
 
-(define-syntax def! (make-rename-transformer #'define))
+(define-syntax (mal-list stx)
+  (syntax-parse stx
+    [(_) #''()]
+    [(_ x:expr ...) #'(x ...)]))
 
-;;(define-syntax def!
-;;  (lambda (stx)
-;;    (syntax-case stx ()
-;;      [def! (identifier? (syntax def!)) (syntax define)])))
+(define-syntax (mal-vec stx)
+  (syntax-parse stx
+    [(_ x:expr ...) #'(vector-immutable x ...)]))
+
+(define-syntax (mal-map stx)
+  (syntax-parse stx
+    [(_ x:expr ...) #'(hash x ...)]))
+
+(define-syntax (mal-special1 stx)
+  (syntax-parse stx
+    [(_ (~datum "'") x:expr) #''x]
+    [(_ (~datum "`") x:expr) #'`x]
+    [(_ (~datum "~") x:expr) #'~x]
+    [(_ (~datum "^") x:expr) #'^x]
+    [(_ (~datum "@") x:expr) #'@x]
+    [(_ (~datum "~@") x:expr) #'~@x]))
+
+(define-syntax (mal-sym stx)
+  (syntax-parse stx
+    [(_ s:expr) #'s]))
+
+(define-syntax (mal-keyword stx)
+  (syntax-parse stx
+    [(_ s:string) #'(string-append-immutable keyword-prefix s)]))
+
+(define-syntax (mal-error-eof stx)
+  (syntax-parse stx
+    [(_ (~datum "(")) (raise-mal-read "EOF found parsing a list")]
+    [(_ (~datum "[")) (raise-mal-read "EOF found parsing a vector")]
+    [(_ (~datum "{")) (raise-mal-read "EOF found parsing a map")]
+    [(_ _) (raise-mal-read "EOF found parsing a string")]))

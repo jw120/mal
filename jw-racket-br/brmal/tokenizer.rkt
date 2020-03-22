@@ -33,6 +33,8 @@
     (token 'UNTERMINATED-STRING lexeme)]
    [(:: ":" (:+ ordinary-char))
     (token 'KEYWORD (substring lexeme 1))]
+   ["def!"
+    (token 'DEF! lexeme)]
    [(:+ ordinary-char)
     (token 'SYMBOL (string->symbol lexeme))]))
 
