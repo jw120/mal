@@ -3,7 +3,9 @@
 **TODO: Add description**
 
 TODO
+- Get step 1 tests to pass
 - Add documentation
+- Convert maps and lists to underlying representation
 
 
 ## Installation
