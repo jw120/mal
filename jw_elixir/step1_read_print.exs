@@ -1,7 +1,7 @@
 defmodule Step1 do
 
   def read(s) do
-    s
+    Reader.read_str(s)
   end
 
   def eval(s) do
@@ -9,7 +9,7 @@ defmodule Step1 do
   end
 
   def print(s) do
-    IO.puts(s)
+    Printer.pr_str(s)
   end
 
   def rep(s) do
@@ -19,11 +19,11 @@ defmodule Step1 do
   def repl() do
     s = IO.gets("user> ")
     unless s == :eof do
-      s |> String.trim |> rep
+      s |> String.trim |> rep |> IO.puts
       repl()
     end
   end
 
 end
 
-Step0.repl()
+Step1.repl()
