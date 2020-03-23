@@ -6,7 +6,7 @@ defmodule Printer do
   @doc """
   Converts a mal value to a string.
 
-  Used in our error handler to must not raise any exceptions.
+  Used in our error handler, so should not raise MalException.
 
   ## Examples
 
@@ -27,7 +27,7 @@ defmodule Printer do
       {:list, xs} -> "(" <> Enum.join(Enum.map(xs, &pr_str(&1)), " ") <> ")"
       {:vector, xs} -> "[" <> Enum.join(Enum.map(xs, &pr_str(&1)), " ") <> "]"
       {:map, xs} -> "{" <> Enum.join(Enum.map(xs, &pr_str(&1)), " ") <> "}"
-      _ -> "Failure in pr_str: Unknown type in pr_str"
+      _ -> raise "Failure in pr_str: Unknown type in pr_str"
     end
   end
 end

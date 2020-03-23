@@ -1,6 +1,6 @@
 defmodule Mal do
   @typedoc """
-  Type for a mal language value
+  Type for mal language values
   """
   @type t ::
           {:string, String.t()}

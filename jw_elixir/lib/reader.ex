@@ -139,4 +139,24 @@ defmodule Reader do
         {{:symbol, tok}, after_tok}
     end
   end
+
+  defp remove_escapes(s) do
+    String.codepoint(s)
+      |> Enum.map_reduce, {"", false}, fn x, {acc, in_escape} ->
+        case {x, in_escape} do
+          {"\\", true} -> { acc <> "\\", false }
+          {"n", true} -> { acc <> "\n", false }
+          {_, true} -> raise MalException, "Bad escape sequence in remove_escapes"
+          {"\\", false} -> {acc, true}
+          {_, false} -> {acc <> x, false}
+        end
+      end
+      |> fn {acc, in_escape} ->
+        case in_escape do
+          true -> raise MalException "EOF in escape sequence in remove_escapes"
+          false -> ac
+        end
+      end
+  end
+
 end
