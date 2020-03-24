@@ -30,6 +30,6 @@ defmodule MalException do
   end
 
   def exception(value) do
-    %MalException{val: value, message: Printer.pr_str(value)}
+    %MalException{val: value, message: Printer.pr_str(value, true)}
   end
 end

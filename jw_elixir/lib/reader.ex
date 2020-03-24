@@ -127,7 +127,7 @@ defmodule Reader do
         {{:symbol, tok}, after_tok}
 
       Regex.match?(~r/^\"[^\"]*\"$/, tok) ->
-        {{:string, String.slice(tok, 1, String.length(tok) - 2)}, after_tok}
+        {{:string, remove_escapes(String.slice(tok, 1, String.length(tok) - 2))}, after_tok}
 
       Regex.match?(~r/^\"[^\"]*$/, tok) ->
         raise MalException, "EOF found in string"
@@ -140,9 +140,9 @@ defmodule Reader do
     end
   end
 
-  defp remove_escapes(s) do
-    String.codepoint(s)
-      |> Enum.map_reduce, {"", false}, fn x, {acc, in_escape} ->
+  def remove_escapes(s) do
+    {new_s, final_in_escape} = String.codepoints(s)
+      |> Enum.reduce({"", false}, fn x, {acc, in_escape} ->
         case {x, in_escape} do
           {"\\", true} -> { acc <> "\\", false }
           {"n", true} -> { acc <> "\n", false }
@@ -150,13 +150,12 @@ defmodule Reader do
           {"\\", false} -> {acc, true}
           {_, false} -> {acc <> x, false}
         end
-      end
-      |> fn {acc, in_escape} ->
-        case in_escape do
-          true -> raise MalException "EOF in escape sequence in remove_escapes"
-          false -> ac
-        end
-      end
+      end)
+
+    case final_in_escape do
+      true -> raise MalException, "EOF in escape sequence in remove_escapes"
+      false -> new_s
+    end
   end
 
 end
