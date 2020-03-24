@@ -37,11 +37,11 @@ defmodule Reader do
 
       "[" ->
         {contents, remainder} = read_vector(s)
-        {{:vector, contents}, remainder}
+        {{:vector, list_to_vector(contents)}, remainder}
 
       "{" ->
         {contents, remainder} = read_map(s)
-        {{:map, contents}, remainder}
+        {{:map, list_to_map(contents)}, remainder}
 
       _ ->
         read_atom(s)
@@ -140,7 +140,8 @@ defmodule Reader do
     end
   end
 
-  def remove_escapes(s) do
+  @spec remove_escapes(String.t()) :: String.t()
+  defp remove_escapes(s) do
     {new_s, final_in_escape} = String.codepoints(s)
       |> Enum.reduce({"", false}, fn x, {acc, in_escape} ->
         case {x, in_escape} do
@@ -156,6 +157,19 @@ defmodule Reader do
       true -> raise MalException, "EOF in escape sequence in remove_escapes"
       false -> new_s
     end
+  end
+
+  @spec list_to_vector([Mal.t]) :: map()
+  def list_to_vector(xs) do
+    Stream.zip(Stream.iterate(0, &(&1 + 1)), xs)
+      |> Map.new
+  end
+
+  @spec list_to_map([Mal.t]) :: map()
+  def list_to_map(xs) do
+    Enum.chunk_every(xs, 2)
+    |> Enum.map(fn [x, y] -> {x, y} end)
+    |> Map.new
   end
 
 end

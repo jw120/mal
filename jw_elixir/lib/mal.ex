@@ -12,6 +12,7 @@ defmodule Mal do
           # void is used when there is no input
           | {:void}
           | {:list, list(t)}
+          # vector held as a map with keys 0, 1, 2...
           | {:vector, map()}
           | {:map, map()}
 end

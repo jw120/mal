@@ -25,10 +25,10 @@ defmodule Printer do
       {:boolean, true} -> "true"
       {:boolean, false} -> "false"
       {nil} -> "nil"
-      {:list, xs} -> "(" <> Enum.join(Enum.map(xs, &pr_str(&1, print_readably)), " ") <> ")"
-      {:vector, xs} -> "[" <> Enum.join(Enum.map(xs, &pr_str(&1, print_readably)), " ") <> "]"
-      {:map, xs} -> "{" <> Enum.join(Enum.map(xs, &pr_str(&1, print_readably)), " ") <> "}"
-      _ -> raise "Failure in pr_str: Unknown type in pr_str"
+      {:list, xs} -> "(" <> join_list(xs, print_readably) <> ")"
+      {:vector, m} -> "[" <> join_list(vector_map_to_list(m), print_readably) <> "]"
+      {:map, m} -> "{" <> join_list(map_to_list(m), print_readably) <> "}"
+      _ -> raise "Failure in pr_str: Unknown type in pr_str #{inspect(x)}"
     end
   end
 
@@ -46,6 +46,28 @@ defmodule Printer do
           end
         end)
       |> Enum.join
+  end
+
+  @spec join_list([Mal.t], boolean()) :: String.t()
+  def join_list(xs, print_readably) do
+    xs
+    |>Enum.map(&pr_str(&1, print_readably))
+    |>Enum.join(" ")
+  end
+
+  @spec vector_map_to_list(map()) :: [Mal.t]
+  def vector_map_to_list(m) when map_size(m) == 0, do: []
+  def vector_map_to_list(m) do
+
+    0..(map_size(m) - 1)
+    |> Enum.map(fn i -> m[i] end)
+  end
+
+  @spec map_to_list(map()) :: [Mal.t]
+  def map_to_list(m) do
+    m
+    |> Map.to_list
+    |> Enum.flat_map(fn {x, y} -> [x, y] end)
   end
 end
 

@@ -4,8 +4,7 @@
 
 TODO
 - Check documentation
-- Convert maps and lists to underlying representation
-
+- dialyse
 
 ## Installation
 
