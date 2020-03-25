@@ -62,16 +62,29 @@ defmodule Env do
   end
 
   @doc """
-  Bind a an alternating list of symbols and values in the given environment. Later values
-  can refer to earlier symbols in the list. Used to implement let*
+  Bind an alternating list of symbols and expressions in the given environment. Expressions
+  are evaluated before binding and can refer to earlier symbols in the list. Used to implement let*
   """
-  @spec bind!(t, [Mal.t()]) :: t
-  def bind!(env, [{:symbol, s} | [val | rest]]) do
+  @spec bind_star!(t, [Mal.t()]) :: t
+  def bind_star!(env, [{:symbol, s} | [val | rest]]) do
     eval_val = Eval.eval(val, env)
     set!(env, s, eval_val)
-    bind!(env, rest)
+    bind_star!(env, rest)
   end
 
-  def bind!(env, []), do: env
-  def bind!(_, _), do: raise(MalException, "Bad binding list for let")
+  def bind_star!(env, []), do: env
+  def bind_star!(_, _), do: raise(MalException, "Bad binding list for let*")
+
+  @doc """
+  Bind a list of symbols and a list of values in the given environment. Used to
+  implement fn*.
+  """
+  @spec bind!(t, [Mal.t()], [Mal.t()]) :: t
+  def bind!(env, [{:symbol, s} | other_syms], [x | other_exprs]) do
+    set!(env, s, x)
+    bind!(env, other_syms, other_exprs)
+  end
+
+  def bind!(env, [], []), do: env
+  def bind!(_, _, _), do: raise(MalException, "Bad binding list")
 end

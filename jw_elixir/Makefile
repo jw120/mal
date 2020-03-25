@@ -24,3 +24,5 @@ step-test:
 	@echo step 1; cd ..; make "test^jw_elixir^step1" | grep "failing tests"
 	@echo step 2; cd ..; make "test^jw_elixir^step2" | grep "failing tests"
 	@echo step 3; cd ..; make "test^jw_elixir^step3" | grep "failing tests"
+	@echo step 4; cd ..; make "test^jw_elixir^step4" | grep "failing tests"
+

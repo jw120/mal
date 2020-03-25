@@ -7,16 +7,23 @@ defmodule Eval do
   Full evaluation of a mal expression (including apply phase with handling of special forms)
   """
   @spec eval(Mal.t(), Env.t()) :: Mal.t()
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   def eval(ast, env) do
     case ast do
       {:list, []} ->
         ast
 
       {:list, [{:symbol, "def!"} | rest]} ->
-        def_special_form(rest, env)
+        SpecialForm.def_form(rest, env)
+
+      {:list, [{:symbol, "do"} | rest]} ->
+        SpecialForm.do_form(rest, env)
+
+      {:list, [{:symbol, "if"} | rest]} ->
+        SpecialForm.if_form(rest, env)
 
       {:list, [{:symbol, "let*"} | rest]} ->
-        let_special_form(rest, env)
+        SpecialForm.let_form(rest, env)
 
       {:list, _} ->
         evaluated_list = eval_ast(ast, env)
@@ -57,32 +64,4 @@ defmodule Eval do
         ast
     end
   end
-
-  @doc """
-  Handle the def! special form
-  """
-  @spec def_special_form([Mal.t()], Env.t()) :: Mal.t()
-  def def_special_form([{:symbol, s}, val], env) do
-    eval_val = eval(val, env)
-    Env.set!(env, s, eval_val)
-    eval_val
-  end
-
-  def def_special_form(_, _), do: raise(MalException, "Bad arguments to def!")
-
-  @doc """
-  Handle the let* special form
-  """
-  @spec let_special_form([Mal.t()], Env.t()) :: Mal.t()
-  def let_special_form([{:list, bindings}, val], env) do
-    let_env = Env.new(env)
-    Env.bind!(let_env, bindings)
-    eval(val, let_env)
-  end
-
-  def let_special_form([{:vector, vec_bindings}, val], env) do
-    let_special_form([{:list, Seq.vector_to_list(vec_bindings)}, val], env)
-  end
-
-  def let_special_form(_, _), do: raise(MalException, "Bad arguments to def!")
 end
