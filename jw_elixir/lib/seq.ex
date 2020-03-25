@@ -15,8 +15,8 @@ defmodule Seq do
   """
   @spec list_to_vector([Mal.t()]) :: Mal.vector_map()
   def list_to_vector(xs) do
-    Stream.zip(Stream.iterate(0, &(&1 + 1)), xs)
-    |> Map.new()
+    indices = Stream.iterate(0, &(&1 + 1))
+    Map.new(Stream.zip(indices, xs))
   end
 
   @doc """
@@ -31,7 +31,8 @@ defmodule Seq do
   """
   @spec list_to_hash_map([Mal.t()]) :: Mal.hash_map_map()
   def list_to_hash_map(xs) do
-    Enum.chunk_every(xs, 2)
+    xs
+    |> Enum.chunk_every(2)
     |> Enum.map(fn [x, y] -> {x, y} end)
     |> Map.new()
   end
@@ -66,14 +67,16 @@ defmodule Seq do
   """
   @spec hash_map_to_list(Mal.hash_map_map()) :: [Mal.t()]
   def hash_map_to_list(m) do
-    Map.to_list(m)
+    m
+    |> Map.to_list()
     |> Enum.flat_map(fn {x, y} -> [x, y] end)
   end
 
   # Helper function to apply eval to the values in a map
   @spec eval_map_values(Mal.hash_map_map(), Env.t()) :: Mal.hash_map_map()
   def eval_map_values(m, env) do
-    Enum.map(m, fn {k, v} -> {k, Eval.eval(v, env)} end)
+    m
+    |> Enum.map(fn {k, v} -> {k, Eval.eval(v, env)} end)
     |> Enum.into(%{})
   end
 end

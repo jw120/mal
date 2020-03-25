@@ -16,6 +16,7 @@ defmodule Printer do
 
   """
   @spec pr_str(Mal.t(), boolean()) :: String.t()
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   def pr_str(x, print_readably) do
     case x do
       {:string, s} -> "\"" <> string_escape(s, print_readably) <> "\""
@@ -38,7 +39,8 @@ defmodule Printer do
   defp string_escape(s, false), do: s
 
   defp string_escape(s, true) do
-    String.codepoints(s)
+    s
+    |> String.codepoints()
     |> Enum.map(fn c ->
       case c do
         "\"" -> "\\\""

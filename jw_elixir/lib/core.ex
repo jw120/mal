@@ -7,7 +7,7 @@ defmodule Core do
   Create a new core environment. Intended to be called only once.
   """
   @spec new_env :: Env.t()
-  def new_env() do
+  def new_env do
     env = Env.new()
     Env.set!(env, "+", {:function, &Core.add/1})
     Env.set!(env, "-", {:function, &Core.subtract/1})

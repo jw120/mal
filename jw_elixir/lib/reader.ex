@@ -83,6 +83,7 @@ defmodule Reader do
   end
 
   @spec read_atom(String.t()) :: {Mal.t(), String.t()}
+  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defp read_atom(s) do
     {tok, after_tok} = Token.next(s)
 
@@ -145,7 +146,8 @@ defmodule Reader do
   @spec remove_escapes(String.t()) :: String.t()
   defp remove_escapes(s) do
     {new_s, final_in_escape} =
-      String.codepoints(s)
+      s
+      |> String.codepoints()
       |> Enum.reduce({"", false}, fn x, {acc, in_escape} ->
         case {x, in_escape} do
           {"\\", true} -> {acc <> "\\", false}

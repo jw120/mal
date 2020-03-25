@@ -1,6 +1,6 @@
 .PHONY: all run test step-test repl typecheck
 
-all: typecheck test step-test
+all: typecheck lint test step-test
 
 CURRENT_STEP = step3_env.exs
 
@@ -9,6 +9,9 @@ run:
 
 repl:
 	-iex -S mix
+
+lint:
+	mix credo list --format=oneline -a
 
 test:
 	-mix test
