@@ -13,9 +13,13 @@ defmodule Mal do
           | {:void}
           | {:list, list(t)}
           # vector held as a map with keys 0, 1, 2...
-          | {:vector, map()}
-          | {:map, map()}
+          | {:vector, vector_map}
+          | {:map, map_map}
           | {:function, ([t] -> t)}
+
+  @type vector_map :: %{optional(non_neg_integer()) => t}
+  @type map_map :: %{optional(t) => t}
+
   end
 
 defmodule MalException do

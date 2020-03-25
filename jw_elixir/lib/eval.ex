@@ -40,7 +40,7 @@ defmodule Eval do
     end
   end
 
-  @spec eval_map_values(map(), Env.t) :: map()
+  @spec eval_map_values(Mal.map_map, Env.t) :: Mal.map_map
   defp eval_map_values(m, env) do
     Enum.map(m, fn {k, v} -> {k, eval(v, env)} end)
       |> Enum.into(%{})
