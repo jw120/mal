@@ -19,9 +19,10 @@ defmodule Env do
     table_id
   end
 
-  @spec set!(t, String.t, Mal.t) :: no_return()
+  @spec set!(t, String.t, Mal.t) :: t
   def set!(env, s, val) do
     :ets.insert(env, {s, val})
+    env
   end
 
   @spec find(t, String.t) :: t | nil

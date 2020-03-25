@@ -11,6 +11,8 @@ defmodule Eval do
     case ast do
       {:list, []} ->
         ast
+      {:list, [{:symbol, "def!"} | rest]} ->
+          def_special_form(rest, env)
       {:list, _} ->
         evaluated_list = eval_ast(ast, env)
         case evaluated_list do
@@ -39,6 +41,13 @@ defmodule Eval do
         ast
     end
   end
+
+  def def_special_form([{:symbol, s}, val], env) do
+    eval_val = eval(val, env)
+    Env.set!(env, s, eval_val)
+    eval_val
+  end
+  def def_special_form(_), do: raise MalException, "Bad arguments to def!"
 
   @spec eval_map_values(Mal.map_map, Env.t) :: Mal.map_map
   defp eval_map_values(m, env) do
