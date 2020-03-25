@@ -25,6 +25,7 @@ defmodule Printer do
       {:boolean, true} -> "true"
       {:boolean, false} -> "false"
       {nil} -> "nil"
+      {:function, _} -> "<function>"
       {:list, xs} -> "(" <> join_list(xs, print_readably) <> ")"
       {:vector, m} -> "[" <> join_list(vector_map_to_list(m), print_readably) <> "]"
       {:map, m} -> "{" <> join_list(map_to_list(m), print_readably) <> "}"

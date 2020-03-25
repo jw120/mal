@@ -3,8 +3,9 @@
 **TODO: Add description**
 
 TODO
-- Check documentation
-- dialyse
+- Get step 2 working
+- Make environments mutable (Agent)
+- Better typing for maps in vector?
 
 ## Installation
 
