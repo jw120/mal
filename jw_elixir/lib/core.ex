@@ -2,11 +2,12 @@ defmodule Core do
 
   @spec new_env :: Env.t()
   def new_env() do
-    Env.new
-    |> Env.set("+", {:function, &Core.add/1})
-    |> Env.set("-", {:function, &Core.subtract/1})
-    |> Env.set("*", {:function, &Core.multiply/1})
-    |> Env.set("/", {:function, &Core.divide/1})
+    env = Env.new
+    Env.set!(env, "+", {:function, &Core.add/1})
+    Env.set!(env, "-", {:function, &Core.subtract/1})
+    Env.set!(env, "*", {:function, &Core.multiply/1})
+    Env.set!(env, "/", {:function, &Core.divide/1})
+    env
   end
 
   @spec add([Mal.t]) :: Mal.t

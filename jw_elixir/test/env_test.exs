@@ -4,11 +4,11 @@ defmodule EnvTest do
 
   test "works" do
     a = Env.new
-      |> Env.set("x", {:number, 7})
-      |> Env.set("y", {:number, 8})
+    Env.set!(a, "x", {:number, 7})
+    Env.set!(a, "y", {:number, 8})
     b = Env.new(a)
-      |> Env.set("y", {:number, 4})
-      |> Env.set("z", {:number, 6})
+    Env.set!(b, "y", {:number, 4})
+    Env.set!(b, "z", {:number, 6})
     assert Env.get(a, "x") == {:number, 7}
     assert Env.get(a, "y") == {:number, 8}
     assert_raise MalException, fn -> Env.get(a, "z") == {:number, 7} end

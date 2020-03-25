@@ -1,24 +1,38 @@
 defmodule Env do
-  defstruct outer: nil, data: %{}
 
-  @type t :: %Env{outer: t, data: %{optional(String.t) => Mal.t}}
+  @moduledoc """
+  Implement mutable environment using ETS
 
-  @spec new(String.t | nil) :: t
+  Environment modelled as a set-type ETS table with string keys
+  and mal-type values. A special :__outer__ key is used to hold the
+  id of the outer table (or nil)
+  """
+
+  @outer_key :__outer__
+
+  @type t :: :ets.tid()
+
+  @spec new(t | nil) :: t
   def new(o \\ nil) do
-    %Env{outer: o}
+    table_id = :ets.new(:mal_env, [])
+    :ets.insert(table_id, {@outer_key, o})
+    table_id
   end
 
-  @spec set(t, String.t, Mal.t) :: t
-  def set(env, s, val) do
-    %{env | data: Map.put(env.data, s, val)}
+  @spec set!(t, String.t, Mal.t) :: no_return()
+  def set!(env, s, val) do
+    :ets.insert(env, {s, val})
   end
 
   @spec find(t, String.t) :: t | nil
   def find(env, s) do
-    case {Map.has_key?(env.data, s), env.outer} do
-      {true, _} -> env
-      {false, nil} -> nil
-      {false, _} -> find(env.outer, s)
+    if :ets.member(env, s) do
+      env
+    else
+      case :ets.lookup(env, @outer_key) do
+        [{@outer_key, nil}] -> nil
+        [{@outer_key, outer}] -> find(outer, s)
+      end
     end
   end
 
@@ -26,7 +40,9 @@ defmodule Env do
   def get(env, s) do
     case find(env, s) do
       nil -> raise MalException, "#{s} not found in environment"
-      found_env -> found_env.data[s]
+      found_env ->
+        [{^s, val}] = :ets.lookup(found_env, s)
+        val
     end
   end
 end
