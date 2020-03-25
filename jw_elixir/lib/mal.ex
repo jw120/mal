@@ -15,7 +15,7 @@ defmodule Mal do
           # vector held as a map with keys 0, 1, 2...
           | {:vector, map()}
           | {:map, map()}
-end
+  end
 
 defmodule MalException do
   @moduledoc """

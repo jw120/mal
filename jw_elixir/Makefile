@@ -2,7 +2,7 @@
 
 all: test step-test
 
-CURRENT_STEP = step1_read_print.exs
+CURRENT_STEP = step2_eval.exs
 
 run:
 	-mix run $(CURRENT_STEP)
@@ -16,3 +16,4 @@ test:
 step-test:
 	@echo step 0; cd ..; make "test^jw-racket^step0" | grep "failing tests"
 	@echo step 1; cd ..; make "test^jw-racket^step1" | grep "failing tests"
+	@echo step 1; cd ..; make "test^jw-racket^step2" | grep "failing tests"
