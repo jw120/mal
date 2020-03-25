@@ -29,6 +29,7 @@ defmodule Reader do
   # Top-level internal reading function
   @spec read_form(String.t()) :: {Mal.t(), String.t()}
   defp read_form(""), do: {{:void}, ""}
+
   defp read_form(s) do
     case Token.peek(s) do
       "(" ->
@@ -143,11 +144,12 @@ defmodule Reader do
   # Remove slash escapes from a string
   @spec remove_escapes(String.t()) :: String.t()
   defp remove_escapes(s) do
-    {new_s, final_in_escape} = String.codepoints(s)
+    {new_s, final_in_escape} =
+      String.codepoints(s)
       |> Enum.reduce({"", false}, fn x, {acc, in_escape} ->
         case {x, in_escape} do
-          {"\\", true} -> { acc <> "\\", false }
-          {"n", true} -> { acc <> "\n", false }
+          {"\\", true} -> {acc <> "\\", false}
+          {"n", true} -> {acc <> "\n", false}
           {_, true} -> raise MalException, "Bad escape sequence in remove_escapes"
           {"\\", false} -> {acc, true}
           {_, false} -> {acc <> x, false}
@@ -159,5 +161,4 @@ defmodule Reader do
       false -> new_s
     end
   end
-
 end

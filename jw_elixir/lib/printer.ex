@@ -36,28 +36,25 @@ defmodule Printer do
   # Add slash escapes to a string
   @spec string_escape(String.t(), boolean()) :: String.t()
   defp string_escape(s, false), do: s
+
   defp string_escape(s, true) do
     String.codepoints(s)
-      |> Enum.map(
-        fn c ->
-          case c do
-            "\"" -> "\\\""
-            "\n" -> "\\n"
-            "\\" -> "\\\\"
-            _ -> c
-          end
-        end)
-      |> Enum.join
+    |> Enum.map(fn c ->
+      case c do
+        "\"" -> "\\\""
+        "\n" -> "\\n"
+        "\\" -> "\\\\"
+        _ -> c
+      end
+    end)
+    |> Enum.join()
   end
 
   # Print the list elements and join with spaces
-  @spec print_and_join([Mal.t], boolean()) :: String.t()
+  @spec print_and_join([Mal.t()], boolean()) :: String.t()
   def print_and_join(xs, print_readably) do
     xs
-    |>Enum.map(&pr_str(&1, print_readably))
-    |>Enum.join(" ")
+    |> Enum.map(&pr_str(&1, print_readably))
+    |> Enum.join(" ")
   end
-
 end
-
-

@@ -3,7 +3,7 @@ defmodule EnvTest do
   doctest Env
 
   test "works" do
-    a = Env.new
+    a = Env.new()
     Env.set!(a, "x", {:number, 7})
     Env.set!(a, "y", {:number, 8})
     b = Env.new(a)
@@ -18,7 +18,5 @@ defmodule EnvTest do
     assert Env.find(b, "x") == a
     assert Env.find(b, "y") == b
     assert Env.find(b, "q") == nil
-
   end
-
 end

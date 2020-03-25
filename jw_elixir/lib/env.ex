@@ -1,5 +1,4 @@
 defmodule Env do
-
   @moduledoc """
   Implement mutable environment using ETS
 
@@ -25,7 +24,7 @@ defmodule Env do
   @doc """
   Mutate the environment to include the given symbol and value
   """
-  @spec set!(t, String.t, Mal.t) :: t
+  @spec set!(t, String.t(), Mal.t()) :: t
   def set!(env, s, val) do
     :ets.insert(env, {s, val})
     env
@@ -35,7 +34,7 @@ defmodule Env do
   Return the first environment in the given environment's chain that has
   a value for the given symnol. Returns nil if not found.
   """
-  @spec find(t, String.t) :: t | nil
+  @spec find(t, String.t()) :: t | nil
   def find(env, s) do
     if :ets.member(env, s) do
       env
@@ -50,10 +49,12 @@ defmodule Env do
   @doc """
   Return the value for the given symbol in the given environment.
   """
-  @spec get(t, String.t) :: Mal.t
+  @spec get(t, String.t()) :: Mal.t()
   def get(env, s) do
     case find(env, s) do
-      nil -> raise MalException, "#{s} not found in environment"
+      nil ->
+        raise MalException, "#{s} not found in environment"
+
       found_env ->
         [{^s, val}] = :ets.lookup(found_env, s)
         val
@@ -64,14 +65,13 @@ defmodule Env do
   Bind a an alternating list of symbols and values in the given environment. Later values
   can refer to earlier symbols in the list. Used to implement let*
   """
-  @spec bind!(t, [Mal.t]) :: t
+  @spec bind!(t, [Mal.t()]) :: t
   def bind!(env, [{:symbol, s} | [val | rest]]) do
     eval_val = Eval.eval(val, env)
     set!(env, s, eval_val)
     bind!(env, rest)
   end
+
   def bind!(env, []), do: env
-  def bind!(_, _), do: raise MalException, "Bad binding list for let"
-
+  def bind!(_, _), do: raise(MalException, "Bad binding list for let")
 end
-

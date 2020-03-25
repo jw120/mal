@@ -1,5 +1,4 @@
 defmodule Mal do
-
   @moduledoc """
   Define the basic type for our language
   """
@@ -25,5 +24,4 @@ defmodule Mal do
 
   @typedoc "Elixir map used to hold a mal hash-map"
   @type hash_map_map :: %{optional(t) => t}
-
 end

@@ -1,0 +1,79 @@
+defmodule Seq do
+  @moduledoc """
+  Provides utilities for handling our sequence types
+  """
+
+  @doc """
+  Converts a mal list to a mal vector (represented as
+  an elixir map).
+
+  ## Examples
+
+      iex> Seq.list_to_vector([{:symbol, "a"}, {:number, 3}])
+      %{0 => {:symbol, "a"}, 1 => {:number, 3}}
+
+  """
+  @spec list_to_vector([Mal.t()]) :: Mal.vector_map()
+  def list_to_vector(xs) do
+    Stream.zip(Stream.iterate(0, &(&1 + 1)), xs)
+    |> Map.new()
+  end
+
+  @doc """
+  Converts a mal list to a mal hash-map (represented as
+  an elixir map). The list has alternating keys and values
+
+  ## Examples
+
+      iex> Seq.list_to_hash_map([{:symbol, "a"}, {:number, 3}])
+      %{{:symbol, "a"} => {:number, 3}}
+
+  """
+  @spec list_to_hash_map([Mal.t()]) :: Mal.hash_map_map()
+  def list_to_hash_map(xs) do
+    Enum.chunk_every(xs, 2)
+    |> Enum.map(fn [x, y] -> {x, y} end)
+    |> Map.new()
+  end
+
+  @doc """
+  Converts a mal vector (represented as a map) to a list (which is in
+  element order)
+
+  ## Examples
+
+      iex> Seq.vector_to_list(%{0 => {:symbol, "a"}, 1 => {:number, 2}})
+      [{:symbol, "a"}, {:number, 2}]
+
+  """
+  @spec vector_to_list(Mal.vector_map()) :: [Mal.t()]
+  def vector_to_list(v) when map_size(v) == 0, do: []
+
+  def vector_to_list(v) do
+    0..(map_size(v) - 1)
+    |> Enum.map(&v[&1])
+  end
+
+  @doc """
+  Converts a mal hash_map (represented as a map) to a list (of alternating keys
+  and values, with keys unordered)
+
+  ## Examples
+
+      iex> Seq.hash_map_to_list(%{{:string, "q"} => {:boolean, true}})
+      [{:string, "q"}, {:boolean, true}]
+
+  """
+  @spec hash_map_to_list(Mal.hash_map_map()) :: [Mal.t()]
+  def hash_map_to_list(m) do
+    Map.to_list(m)
+    |> Enum.flat_map(fn {x, y} -> [x, y] end)
+  end
+
+  # Helper function to apply eval to the values in a map
+  @spec eval_map_values(Mal.hash_map_map(), Env.t()) :: Mal.hash_map_map()
+  def eval_map_values(m, env) do
+    Enum.map(m, fn {k, v} -> {k, Eval.eval(v, env)} end)
+    |> Enum.into(%{})
+  end
+end
