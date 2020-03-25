@@ -1,5 +1,12 @@
 defmodule Core do
 
+  @moduledoc """
+  Provide the core environment for mal that holds all the pre-defined functions
+  """
+
+  @doc """
+  Create a new core environment. Intended to be called only once.
+  """
   @spec new_env :: Env.t()
   def new_env() do
     env = Env.new

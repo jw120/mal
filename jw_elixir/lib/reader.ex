@@ -26,9 +26,9 @@ defmodule Reader do
     val
   end
 
+  # Top-level internal reading function
   @spec read_form(String.t()) :: {Mal.t(), String.t()}
   defp read_form(""), do: {{:void}, ""}
-
   defp read_form(s) do
     case Token.peek(s) do
       "(" ->
@@ -37,11 +37,11 @@ defmodule Reader do
 
       "[" ->
         {contents, remainder} = read_vector(s)
-        {{:vector, list_to_vector(contents)}, remainder}
+        {{:vector, Seq.list_to_vector(contents)}, remainder}
 
       "{" ->
         {contents, remainder} = read_map(s)
-        {{:map, list_to_map(contents)}, remainder}
+        {{:hash_map, Seq.list_to_hash_map(contents)}, remainder}
 
       _ ->
         read_atom(s)
@@ -49,25 +49,25 @@ defmodule Reader do
   end
 
   @spec read_list(String.t()) :: {[Mal.t()], String.t()}
-  def read_list(s) do
+  defp read_list(s) do
     {"(", after_open} = Token.next(s)
     read_until(after_open, {:symbol, ")"})
   end
 
   @spec read_vector(String.t()) :: {[Mal.t()], String.t()}
-  def read_vector(s) do
+  defp read_vector(s) do
     {"[", after_open} = Token.next(s)
     read_until(after_open, {:symbol, "]"})
   end
 
   @spec read_map(String.t()) :: {[Mal.t()], String.t()}
-  def read_map(s) do
+  defp read_map(s) do
     {"{", after_open} = Token.next(s)
     read_until(after_open, {:symbol, "}"})
   end
 
   @spec read_until(String.t(), Mal.t()) :: {[Mal.t()], String.t()}
-  def read_until(s, closer) do
+  defp read_until(s, closer) do
     case read_form(s) do
       {^closer, after_closer} ->
         {[], after_closer}
@@ -82,7 +82,7 @@ defmodule Reader do
   end
 
   @spec read_atom(String.t()) :: {Mal.t(), String.t()}
-  def read_atom(s) do
+  defp read_atom(s) do
     {tok, after_tok} = Token.next(s)
 
     cond do
@@ -140,6 +140,7 @@ defmodule Reader do
     end
   end
 
+  # Remove slash escapes from a string
   @spec remove_escapes(String.t()) :: String.t()
   defp remove_escapes(s) do
     {new_s, final_in_escape} = String.codepoints(s)
@@ -157,19 +158,6 @@ defmodule Reader do
       true -> raise MalException, "EOF in escape sequence in remove_escapes"
       false -> new_s
     end
-  end
-
-  @spec list_to_vector([Mal.t]) :: map()
-  def list_to_vector(xs) do
-    Stream.zip(Stream.iterate(0, &(&1 + 1)), xs)
-      |> Map.new
-  end
-
-  @spec list_to_map([Mal.t]) :: map()
-  def list_to_map(xs) do
-    Enum.chunk_every(xs, 2)
-    |> Enum.map(fn [x, y] -> {x, y} end)
-    |> Map.new
   end
 
 end

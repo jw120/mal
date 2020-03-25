@@ -1,7 +1,10 @@
 defmodule Mal do
-  @typedoc """
-  Type for mal language values
+
+  @moduledoc """
+  Define the basic type for our language
   """
+
+  @typedoc "Type for mal language values"
   @type t ::
           {:string, String.t()}
           | {:symbol, String.t()}
@@ -14,28 +17,13 @@ defmodule Mal do
           | {:list, list(t)}
           # vector held as a map with keys 0, 1, 2...
           | {:vector, vector_map}
-          | {:map, map_map}
+          | {:hash_map, hash_map_map}
           | {:function, ([t] -> t)}
 
+  @typedoc "Elixir map used to hold a mal vector"
   @type vector_map :: %{optional(non_neg_integer()) => t}
-  @type map_map :: %{optional(t) => t}
 
-  end
+  @typedoc "Elixir map used to hold a mal hash-map"
+  @type hash_map_map :: %{optional(t) => t}
 
-defmodule MalException do
-  @moduledoc """
-  Exception type for our mal langauge. Either a plain string (for internal failures)
-  or a mal value (from mal's raise) can be used.
-  """
-
-  defexception [:val, :message]
-
-  @impl true
-  def exception(value) when is_bitstring(value) do
-    %MalException{val: {:string, value}, message: value}
-  end
-
-  def exception(value) do
-    %MalException{val: value, message: Printer.pr_str(value, true)}
-  end
 end
