@@ -17,10 +17,13 @@ defmodule Core do
     Env.set!(env, ">=", {:function, &Core.ge/1})
     Env.set!(env, "<", {:function, &Core.lt/1})
     Env.set!(env, "<=", {:function, &Core.le/1})
+    Env.set!(env, "=", {:function, &Core.mal_equal_wrapped/1})
     Env.set!(env, "prn", {:function, &Core.prn/1})
     Env.set!(env, "list", {:function, &Core.list/1})
     Env.set!(env, "list?", {:function, &Core.list?/1})
     Env.set!(env, "empty?", {:function, &Core.mal_empty?/1})
+    Env.set!(env, "count", {:function, &Core.mal_count/1})
+    Eval.eval(Reader.read_str("(def! not (fn* (a) (if a false true)))"), env)
     env
   end
 
@@ -56,9 +59,19 @@ defmodule Core do
   def le([{:number, x}, {:number, y}]), do: {:boolean, x <= y}
   def le(args), do: raise(MalException, "Bad arguments to <=: #{inspect(args)}")
 
-  #  @spec mal_equal?([Mal.t()]) :: Mal.t()
-  #  def mal_equal?([{:list, xs}, {:list, ys}]) do
-  # def divide(args), do: raise(MalException, "Bad arguments to /: #{inspect(args)}")
+  @spec mal_equal_wrapped([Mal.t()]) :: Mal.t()
+  def mal_equal_wrapped([x, y]), do: {:boolean, mal_equal?(x, y)}
+  def mal_equal_wrapped(args), do: raise(MalException, "Need two arguments for =: #{inspect(args)}")
+
+  @spec mal_equal?(Mal.t(), Mal.t()) :: boolean()
+  def mal_equal?({:list, xs}, {:list, ys}), do: list_equal?(xs, ys)
+  def mal_equal?({:list, xs}, {:vector, ys}), do: list_equal?(xs, Seq.vector_to_list(ys))
+  def mal_equal?({:vector, xs}, {:list, ys}), do: list_equal?(Seq.vector_to_list(xs), ys)
+  def mal_equal?({:vector, xs}, {:vector, ys}), do: list_equal?(Seq.vector_to_list(xs), Seq.vector_to_list(ys))
+  def mal_equal?(a, b), do: a == b
+  defp list_equal?([x | xs], [y | ys]), do: mal_equal?(x, y) && list_equal?(xs, ys)
+  defp list_equal?([], []), do: true
+  defp list_equal?(_, _), do: false
 
   @spec prn([Mal.t()]) :: {nil}
   def prn([x | _]) do
@@ -75,15 +88,18 @@ defmodule Core do
   def list(xs), do: {:list, xs}
 
   @spec list?([Mal.t()]) :: Mal.t()
-  def list?({:list, _}), do: {:boolean, true}
-  def list?(_), do: {:boolean, false}
+  def list?([{:list, _}]), do: {:boolean, true}
+  def list?([_]), do: {:boolean, false}
+  def list?(args), do: raise(MalException, "list? expects one argument: : #{inspect(args)}")
 
-  @spec mal_empty?({:list, [Mal.t()]}) :: {:boolean, boolean()}
-  def mal_empty?({:list, []}), do: {:boolean, true}
-  def mal_empty?({:list, _}), do: {:boolean, false}
-  def mal_empty?(_), do: raise(MalException, "Non-list passed to empty?")
+  @spec mal_empty?([{:list, [Mal.t()]}]) :: {:boolean, boolean()}
+  def mal_empty?([{:list, xs}]), do: {:boolean, Enum.empty?(xs)}
+  def mal_empty?([{:vector, xs}]), do: {:boolean, Enum.empty?(xs)}
+  def mal_empty?(args), do: raise(MalException, "empty? expects one sequence argument: #{inspect(args)}")
 
-  @spec mal_count({:list, [Mal.t()]}) :: {:number, number()}
-  def mal_count({:list, xs}), do: {:number, length(xs)}
-  def mal_count(_), do: raise(MalException, "Non-list passed to count")
+  @spec mal_count([{:list, [Mal.t()]} | {:nil}]) :: {:number, number()}
+  def mal_count([{:list, xs}]), do: {:number, length(xs)}
+  def mal_count([{:vector, xs}]), do: {:number, map_size(xs)}
+  def mal_count([{:nil}]), do: {:number, 0}
+  def mal_count(args), do: raise(MalException, "count expects one sequence argument: #{inspect(args)}")
 end

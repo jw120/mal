@@ -26,6 +26,23 @@ defmodule SpecialForm do
   end
 
   @doc """
+  Handle the fn* special form
+  """
+  @spec fn_form([Mal.t()], Env.t()) :: Mal.t()
+  def fn_form([{:list, binds}, val], env) do
+    closure = fn args ->
+      closure_env = Env.new(env) |> Env.bind!(binds, args)
+      Eval.eval(val, closure_env)
+    end
+    {:function, closure}
+  end
+  def fn_form([{:vector, vector_binds}, val], env) do
+    binds = Seq.vector_to_list(vector_binds)
+    fn_form([{:list, binds}, val], env)
+  end
+  def fn_form(_, _), do: raise(MalException, "Bad arguments to fn*")
+
+  @doc """
   Handle the if special form
   """
   @spec if_form([Mal.t()], Env.t()) :: Mal.t()

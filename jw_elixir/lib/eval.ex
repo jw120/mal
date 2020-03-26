@@ -19,6 +19,9 @@ defmodule Eval do
       {:list, [{:symbol, "do"} | rest]} ->
         SpecialForm.do_form(rest, env)
 
+      {:list, [{:symbol, "fn*"} | rest]} ->
+        SpecialForm.fn_form(rest, env)
+
       {:list, [{:symbol, "if"} | rest]} ->
         SpecialForm.if_form(rest, env)
 
