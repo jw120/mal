@@ -3,6 +3,12 @@ defmodule Core do
   Provide the core environment for mal that holds all the pre-defined functions
   """
 
+  # Functions defined in mal code
+  @mal_prelude [
+    "(def! not (fn* (a) (if a false true)))",
+    ~S/(def! load-file (fn* (f) (eval (read-string (str "(do " (slurp f) "\nnil)")))))/
+  ]
+
   @doc """
   Create a new core environment. Intended to be called only once.
   """
@@ -11,73 +17,77 @@ defmodule Core do
     env = Env.new()
 
     # Numeric and logical functions
-    Env.set!(env, "+", {:function, wrap_int2_int(&(&1 + &2), "+")})
-    Env.set!(env, "-", {:function, wrap_int2_int(&(&1 - &2), "-")})
-    Env.set!(env, "*", {:function, wrap_int2_int(&(&1 * &2), "*")})
-    Env.set!(env, "/", {:function, wrap_int2_int(&div(&1, &2), "/")})
-    Env.set!(env, ">", {:function, wrap_int2_bool(&(&1 > &2), ">")})
-    Env.set!(env, ">=", {:function, wrap_int2_bool(&(&1 >= &2), ">=")})
-    Env.set!(env, "<", {:function, wrap_int2_bool(&(&1 < &2), "<")})
-    Env.set!(env, "<=", {:function, wrap_int2_bool(&(&1 <= &2), "<=")})
+    set_wrapped_int2!(env, "+", &{:number, &1 + &2})
+    set_wrapped_int2!(env, "-", &{:number, &1 - &2})
+    set_wrapped_int2!(env, "*", &{:number, &1 * &2})
+    set_wrapped_int2!(env, "/", &{:number, div(&1, &2)})
+    set_wrapped_int2!(env, ">", &{:boolean, (&1 > &2)})
+    set_wrapped_int2!(env, ">=", &{:boolean, (&1 >= &2)})
+    set_wrapped_int2!(env, "<", &{:boolean, (&1 < &2)})
+    set_wrapped_int2!(env, "<=", &{:boolean, (&1 <= &2)})
 
     # IO functions
     Env.set!(env, "prn", {:function, &mal_prn/1})
     Env.set!(env, "println", {:function, &mal_println/1})
     Env.set!(env, "pr-str", {:function, &mal_pr_str/1})
     Env.set!(env, "str", {:function, &mal_str/1})
+    set_wrapped_str1!(env, "read-string", &Reader.read_str/1)
+    set_wrapped_str1!(env, "slurp", &mal_slurp/1)
 
     # Sequence functions
     Env.set!(env, "list", {:function, &{:list, &1}})
-    Env.set!(env, "list?", {:function, wrap_mal1_bool(&mal_list?/1, "list?")})
-    Env.set!(env, "empty?", {:function, &Core.mal_empty?/1})
-    Env.set!(env, "count", {:function, &Core.mal_count/1})
+    Env.set!(env, "empty?", {:function, &mal_empty?/1})
+    Env.set!(env, "count", {:function, &mal_count/1})
+    set_wrapped_mal1!(env, "list?", &({:boolean, mal_list?(&1)}))
 
     # Other functions
-    Env.set!(env, "=", {:function, wrap_mal2_bool(&mal_equal?/2, "=")})
+    set_wrapped_mal2_bool!(env, "=", &mal_equal?/2)
+    set_wrapped_mal1!(env, "eval", &(Eval.eval(&1, env)))
 
     # Mal-defined functions
-    Eval.eval(Reader.read_str("(def! not (fn* (a) (if a false true)))"), env)
+    @mal_prelude
+      |> Enum.each(&Eval.eval(Reader.read_str(&1), env))
 
     env
   end
 
   # To save boilerplate we use wrapping functions to convert simple elixir functions
-  # to functions which act on a list of mal types
+  # to functions which act on a list of mal types.
 
-  @typep int2_int :: (integer(), integer() -> integer())
-  @spec wrap_int2_int(int2_int, String.t()) :: Mal.closure()
-  defp wrap_int2_int(f, mal_name) do
-    fn
-      [{:number, x}, {:number, y}] -> {:number, f.(x, y)}
+  # Add to the environment a wrapped version of an int x int -> mal function
+  @spec set_wrapped_int2!(Env.t(), String.t(), (integer(), integer() -> Mal.t())) :: Env.t
+  defp set_wrapped_int2!(env, mal_name, f) do
+    Env.set!(env, mal_name, {:function, fn
+      [{:number, x}, {:number, y}] -> f.(x, y)
       args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
-    end
+    end})
   end
 
-  @typep int2_bool :: (boolean(), boolean() -> boolean())
-  @spec wrap_int2_bool(int2_bool, String.t()) :: Mal.closure()
-  defp wrap_int2_bool(f, mal_name) do
-    fn
-      [{:number, x}, {:number, y}] -> {:boolean, f.(x, y)}
-      args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
-    end
-  end
-
-  @typep mal2_bool :: (Mal.t(), Mal.t() -> boolean())
-  @spec wrap_mal2_bool(mal2_bool, String.t()) :: Mal.closure()
-  defp wrap_mal2_bool(f, mal_name) do
-    fn
+  # This adds a mal x mal -> bool function (used for mal_equal?)
+  @spec set_wrapped_mal2_bool!(Env.t, String.t(), (Mal.t, Mal.t -> boolean())) :: Env.t
+  defp set_wrapped_mal2_bool!(env, mal_name, f) do
+    Env.set!(env, mal_name, {:function, fn
       [x, y] -> {:boolean, f.(x, y)}
       args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
-    end
+    end})
   end
 
-  @typep mal1_bool :: (Mal.t() -> boolean())
-  @spec wrap_mal1_bool(mal1_bool, String.t()) :: Mal.closure()
-  defp wrap_mal1_bool(f, mal_name) do
-    fn
-      [x] -> {:boolean, f.(x)}
+  # This adds a mal -> mal function
+  @spec set_wrapped_mal1!(Env.t, String.t(), (Mal.t() -> Mal.t())) :: Env.t
+  defp set_wrapped_mal1!(env, mal_name, f) do
+    Env.set!(env, mal_name, {:function, fn
+      [x] -> f.(x)
       args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
-    end
+    end})
+  end
+
+  # This adds a string -> mal function
+  @spec set_wrapped_str1!(Env.t, String.t(), (String.t() -> Mal.t())) :: Env.t
+  defp set_wrapped_str1!(env, mal_name, f) do
+    Env.set!(env, mal_name, {:function, fn
+      [{:string, s}] -> f.(s)
+      args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
+    end})
   end
 
   # IO functions
@@ -116,6 +126,13 @@ defmodule Core do
     |> Enum.map(&Printer.pr_str(&1, false))
     |> Enum.join("")
     |> (fn s -> {:string, s} end).()
+  end
+
+  @spec mal_slurp(String.t()) :: {:string, String.t()}
+  def mal_slurp(file_name) do
+    {:ok, file} = File.open(file_name, [:read])
+    contents = IO.read(file, :all)
+    {:string, contents}
   end
 
   #
