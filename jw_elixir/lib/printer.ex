@@ -19,7 +19,11 @@ defmodule Printer do
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   def pr_str(x, print_readably) do
     case x do
-      {:string, s} -> "\"" <> string_escape(s, print_readably) <> "\""
+      {:string, s} ->
+        case print_readably do
+          true -> "\"" <> string_escape(s) <> "\""
+          false -> s
+        end
       {:symbol, s} -> s
       {:keyword, s} -> ":" <> s
       {:number, n} -> Integer.to_string(n)
@@ -35,10 +39,8 @@ defmodule Printer do
   end
 
   # Add slash escapes to a string
-  @spec string_escape(String.t(), boolean()) :: String.t()
-  defp string_escape(s, false), do: s
-
-  defp string_escape(s, true) do
+  @spec string_escape(String.t()) :: String.t()
+  defp string_escape(s) do
     s
     |> String.codepoints()
     |> Enum.map(fn c ->

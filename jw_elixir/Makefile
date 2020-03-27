@@ -1,6 +1,7 @@
 .PHONY: all run test step-test repl typecheck
 
-all: typecheck lint test step-test
+#all: typecheck lint test step-test
+all: typecheck test step-test
 
 CURRENT_STEP = step3_env.exs
 

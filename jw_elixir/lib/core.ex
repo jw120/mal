@@ -9,6 +9,8 @@ defmodule Core do
   @spec new_env :: Env.t()
   def new_env do
     env = Env.new()
+
+    # Numeric and logical functions
     Env.set!(env, "+", {:function, wrap_int2_int(&(&1 + &2), "+")})
     Env.set!(env, "-", {:function, wrap_int2_int(&(&1 - &2), "-")})
     Env.set!(env, "*", {:function, wrap_int2_int(&(&1 * &2), "*")})
@@ -17,13 +19,25 @@ defmodule Core do
     Env.set!(env, ">=", {:function, wrap_int2_bool(&(&1 >= &2), ">=")})
     Env.set!(env, "<", {:function, wrap_int2_bool(&(&1 < &2), "<")})
     Env.set!(env, "<=", {:function, wrap_int2_bool(&(&1 <= &2), "<=")})
-    Env.set!(env, "=", {:function, wrap_mal2_bool(&mal_equal?/2, "=")})
-    Env.set!(env, "prn", {:function, &Core.prn/1})
-    Env.set!(env, "list", {:function, &Core.list/1})
-    Env.set!(env, "list?", {:function, &Core.list?/1})
+
+    # IO functions
+    Env.set!(env, "prn", {:function, &mal_prn/1})
+    Env.set!(env, "println", {:function, &mal_println/1})
+    Env.set!(env, "pr-str", {:function, &mal_pr_str/1})
+    Env.set!(env, "str", {:function, &mal_str/1})
+
+    # Sequence functions
+    Env.set!(env, "list", {:function, &({:list, &1})})
+    Env.set!(env, "list?", {:function, wrap_mal1_bool(&mal_list?/1, "list?")})
     Env.set!(env, "empty?", {:function, &Core.mal_empty?/1})
     Env.set!(env, "count", {:function, &Core.mal_count/1})
+
+    # Other functions
+    Env.set!(env, "=", {:function, wrap_mal2_bool(&mal_equal?/2, "=")})
+
+    # Mal-defined functions
     Eval.eval(Reader.read_str("(def! not (fn* (a) (if a false true)))"), env)
+
     env
   end
 
@@ -35,7 +49,7 @@ defmodule Core do
   defp wrap_int2_int(f, mal_name) do
     fn
       [{:number, x}, {:number, y}] -> {:number, f.(x, y)}
-      args -> raise(MalException, "Bad arguments to " <> mal_name <> ": #{inspect(args)}")
+      args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
     end
   end
 
@@ -44,7 +58,7 @@ defmodule Core do
   defp wrap_int2_bool(f, mal_name) do
     fn
       [{:number, x}, {:number, y}] -> {:boolean, f.(x, y)}
-      args -> raise(MalException, "Bad arguments to " <> mal_name <> ": #{inspect(args)}")
+      args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
     end
   end
 
@@ -53,38 +67,65 @@ defmodule Core do
   defp wrap_mal2_bool(f, mal_name) do
     fn
       [x, y] -> {:boolean, f.(x, y)}
-      args -> raise(MalException, "Bad arguments to " <> mal_name <> ": #{inspect(args)}")
+      args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
     end
   end
 
-  @spec mal_equal?(Mal.t(), Mal.t()) :: boolean()
-  def mal_equal?({:list, xs}, {:list, ys}), do: list_equal?(xs, ys)
-  def mal_equal?({:list, xs}, {:vector, ys}), do: list_equal?(xs, Seq.vector_to_list(ys))
-  def mal_equal?({:vector, xs}, {:list, ys}), do: list_equal?(Seq.vector_to_list(xs), ys)
-  def mal_equal?({:vector, xs}, {:vector, ys}), do: list_equal?(Seq.vector_to_list(xs), Seq.vector_to_list(ys))
-  def mal_equal?(a, b), do: a == b
-  defp list_equal?([x | xs], [y | ys]), do: mal_equal?(x, y) && list_equal?(xs, ys)
-  defp list_equal?([], []), do: true
-  defp list_equal?(_, _), do: false
+  @typep mal1_bool :: (Mal.t() -> boolean())
+  @spec wrap_mal1_bool(mal1_bool, String.t()) :: Mal.closure()
+  defp wrap_mal1_bool(f, mal_name) do
+    fn
+      [x] -> {:boolean, f.(x)}
+      args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
+    end
+  end
 
-  @spec prn([Mal.t()]) :: {nil}
-  def prn([x | _]) do
-    x
-    |> Printer.pr_str(true)
+  # IO functions
+
+  @spec mal_prn([Mal.t()]) :: {nil}
+  def mal_prn(xs) do
+    xs
+    |> Enum.map(&(Printer.pr_str(&1, true)))
+    |> Enum.join(" ")
     |> IO.puts()
-
     {nil}
   end
 
-  def prn([]), do: raise(MalException, "No argument for prn")
+  @spec mal_println([Mal.t()]) :: {nil}
+  def mal_println(xs) do
+    xs
+    |> Enum.map(&(Printer.pr_str(&1, false)))
+    |> Enum.join(" ")
+    |> IO.puts()
+    {nil}
+  end
 
-  @spec list([Mal.t()]) :: Mal.t()
-  def list(xs), do: {:list, xs}
+  @spec mal_pr_str([Mal.t()]) :: {:string, String.t()}
+  def mal_pr_str(xs) do
+    xs
+    |> Enum.map(&(Printer.pr_str(&1, true)))
+    |> Enum.join(" ")
+    |> (fn s -> {:string, s} end).()
+  end
 
-  @spec list?([Mal.t()]) :: Mal.t()
-  def list?([{:list, _}]), do: {:boolean, true}
-  def list?([_]), do: {:boolean, false}
-  def list?(args), do: raise(MalException, "list? expects one argument: : #{inspect(args)}")
+  @spec mal_str([Mal.t()]) :: {:string, String.t()}
+  def mal_str(xs) do
+    xs
+    |> Enum.map(&(Printer.pr_str(&1, false)))
+    |> Enum.join("")
+    |> (fn s -> {:string, s} end).()
+  end
+
+  #
+  # Sequence functions
+  #
+
+#  @spec list([Mal.t()]) :: Mal.t()
+ # def list(xs), do: {:list, xs}
+
+  @spec mal_list?(Mal.t()) :: boolean()
+  def mal_list?({:list, _}), do: true
+  def mal_list?(_), do: false
 
   @spec mal_empty?([{:list, [Mal.t()]}]) :: {:boolean, boolean()}
   def mal_empty?([{:list, xs}]), do: {:boolean, Enum.empty?(xs)}
@@ -96,4 +137,20 @@ defmodule Core do
   def mal_count([{:vector, xs}]), do: {:number, map_size(xs)}
   def mal_count([{:nil}]), do: {:number, 0}
   def mal_count(args), do: raise(MalException, "count expects one sequence argument: #{inspect(args)}")
+
+  #
+  # Other functions
+  #
+
+  @spec mal_equal?(Mal.t(), Mal.t()) :: boolean()
+  def mal_equal?({:list, xs}, {:list, ys}), do: list_equal?(xs, ys)
+  def mal_equal?({:list, xs}, {:vector, ys}), do: list_equal?(xs, Seq.vector_to_list(ys))
+  def mal_equal?({:vector, xs}, {:list, ys}), do: list_equal?(Seq.vector_to_list(xs), ys)
+  def mal_equal?({:vector, xs}, {:vector, ys}), do: list_equal?(Seq.vector_to_list(xs), Seq.vector_to_list(ys))
+  def mal_equal?(a, b), do: a == b
+  defp list_equal?([x | xs], [y | ys]), do: mal_equal?(x, y) && list_equal?(xs, ys)
+  defp list_equal?([], []), do: true
+  defp list_equal?(_, _), do: false
+
 end
+

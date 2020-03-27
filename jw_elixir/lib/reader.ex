@@ -128,7 +128,7 @@ defmodule Reader do
       Regex.match?(~r/^[\[\]{}()'`~@]$/, tok) ->
         {{:symbol, tok}, after_tok}
 
-      Regex.match?(~r/^\"[^\"]*\"$/, tok) ->
+      Regex.match?(~r/^".*"$/, tok) ->
         {{:string, remove_escapes(String.slice(tok, 1, String.length(tok) - 2))}, after_tok}
 
       Regex.match?(~r/^\"[^\"]*$/, tok) ->
@@ -152,6 +152,7 @@ defmodule Reader do
         case {x, in_escape} do
           {"\\", true} -> {acc <> "\\", false}
           {"n", true} -> {acc <> "\n", false}
+          {"\"", true} -> {acc <> "\"", false}
           {_, true} -> raise MalException, "Bad escape sequence in remove_escapes"
           {"\\", false} -> {acc, true}
           {_, false} -> {acc <> x, false}
