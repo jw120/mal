@@ -9,15 +9,15 @@ defmodule Core do
   @spec new_env :: Env.t()
   def new_env do
     env = Env.new()
-    Env.set!(env, "+", {:function, &Core.add/1})
-    Env.set!(env, "-", {:function, &Core.subtract/1})
-    Env.set!(env, "*", {:function, &Core.multiply/1})
-    Env.set!(env, "/", {:function, &Core.divide/1})
-    Env.set!(env, ">", {:function, &Core.gt/1})
-    Env.set!(env, ">=", {:function, &Core.ge/1})
-    Env.set!(env, "<", {:function, &Core.lt/1})
-    Env.set!(env, "<=", {:function, &Core.le/1})
-    Env.set!(env, "=", {:function, &Core.mal_equal_wrapped/1})
+    Env.set!(env, "+", {:function, wrap_int2_int(&(&1 + &2), "+")})
+    Env.set!(env, "-", {:function, wrap_int2_int(&(&1 - &2), "-")})
+    Env.set!(env, "*", {:function, wrap_int2_int(&(&1 * &2), "*")})
+    Env.set!(env, "/", {:function, wrap_int2_int(&(div(&1, &2)), "/")})
+    Env.set!(env, ">", {:function, wrap_int2_bool(&(&1 > &2), ">")})
+    Env.set!(env, ">=", {:function, wrap_int2_bool(&(&1 >= &2), ">=")})
+    Env.set!(env, "<", {:function, wrap_int2_bool(&(&1 < &2), "<")})
+    Env.set!(env, "<=", {:function, wrap_int2_bool(&(&1 <= &2), "<=")})
+    Env.set!(env, "=", {:function, wrap_mal2_bool(&mal_equal?/2, "=")})
     Env.set!(env, "prn", {:function, &Core.prn/1})
     Env.set!(env, "list", {:function, &Core.list/1})
     Env.set!(env, "list?", {:function, &Core.list?/1})
@@ -27,41 +27,35 @@ defmodule Core do
     env
   end
 
-  @spec add([Mal.t()]) :: Mal.t()
-  def add([{:number, x}, {:number, y}]), do: {:number, x + y}
-  def add(args), do: raise(MalException, "Bad arguments to +: #{inspect(args)}")
+  # To save boilerplate we use wrapping functions to convert simple elixir functions
+  # to functions which act on a list of mal types
 
-  @spec subtract([Mal.t()]) :: Mal.t()
-  def subtract([{:number, x}, {:number, y}]), do: {:number, x - y}
-  def subtract(args), do: raise(MalException, "Bad arguments to -: #{inspect(args)}")
+  @typep int2_int :: (integer(), integer() -> integer())
+  @spec wrap_int2_int(int2_int, String.t()) :: Mal.closure()
+  defp wrap_int2_int(f, mal_name) do
+    fn
+      [{:number, x}, {:number, y}] -> {:number, f.(x, y)}
+      args -> raise(MalException, "Bad arguments to " <> mal_name <> ": #{inspect(args)}")
+    end
+  end
 
-  @spec multiply([Mal.t()]) :: Mal.t()
-  def multiply([{:number, x}, {:number, y}]), do: {:number, x * y}
-  def multiply(args), do: raise(MalException, "Bad arguments to *: #{inspect(args)}")
+  @typep int2_bool :: (boolean(), boolean() -> boolean())
+  @spec wrap_int2_bool(int2_bool, String.t()) :: Mal.closure()
+  defp wrap_int2_bool(f, mal_name) do
+    fn
+      [{:number, x}, {:number, y}] -> {:boolean, f.(x, y)}
+      args -> raise(MalException, "Bad arguments to " <> mal_name <> ": #{inspect(args)}")
+    end
+  end
 
-  @spec divide([Mal.t()]) :: Mal.t()
-  def divide([{:number, x}, {:number, y}]), do: {:number, div(x, y)}
-  def divide(args), do: raise(MalException, "Bad arguments to /: #{inspect(args)}")
-
-  @spec gt([Mal.t()]) :: Mal.t()
-  def gt([{:number, x}, {:number, y}]), do: {:boolean, x > y}
-  def gt(args), do: raise(MalException, "Bad arguments to >: #{inspect(args)}")
-
-  @spec ge([Mal.t()]) :: Mal.t()
-  def ge([{:number, x}, {:number, y}]), do: {:boolean, x >= y}
-  def ge(args), do: raise(MalException, "Bad arguments to >=: #{inspect(args)}")
-
-  @spec lt([Mal.t()]) :: Mal.t()
-  def lt([{:number, x}, {:number, y}]), do: {:boolean, x < y}
-  def lt(args), do: raise(MalException, "Bad arguments to <: #{inspect(args)}")
-
-  @spec le([Mal.t()]) :: Mal.t()
-  def le([{:number, x}, {:number, y}]), do: {:boolean, x <= y}
-  def le(args), do: raise(MalException, "Bad arguments to <=: #{inspect(args)}")
-
-  @spec mal_equal_wrapped([Mal.t()]) :: Mal.t()
-  def mal_equal_wrapped([x, y]), do: {:boolean, mal_equal?(x, y)}
-  def mal_equal_wrapped(args), do: raise(MalException, "Need two arguments for =: #{inspect(args)}")
+  @typep mal2_bool :: (Mal.t(), Mal.t() -> boolean())
+  @spec wrap_mal2_bool(mal2_bool, String.t()) :: Mal.closure()
+  defp wrap_mal2_bool(f, mal_name) do
+    fn
+      [x, y] -> {:boolean, f.(x, y)}
+      args -> raise(MalException, "Bad arguments to " <> mal_name <> ": #{inspect(args)}")
+    end
+  end
 
   @spec mal_equal?(Mal.t(), Mal.t()) :: boolean()
   def mal_equal?({:list, xs}, {:list, ys}), do: list_equal?(xs, ys)

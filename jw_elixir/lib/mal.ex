@@ -17,7 +17,10 @@ defmodule Mal do
           # vector held as a map with keys 0, 1, 2...
           | {:vector, vector_map}
           | {:hash_map, hash_map_map}
-          | {:function, ([t] -> t)}
+          | {:function, closure}
+
+  @typedoc "Type for a mal function"
+  @type closure :: ([t] -> t)
 
   @typedoc "Elixir map used to hold a mal vector"
   @type vector_map :: %{optional(non_neg_integer()) => t}
