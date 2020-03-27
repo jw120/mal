@@ -14,7 +14,7 @@ defmodule Core do
     Env.set!(env, "+", {:function, wrap_int2_int(&(&1 + &2), "+")})
     Env.set!(env, "-", {:function, wrap_int2_int(&(&1 - &2), "-")})
     Env.set!(env, "*", {:function, wrap_int2_int(&(&1 * &2), "*")})
-    Env.set!(env, "/", {:function, wrap_int2_int(&(div(&1, &2)), "/")})
+    Env.set!(env, "/", {:function, wrap_int2_int(&div(&1, &2), "/")})
     Env.set!(env, ">", {:function, wrap_int2_bool(&(&1 > &2), ">")})
     Env.set!(env, ">=", {:function, wrap_int2_bool(&(&1 >= &2), ">=")})
     Env.set!(env, "<", {:function, wrap_int2_bool(&(&1 < &2), "<")})
@@ -27,7 +27,7 @@ defmodule Core do
     Env.set!(env, "str", {:function, &mal_str/1})
 
     # Sequence functions
-    Env.set!(env, "list", {:function, &({:list, &1})})
+    Env.set!(env, "list", {:function, &{:list, &1}})
     Env.set!(env, "list?", {:function, wrap_mal1_bool(&mal_list?/1, "list?")})
     Env.set!(env, "empty?", {:function, &Core.mal_empty?/1})
     Env.set!(env, "count", {:function, &Core.mal_count/1})
@@ -85,25 +85,27 @@ defmodule Core do
   @spec mal_prn([Mal.t()]) :: {nil}
   def mal_prn(xs) do
     xs
-    |> Enum.map(&(Printer.pr_str(&1, true)))
+    |> Enum.map(&Printer.pr_str(&1, true))
     |> Enum.join(" ")
     |> IO.puts()
+
     {nil}
   end
 
   @spec mal_println([Mal.t()]) :: {nil}
   def mal_println(xs) do
     xs
-    |> Enum.map(&(Printer.pr_str(&1, false)))
+    |> Enum.map(&Printer.pr_str(&1, false))
     |> Enum.join(" ")
     |> IO.puts()
+
     {nil}
   end
 
   @spec mal_pr_str([Mal.t()]) :: {:string, String.t()}
   def mal_pr_str(xs) do
     xs
-    |> Enum.map(&(Printer.pr_str(&1, true)))
+    |> Enum.map(&Printer.pr_str(&1, true))
     |> Enum.join(" ")
     |> (fn s -> {:string, s} end).()
   end
@@ -111,7 +113,7 @@ defmodule Core do
   @spec mal_str([Mal.t()]) :: {:string, String.t()}
   def mal_str(xs) do
     xs
-    |> Enum.map(&(Printer.pr_str(&1, false)))
+    |> Enum.map(&Printer.pr_str(&1, false))
     |> Enum.join("")
     |> (fn s -> {:string, s} end).()
   end
@@ -120,8 +122,8 @@ defmodule Core do
   # Sequence functions
   #
 
-#  @spec list([Mal.t()]) :: Mal.t()
- # def list(xs), do: {:list, xs}
+  #  @spec list([Mal.t()]) :: Mal.t()
+  # def list(xs), do: {:list, xs}
 
   @spec mal_list?(Mal.t()) :: boolean()
   def mal_list?({:list, _}), do: true
@@ -130,13 +132,17 @@ defmodule Core do
   @spec mal_empty?([{:list, [Mal.t()]}]) :: {:boolean, boolean()}
   def mal_empty?([{:list, xs}]), do: {:boolean, Enum.empty?(xs)}
   def mal_empty?([{:vector, xs}]), do: {:boolean, Enum.empty?(xs)}
-  def mal_empty?(args), do: raise(MalException, "empty? expects one sequence argument: #{inspect(args)}")
 
-  @spec mal_count([{:list, [Mal.t()]} | {:nil}]) :: {:number, number()}
+  def mal_empty?(args),
+    do: raise(MalException, "empty? expects one sequence argument: #{inspect(args)}")
+
+  @spec mal_count([{:list, [Mal.t()]} | {nil}]) :: {:number, number()}
   def mal_count([{:list, xs}]), do: {:number, length(xs)}
   def mal_count([{:vector, xs}]), do: {:number, map_size(xs)}
-  def mal_count([{:nil}]), do: {:number, 0}
-  def mal_count(args), do: raise(MalException, "count expects one sequence argument: #{inspect(args)}")
+  def mal_count([{nil}]), do: {:number, 0}
+
+  def mal_count(args),
+    do: raise(MalException, "count expects one sequence argument: #{inspect(args)}")
 
   #
   # Other functions
@@ -146,11 +152,12 @@ defmodule Core do
   def mal_equal?({:list, xs}, {:list, ys}), do: list_equal?(xs, ys)
   def mal_equal?({:list, xs}, {:vector, ys}), do: list_equal?(xs, Seq.vector_to_list(ys))
   def mal_equal?({:vector, xs}, {:list, ys}), do: list_equal?(Seq.vector_to_list(xs), ys)
-  def mal_equal?({:vector, xs}, {:vector, ys}), do: list_equal?(Seq.vector_to_list(xs), Seq.vector_to_list(ys))
+
+  def mal_equal?({:vector, xs}, {:vector, ys}),
+    do: list_equal?(Seq.vector_to_list(xs), Seq.vector_to_list(ys))
+
   def mal_equal?(a, b), do: a == b
   defp list_equal?([x | xs], [y | ys]), do: mal_equal?(x, y) && list_equal?(xs, ys)
   defp list_equal?([], []), do: true
   defp list_equal?(_, _), do: false
-
 end
-

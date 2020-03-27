@@ -24,17 +24,39 @@ defmodule Printer do
           true -> "\"" <> string_escape(s) <> "\""
           false -> s
         end
-      {:symbol, s} -> s
-      {:keyword, s} -> ":" <> s
-      {:number, n} -> Integer.to_string(n)
-      {:boolean, true} -> "true"
-      {:boolean, false} -> "false"
-      {nil} -> "nil"
-      {:function, _} -> "<function>"
-      {:list, xs} -> "(" <> print_and_join(xs, print_readably) <> ")"
-      {:vector, m} -> "[" <> print_and_join(Seq.vector_to_list(m), print_readably) <> "]"
-      {:hash_map, m} -> "{" <> print_and_join(Seq.hash_map_to_list(m), print_readably) <> "}"
-      _ -> raise "Failure in pr_str: Unknown type in pr_str #{inspect(x)}"
+
+      {:symbol, s} ->
+        s
+
+      {:keyword, s} ->
+        ":" <> s
+
+      {:number, n} ->
+        Integer.to_string(n)
+
+      {:boolean, true} ->
+        "true"
+
+      {:boolean, false} ->
+        "false"
+
+      {nil} ->
+        "nil"
+
+      {:function, _} ->
+        "<function>"
+
+      {:list, xs} ->
+        "(" <> print_and_join(xs, print_readably) <> ")"
+
+      {:vector, m} ->
+        "[" <> print_and_join(Seq.vector_to_list(m), print_readably) <> "]"
+
+      {:hash_map, m} ->
+        "{" <> print_and_join(Seq.hash_map_to_list(m), print_readably) <> "}"
+
+      _ ->
+        raise "Failure in pr_str: Unknown type in pr_str #{inspect(x)}"
     end
   end
 

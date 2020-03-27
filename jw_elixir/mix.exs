@@ -21,8 +21,8 @@ defmodule JwElixir.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
-      {:credo, "~> 1.3", only: [:dev, :test], runtime: false}
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false}
+      #      {:credo, "~> 1.3", only: [:dev, :test], runtime: false}
     ]
   end
 end

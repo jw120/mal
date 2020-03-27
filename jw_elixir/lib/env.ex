@@ -77,9 +77,14 @@ defmodule Env do
 
   @doc """
   Bind a list of symbols and a list of values in the given environment. Used to
-  implement fn*.
+  implement fn*. The & symbol means to bind the next-symbol to a list of all
+  remaining bindings
   """
   @spec bind!(t, [Mal.t()], [Mal.t()]) :: t
+  def bind!(env, [{:symbol, "&"} | [{:symbol, rest_bind}]], exprs) do
+    set!(env, rest_bind, {:list, exprs})
+  end
+
   def bind!(env, [{:symbol, s} | other_syms], [x | other_exprs]) do
     set!(env, s, x)
     bind!(env, other_syms, other_exprs)

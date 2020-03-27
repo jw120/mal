@@ -1,9 +1,13 @@
 # Elixir implementation of mal
 
 TODO
-- Update docs and doctests
+- Try exdoc
+
+Maybe macros instead of wrap functions in core?
 
 Choices
  - Vectors as maps
  - Environments (and atoms?) with ETS
+
+  Be careful with ^ and $ as they match start/end of line, not string endings. If you want to match the whole string use: \A and \z. [link]
 

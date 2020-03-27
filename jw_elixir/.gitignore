@@ -24,3 +24,5 @@ jw_elixir-*.tar
 
 # Ignore LS files
 .elixir_ls
+
+mix.lock
