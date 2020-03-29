@@ -132,7 +132,8 @@ defmodule Reader do
       Regex.match?(~r/^[\[\]{}()'`~@]$/, tok) ->
         {{:symbol, tok}, after_tok}
 
-      Regex.match?(~r/^".*"$/s, tok) -> # Note /s makes . match include newlines
+      # Note /s makes . match include newlines
+      Regex.match?(~r/^".*"$/s, tok) ->
         {{:string, remove_escapes(String.slice(tok, 1, String.length(tok) - 2))}, after_tok}
 
       Regex.match?(~r/^\"[^\"]*$/, tok) ->

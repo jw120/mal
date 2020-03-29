@@ -1,7 +1,7 @@
-.PHONY: all run test step-test repl typecheck
+.PHONY: all run repl format lint test step-test repl typecheck
 
-#all: typecheck lint test step-test
-all: typecheck test step-test
+all: typecheck lint format test step-test
+#all: typecheck format test step-test
 
 CURRENT_STEP = step6_file.exs
 
@@ -10,6 +10,9 @@ run:
 
 repl:
 	-iex -S mix
+
+format:
+	mix format
 
 lint:
 	mix credo list --format=oneline -a

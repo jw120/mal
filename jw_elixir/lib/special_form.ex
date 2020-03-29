@@ -31,7 +31,7 @@ defmodule Eval.SpecialForm do
   @spec fn_form([Mal.t()], Env.t()) :: Mal.t()
   def fn_form([{:list, binds}, val], env) do
     closure = fn args ->
-      closure_env = Env.new(env) |> Env.bind!(binds, args)
+      closure_env = env |> Env.new() |> Env.bind!(binds, args)
       Eval.eval(val, closure_env)
     end
 

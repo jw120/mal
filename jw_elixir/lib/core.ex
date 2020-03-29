@@ -113,7 +113,7 @@ defmodule Core do
   # IO functions
 
   @spec mal_prn([Mal.t()]) :: {nil}
-  def mal_prn(xs) do
+  defp mal_prn(xs) do
     xs
     |> Enum.map(&Printer.pr_str(&1, true))
     |> Enum.join(" ")
@@ -123,7 +123,7 @@ defmodule Core do
   end
 
   @spec mal_println([Mal.t()]) :: {nil}
-  def mal_println(xs) do
+  defp mal_println(xs) do
     xs
     |> Enum.map(&Printer.pr_str(&1, false))
     |> Enum.join(" ")
@@ -133,7 +133,7 @@ defmodule Core do
   end
 
   @spec mal_pr_str([Mal.t()]) :: {:string, String.t()}
-  def mal_pr_str(xs) do
+  defp mal_pr_str(xs) do
     xs
     |> Enum.map(&Printer.pr_str(&1, true))
     |> Enum.join(" ")
@@ -141,7 +141,7 @@ defmodule Core do
   end
 
   @spec mal_str([Mal.t()]) :: {:string, String.t()}
-  def mal_str(xs) do
+  defp mal_str(xs) do
     xs
     |> Enum.map(&Printer.pr_str(&1, false))
     |> Enum.join("")
@@ -149,16 +149,18 @@ defmodule Core do
   end
 
   @spec mal_slurp(String.t()) :: {:string, String.t()}
-  def mal_slurp(file_name) do
+  defp mal_slurp(file_name) do
     {:ok, file} = File.open(file_name, [:read])
     contents = IO.read(file, :all)
     {:string, contents}
   end
 
   @spec mal_read_string(String.t()) :: Mal.t()
-  def mal_read_string(s) do
+  defp mal_read_string(s) do
     case Reader.read_str(s) do
-      {:void} -> {nil}
+      {:void} ->
+        {nil}
+
       x ->
         x
     end
@@ -172,22 +174,22 @@ defmodule Core do
   # def list(xs), do: {:list, xs}
 
   @spec mal_list?(Mal.t()) :: boolean()
-  def mal_list?({:list, _}), do: true
-  def mal_list?(_), do: false
+  defp mal_list?({:list, _}), do: true
+  defp mal_list?(_), do: false
 
   @spec mal_empty?([{:list, [Mal.t()]}]) :: {:boolean, boolean()}
-  def mal_empty?([{:list, xs}]), do: {:boolean, Enum.empty?(xs)}
-  def mal_empty?([{:vector, xs}]), do: {:boolean, Enum.empty?(xs)}
+  defp mal_empty?([{:list, xs}]), do: {:boolean, Enum.empty?(xs)}
+  defp mal_empty?([{:vector, xs}]), do: {:boolean, Enum.empty?(xs)}
 
-  def mal_empty?(args),
+  defp mal_empty?(args),
     do: raise(MalException, "empty? expects one sequence argument: #{inspect(args)}")
 
   @spec mal_count([{:list, [Mal.t()]} | {nil}]) :: {:number, number()}
-  def mal_count([{:list, xs}]), do: {:number, length(xs)}
-  def mal_count([{:vector, xs}]), do: {:number, map_size(xs)}
-  def mal_count([{nil}]), do: {:number, 0}
+  defp mal_count([{:list, xs}]), do: {:number, length(xs)}
+  defp mal_count([{:vector, xs}]), do: {:number, map_size(xs)}
+  defp mal_count([{nil}]), do: {:number, 0}
 
-  def mal_count(args),
+  defp mal_count(args),
     do: raise(MalException, "count expects one sequence argument: #{inspect(args)}")
 
   #
@@ -195,14 +197,14 @@ defmodule Core do
   #
 
   @spec mal_equal?(Mal.t(), Mal.t()) :: boolean()
-  def mal_equal?({:list, xs}, {:list, ys}), do: list_equal?(xs, ys)
-  def mal_equal?({:list, xs}, {:vector, ys}), do: list_equal?(xs, Seq.vector_to_list(ys))
-  def mal_equal?({:vector, xs}, {:list, ys}), do: list_equal?(Seq.vector_to_list(xs), ys)
+  defp mal_equal?({:list, xs}, {:list, ys}), do: list_equal?(xs, ys)
+  defp mal_equal?({:list, xs}, {:vector, ys}), do: list_equal?(xs, Seq.vector_to_list(ys))
+  defp mal_equal?({:vector, xs}, {:list, ys}), do: list_equal?(Seq.vector_to_list(xs), ys)
 
-  def mal_equal?({:vector, xs}, {:vector, ys}),
+  defp mal_equal?({:vector, xs}, {:vector, ys}),
     do: list_equal?(Seq.vector_to_list(xs), Seq.vector_to_list(ys))
 
-  def mal_equal?(a, b), do: a == b
+  defp mal_equal?(a, b), do: a == b
   defp list_equal?([x | xs], [y | ys]), do: mal_equal?(x, y) && list_equal?(xs, ys)
   defp list_equal?([], []), do: true
   defp list_equal?(_, _), do: false
