@@ -3,7 +3,7 @@
 all: typecheck lint format test step-test
 #all: typecheck format test step-test
 
-CURRENT_STEP = step6_file.exs
+CURRENT_STEP = step7_quote.exs
 
 run:
 	-mix run $(CURRENT_STEP)
@@ -31,4 +31,5 @@ step-test:
 	@echo step 4; cd ..; make "test^jw_elixir^step4" | grep "failing tests"
 	@echo step 5; cd ..; make "test^jw_elixir^step5" | grep "failing tests"
 	@echo step 6; cd ..; make "test^jw_elixir^step6" | grep "failing tests"
+	@echo step 7; cd ..; make "test^jw_elixir^step7" | grep "failing tests"
 

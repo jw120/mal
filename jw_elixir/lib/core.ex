@@ -43,6 +43,8 @@ defmodule Core do
     Env.set!(env, "empty?", {:function, &mal_empty?/1})
     Env.set!(env, "count", {:function, &mal_count/1})
     set_wrapped_mal1!(env, "list?", &{:boolean, mal_list?(&1)})
+    set_wrapped_mal2!(env, "cons", &mal_cons/2)
+    Env.set!(env, "concat", {:function, &mal_concat/1})
 
     # Atom functions
     set_wrapped_mal1!(env, "atom", &Atom.mal_atom(&1, atom_pid))
@@ -216,6 +218,25 @@ defmodule Core do
 
   defp mal_count(args),
     do: raise(MalException, "count expects one sequence argument: #{inspect(args)}")
+
+  @spec mal_cons(Mal.t(), Mal.t()) :: {:list, [Mal.t()]}
+  def mal_cons(x, {:list, xs}), do: {:list, [x | xs]}
+  def mal_cons(x, {:vector, v}), do: {:list, [x | Seq.vector_to_list(v)]}
+  def mal_cons(x, y), do: raise(MalException, "bad args for cons: #{inspect(x)} #{inspect(y)}")
+
+  @spec mal_concat([{:list, [Mal.t()]}]) :: {:list, [Mal.t()]}
+  def mal_concat([]), do: {:list, []}
+
+  def mal_concat(args) when is_list(args) do
+    args
+    |> Enum.map(fn
+      {:list, xs} -> xs
+      {:vector, v} -> Seq.vector_to_list(v)
+      other -> raise(MalException, "concat arguments must be lists: #{other}")
+    end)
+    |> Enum.concat()
+    |> (fn ys -> {:list, ys} end).()
+  end
 
   #
   # Other functions
