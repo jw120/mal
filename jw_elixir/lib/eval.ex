@@ -3,6 +3,8 @@ defmodule Eval do
   Mal evaluation
   """
 
+  alias Eval.SpecialForm
+
   @doc """
   Full evaluation of a mal expression (including apply phase with handling of special forms)
   """

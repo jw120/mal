@@ -1,6 +1,6 @@
 defmodule Printer do
   @moduledoc """
-  Printer module provides pr_str to convert a mal value into a string.
+  Printer module provides `pr_str` to convert a mal value into a string.
   """
 
   @doc """

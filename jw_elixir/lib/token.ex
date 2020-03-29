@@ -1,39 +1,46 @@
-defmodule Token do
+defmodule Reader.Token do
   @moduledoc """
   Provides functions to extract mal-language tokens from a string.
 
-  Used the regex provided on the mal site.
+  Based on the the regex provided on the mal site, but modified to automatically skip
+  white space (including comments).
   """
 
-  @mal_regex ~R"""
-    [\s,]*
-    (
-      ~@ |
-      [\[\]{}()'`~@] |
-      "(?:\\.|[^\"])*"? |
-      ;.* |
-      [^\s\[\]{}('"`,;)]*
-    )
+  # Whitespace is spaces (including commas) and line comments. Note non-capturing regex groups
+  @mal_whitespace ~r/^(?:(?:[\s,]+)|(?:;[^\n]*))+/
+
+  @mal_token ~R"""
+    ~@ |
+    [\[\]{}()'`~@] |
+    "(?:\\.|[^\"])*"? |
+    [^\s\[\]{}('"`,;)]*
   """x
 
   @doc """
-  Returns the leading token in the given string and the remaining portion of the string.
+  Returns the leading token in the given string and the remaining portion of the string, or :void
+  if there is no token.
 
   ## Examples
 
-      iex> Token.next("  12  ab")
+      iex> Reader.Token.next("  12  ab")
       {"12", "  ab"}
 
   """
-  @spec next(String.t()) :: {String.t(), String.t()}
+  @spec next(String.t()) :: {String.t() | :void, String.t()}
   def next(target) do
-    case Regex.run(@mal_regex, target, return: :index) do
-      [{_, _}, {group_start, group_len}] ->
-        {_before, group_and_rest} = String.split_at(target, group_start)
-        String.split_at(group_and_rest, group_len)
+    target_after_leading_whitespace = skip_whitespace(target)
 
-      _ ->
-        {"Failed", "failed"}
+    if target_after_leading_whitespace == "" do
+      {:void, ""}
+    else
+      case Regex.run(@mal_token, target_after_leading_whitespace, return: :index) do
+        [{0, token_len}] ->
+          String.split_at(target_after_leading_whitespace, token_len)
+
+        _ ->
+          raise MalException,
+                "Internal failure in Token.next with: #{target_after_leading_whitespace}"
+      end
     end
   end
 
@@ -42,13 +49,39 @@ defmodule Token do
 
   ## Examples
 
-      iex> Token.peek("  12  ab")
+      iex> Reader.Token.peek("  12  ab")
       "12"
 
   """
-  @spec peek(String.t()) :: String.t()
+  @spec peek(String.t()) :: String.t() | :void
   def peek(target) do
-    {group_match, _new_target} = next(target)
-    group_match
+    {token, _new_target} = next(target)
+    token
+  end
+
+  @doc """
+  Is the string empty, i.e, whitespace (inclduing comments) only
+
+  ## Examples
+
+      iex> Reader.Token.empty?("  ; Comment")
+      true
+
+  """
+  @spec empty?(String.t()) :: boolean()
+  def empty?(s) do
+    "" == skip_whitespace(s)
+  end
+
+  # Target string without leading white space
+  @spec skip_whitespace(String.t()) :: String.t()
+  def skip_whitespace(s) do
+    case Regex.run(@mal_whitespace, s, return: :index) do
+      [{0, white_space_len}] ->
+        String.slice(s, white_space_len, String.length(s) - white_space_len)
+
+      _ ->
+        s
+    end
   end
 end

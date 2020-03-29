@@ -1,6 +1,6 @@
 defmodule Repl do
   @moduledoc """
-  Provides read-eval-print-loop functionality
+  Provides read-eval-print loop functionality
   """
 
   @doc """

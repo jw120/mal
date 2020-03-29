@@ -21,32 +21,32 @@ defmodule Core do
     set_wrapped_int2!(env, "-", &{:number, &1 - &2})
     set_wrapped_int2!(env, "*", &{:number, &1 * &2})
     set_wrapped_int2!(env, "/", &{:number, div(&1, &2)})
-    set_wrapped_int2!(env, ">", &{:boolean, (&1 > &2)})
-    set_wrapped_int2!(env, ">=", &{:boolean, (&1 >= &2)})
-    set_wrapped_int2!(env, "<", &{:boolean, (&1 < &2)})
-    set_wrapped_int2!(env, "<=", &{:boolean, (&1 <= &2)})
+    set_wrapped_int2!(env, ">", &{:boolean, &1 > &2})
+    set_wrapped_int2!(env, ">=", &{:boolean, &1 >= &2})
+    set_wrapped_int2!(env, "<", &{:boolean, &1 < &2})
+    set_wrapped_int2!(env, "<=", &{:boolean, &1 <= &2})
 
     # IO functions
     Env.set!(env, "prn", {:function, &mal_prn/1})
     Env.set!(env, "println", {:function, &mal_println/1})
     Env.set!(env, "pr-str", {:function, &mal_pr_str/1})
     Env.set!(env, "str", {:function, &mal_str/1})
-    set_wrapped_str1!(env, "read-string", &Reader.read_str/1)
+    set_wrapped_str1!(env, "read-string", &mal_read_string/1)
     set_wrapped_str1!(env, "slurp", &mal_slurp/1)
 
     # Sequence functions
     Env.set!(env, "list", {:function, &{:list, &1}})
     Env.set!(env, "empty?", {:function, &mal_empty?/1})
     Env.set!(env, "count", {:function, &mal_count/1})
-    set_wrapped_mal1!(env, "list?", &({:boolean, mal_list?(&1)}))
+    set_wrapped_mal1!(env, "list?", &{:boolean, mal_list?(&1)})
 
     # Other functions
     set_wrapped_mal2_bool!(env, "=", &mal_equal?/2)
-    set_wrapped_mal1!(env, "eval", &(Eval.eval(&1, env)))
+    set_wrapped_mal1!(env, "eval", &Eval.eval(&1, env))
 
     # Mal-defined functions
     @mal_prelude
-      |> Enum.each(&Eval.eval(Reader.read_str(&1), env))
+    |> Enum.each(&Eval.eval(Reader.read_str(&1), env))
 
     env
   end
@@ -55,39 +55,59 @@ defmodule Core do
   # to functions which act on a list of mal types.
 
   # Add to the environment a wrapped version of an int x int -> mal function
-  @spec set_wrapped_int2!(Env.t(), String.t(), (integer(), integer() -> Mal.t())) :: Env.t
+  @spec set_wrapped_int2!(Env.t(), String.t(), (integer(), integer() -> Mal.t())) :: Env.t()
   defp set_wrapped_int2!(env, mal_name, f) do
-    Env.set!(env, mal_name, {:function, fn
-      [{:number, x}, {:number, y}] -> f.(x, y)
-      args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
-    end})
+    Env.set!(
+      env,
+      mal_name,
+      {:function,
+       fn
+         [{:number, x}, {:number, y}] -> f.(x, y)
+         args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
+       end}
+    )
   end
 
   # This adds a mal x mal -> bool function (used for mal_equal?)
-  @spec set_wrapped_mal2_bool!(Env.t, String.t(), (Mal.t, Mal.t -> boolean())) :: Env.t
+  @spec set_wrapped_mal2_bool!(Env.t(), String.t(), (Mal.t(), Mal.t() -> boolean())) :: Env.t()
   defp set_wrapped_mal2_bool!(env, mal_name, f) do
-    Env.set!(env, mal_name, {:function, fn
-      [x, y] -> {:boolean, f.(x, y)}
-      args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
-    end})
+    Env.set!(
+      env,
+      mal_name,
+      {:function,
+       fn
+         [x, y] -> {:boolean, f.(x, y)}
+         args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
+       end}
+    )
   end
 
   # This adds a mal -> mal function
-  @spec set_wrapped_mal1!(Env.t, String.t(), (Mal.t() -> Mal.t())) :: Env.t
+  @spec set_wrapped_mal1!(Env.t(), String.t(), (Mal.t() -> Mal.t())) :: Env.t()
   defp set_wrapped_mal1!(env, mal_name, f) do
-    Env.set!(env, mal_name, {:function, fn
-      [x] -> f.(x)
-      args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
-    end})
+    Env.set!(
+      env,
+      mal_name,
+      {:function,
+       fn
+         [x] -> f.(x)
+         args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
+       end}
+    )
   end
 
   # This adds a string -> mal function
-  @spec set_wrapped_str1!(Env.t, String.t(), (String.t() -> Mal.t())) :: Env.t
+  @spec set_wrapped_str1!(Env.t(), String.t(), (String.t() -> Mal.t())) :: Env.t()
   defp set_wrapped_str1!(env, mal_name, f) do
-    Env.set!(env, mal_name, {:function, fn
-      [{:string, s}] -> f.(s)
-      args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
-    end})
+    Env.set!(
+      env,
+      mal_name,
+      {:function,
+       fn
+         [{:string, s}] -> f.(s)
+         args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
+       end}
+    )
   end
 
   # IO functions
@@ -133,6 +153,15 @@ defmodule Core do
     {:ok, file} = File.open(file_name, [:read])
     contents = IO.read(file, :all)
     {:string, contents}
+  end
+
+  @spec mal_read_string(String.t()) :: Mal.t()
+  def mal_read_string(s) do
+    case Reader.read_str(s) do
+      {:void} -> {nil}
+      x ->
+        x
+    end
   end
 
   #

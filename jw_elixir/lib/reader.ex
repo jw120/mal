@@ -3,6 +3,8 @@ defmodule Reader do
   Provides conversion of a string into a mal type
   """
 
+  alias Reader.Token
+
   @doc """
   Converts a string into a mal type.
 
@@ -18,18 +20,17 @@ defmodule Reader do
   @spec read_str(String.t()) :: Mal.t()
   def read_str(s) do
     {val, remaining} = read_form(s)
-    # Remaining must be only trailing whitespace (including commas) and an optional comment
-    unless Regex.match?(~r/^[\s,]*(;.*)?$/, remaining) do
-      raise "Unexpected leftovers in read_str"
-    end
 
-    val
+    if Reader.Token.empty?(remaining) do
+      val
+    else
+      raise MalException,
+            "Unexpected leftovers in read_str reading '#{s}' left over '#{remaining}'"
+    end
   end
 
   # Top-level internal reading function
   @spec read_form(String.t()) :: {Mal.t(), String.t()}
-  defp read_form(""), do: {{:void}, ""}
-
   defp read_form(s) do
     case Token.peek(s) do
       "(" ->
@@ -43,6 +44,9 @@ defmodule Reader do
       "{" ->
         {contents, remainder} = read_map(s)
         {{:hash_map, Seq.list_to_hash_map(contents)}, remainder}
+
+      :void ->
+        {{:void}, ""}
 
       _ ->
         read_atom(s)
@@ -128,7 +132,7 @@ defmodule Reader do
       Regex.match?(~r/^[\[\]{}()'`~@]$/, tok) ->
         {{:symbol, tok}, after_tok}
 
-      Regex.match?(~r/^".*"$/, tok) ->
+      Regex.match?(~r/^".*"$/s, tok) -> # Note /s makes . match include newlines
         {{:string, remove_escapes(String.slice(tok, 1, String.length(tok) - 2))}, after_tok}
 
       Regex.match?(~r/^\"[^\"]*$/, tok) ->

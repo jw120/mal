@@ -1,4 +1,4 @@
-defmodule SpecialForm do
+defmodule Eval.SpecialForm do
   @moduledoc """
   Functions to handle special forms during evaluation
   """
