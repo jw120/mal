@@ -18,6 +18,7 @@ defmodule Mal do
           | {:vector, vector_map}
           | {:hash_map, hash_map_map}
           | {:function, closure}
+          | {:atom, pid, non_neg_integer()}
 
   @typedoc "Type for a mal function"
   @type closure :: ([t] -> t)

@@ -30,7 +30,7 @@ defmodule Repl do
   @doc """
   Handles mal startup. If System.argv() is empty then use repl, otherwise load the given file
   """
-  @spec start() :: :ok
+  @spec start() :: no_return()
   def start do
     repl_env = Core.new_env()
 
@@ -42,8 +42,8 @@ defmodule Repl do
         "(load-file \"#{mal_prog}\")"
         |> Reader.read_str()
         |> Eval.eval(repl_env)
-        |> Printer.pr_str(true)
-        |> IO.puts()
+
+        exit(:normal)
 
       [] ->
         Env.set!(repl_env, "*ARGV*", {:list, []})

@@ -55,6 +55,9 @@ defmodule Printer do
       {:hash_map, m} ->
         "{" <> print_and_join(Seq.hash_map_to_list(m), print_readably) <> "}"
 
+      {:atom, _, _} ->
+        "(atom " <> pr_str(Core.Atom.mal_deref(x), print_readably) <> ")"
+
       _ ->
         raise "Failure in pr_str: Unknown type in pr_str #{inspect(x)}"
     end

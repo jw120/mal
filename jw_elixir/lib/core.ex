@@ -3,6 +3,8 @@ defmodule Core do
   Provide the core environment for mal that holds all the pre-defined functions
   """
 
+  alias Core.Atom
+
   # Functions defined in mal code
   @mal_prelude [
     "(def! not (fn* (a) (if a false true)))",
@@ -15,6 +17,8 @@ defmodule Core do
   @spec new_env :: Env.t()
   def new_env do
     env = Env.new()
+
+    atom_pid = Atom.initialize()
 
     # Numeric and logical functions
     set_wrapped_int2!(env, "+", &{:number, &1 + &2})
@@ -39,6 +43,13 @@ defmodule Core do
     Env.set!(env, "empty?", {:function, &mal_empty?/1})
     Env.set!(env, "count", {:function, &mal_count/1})
     set_wrapped_mal1!(env, "list?", &{:boolean, mal_list?(&1)})
+
+    # Atom functions
+    set_wrapped_mal1!(env, "atom", &Atom.mal_atom(&1, atom_pid))
+    set_wrapped_mal1!(env, "atom?", &{:boolean, Atom.mal_atom?(&1)})
+    set_wrapped_mal1!(env, "deref", &Atom.mal_deref/1)
+    set_wrapped_mal2!(env, "reset!", &Atom.mal_reset!/2)
+    Env.set!(env, "swap!", {:function, &Atom.mal_swap!/1})
 
     # Other functions
     set_wrapped_mal2_bool!(env, "=", &mal_equal?/2)
@@ -77,6 +88,20 @@ defmodule Core do
       {:function,
        fn
          [x, y] -> {:boolean, f.(x, y)}
+         args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
+       end}
+    )
+  end
+
+  # This adds a mal x mal -> mal function
+  @spec set_wrapped_mal2!(Env.t(), String.t(), (Mal.t(), Mal.t() -> Mal.t())) :: Env.t()
+  defp set_wrapped_mal2!(env, mal_name, f) do
+    Env.set!(
+      env,
+      mal_name,
+      {:function,
+       fn
+         [x, y] -> f.(x, y)
          args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
        end}
     )
