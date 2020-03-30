@@ -116,22 +116,21 @@ defmodule Eval.SpecialForm do
 
   # Helper function to implement quasiquote
   @spec quasiquote(Mal.t()) :: {:list, [Mal.t()]}
-  def quasiquote(ast) do
-    case ast do
-      {:vector, v} ->
-        quasiquote({:list, Seq.vector_to_list(v)})
+  defp quasiquote({:vector, v}), do: quasiquote({:list, Seq.vector_to_list(v)})
+  defp quasiquote({:list, [head | rest]}), do: quasiquote_pair([head | rest])
+  defp quasiquote(ast), do: {:list, [{:symbol, "quote"}, ast]}
 
-      {:list, [{:symbol, "unquote"}, val]} ->
-        val
+  # Helper function to quasi
+  @spec quasiquote_pair(nonempty_list(Mal.t())) :: Mal.t()
+  defp quasiquote_pair([{:symbol, "unquote"}, val]) do
+    val
+  end
 
-      {:list, [{:list, [{:symbol, "splice-unquote"}, val]} | rest]} ->
-        {:list, [{:symbol, "concat"}, val, quasiquote({:list, rest})]}
+  defp quasiquote_pair([{:list, [{:symbol, "splice-unquote"}, val]} | rest]) do
+    {:list, [{:symbol, "concat"}, val, quasiquote({:list, rest})]}
+  end
 
-      {:list, [head | rest]} ->
-        {:list, [{:symbol, "cons"}, quasiquote(head), quasiquote({:list, rest})]}
-
-      _ ->
-        {:list, [{:symbol, "quote"}, ast]}
-    end
+  defp quasiquote_pair([head | rest]) do
+    {:list, [{:symbol, "cons"}, quasiquote(head), quasiquote({:list, rest})]}
   end
 end

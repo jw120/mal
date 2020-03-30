@@ -27,7 +27,8 @@ defmodule Eval do
                 f.(rest)
 
               _ ->
-                raise MalException, "Non-function when evaluating a list: #{inspect evaluated_list}"
+                raise MalException,
+                      "Non-function when evaluating a list: #{inspect(evaluated_list)}"
             end
         end
 
