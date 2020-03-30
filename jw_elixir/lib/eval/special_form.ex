@@ -2,6 +2,21 @@ defmodule Eval.SpecialForm do
   @moduledoc """
   Functions to handle special forms during evaluation
   """
+
+  @doc """
+  If the given head expression is a symbol matching a special form then call
+  the given special form and return true. Otherwise false
+  """
+  @spec invoke(Mal.t(), [Mal.t()], Env.t()) :: {:ok, Mal.t()} | :not_special
+  def invoke({:symbol, "def!"}, args, env), do: {:ok, def_form(args, env)}
+  def invoke({:symbol, "do"}, args, env), do: {:ok, do_form(args, env)}
+  def invoke({:symbol, "fn*"}, args, env), do: {:ok, fn_form(args, env)}
+  def invoke({:symbol, "if"}, args, env), do: {:ok, if_form(args, env)}
+  def invoke({:symbol, "let*"}, args, env), do: {:ok, let_form(args, env)}
+  def invoke({:symbol, "quote"}, args, env), do: {:ok, quote_form(args, env)}
+  def invoke({:symbol, "quasiquote"}, args, env), do: {:ok, quasiquote_form(args, env)}
+  def invoke(_, _, _), do: :not_special
+
   @doc """
   Handle the def! special form
   """
@@ -81,4 +96,42 @@ defmodule Eval.SpecialForm do
   end
 
   def let_form(_, _), do: raise(MalException, "Bad arguments to def!")
+
+  @doc """
+  Handle the quote special form
+  """
+  @spec quote_form([Mal.t()], Env.t()) :: Mal.t()
+  def quote_form([val], _env), do: val
+  def quote_form(_, _), do: raise(MalException, "Bad arguments to quote")
+
+  @doc """
+  Handle the quasiquote special form
+  """
+  @spec quasiquote_form([Mal.t()], Env.t()) :: Mal.t()
+  def quasiquote_form([val], env) do
+    Eval.eval(quasiquote(val), env)
+  end
+
+  def quasiquote_form(_, _), do: raise(MalException, "Bad arguments to quasiquote")
+
+  # Helper function to implement quasiquote
+  @spec quasiquote(Mal.t()) :: {:list, [Mal.t()]}
+  def quasiquote(ast) do
+    case ast do
+      {:vector, v} ->
+        quasiquote({:list, Seq.vector_to_list(v)})
+
+      {:list, [{:symbol, "unquote"}, val]} ->
+        val
+
+      {:list, [{:list, [{:symbol, "splice-unquote"}, val]} | rest]} ->
+        {:list, [{:symbol, "concat"}, val, quasiquote({:list, rest})]}
+
+      {:list, [head | rest]} ->
+        {:list, [{:symbol, "cons"}, quasiquote(head), quasiquote({:list, rest})]}
+
+      _ ->
+        {:list, [{:symbol, "quote"}, ast]}
+    end
+  end
 end

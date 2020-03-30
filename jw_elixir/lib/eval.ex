@@ -9,36 +9,26 @@ defmodule Eval do
   Full evaluation of a mal expression (including apply phase with handling of special forms)
   """
   @spec eval(Mal.t(), Env.t()) :: Mal.t()
-  # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   def eval(ast, env) do
     case ast do
       {:list, []} ->
         ast
 
-      {:list, [{:symbol, "def!"} | rest]} ->
-        SpecialForm.def_form(rest, env)
+      {:list, [head | rest]} ->
+        case SpecialForm.invoke(head, rest, env) do
+          {:ok, val} ->
+            val
 
-      {:list, [{:symbol, "do"} | rest]} ->
-        SpecialForm.do_form(rest, env)
+          :not_special ->
+            evaluated_list = eval_ast(ast, env)
 
-      {:list, [{:symbol, "fn*"} | rest]} ->
-        SpecialForm.fn_form(rest, env)
+            case evaluated_list do
+              {:list, [{:function, f} | rest]} ->
+                f.(rest)
 
-      {:list, [{:symbol, "if"} | rest]} ->
-        SpecialForm.if_form(rest, env)
-
-      {:list, [{:symbol, "let*"} | rest]} ->
-        SpecialForm.let_form(rest, env)
-
-      {:list, _} ->
-        evaluated_list = eval_ast(ast, env)
-
-        case evaluated_list do
-          {:list, [{:function, f} | rest]} ->
-            f.(rest)
-
-          _ ->
-            raise MalException, "Non-function when evaluating a list: #{evaluated_list}"
+              _ ->
+                raise MalException, "Non-function when evaluating a list: #{inspect evaluated_list}"
+            end
         end
 
       _ ->
