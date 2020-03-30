@@ -43,7 +43,7 @@ defmodule Printer do
       nil ->
         "nil"
 
-      {:function, _} ->
+      %Mal.Function{} ->
         "<function>"
 
       xs when is_list(xs) ->
