@@ -4,6 +4,7 @@ defmodule Reader do
   """
 
   alias Reader.Token
+  import Mal, only: :macros
 
   @doc """
   Converts a string into a mal type.
@@ -14,7 +15,7 @@ defmodule Reader do
   ## Examples
 
       iex> Reader.read_str("  12")
-      {:number, 12}
+      12
 
   """
   @spec read_str(String.t()) :: Mal.t()
@@ -35,7 +36,7 @@ defmodule Reader do
     case Token.peek(s) do
       "(" ->
         {contents, remainder} = read_list(s)
-        {{:list, contents}, remainder}
+        {contents, remainder}
 
       "[" ->
         {contents, remainder} = read_vector(s)
@@ -46,7 +47,7 @@ defmodule Reader do
         {{:hash_map, Seq.list_to_hash_map(contents)}, remainder}
 
       :void ->
-        {{:void}, ""}
+        {:void, ""}
 
       _ ->
         read_atom(s)
@@ -56,19 +57,19 @@ defmodule Reader do
   @spec read_list(String.t()) :: {[Mal.t()], String.t()}
   defp read_list(s) do
     {"(", after_open} = Token.next(s)
-    read_until(after_open, {:symbol, ")"})
+    read_until(after_open, sym(")"))
   end
 
   @spec read_vector(String.t()) :: {[Mal.t()], String.t()}
   defp read_vector(s) do
     {"[", after_open} = Token.next(s)
-    read_until(after_open, {:symbol, "]"})
+    read_until(after_open, sym("]"))
   end
 
   @spec read_map(String.t()) :: {[Mal.t()], String.t()}
   defp read_map(s) do
     {"{", after_open} = Token.next(s)
-    read_until(after_open, {:symbol, "}"})
+    read_until(after_open, sym("}"))
   end
 
   @spec read_until(String.t(), Mal.t()) :: {[Mal.t()], String.t()}
@@ -77,7 +78,7 @@ defmodule Reader do
       {^closer, after_closer} ->
         {[], after_closer}
 
-      {{:void}, _} ->
+      {:void, _} ->
         raise MalException, "EOF during read"
 
       {tok, after_tok} ->
@@ -93,48 +94,48 @@ defmodule Reader do
 
     cond do
       "true" == tok ->
-        {{:boolean, true}, after_tok}
+        {true, after_tok}
 
       "false" == tok ->
-        {{:boolean, false}, after_tok}
+        {false, after_tok}
 
       "nil" == tok ->
-        {{nil}, after_tok}
+        {nil, after_tok}
 
       "'" == tok ->
         {next_form, after_next_form} = read_form(after_tok)
-        {{:list, [{:symbol, "quote"}, next_form]}, after_next_form}
+        {[sym("quote"), next_form], after_next_form}
 
       "`" == tok ->
         {next_form, after_next_form} = read_form(after_tok)
-        {{:list, [{:symbol, "quasiquote"}, next_form]}, after_next_form}
+        {[sym("quasiquote"), next_form], after_next_form}
 
       "~" == tok ->
         {next_form, after_next_form} = read_form(after_tok)
-        {{:list, [{:symbol, "unquote"}, next_form]}, after_next_form}
+        {[sym("unquote"), next_form], after_next_form}
 
       "~@" == tok ->
         {next_form, after_next_form} = read_form(after_tok)
-        {{:list, [{:symbol, "splice-unquote"}, next_form]}, after_next_form}
+        {[sym("splice-unquote"), next_form], after_next_form}
 
       "@" == tok ->
         {next_form, after_next_form} = read_form(after_tok)
-        {{:list, [{:symbol, "deref"}, next_form]}, after_next_form}
+        {[sym("deref"), next_form], after_next_form}
 
       "^" == tok ->
         {next_form, after_next_form} = read_form(after_tok)
         {next_next_form, after_next_next_form} = read_form(after_next_form)
-        {{:list, [{:symbol, "with-meta"}, next_next_form, next_form]}, after_next_next_form}
+        {[sym("with-meta"), next_next_form, next_form], after_next_next_form}
 
       Regex.match?(~r/^-?[[:digit:]]+$/, tok) ->
-        {{:number, String.to_integer(tok)}, after_tok}
+        {String.to_integer(tok), after_tok}
 
       Regex.match?(~r/^[\[\]{}()'`~@]$/, tok) ->
-        {{:symbol, tok}, after_tok}
+        {sym(tok), after_tok}
 
       # Note /s makes . match include newlines
       Regex.match?(~r/^".*"$/s, tok) ->
-        {{:string, remove_escapes(String.slice(tok, 1, String.length(tok) - 2))}, after_tok}
+        {remove_escapes(String.slice(tok, 1, String.length(tok) - 2)), after_tok}
 
       Regex.match?(~r/^\"[^\"]*$/, tok) ->
         raise MalException, "EOF found in string"
@@ -143,7 +144,7 @@ defmodule Reader do
         {{:keyword, String.slice(tok, 1, String.length(tok) - 1)}, after_tok}
 
       true ->
-        {{:symbol, tok}, after_tok}
+        {sym(tok), after_tok}
     end
   end
 

@@ -15,7 +15,7 @@ defmodule Repl do
       try do
         read_val = read_fn.(String.trim(s))
 
-        unless read_val == {:void} do
+        unless read_val == :void do
           print_val = print_fn.(eval_fn.(read_val))
           IO.puts(print_val)
         end
@@ -36,8 +36,7 @@ defmodule Repl do
 
     case System.argv() do
       [mal_prog | other_args] ->
-        other_args_mal = {:list, Enum.map(other_args, fn s -> {:string, s} end)}
-        Env.set!(repl_env, "*ARGV*", other_args_mal)
+        Env.set!(repl_env, "*ARGV*", other_args)
 
         "(load-file \"#{mal_prog}\")"
         |> Reader.read_str()
@@ -46,7 +45,7 @@ defmodule Repl do
         exit(:normal)
 
       [] ->
-        Env.set!(repl_env, "*ARGV*", {:list, []})
+        Env.set!(repl_env, "*ARGV*", [])
 
         run(
           &Reader.read_str/1,

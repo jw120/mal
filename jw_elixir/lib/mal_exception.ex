@@ -12,13 +12,13 @@ defmodule MalException do
   #   raise(MalException, {"Bad arguments", args}
   def exception({prefix, value}) do
     combined = prefix <> ": " <> Printer.pr_str(value, true)
-    %MalException{val: {:string, combined}, message: combined}
+    %MalException{val: combined, message: combined}
   end
 
   # Raising with a string - for a simple failure message
   #   raise(MalException, "Something has gone wrong")
   def exception(value) when is_bitstring(value) do
-    %MalException{val: {:string, value}, message: value}
+    %MalException{val: value, message: value}
   end
 
   # Raising with a mal value - for mal throw

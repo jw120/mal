@@ -7,6 +7,8 @@ defmodule Env do
   id of the outer table (or nil)
   """
 
+  import Mal, only: :macros
+
   @outer_key :__outer__
 
   @type t :: :ets.tid()
@@ -66,14 +68,14 @@ defmodule Env do
   are evaluated before binding and can refer to earlier symbols in the list. Used to implement let*
   """
   @spec bind_star!(t, [Mal.t()]) :: t
-  def bind_star!(env, [{:symbol, s} | [val | rest]]) do
+  def bind_star!(env, [sym(s) | [val | rest]]) do
     eval_val = Eval.eval(val, env)
     set!(env, s, eval_val)
     bind_star!(env, rest)
   end
 
   def bind_star!(env, []), do: env
-  def bind_star!(_, _), do: raise(MalException, "Bad binding list for let*")
+  def bind_star!(_, args), do: raise(MalException, "Bad binding list for let*: #{inspect(args)}")
 
   @doc """
   Bind a list of symbols and a list of values in the given environment. Used to
@@ -81,11 +83,11 @@ defmodule Env do
   remaining bindings
   """
   @spec bind!(t, [Mal.t()], [Mal.t()]) :: t
-  def bind!(env, [{:symbol, "&"} | [{:symbol, rest_bind}]], exprs) do
-    set!(env, rest_bind, {:list, exprs})
+  def bind!(env, [sym("&") | [sym(rest_bind)]], exprs) do
+    set!(env, rest_bind, exprs)
   end
 
-  def bind!(env, [{:symbol, s} | other_syms], [x | other_exprs]) do
+  def bind!(env, [sym(s) | other_syms], [x | other_exprs]) do
     set!(env, s, x)
     bind!(env, other_syms, other_exprs)
   end

@@ -11,7 +11,7 @@ defmodule Printer do
 
   ## Examples
 
-      iex> Printer.pr_str({:number, 23}, true)
+      iex> Printer.pr_str(23, true)
       "23"
 
   """
@@ -19,7 +19,7 @@ defmodule Printer do
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   def pr_str(x, print_readably) do
     case x do
-      {:string, s} ->
+      s when is_bitstring(s) ->
         case print_readably do
           true -> "\"" <> string_escape(s) <> "\""
           false -> s
@@ -31,22 +31,22 @@ defmodule Printer do
       {:keyword, s} ->
         ":" <> s
 
-      {:number, n} ->
+      n when is_integer(n) ->
         Integer.to_string(n)
 
-      {:boolean, true} ->
+      true ->
         "true"
 
-      {:boolean, false} ->
+      false ->
         "false"
 
-      {nil} ->
+      nil ->
         "nil"
 
       {:function, _} ->
         "<function>"
 
-      {:list, xs} ->
+      xs when is_list(xs) ->
         "(" <> print_and_join(xs, print_readably) <> ")"
 
       {:vector, m} ->
