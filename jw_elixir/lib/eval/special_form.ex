@@ -11,10 +11,12 @@ defmodule Eval.SpecialForm do
   """
   @spec invoke(Mal.t(), Mal.arguments(), Env.t()) :: {:special, Mal.t()} | :not_special
   def invoke(sym("def!"), args, env), do: {:special, def_form(args, env)}
+  def invoke(sym("defmacro!"), args, env), do: {:special, defmacro_form(args, env)}
   def invoke(sym("do"), args, env), do: {:special, do_form(args, env)}
   def invoke(sym("fn*"), args, env), do: {:special, fn_form(args, env)}
   def invoke(sym("if"), args, env), do: {:special, if_form(args, env)}
   def invoke(sym("let*"), args, env), do: {:special, let_form(args, env)}
+  def invoke(sym("macroexpand"), args, env), do: {:special, macroexpand_form(args, env)}
   def invoke(sym("quote"), args, env), do: {:special, quote_form(args, env)}
   def invoke(sym("quasiquote"), args, env), do: {:special, quasiquote_form(args, env)}
   def invoke(_, _, _), do: :not_special
@@ -30,6 +32,23 @@ defmodule Eval.SpecialForm do
   end
 
   def def_form(_, _), do: raise(MalException, "Bad arguments to def!")
+
+  @doc """
+  Handle the defmacro! special form
+  """
+  @spec defmacro_form(Mal.arguments(), Env.t()) :: Mal.t()
+  def defmacro_form([sym(s), val], env) do
+    macro_val =
+      case Eval.eval(val, env) do
+        f = %Mal.Function{} -> %{f | is_macro: true}
+        _ -> raise(MalException, "Need a function for defmacro!")
+      end
+
+    Env.set!(env, s, macro_val)
+    macro_val
+  end
+
+  def defmacro_form(_, _), do: raise(MalException, "Bad arguments to defmacro!")
 
   @doc """
   Handle the do special form
@@ -99,6 +118,16 @@ defmodule Eval.SpecialForm do
   end
 
   def let_form(_, _), do: raise(MalException, "Bad arguments to let")
+
+  @doc """
+  Handle the macroexpand special form
+  """
+  @spec macroexpand_form(Mal.arguments(), Env.t()) :: Mal.t()
+  def macroexpand_form([ast], env) do
+    Eval.macro_expand(ast, env)
+  end
+
+  def macroexpand_form(_, _), do: raise(MalException, "Bad arguments to macroexpand")
 
   @doc """
   Handle the quote special form

@@ -7,8 +7,11 @@ defmodule Core do
 
   # Functions defined in mal code
   @mal_prelude [
-    "(def! not (fn* (a) (if a false true)))",
-    ~S/(def! load-file (fn* (f) (eval (read-string (str "(do " (slurp f) "\nnil)")))))/
+    "(def! not (fn* (a) " <>
+      "(if a false true)))",
+    ~S/(def! load-file (fn* (f) / <>
+      ~S/(eval (read-string (str "(do " (slurp f) "\nnil)")))))/#,
+#    ~S/(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) (cons 'cond (rest (rest xs)))))))/
   ]
 
   @doc """
