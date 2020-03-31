@@ -9,8 +9,8 @@ defmodule Seq do
 
   ## Examples
 
-      iex> Seq.list_to_vector([{:symbol, "a"}, {:number, 3}])
-      %{0 => {:symbol, "a"}, 1 => {:number, 3}}
+      iex> Seq.list_to_vector([{:symbol, "a"}, 3])
+      %{0 => {:symbol, "a"}, 1 => 3}
 
   """
   @spec list_to_vector([Mal.t()]) :: Mal.vector_map()
@@ -25,8 +25,8 @@ defmodule Seq do
 
   ## Examples
 
-      iex> Seq.list_to_hash_map([{:symbol, "a"}, {:number, 3}])
-      %{{:symbol, "a"} => {:number, 3}}
+      iex> Seq.list_to_hash_map([{:symbol, "a"}, 3])
+      %{{:symbol, "a"} => 3}
 
   """
   @spec list_to_hash_map([Mal.t()]) :: Mal.hash_map_map()
@@ -43,8 +43,8 @@ defmodule Seq do
 
   ## Examples
 
-      iex> Seq.vector_to_list(%{0 => {:symbol, "a"}, 1 => {:number, 2}})
-      [{:symbol, "a"}, {:number, 2}]
+      iex> Seq.vector_to_list(%{0 => {:symbol, "a"}, 1 => 2})
+      [{:symbol, "a"}, 2]
 
   """
   @spec vector_to_list(Mal.vector_map()) :: [Mal.t()]
@@ -61,8 +61,8 @@ defmodule Seq do
 
   ## Examples
 
-      iex> Seq.hash_map_to_list(%{{:string, "q"} => {:boolean, true}})
-      [{:string, "q"}, {:boolean, true}]
+      iex> Seq.hash_map_to_list(%{"q" => true})
+      ["q", true]
 
   """
   @spec hash_map_to_list(Mal.hash_map_map()) :: [Mal.t()]

@@ -45,7 +45,7 @@ defmodule Core.Atom do
   def mal_reset!(_, _), do: raise(MalException, "reset! called on non-atom")
 
   @spec mal_swap!([Mal.t()]) :: Mal.t()
-  def mal_swap!([{:atom, agent, key} | [{:function, f} | other_args]]) do
+  def mal_swap!([{:atom, agent, key} | [%Mal.Function{closure: f} | other_args]]) do
     old_value = Agent.get(agent, &Map.get(&1, key))
     new_value = f.([old_value | other_args])
     Agent.update(agent, &Map.replace!(&1, key, new_value))

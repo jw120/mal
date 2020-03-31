@@ -23,7 +23,7 @@ defmodule Eval do
             evaluated_list = eval_ast(ast, env)
 
             case evaluated_list do
-              [{:function, f} | rest] ->
+              [%Mal.Function{closure: f} | rest] ->
                 f.(rest)
 
               _ ->

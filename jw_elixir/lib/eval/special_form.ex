@@ -47,12 +47,13 @@ defmodule Eval.SpecialForm do
   """
   @spec fn_form([Mal.t()], Env.t()) :: Mal.t()
   def fn_form([binds, val], env) when is_list(binds) do
-    closure = fn args ->
-      closure_env = env |> Env.new() |> Env.bind!(binds, args)
-      Eval.eval(val, closure_env)
-    end
-
-    {:function, closure}
+    %Mal.Function{
+      is_macro: false,
+      closure: fn args ->
+        closure_env = env |> Env.new() |> Env.bind!(binds, args)
+        Eval.eval(val, closure_env)
+      end
+    }
   end
 
   def fn_form([{:vector, vector_binds}, val], env) do

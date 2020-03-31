@@ -15,14 +15,18 @@ defmodule Mal do
           | list(t)
           | {:vector, vector_map}
           | {:hash_map, hash_map_map}
-          | Mal.Function.t
+          | Mal.Function.t()
           | {:atom, pid, non_neg_integer()}
 
   @typedoc "Type for a mal function"
   @type closure :: ([t] -> t)
 
+  @typedoc "Type for arguments of a mal function"
+  @type arguments :: [t]
+
   defmodule Function do
-    defstruct closure: nil, is_macro: false
+    @enforce_keys [:closure, :is_macro]
+    defstruct [:closure, :is_macro]
     @type t :: %__MODULE__{closure: Mal.closure(), is_macro: boolean()}
   end
 
