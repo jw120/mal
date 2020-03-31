@@ -7,22 +7,22 @@ defmodule Eval.SpecialForm do
 
   @doc """
   If the given head expression is a symbol matching a special form then call
-  the given special form and return true. Otherwise false
+  the given special form and return the result with :special. Otherwise :not_special
   """
-  @spec invoke(Mal.t(), [Mal.t()], Env.t()) :: {:ok, Mal.t()} | :not_special
-  def invoke(sym("def!"), args, env), do: {:ok, def_form(args, env)}
-  def invoke(sym("do"), args, env), do: {:ok, do_form(args, env)}
-  def invoke(sym("fn*"), args, env), do: {:ok, fn_form(args, env)}
-  def invoke(sym("if"), args, env), do: {:ok, if_form(args, env)}
-  def invoke(sym("let*"), args, env), do: {:ok, let_form(args, env)}
-  def invoke(sym("quote"), args, env), do: {:ok, quote_form(args, env)}
-  def invoke(sym("quasiquote"), args, env), do: {:ok, quasiquote_form(args, env)}
+  @spec invoke(Mal.t(), Mal.arguments(), Env.t()) :: {:special, Mal.t()} | :not_special
+  def invoke(sym("def!"), args, env), do: {:special, def_form(args, env)}
+  def invoke(sym("do"), args, env), do: {:special, do_form(args, env)}
+  def invoke(sym("fn*"), args, env), do: {:special, fn_form(args, env)}
+  def invoke(sym("if"), args, env), do: {:special, if_form(args, env)}
+  def invoke(sym("let*"), args, env), do: {:special, let_form(args, env)}
+  def invoke(sym("quote"), args, env), do: {:special, quote_form(args, env)}
+  def invoke(sym("quasiquote"), args, env), do: {:special, quasiquote_form(args, env)}
   def invoke(_, _, _), do: :not_special
 
   @doc """
   Handle the def! special form
   """
-  @spec def_form([Mal.t()], Env.t()) :: Mal.t()
+  @spec def_form(Mal.arguments(), Env.t()) :: Mal.t()
   def def_form([sym(s), val], env) do
     eval_val = Eval.eval(val, env)
     Env.set!(env, s, eval_val)
@@ -34,18 +34,18 @@ defmodule Eval.SpecialForm do
   @doc """
   Handle the do special form
   """
-  @spec do_form([Mal.t()], Env.t()) :: Mal.t()
+  @spec do_form(Mal.arguments(), Env.t()) :: Mal.t()
   def do_form([], _), do: raise(MalException, "No arguments to do")
 
   def do_form(exprs, env) do
     exprs
-    |> Enum.reduce(nil, fn x, _ -> Eval.eval(x, env) end)
+    |> Enum.reduce(nil, fn x, _acc -> Eval.eval(x, env) end)
   end
 
   @doc """
   Handle the fn* special form
   """
-  @spec fn_form([Mal.t()], Env.t()) :: Mal.t()
+  @spec fn_form(Mal.arguments(), Env.t()) :: Mal.t()
   def fn_form([%Mal.List{contents: binds}, val], env) do
     %Mal.Function{
       is_macro: false,
@@ -66,8 +66,8 @@ defmodule Eval.SpecialForm do
   @doc """
   Handle the if special form
   """
-  @spec if_form([Mal.t()], Env.t()) :: Mal.t()
-  def if_form([condition | [if_val | rest]], env) do
+  @spec if_form(Mal.arguments(), Env.t()) :: Mal.t()
+  def if_form([condition | [then_val | rest]], env) do
     else_val =
       case rest do
         [val] -> val
@@ -75,10 +75,10 @@ defmodule Eval.SpecialForm do
         _ -> raise(MalException, "Too many arguments for if")
       end
 
-    case Eval.eval(condition, env) do
-      false -> Eval.eval(else_val, env)
-      nil -> Eval.eval(else_val, env)
-      _ -> Eval.eval(if_val, env)
+    if Eval.eval(condition, env) in [false, nil] do
+      Eval.eval(else_val, env)
+    else
+      Eval.eval(then_val, env)
     end
   end
 
@@ -87,7 +87,7 @@ defmodule Eval.SpecialForm do
   @doc """
   Handle the let* special form
   """
-  @spec let_form([Mal.t()], Env.t()) :: Mal.t()
+  @spec let_form(Mal.arguments(), Env.t()) :: Mal.t()
   def let_form([%Mal.List{contents: bindings}, val], env) do
     let_env = Env.new(env)
     Env.bind_star!(let_env, bindings)
@@ -103,7 +103,7 @@ defmodule Eval.SpecialForm do
   @doc """
   Handle the quote special form
   """
-  @spec quote_form([Mal.t()], Env.t()) :: Mal.t()
+  @spec quote_form(Mal.arguments(), Env.t()) :: Mal.t()
   def quote_form([val], _env), do: val
   def quote_form(_, _), do: raise(MalException, "Bad arguments to quote")
 
@@ -123,19 +123,11 @@ defmodule Eval.SpecialForm do
     quasiquote(%Mal.List{contents: Seq.vector_map_to_list(v)})
   end
 
-  defp quasiquote(%Mal.List{contents: [head | rest]}) do
-    quasiquote_pair([head | rest])
-  end
-
-  defp quasiquote(ast), do: %Mal.List{contents: [sym("quote"), ast]}
-
-  # Helper function to quasi
-  @spec quasiquote_pair(nonempty_list(Mal.t())) :: Mal.t()
-  defp quasiquote_pair([sym("unquote"), val]) do
+  defp quasiquote(%Mal.List{contents: [sym("unquote"), val]}) do
     val
   end
 
-  defp quasiquote_pair([%Mal.List{contents: [sym("splice-unquote"), val]} | rest]) do
+  defp quasiquote(%Mal.List{contents: [%Mal.List{contents: [sym("splice-unquote"), val]} | rest]}) do
     %Mal.List{contents: qq_rest_contents} = quasiquote(%Mal.List{contents: rest})
 
     %Mal.List{
@@ -147,7 +139,7 @@ defmodule Eval.SpecialForm do
     }
   end
 
-  defp quasiquote_pair([head | rest]) do
+  defp quasiquote(%Mal.List{contents: [head | rest]}) do
     %Mal.List{contents: qq_rest_contents} = quasiquote(%Mal.List{contents: rest})
 
     %Mal.List{
@@ -158,4 +150,6 @@ defmodule Eval.SpecialForm do
       ]
     }
   end
+
+  defp quasiquote(ast), do: %Mal.List{contents: [sym("quote"), ast]}
 end

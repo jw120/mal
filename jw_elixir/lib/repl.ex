@@ -28,7 +28,7 @@ defmodule Repl do
   end
 
   @doc """
-  Handles mal startup. If System.argv() is empty then use repl, otherwise load the given file
+  Handles mal startup. If System.argv() is empty then run the repl, otherwise load the given file
   """
   @spec start() :: no_return()
   def start do
@@ -55,5 +55,3 @@ defmodule Repl do
     end
   end
 end
-
-# (rep (format "(load-file ~s)" (vector-ref (current-command-line-arguments) 0)))

@@ -18,7 +18,8 @@ defmodule Core do
   def new_env do
     env = Env.new()
 
-    atom_pid = Atom.initialize()
+    # Start the agent for our atoms and capture its pid (for use in mal_atom below)
+    agent_pid = Atom.initialize()
 
     # Numeric and logical functions
     set_wrapped2!(env, "+", &Kernel.+/2)
@@ -47,7 +48,7 @@ defmodule Core do
     set_wrappedN!(env, "concat", &mal_concat/1)
 
     # Atom functions
-    set_wrapped1!(env, "atom", &Atom.mal_atom(&1, atom_pid))
+    set_wrapped1!(env, "atom", &Atom.mal_atom(&1, agent_pid))
     set_wrapped1!(env, "atom?", &Atom.mal_atom?/1)
     set_wrapped1!(env, "deref", &Atom.mal_deref/1)
     set_wrapped2!(env, "reset!", &Atom.mal_reset!/2)
@@ -193,6 +194,7 @@ defmodule Core do
   # Other functions
   #
 
+  # Equality that treats lists and vectors as equal
   @spec mal_equal?(Mal.t(), Mal.t()) :: boolean()
   defp mal_equal?(%Mal.List{contents: xs}, %Mal.List{contents: ys}),
     do: list_equal?(xs, ys)
@@ -203,7 +205,7 @@ defmodule Core do
   defp mal_equal?(%Mal.Vector{vector_map: xs}, %Mal.List{contents: ys}),
     do: list_equal?(Seq.vector_map_to_list(xs), ys)
 
-  defp mal_equal?({:vector, xs}, {:vector, ys}),
+  defp mal_equal?(%Mal.Vector{vector_map: xs}, %Mal.Vector{vector_map: ys}),
     do: list_equal?(Seq.vector_map_to_list(xs), Seq.vector_map_to_list(ys))
 
   defp mal_equal?(a, b),

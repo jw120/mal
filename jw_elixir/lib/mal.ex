@@ -30,6 +30,10 @@ defmodule Mal do
   @typedoc "Elixir map used to hold a mal hash-map"
   @type hashmap_map :: %{optional(t) => t}
 
+  @doc """
+  Convenience macro to allow writing `sym("x")` instead of
+  `{:symbol, "x"}`
+  """
   defmacro sym(s) do
     quote do
       {:symbol, unquote(s)}
@@ -39,30 +43,50 @@ end
 
 defmodule Mal.Atom do
   @enforce_keys [:agent, :key]
+
+  @doc """
+  Struct for mal atoms
+  """
   defstruct [:agent, :key]
   @type t :: %__MODULE__{agent: pid, key: non_neg_integer()}
 end
 
 defmodule Mal.Function do
   @enforce_keys [:closure, :is_macro]
+
+  @doc """
+  Struct for mal functions and macros
+  """
   defstruct [:closure, :is_macro]
   @type t :: %__MODULE__{closure: Mal.closure(), is_macro: boolean()}
 end
 
 defmodule Mal.HashMap do
   @enforce_keys [:hashmap_map]
+
+  @doc """
+  Struct for mal hashmaps
+  """
   defstruct [:hashmap_map, meta: nil]
   @type t :: %__MODULE__{hashmap_map: Mal.hashmap_map(), meta: Mal.t()}
 end
 
 defmodule Mal.List do
   @enforce_keys [:contents]
+
+  @doc """
+  Struct for mal lists
+  """
   defstruct [:contents, meta: nil]
   @type t :: %__MODULE__{contents: [any], meta: Mal.t()}
 end
 
 defmodule Mal.Vector do
   @enforce_keys [:vector_map]
+
+  @doc """
+  Struct for mal vector
+  """
   defstruct [:vector_map, meta: nil]
   @type t :: %__MODULE__{vector_map: Mal.vector_map(), meta: Mal.t()}
 end

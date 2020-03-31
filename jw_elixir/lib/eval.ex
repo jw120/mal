@@ -16,7 +16,7 @@ defmodule Eval do
 
       %Mal.List{contents: [head | rest]} ->
         case SpecialForm.invoke(head, rest, env) do
-          {:ok, val} ->
+          {:special, val} ->
             val
 
           :not_special ->

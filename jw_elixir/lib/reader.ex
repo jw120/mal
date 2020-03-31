@@ -35,15 +35,15 @@ defmodule Reader do
   defp read_form(s) do
     case Token.peek(s) do
       "(" ->
-        {contents, remainder} = read_list(s)
+        {contents, remainder} = read_seq(s, "(", ")")
         {%Mal.List{contents: contents}, remainder}
 
       "[" ->
-        {contents, remainder} = read_vector(s)
+        {contents, remainder} = read_seq(s, "[", "]")
         {%Mal.Vector{vector_map: Seq.list_to_vector_map(contents)}, remainder}
 
       "{" ->
-        {contents, remainder} = read_map(s)
+        {contents, remainder} = read_seq(s, "{", "}")
         {%Mal.HashMap{hashmap_map: Seq.list_to_hashmap_map(contents)}, remainder}
 
       :void ->
@@ -54,24 +54,14 @@ defmodule Reader do
     end
   end
 
-  @spec read_list(String.t()) :: {[Mal.t()], String.t()}
-  defp read_list(s) do
-    {"(", after_open} = Token.next(s)
-    read_until(after_open, sym(")"))
+  # Helper function to read a list, vector, or map
+  @spec read_seq(String.t(), String.t(), String.t()) :: {[Mal.t()], String.t()}
+  defp read_seq(s, opener, closer) do
+    {^opener, after_open} = Token.next(s)
+    read_until(after_open, sym(closer))
   end
 
-  @spec read_vector(String.t()) :: {[Mal.t()], String.t()}
-  defp read_vector(s) do
-    {"[", after_open} = Token.next(s)
-    read_until(after_open, sym("]"))
-  end
-
-  @spec read_map(String.t()) :: {[Mal.t()], String.t()}
-  defp read_map(s) do
-    {"{", after_open} = Token.next(s)
-    read_until(after_open, sym("}"))
-  end
-
+  # Helper function to read a list, vector, or map after the opening bracket
   @spec read_until(String.t(), Mal.t()) :: {[Mal.t()], String.t()}
   defp read_until(s, closer) do
     case read_form(s) do

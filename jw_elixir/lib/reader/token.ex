@@ -24,6 +24,8 @@ defmodule Reader.Token do
 
       iex> Reader.Token.next("  12  ab")
       {"12", "  ab"}
+      iex> Reader.Token.next("  ;comment")
+      {:void, ""}
 
   """
   @spec next(String.t()) :: {String.t() | :void, String.t()}
@@ -73,9 +75,9 @@ defmodule Reader.Token do
     "" == skip_whitespace(s)
   end
 
-  # Target string without leading white space
+  # Helper function to return the string without leading white space
   @spec skip_whitespace(String.t()) :: String.t()
-  def skip_whitespace(s) do
+  defp skip_whitespace(s) do
     case Regex.run(@mal_whitespace, s, return: :index) do
       [{0, white_space_len}] ->
         String.slice(s, white_space_len, String.length(s) - white_space_len)
