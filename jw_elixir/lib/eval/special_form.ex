@@ -46,7 +46,7 @@ defmodule Eval.SpecialForm do
   Handle the fn* special form
   """
   @spec fn_form([Mal.t()], Env.t()) :: Mal.t()
-  def fn_form([binds, val], env) when is_list(binds) do
+  def fn_form([%Mal.List{contents: binds}, val], env) do
     %Mal.Function{
       is_macro: false,
       closure: fn args ->
@@ -56,9 +56,9 @@ defmodule Eval.SpecialForm do
     }
   end
 
-  def fn_form([{:vector, vector_binds}, val], env) do
-    binds = Seq.vector_to_list(vector_binds)
-    fn_form([binds, val], env)
+  def fn_form([%Mal.Vector{vector_map: vector_binds}, val], env) do
+    binds = Seq.vector_map_to_list(vector_binds)
+    fn_form([%Mal.List{contents: binds}, val], env)
   end
 
   def fn_form(_, _), do: raise(MalException, "Bad arguments to fn*")
@@ -88,14 +88,14 @@ defmodule Eval.SpecialForm do
   Handle the let* special form
   """
   @spec let_form([Mal.t()], Env.t()) :: Mal.t()
-  def let_form([bindings, val], env) when is_list(bindings) do
+  def let_form([%Mal.List{contents: bindings}, val], env) do
     let_env = Env.new(env)
     Env.bind_star!(let_env, bindings)
     Eval.eval(val, let_env)
   end
 
-  def let_form([{:vector, vec_bindings}, val], env) do
-    let_form([Seq.vector_to_list(vec_bindings), val], env)
+  def let_form([%Mal.Vector{vector_map: vec_bindings}, val], env) do
+    let_form([%Mal.List{contents: Seq.vector_map_to_list(vec_bindings)}, val], env)
   end
 
   def let_form(_, _), do: raise(MalException, "Bad arguments to let")
@@ -110,7 +110,7 @@ defmodule Eval.SpecialForm do
   @doc """
   Handle the quasiquote special form
   """
-  @spec quasiquote_form([Mal.t()], Env.t()) :: Mal.t()
+  @spec quasiquote_form(Mal.arguments(), Env.t()) :: Mal.t()
   def quasiquote_form([val], env) do
     Eval.eval(quasiquote(val), env)
   end
@@ -118,10 +118,16 @@ defmodule Eval.SpecialForm do
   def quasiquote_form(_, _), do: raise(MalException, "Bad arguments to quasiquote")
 
   # Helper function to implement quasiquote
-  @spec quasiquote(Mal.t()) :: [Mal.t()]
-  defp quasiquote({:vector, v}), do: quasiquote(Seq.vector_to_list(v))
-  defp quasiquote([head | rest]), do: quasiquote_pair([head | rest])
-  defp quasiquote(ast), do: [sym("quote"), ast]
+  @spec quasiquote(Mal.t()) :: Mal.t()
+  defp quasiquote(%Mal.Vector{vector_map: v}) do
+    quasiquote(%Mal.List{contents: Seq.vector_map_to_list(v)})
+  end
+
+  defp quasiquote(%Mal.List{contents: [head | rest]}) do
+    quasiquote_pair([head | rest])
+  end
+
+  defp quasiquote(ast), do: %Mal.List{contents: [sym("quote"), ast]}
 
   # Helper function to quasi
   @spec quasiquote_pair(nonempty_list(Mal.t())) :: Mal.t()
@@ -130,10 +136,10 @@ defmodule Eval.SpecialForm do
   end
 
   defp quasiquote_pair([[sym("splice-unquote"), val] | rest]) do
-    [sym("concat"), val, quasiquote(rest)]
+    %Mal.List{contents: [sym("concat"), val, quasiquote(rest)]}
   end
 
   defp quasiquote_pair([head | rest]) do
-    [sym("cons"), quasiquote(head), quasiquote(rest)]
+    %Mal.List{contents: [sym("cons"), quasiquote(head), quasiquote(rest)]}
   end
 end

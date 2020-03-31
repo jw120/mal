@@ -36,15 +36,15 @@ defmodule Reader do
     case Token.peek(s) do
       "(" ->
         {contents, remainder} = read_list(s)
-        {contents, remainder}
+        {%Mal.List{contents: contents}, remainder}
 
       "[" ->
         {contents, remainder} = read_vector(s)
-        {{:vector, Seq.list_to_vector(contents)}, remainder}
+        {%Mal.Vector{vector_map: Seq.list_to_vector_map(contents)}, remainder}
 
       "{" ->
         {contents, remainder} = read_map(s)
-        {{:hash_map, Seq.list_to_hash_map(contents)}, remainder}
+        {%Mal.HashMap{hashmap_map: Seq.list_to_hashmap_map(contents)}, remainder}
 
       :void ->
         {:void, ""}
@@ -104,28 +104,28 @@ defmodule Reader do
 
       "'" == tok ->
         {next_form, after_next_form} = read_form(after_tok)
-        {[sym("quote"), next_form], after_next_form}
+        {%Mal.List{contents: [sym("quote"), next_form]}, after_next_form}
 
       "`" == tok ->
         {next_form, after_next_form} = read_form(after_tok)
-        {[sym("quasiquote"), next_form], after_next_form}
+        {%Mal.List{contents: [sym("quasiquote"), next_form]}, after_next_form}
 
       "~" == tok ->
         {next_form, after_next_form} = read_form(after_tok)
-        {[sym("unquote"), next_form], after_next_form}
+        {%Mal.List{contents: [sym("unquote"), next_form]}, after_next_form}
 
       "~@" == tok ->
         {next_form, after_next_form} = read_form(after_tok)
-        {[sym("splice-unquote"), next_form], after_next_form}
+        {%Mal.List{contents: [sym("splice-unquote"), next_form]}, after_next_form}
 
       "@" == tok ->
         {next_form, after_next_form} = read_form(after_tok)
-        {[sym("deref"), next_form], after_next_form}
+        {%Mal.List{contents: [sym("deref"), next_form]}, after_next_form}
 
       "^" == tok ->
         {next_form, after_next_form} = read_form(after_tok)
         {next_next_form, after_next_next_form} = read_form(after_next_form)
-        {[sym("with-meta"), next_next_form, next_form], after_next_next_form}
+        {%Mal.List{contents: [sym("with-meta"), next_next_form, next_form]}, after_next_next_form}
 
       Regex.match?(~r/^-?[[:digit:]]+$/, tok) ->
         {String.to_integer(tok), after_tok}

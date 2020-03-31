@@ -84,7 +84,7 @@ defmodule Env do
   """
   @spec bind!(t, [Mal.t()], [Mal.t()]) :: t
   def bind!(env, [sym("&") | [sym(rest_bind)]], exprs) do
-    set!(env, rest_bind, exprs)
+    set!(env, rest_bind, %Mal.List{contents: exprs})
   end
 
   def bind!(env, [sym(s) | other_syms], [x | other_exprs]) do

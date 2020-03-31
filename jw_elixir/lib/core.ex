@@ -39,10 +39,10 @@ defmodule Core do
     set_wrapped1!(env, "slurp", &mal_slurp/1)
 
     # Sequence functions
-    set_wrappedN!(env, "list", &Function.identity/1)
+    set_wrappedN!(env, "list", &%Mal.List{contents: &1})
     set_wrapped1!(env, "empty?", &mal_empty?/1)
     set_wrapped1!(env, "count", &mal_count/1)
-    set_wrapped1!(env, "list?", &is_list/1)
+    set_wrapped1!(env, "list?", &mal_list?/1)
     set_wrapped2!(env, "cons", &mal_cons/2)
     set_wrappedN!(env, "concat", &mal_concat/1)
 
@@ -155,30 +155,38 @@ defmodule Core do
   #
 
   @spec mal_empty?(Mal.t()) :: boolean()
-  defp mal_empty?(xs) when is_list(xs), do: Enum.empty?(xs)
-  defp mal_empty?({:vector, v}), do: Enum.empty?(v)
+  defp mal_empty?(%Mal.List{contents: xs}), do: Enum.empty?(xs)
+  defp mal_empty?(%Mal.Vector{vector_map: v}), do: Enum.empty?(v)
   defp mal_empty?(args), do: raise(MalException, "empty? takes a sequence : #{inspect(args)}")
 
   @spec mal_count(Mal.t()) :: number()
-  defp mal_count(xs) when is_list(xs), do: length(xs)
-  defp mal_count({:vector, xs}), do: map_size(xs)
+  defp mal_count(%Mal.List{contents: xs}), do: length(xs)
+  defp mal_count(%Mal.Vector{vector_map: v}), do: map_size(v)
   defp mal_count(nil), do: 0
   defp mal_count(args), do: raise(MalException, "count takes a sequence: #{inspect(args)}")
 
-  @spec mal_cons(Mal.t(), Mal.t()) :: [Mal.t()]
-  def mal_cons(x, xs) when is_list(xs), do: [x | xs]
-  def mal_cons(x, {:vector, v}), do: [x | Seq.vector_to_list(v)]
+  @spec mal_list?(Mal.t()) :: boolean()
+  defp mal_list?(%Mal.List{}), do: true
+  defp mal_list?(_), do: false
+
+  @spec mal_cons(Mal.t(), Mal.t()) :: Mal.t()
+  def mal_cons(x, %Mal.List{contents: xs}), do: %Mal.List{contents: [x | xs]}
+
+  def mal_cons(x, %Mal.Vector{vector_map: v}),
+    do: %Mal.List{contents: [x | Seq.vector_map_to_list(v)]}
+
   def mal_cons(x, y), do: raise(MalException, "bad args for cons: #{inspect(x)} #{inspect(y)}")
 
-  @spec mal_concat(Mal.arguments()) :: [Mal.t()]
-  def mal_concat(args) when is_list(args) do
+  @spec mal_concat(Mal.arguments()) :: Mal.t()
+  def mal_concat(args) do
     args
     |> Enum.map(fn
-      xs when is_list(xs) -> xs
-      {:vector, v} -> Seq.vector_to_list(v)
+      %Mal.List{contents: xs} -> xs
+      %Mal.Vector{vector_map: v} -> Seq.vector_map_to_list(v)
       other -> raise(MalException, "concat arguments must be lists: #{other}")
     end)
     |> Enum.concat()
+    |> (fn xs -> %Mal.List{contents: xs} end).()
   end
 
   #
@@ -186,14 +194,21 @@ defmodule Core do
   #
 
   @spec mal_equal?(Mal.t(), Mal.t()) :: boolean()
-  defp mal_equal?(xs, ys) when is_list(xs) and is_list(ys), do: list_equal?(xs, ys)
-  defp mal_equal?(xs, {:vector, ys}) when is_list(xs), do: list_equal?(xs, Seq.vector_to_list(ys))
-  defp mal_equal?({:vector, xs}, ys) when is_list(ys), do: list_equal?(Seq.vector_to_list(xs), ys)
+  defp mal_equal?(%Mal.List{contents: xs}, %Mal.List{contents: ys}),
+    do: list_equal?(xs, ys)
+
+  defp mal_equal?(%Mal.List{contents: xs}, %Mal.Vector{vector_map: ys}),
+    do: list_equal?(xs, Seq.vector_map_to_list(ys))
+
+  defp mal_equal?(%Mal.Vector{vector_map: xs}, %Mal.List{contents: ys}),
+    do: list_equal?(Seq.vector_map_to_list(xs), ys)
 
   defp mal_equal?({:vector, xs}, {:vector, ys}),
-    do: list_equal?(Seq.vector_to_list(xs), Seq.vector_to_list(ys))
+    do: list_equal?(Seq.vector_map_to_list(xs), Seq.vector_map_to_list(ys))
 
-  defp mal_equal?(a, b), do: a == b
+  defp mal_equal?(a, b),
+    do: a == b
+
   defp list_equal?([x | xs], [y | ys]), do: mal_equal?(x, y) && list_equal?(xs, ys)
   defp list_equal?([], []), do: true
   defp list_equal?(_, _), do: false

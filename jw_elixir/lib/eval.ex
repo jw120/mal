@@ -11,16 +11,16 @@ defmodule Eval do
   @spec eval(Mal.t(), Env.t()) :: Mal.t()
   def eval(ast, env) do
     case ast do
-      [] ->
+      %Mal.List{contents: []} ->
         ast
 
-      [head | rest] ->
+      %Mal.List{contents: [head | rest]} ->
         case SpecialForm.invoke(head, rest, env) do
           {:ok, val} ->
             val
 
           :not_special ->
-            evaluated_list = eval_ast(ast, env)
+            %Mal.List{contents: evaluated_list} = eval_ast(ast, env)
 
             case evaluated_list do
               [%Mal.Function{closure: f} | rest] ->
@@ -47,14 +47,14 @@ defmodule Eval do
       {:symbol, s} ->
         Env.get(env, s)
 
-      contents when is_list(contents) ->
-        Enum.map(contents, &eval(&1, env))
+      %Mal.List{contents: contents} ->
+        %Mal.List{contents: Enum.map(contents, &eval(&1, env))}
 
-      {:vector, contents} ->
-        {:vector, Seq.eval_map_values(contents, env)}
+      %Mal.Vector{vector_map: v} ->
+        %Mal.Vector{vector_map: Seq.eval_map_values(v, env)}
 
-      {:hash_map, contents} ->
-        {:hash_map, Seq.eval_map_values(contents, env)}
+      %Mal.HashMap{hashmap_map: m} ->
+        %Mal.HashMap{hashmap_map: Seq.eval_map_values(m, env)}
 
       _ ->
         ast

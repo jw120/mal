@@ -15,9 +15,9 @@ defmodule ReaderTest do
   end
 
   test "reads list" do
-    assert Reader.read_str("()") == []
-    assert Reader.read_str("(1 3)") == [1, 3]
-    assert Reader.read_str("(plus 2)") == [{:symbol, "plus"}, 2]
+    assert Reader.read_str("()") == %Mal.List{contents: []}
+    assert Reader.read_str("(1 3)") == %Mal.List{contents: [1, 3]}
+    assert Reader.read_str("(plus 2)") == %Mal.List{contents: [{:symbol, "plus"}, 2]}
   end
 
   test "skips comments" do

@@ -18,26 +18,26 @@ defmodule Core.Atom do
     agent
   end
 
-  @spec mal_atom(Mal.t(), pid) :: {:atom, pid, non_neg_integer()}
+  @spec mal_atom(Mal.t(), pid) :: Mal.t()
   def mal_atom(x, agent) do
     :ok = Agent.update(agent, &Map.put(&1, map_size(&1), x))
-    atom_key = Agent.get(agent, &(map_size(&1) - 1))
-    {:atom, agent, atom_key}
+    key = Agent.get(agent, &(map_size(&1) - 1))
+    %Mal.Atom{agent: agent, key: key}
   end
 
   @spec mal_atom?(Mal.t()) :: boolean
-  def mal_atom?({:atom, _, _}), do: true
+  def mal_atom?(%Mal.Atom{}), do: true
   def mal_atom?(_), do: false
 
   @spec mal_deref(Mal.t()) :: Mal.t()
-  def mal_deref({:atom, agent, key}) do
+  def mal_deref(%Mal.Atom{agent: agent, key: key}) do
     Agent.get(agent, &Map.get(&1, key))
   end
 
   def mal_deref(_), do: raise(MalException, "deref called on non-atom")
 
   @spec mal_reset!(Mal.t(), Mal.t()) :: Mal.t()
-  def mal_reset!({:atom, agent, key}, val) do
+  def mal_reset!(%Mal.Atom{agent: agent, key: key}, val) do
     Agent.update(agent, &Map.replace!(&1, key, val))
     val
   end
@@ -45,7 +45,7 @@ defmodule Core.Atom do
   def mal_reset!(_, _), do: raise(MalException, "reset! called on non-atom")
 
   @spec mal_swap!([Mal.t()]) :: Mal.t()
-  def mal_swap!([{:atom, agent, key} | [%Mal.Function{closure: f} | other_args]]) do
+  def mal_swap!([%Mal.Atom{agent: agent, key: key} | [%Mal.Function{closure: f} | other_args]]) do
     old_value = Agent.get(agent, &Map.get(&1, key))
     new_value = f.([old_value | other_args])
     Agent.update(agent, &Map.replace!(&1, key, new_value))

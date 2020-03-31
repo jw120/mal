@@ -36,7 +36,7 @@ defmodule Repl do
 
     case System.argv() do
       [mal_prog | other_args] ->
-        Env.set!(repl_env, "*ARGV*", other_args)
+        Env.set!(repl_env, "*ARGV*", %Mal.List{contents: other_args})
 
         "(load-file \"#{mal_prog}\")"
         |> Reader.read_str()
@@ -45,7 +45,7 @@ defmodule Repl do
         exit(:normal)
 
       [] ->
-        Env.set!(repl_env, "*ARGV*", [])
+        Env.set!(repl_env, "*ARGV*", %Mal.List{contents: []})
 
         run(
           &Reader.read_str/1,

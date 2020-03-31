@@ -46,16 +46,16 @@ defmodule Printer do
       %Mal.Function{} ->
         "<function>"
 
-      xs when is_list(xs) ->
+      %Mal.List{contents: xs} ->
         "(" <> print_and_join(xs, print_readably) <> ")"
 
-      {:vector, m} ->
-        "[" <> print_and_join(Seq.vector_to_list(m), print_readably) <> "]"
+      %Mal.Vector{vector_map: m} ->
+        "[" <> print_and_join(Seq.vector_map_to_list(m), print_readably) <> "]"
 
-      {:hash_map, m} ->
-        "{" <> print_and_join(Seq.hash_map_to_list(m), print_readably) <> "}"
+      %Mal.HashMap{hashmap_map: m} ->
+        "{" <> print_and_join(Seq.hashmap_map_to_list(m), print_readably) <> "}"
 
-      {:atom, _, _} ->
+      %Mal.Atom{} ->
         "(atom " <> pr_str(Core.Atom.mal_deref(x), print_readably) <> ")"
 
       _ ->
