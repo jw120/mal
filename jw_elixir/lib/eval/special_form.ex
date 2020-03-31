@@ -135,11 +135,27 @@ defmodule Eval.SpecialForm do
     val
   end
 
-  defp quasiquote_pair([[sym("splice-unquote"), val] | rest]) do
-    %Mal.List{contents: [sym("concat"), val, quasiquote(rest)]}
+  defp quasiquote_pair([%Mal.List{contents: [sym("splice-unquote"), val]} | rest]) do
+    %Mal.List{contents: qq_rest_contents} = quasiquote(%Mal.List{contents: rest})
+
+    %Mal.List{
+      contents: [
+        sym("concat"),
+        val,
+        %Mal.List{contents: qq_rest_contents}
+      ]
+    }
   end
 
   defp quasiquote_pair([head | rest]) do
-    %Mal.List{contents: [sym("cons"), quasiquote(head), quasiquote(rest)]}
+    %Mal.List{contents: qq_rest_contents} = quasiquote(%Mal.List{contents: rest})
+
+    %Mal.List{
+      contents: [
+        sym("cons"),
+        quasiquote(head),
+        %Mal.List{contents: qq_rest_contents}
+      ]
+    }
   end
 end
