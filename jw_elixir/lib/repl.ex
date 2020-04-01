@@ -20,7 +20,7 @@ defmodule Repl do
           IO.puts(print_val)
         end
       rescue
-        e in MalException -> IO.puts(e.message)
+        e in MalException -> IO.puts("Exception: #{e.message}")
       end
 
       run(read_fn, eval_fn, print_fn)

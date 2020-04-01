@@ -61,6 +61,7 @@ defmodule Core do
     # Other functions
     set_wrapped2!(env, "=", &mal_equal?/2)
     set_wrapped1!(env, "eval", &Eval.eval(&1, env))
+    set_wrapped1!(env, "throw", &raise(MalException, &1))
 
     # Mal-defined functions
     @mal_prelude

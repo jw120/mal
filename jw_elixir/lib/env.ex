@@ -55,7 +55,7 @@ defmodule Env do
   def get(env, s) do
     case find(env, s) do
       nil ->
-        raise MalException, "#{s} not found in environment"
+        raise MalException, "'#{s}' not found"
 
       found_env ->
         [{^s, val}] = :ets.lookup(found_env, s)

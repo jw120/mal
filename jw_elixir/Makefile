@@ -4,7 +4,7 @@
 all: typecheck format test step-test
 
 
-CURRENT_STEP = step8_macros.exs
+CURRENT_STEP = step9_try.exs
 
 run:
 	-mix run $(CURRENT_STEP)
@@ -34,4 +34,5 @@ step-test:
 	@echo step 6; cd ..; make "test^jw_elixir^step6" | grep "failing tests"
 	@echo step 7; cd ..; make "test^jw_elixir^step7" | grep "failing tests"
 	@echo step 8; cd ..; make "test^jw_elixir^step8" | grep "failing tests"
+	@echo step 9; cd ..; make "test^jw_elixir^step9" | grep "failing tests"
 

@@ -19,6 +19,7 @@ defmodule Eval.SpecialForm do
   def invoke(sym("macroexpand"), args, env), do: {:special, macroexpand_form(args, env)}
   def invoke(sym("quote"), args, env), do: {:special, quote_form(args, env)}
   def invoke(sym("quasiquote"), args, env), do: {:special, quasiquote_form(args, env)}
+  def invoke(sym("try*"), args, env), do: {:special, try_form(args, env)}
   def invoke(_, _, _), do: :not_special
 
   @doc """
@@ -130,6 +131,27 @@ defmodule Eval.SpecialForm do
   @spec quasiquote_form(Mal.arguments(), Env.t()) :: Mal.t()
   def quasiquote_form([val], env) do
     Eval.eval(quasiquote(val), env)
+  end
+
+  @doc """
+  Handle the quasiquote try* form
+  """
+  @spec try_form(Mal.arguments(), Env.t()) :: Mal.t()
+  def try_form([a, %Mal.List{contents: [sym("catch*"), sym(b), c]}], env) do
+    try do
+      #      IO.puts("try eval1")
+      Eval.eval(a, env)
+    rescue
+      e in MalException ->
+        #        IO.puts("try rescue1 binding #{b}")
+        catch_env = Env.new(env)
+        Env.set!(catch_env, b, e.val)
+        Eval.eval(c, catch_env)
+    end
+  end
+
+  def try_form([a], env) do
+    Eval.eval(a, env)
   end
 
   # Helper function to implement quasiquote
