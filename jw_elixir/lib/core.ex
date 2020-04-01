@@ -23,7 +23,7 @@ defmodule Core do
     agent_pid = Atom.initialize()
 
     # Numeric and logical functions
-    set_wrapped2!(env, "+", &Kernel.+/2)
+    set_wrapped2!(env, "+", fn x, y when is_integer(x) and is_integer(y) -> x + y end)
     set_wrapped2!(env, "-", &Kernel.-/2)
     set_wrapped2!(env, "*", &Kernel.*/2)
     set_wrapped2!(env, "/", &Kernel.div/2)
@@ -76,10 +76,8 @@ defmodule Core do
   @spec set_wrapped2!(Env.t(), String.t(), (Mal.t(), Mal.t() -> Mal.t())) :: Env.t()
   defp set_wrapped2!(env, mal_name, f) do
     Env.set!(env, mal_name, %Mal.Function{
-      closure: fn
-        [x, y] -> f.(x, y)
-        args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
-      end,
+      closure: fn [x, y] -> f.(x, y) end,
+      name: mal_name,
       is_macro: false
     })
   end
@@ -88,10 +86,8 @@ defmodule Core do
   @spec set_wrapped1!(Env.t(), String.t(), (Mal.t() -> Mal.t())) :: Env.t()
   defp set_wrapped1!(env, mal_name, f) do
     Env.set!(env, mal_name, %Mal.Function{
-      closure: fn
-        [x] -> f.(x)
-        args -> raise(MalException, {"Bad arguments to " <> mal_name, args})
-      end,
+      closure: fn [x] -> f.(x) end,
+      name: mal_name,
       is_macro: false
     })
   end
@@ -99,7 +95,11 @@ defmodule Core do
   # This adds a [mal] -> mal function
   @spec set_wrappedN!(Env.t(), String.t(), Mal.closure()) :: Env.t()
   defp set_wrappedN!(env, mal_name, f) do
-    Env.set!(env, mal_name, %Mal.Function{closure: f, is_macro: false})
+    Env.set!(env, mal_name, %Mal.Function{
+      closure: f,
+      name: mal_name,
+      is_macro: false
+    })
   end
 
   # IO functions
@@ -159,36 +159,34 @@ defmodule Core do
   # Sequence functions
   #
 
-  @spec mal_empty?(Mal.t()) :: boolean()
+  @spec mal_empty?(Mal.List.t() | Mal.Vector.t()) :: boolean()
   defp mal_empty?(%Mal.List{contents: xs}), do: Enum.empty?(xs)
   defp mal_empty?(%Mal.Vector{vector_map: v}), do: Enum.empty?(v)
-  defp mal_empty?(args), do: raise(MalException, "empty? takes a sequence : #{inspect(args)}")
 
-  @spec mal_count(Mal.t()) :: number()
+  @spec mal_count(Mal.List.t() | Mal.Vector.t() | nil) :: number()
   defp mal_count(%Mal.List{contents: xs}), do: length(xs)
   defp mal_count(%Mal.Vector{vector_map: v}), do: map_size(v)
   defp mal_count(nil), do: 0
-  defp mal_count(args), do: raise(MalException, "count takes a sequence: #{inspect(args)}")
 
   @spec mal_list?(Mal.t()) :: boolean()
   defp mal_list?(%Mal.List{}), do: true
   defp mal_list?(_), do: false
 
-  @spec mal_cons(Mal.t(), Mal.t()) :: Mal.t()
+  @spec mal_cons(Mal.t(), Mal.List.t() | Mal.Vector.t()) :: Mal.t()
   def mal_cons(x, %Mal.List{contents: xs}), do: %Mal.List{contents: [x | xs]}
 
   def mal_cons(x, %Mal.Vector{vector_map: v}),
     do: %Mal.List{contents: [x | Seq.vector_map_to_list(v)]}
 
-  def mal_cons(x, y), do: raise(MalException, "bad args for cons: #{inspect(x)} #{inspect(y)}")
-
   @spec mal_concat(Mal.arguments()) :: Mal.t()
   def mal_concat(args) do
     args
     |> Enum.map(fn
-      %Mal.List{contents: xs} -> xs
-      %Mal.Vector{vector_map: v} -> Seq.vector_map_to_list(v)
-      other -> raise(MalException, "concat arguments must be lists: #{other}")
+      %Mal.List{contents: xs} ->
+        xs
+
+      %Mal.Vector{vector_map: v} ->
+        Seq.vector_map_to_list(v)
     end)
     |> Enum.concat()
     |> (fn xs -> %Mal.List{contents: xs} end).()
@@ -203,8 +201,10 @@ defmodule Core do
   @spec mal_rest(nil | Mal.List.t() | Mal.Vector.t()) :: Mal.List.t()
   def mal_rest(%Mal.List{contents: []}), do: %Mal.List{contents: []}
   def mal_rest(%Mal.List{contents: [_ | xs]}), do: %Mal.List{contents: xs}
+
   def mal_rest(%Mal.Vector{vector_map: v}),
     do: mal_rest(%Mal.List{contents: Seq.vector_map_to_list(v)})
+
   def mal_rest(nil), do: %Mal.List{contents: []}
 
   @spec mal_nth(Mal.List.t() | Mal.Vector.t(), non_neg_integer()) :: Mal.t()
@@ -214,6 +214,7 @@ defmodule Core do
       :error -> raise MalException, "Index out of range"
     end
   end
+
   def mal_nth(%Mal.Vector{vector_map: v}, i) do
     case Map.fetch(v, i) do
       {:ok, x} -> x

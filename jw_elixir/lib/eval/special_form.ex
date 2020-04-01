@@ -31,8 +31,6 @@ defmodule Eval.SpecialForm do
     eval_val
   end
 
-  def def_form(_, _), do: raise(MalException, "Bad arguments to def!")
-
   @doc """
   Handle the defmacro! special form
   """
@@ -47,8 +45,6 @@ defmodule Eval.SpecialForm do
     Env.set!(env, s, macro_val)
     macro_val
   end
-
-  def defmacro_form(_, _), do: raise(MalException, "Bad arguments to defmacro!")
 
   @doc """
   Handle the do special form
@@ -68,6 +64,7 @@ defmodule Eval.SpecialForm do
   def fn_form([%Mal.List{contents: binds}, val], env) do
     %Mal.Function{
       is_macro: false,
+      name: "fn*",
       closure: fn args ->
         closure_env = env |> Env.new() |> Env.bind!(binds, args)
         Eval.eval(val, closure_env)
@@ -79,8 +76,6 @@ defmodule Eval.SpecialForm do
     binds = Seq.vector_map_to_list(vector_binds)
     fn_form([%Mal.List{contents: binds}, val], env)
   end
-
-  def fn_form(_, _), do: raise(MalException, "Bad arguments to fn*")
 
   @doc """
   Handle the if special form
@@ -101,8 +96,6 @@ defmodule Eval.SpecialForm do
     end
   end
 
-  def if_form(_, _), do: raise(MalException, "Bad arguments to if")
-
   @doc """
   Handle the let* special form
   """
@@ -117,8 +110,6 @@ defmodule Eval.SpecialForm do
     let_form([%Mal.List{contents: Seq.vector_map_to_list(vec_bindings)}, val], env)
   end
 
-  def let_form(_, _), do: raise(MalException, "Bad arguments to let")
-
   @doc """
   Handle the macroexpand special form
   """
@@ -127,14 +118,11 @@ defmodule Eval.SpecialForm do
     Eval.macro_expand(ast, env)
   end
 
-  def macroexpand_form(_, _), do: raise(MalException, "Bad arguments to macroexpand")
-
   @doc """
   Handle the quote special form
   """
   @spec quote_form(Mal.arguments(), Env.t()) :: Mal.t()
   def quote_form([val], _env), do: val
-  def quote_form(_, _), do: raise(MalException, "Bad arguments to quote")
 
   @doc """
   Handle the quasiquote special form
@@ -143,8 +131,6 @@ defmodule Eval.SpecialForm do
   def quasiquote_form([val], env) do
     Eval.eval(quasiquote(val), env)
   end
-
-  def quasiquote_form(_, _), do: raise(MalException, "Bad arguments to quasiquote")
 
   # Helper function to implement quasiquote
   @spec quasiquote(Mal.t()) :: Mal.t()

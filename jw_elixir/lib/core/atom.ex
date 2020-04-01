@@ -43,8 +43,6 @@ defmodule Core.Atom do
     Agent.get(agent, &Map.get(&1, key))
   end
 
-  def mal_deref(_), do: raise(MalException, "deref called on non-atom")
-
   @doc """
   Implements the mal reset function which mutates the value held by the atom
   """
@@ -53,8 +51,6 @@ defmodule Core.Atom do
     Agent.update(agent, &Map.replace!(&1, key, new_val))
     new_val
   end
-
-  def mal_reset!(_, _), do: raise(MalException, "reset! called on non-atom")
 
   @doc """
   Implements the mal swap! function which mutates the value held by the atom using
@@ -67,6 +63,4 @@ defmodule Core.Atom do
     Agent.update(agent, &Map.replace!(&1, key, new_value))
     new_value
   end
-
-  def mal_swap!(_), do: raise(MalException, "Bad arguments for swap!")
 end

@@ -52,13 +52,13 @@ defmodule Mal.Atom do
 end
 
 defmodule Mal.Function do
-  @enforce_keys [:closure, :is_macro]
+  @enforce_keys [:closure, :name, :is_macro]
 
   @doc """
   Struct for mal functions and macros
   """
-  defstruct [:closure, :is_macro]
-  @type t :: %__MODULE__{closure: Mal.closure(), is_macro: boolean()}
+  defstruct [:closure, :name, :is_macro]
+  @type t :: %__MODULE__{closure: Mal.closure(), name: String.t(), is_macro: boolean()}
 end
 
 defmodule Mal.HashMap do

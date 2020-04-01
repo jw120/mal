@@ -26,8 +26,13 @@ defmodule Eval do
                 %Mal.List{contents: evaluated_list} = eval_ast(ast, env)
 
                 case evaluated_list do
-                  [%Mal.Function{closure: f} | rest] ->
-                    f.(rest)
+                  [%Mal.Function{closure: f, name: f_name} | rest] ->
+                    try do
+                      f.(rest)
+                    rescue
+                      _e in FunctionClauseError ->
+                        raise MalException, "Bad arguments for #{f_name}"
+                    end
 
                   _ ->
                     raise MalException,

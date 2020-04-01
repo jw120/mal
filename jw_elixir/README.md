@@ -9,9 +9,14 @@ Choices
  - Atoms with agent (as cross-process)
  - Nothing done for TCO (as elixir does automatically?)
  - Ambiguity between [Mal] as a Mal list type and also a list of Mal types
+ - Rely on elixir pattern matching to avoid type checking/raise everywhere
 
   Be careful with ^ and $ as they match start/end of line, not string endings. If you want to match the whole string use: \A and \z. [link]
 
 Macros for :symbol - can we avoid ""
 
-Can we avoid type checking code and rely on elixir exceptions for not matching (done for first/rest/nth) - we should catch FunctionClauseError?
+macro for %Mal.List
+
+Can we have a tigher spec
+  @spec def_form(Mal.arguments(), Env.t()) :: Mal.t()
+  def def_form([sym(s), val], env) do
