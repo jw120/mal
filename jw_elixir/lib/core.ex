@@ -62,6 +62,11 @@ defmodule Core do
     set_wrapped2!(env, "=", &mal_equal?/2)
     set_wrapped1!(env, "eval", &Eval.eval(&1, env))
     set_wrapped1!(env, "throw", &raise(MalException, &1))
+    set_wrapped1!(env, "nil?", &mal_nil?/1)
+    set_wrapped1!(env, "true?", &mal_true?/1)
+    set_wrapped1!(env, "false?", &mal_false?/1)
+    set_wrapped1!(env, "symbol?", &mal_symbol?/1)
+
 
     # Mal-defined functions
     @mal_prelude
@@ -247,4 +252,21 @@ defmodule Core do
   defp list_equal?([x | xs], [y | ys]), do: mal_equal?(x, y) && list_equal?(xs, ys)
   defp list_equal?([], []), do: true
   defp list_equal?(_, _), do: false
+
+  @spec mal_nil?(Mal.t()) :: boolean()
+  defp mal_nil?(nil), do: true
+  defp mal_nil?(_), do: false
+
+  @spec mal_true?(Mal.t()) :: boolean()
+  defp mal_true?(true), do: true
+  defp mal_true?(_), do: false
+
+  @spec mal_false?(Mal.t()) :: boolean()
+  defp mal_false?(false), do: true
+  defp mal_false?(_), do: false
+
+  @spec mal_symbol?(Mal.t()) :: boolean()
+  defp mal_symbol?({:symbol, _}), do: true
+  defp mal_symbol?(_), do: false
+
 end
