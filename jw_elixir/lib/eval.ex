@@ -86,7 +86,9 @@ defmodule Eval do
   @spec is_macro_call(Mal.t(), Env.t()) :: boolean
   defp is_macro_call(%Mal.List{contents: [sym(s) | _]}, env) do
     case Env.find(env, s) do
-      nil -> false
+      nil ->
+        false
+
       containing_env ->
         case Env.get(containing_env, s) do
           %Mal.Function{is_macro: is_macro} -> is_macro

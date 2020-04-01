@@ -7,11 +7,9 @@ defmodule Core do
 
   # Functions defined in mal code
   @mal_prelude [
-    "(def! not (fn* (a) " <>
-      "(if a false true)))",
-    ~S/(def! load-file (fn* (f) / <>
-      ~S/(eval (read-string (str "(do " (slurp f) "\nnil)")))))/#,
-#    ~S/(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) (cons 'cond (rest (rest xs)))))))/
+    "(def! not (fn* (a) (if a false true)))",
+    "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\\nnil)\")))))",
+    "(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) (cons 'cond (rest (rest xs)))))))"
   ]
 
   @doc """
@@ -49,6 +47,9 @@ defmodule Core do
     set_wrapped1!(env, "list?", &mal_list?/1)
     set_wrapped2!(env, "cons", &mal_cons/2)
     set_wrappedN!(env, "concat", &mal_concat/1)
+    set_wrapped1!(env, "first", &mal_first/1)
+    set_wrapped1!(env, "rest", &mal_rest/1)
+    set_wrapped2!(env, "nth", &mal_nth/2)
 
     # Atom functions
     set_wrapped1!(env, "atom", &Atom.mal_atom(&1, agent_pid))
@@ -191,6 +192,33 @@ defmodule Core do
     end)
     |> Enum.concat()
     |> (fn xs -> %Mal.List{contents: xs} end).()
+  end
+
+  @spec mal_first(nil | Mal.List.t() | Mal.Vector.t()) :: Mal.t()
+  def mal_first(%Mal.List{contents: xs}), do: List.first(xs)
+  def mal_first(%Mal.Vector{vector_map: v}) when map_size(v) == 0, do: nil
+  def mal_first(%Mal.Vector{vector_map: v}), do: v[0]
+  def mal_first(nil), do: nil
+
+  @spec mal_rest(nil | Mal.List.t() | Mal.Vector.t()) :: Mal.List.t()
+  def mal_rest(%Mal.List{contents: []}), do: %Mal.List{contents: []}
+  def mal_rest(%Mal.List{contents: [_ | xs]}), do: %Mal.List{contents: xs}
+  def mal_rest(%Mal.Vector{vector_map: v}),
+    do: mal_rest(%Mal.List{contents: Seq.vector_map_to_list(v)})
+  def mal_rest(nil), do: %Mal.List{contents: []}
+
+  @spec mal_nth(Mal.List.t() | Mal.Vector.t(), non_neg_integer()) :: Mal.t()
+  def mal_nth(%Mal.List{contents: xs}, i) do
+    case Enum.fetch(xs, i) do
+      {:ok, x} -> x
+      :error -> raise MalException, "Index out of range"
+    end
+  end
+  def mal_nth(%Mal.Vector{vector_map: v}, i) do
+    case Map.fetch(v, i) do
+      {:ok, x} -> x
+      :error -> raise MalException, "Index out of range"
+    end
   end
 
   #

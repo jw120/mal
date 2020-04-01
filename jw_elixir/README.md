@@ -13,3 +13,5 @@ Choices
   Be careful with ^ and $ as they match start/end of line, not string endings. If you want to match the whole string use: \A and \z. [link]
 
 Macros for :symbol - can we avoid ""
+
+Can we avoid type checking code and rely on elixir exceptions for not matching (done for first/rest/nth) - we should catch FunctionClauseError?
