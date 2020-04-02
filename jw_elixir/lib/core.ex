@@ -66,7 +66,8 @@ defmodule Core do
     set_wrapped1!(env, "true?", &mal_true?/1)
     set_wrapped1!(env, "false?", &mal_false?/1)
     set_wrapped1!(env, "symbol?", &mal_symbol?/1)
-
+    set_wrappedN!(env, "apply", &mal_apply/1)
+    set_wrapped2!(env, "map", &mal_map/2)
 
     # Mal-defined functions
     @mal_prelude
@@ -269,4 +270,24 @@ defmodule Core do
   defp mal_symbol?({:symbol, _}), do: true
   defp mal_symbol?(_), do: false
 
+  @spec mal_apply(Mal.arguments()) :: Mal.t()
+  defp mal_apply([%Mal.Function{closure: f} | args]) do
+    last_arg =
+      case List.last(args) do
+        %Mal.List{contents: xs} -> xs
+        %Mal.Vector{vector_map: v} -> Seq.vector_map_to_list(v)
+        nil -> []
+        _ -> raise "Last argument to apply must be a sequece"
+      end
+
+    other_args = Enum.take(args, length(args) - 1)
+    apply(f, [other_args ++ last_arg])
+  end
+
+  defp mal_map(%Mal.Function{closure: f}, %Mal.List{contents: xs}) do
+    %Mal.List{contents: Enum.map(xs, fn x -> f.([x]) end)}
+  end
+  defp mal_map(%Mal.Function{closure: f}, %Mal.Vector{vector_map: v}) do
+    %Mal.List{contents: Enum.map(v, fn {_i, x} -> f.([x]) end)}
+  end
 end
