@@ -57,7 +57,7 @@ defmodule Core.Misc do
     end)
 
     wrap1(env, "fn?", fn
-      %Mal.Function{} -> true
+      %Mal.Function{is_macro: false} -> true
       _ -> false
     end)
 

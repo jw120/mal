@@ -70,6 +70,23 @@ defmodule Core.Sequence do
       %Mal.List{} -> true
       _ -> false
     end)
+
+    wrap1(env, "seq", fn
+      %Mal.List{contents: []} -> nil
+      %Mal.Vector{vector_map: v} when map_size(v) == 0 -> nil
+      "" -> nil
+      %Mal.List{contents: xs} -> %Mal.List{contents: xs}
+      %Mal.Vector{vector_map: v} -> %Mal.List{contents: Seq.vector_map_to_list(v)}
+      s when is_bitstring(s) -> %Mal.List{contents: String.graphemes(s)}
+    end)
+
+    wrapN(env, "conj", fn
+      [%Mal.List{contents: xs} | args] ->
+        %Mal.List{contents: Enum.reverse(args) ++ xs}
+      [%Mal.Vector{vector_map: v} | args] ->
+        %Mal.Vector{vector_map: Seq.list_to_vector_map(Seq.vector_map_to_list(v) ++ args)}
+    end)
+
   end
 
   @spec mal_rest(nil | Mal.List.t() | Mal.Vector.t()) :: Mal.List.t()

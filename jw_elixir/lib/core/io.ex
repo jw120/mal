@@ -58,7 +58,7 @@ defmodule Core.IO do
       prompt when is_bitstring(prompt) ->
         case IO.gets(prompt) do
           :eof -> nil
-          s -> s
+          s -> String.replace_suffix(s, "\n", "")
         end
     end)
   end
