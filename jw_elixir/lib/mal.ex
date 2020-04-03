@@ -47,8 +47,8 @@ defmodule Mal.Atom do
   @doc """
   Struct for mal atoms
   """
-  defstruct [:agent, :key]
-  @type t :: %__MODULE__{agent: pid, key: non_neg_integer()}
+  defstruct [:agent, :key, meta: nil]
+  @type t :: %__MODULE__{agent: pid, key: non_neg_integer(), meta: Mal.t()}
 end
 
 defmodule Mal.Function do
@@ -57,8 +57,14 @@ defmodule Mal.Function do
   @doc """
   Struct for mal functions and macros
   """
-  defstruct [:closure, :name, :is_macro]
-  @type t :: %__MODULE__{closure: Mal.closure(), name: String.t(), is_macro: boolean()}
+  defstruct [:closure, :name, :is_macro, meta: nil]
+
+  @type t :: %__MODULE__{
+          closure: Mal.closure(),
+          name: String.t(),
+          is_macro: boolean(),
+          meta: Mal.t()
+        }
 end
 
 defmodule Mal.HashMap do

@@ -21,6 +21,7 @@ defmodule Core do
     Core.Atom.add(env)
     Core.HashMap.add(env)
     Core.IO.add(env)
+    Core.Meta.add(env)
     Core.Misc.add(env)
     Core.Numeric.add(env)
     Core.Sequence.add(env)

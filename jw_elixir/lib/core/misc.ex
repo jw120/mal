@@ -76,11 +76,7 @@ defmodule Core.Misc do
       _ -> false
     end)
 
-    wrapN(env, "time-ms", fn [] -> raise(MalException, "NYI") end)
-    wrap1(env, "meta", fn _ -> raise(MalException, "NYI") end)
-    wrap2(env, "with-meta", fn _, _ -> raise(MalException, "NYI") end)
-    wrapN(env, "conj", fn _ -> raise(MalException, "NYI") end)
-    wrap1(env, "seq", fn _ -> raise(MalException, "NYI") end)
+    wrapN(env, "time-ms", fn [] -> System.system_time(:millisecond) end)
 
   end
 
