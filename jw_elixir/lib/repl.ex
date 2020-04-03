@@ -3,6 +3,8 @@ defmodule Repl do
   Provides read-eval-print loop functionality
   """
 
+  @repl_startup "(println (str \"Mal [\" *host-language* \"]\"))"
+
   @doc """
   Repeatedly prompts the user for input, and then applies the given real, evaluate and print
   functions to the input before printing the output
@@ -46,6 +48,7 @@ defmodule Repl do
 
       [] ->
         Env.set!(repl_env, "*ARGV*", %Mal.List{contents: []})
+        Eval.eval(Reader.read_str(@repl_startup), repl_env)
 
         run(
           &Reader.read_str/1,
