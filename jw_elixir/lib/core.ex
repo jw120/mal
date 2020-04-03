@@ -50,6 +50,56 @@ defmodule Core do
     set_wrapped1!(env, "first", &mal_first/1)
     set_wrapped1!(env, "rest", &mal_rest/1)
     set_wrapped2!(env, "nth", &mal_nth/2)
+    set_wrappedN!(env, "vector", fn xs -> %Mal.Vector{vector_map: Seq.list_to_vector_map(xs)} end)
+
+    set_wrapped1!(env, "vector?", fn
+      %Mal.Vector{} -> true
+      _ -> false
+    end)
+
+    set_wrapped1!(env, "sequential?", fn
+      %Mal.Vector{} -> true
+      %Mal.List{} -> true
+      _ -> false
+    end)
+
+    # Hashmap functions
+    set_wrappedN!(env, "hash-map", fn
+      args when is_list(args) -> %Mal.HashMap{hashmap_map: Seq.list_to_hashmap_map(args)}
+    end)
+
+    set_wrapped1!(env, "map?", fn
+      %Mal.HashMap{} -> true
+      _ -> false
+    end)
+
+    set_wrapped2!(env, "get", fn
+      %Mal.HashMap{hashmap_map: m}, k -> Map.get(m, k)
+      nil, _k -> nil
+    end)
+
+    set_wrapped2!(env, "contains?", fn
+      %Mal.HashMap{hashmap_map: m}, k -> Map.has_key?(m, k)
+      nil, _k -> false
+    end)
+
+    set_wrapped1!(env, "keys", fn
+      %Mal.HashMap{hashmap_map: m} -> %Mal.List{contents: Map.keys(m)}
+      nil -> %Mal.List{contents: []}
+    end)
+
+    set_wrapped1!(env, "vals", fn
+      %Mal.HashMap{hashmap_map: m} -> %Mal.List{contents: Map.values(m)}
+      nil -> %Mal.List{contents: []}
+    end)
+
+    set_wrappedN!(env, "assoc", fn [%Mal.HashMap{hashmap_map: m} | assoc_list] ->
+      %Mal.HashMap{hashmap_map: Map.merge(m, Seq.list_to_hashmap_map(assoc_list))}
+    end)
+
+    set_wrappedN!(env, "dissoc", fn [%Mal.HashMap{hashmap_map: m} | key_list] ->
+      %Mal.HashMap{hashmap_map: Map.drop(m, key_list)}
+    end)
 
     # Atom functions
     set_wrapped1!(env, "atom", &Atom.mal_atom(&1, agent_pid))
@@ -68,6 +118,17 @@ defmodule Core do
     set_wrapped1!(env, "symbol?", &mal_symbol?/1)
     set_wrappedN!(env, "apply", &mal_apply/1)
     set_wrapped2!(env, "map", &mal_map/2)
+    set_wrapped1!(env, "symbol", fn s when is_bitstring(s) -> {:symbol, s} end)
+
+    set_wrapped1!(env, "keyword", fn
+      s when is_bitstring(s) -> {:keyword, s}
+      {:keyword, k} -> {:keyword, k}
+    end)
+
+    set_wrapped1!(env, "keyword?", fn
+      {:keyword, _} -> true
+      _ -> false
+    end)
 
     # Mal-defined functions
     @mal_prelude
@@ -107,6 +168,19 @@ defmodule Core do
       name: mal_name,
       is_macro: false
     })
+  end
+
+  defmacro set_wrapped_match!(env, mal_name, pattern) do
+    quote do
+      Env.set!(unquote(env), unquote(mal_name), %Mal.Function{
+        closure: fn
+          unquote(pattern) -> true
+          _ -> false
+        end,
+        name: mal_name,
+        is_macro: false
+      })
+    end
   end
 
   # IO functions
@@ -247,6 +321,13 @@ defmodule Core do
   defp mal_equal?(%Mal.Vector{vector_map: xs}, %Mal.Vector{vector_map: ys}),
     do: list_equal?(Seq.vector_map_to_list(xs), Seq.vector_map_to_list(ys))
 
+  defp mal_equal?(%Mal.HashMap{hashmap_map: m1}, %Mal.HashMap{hashmap_map: m2}) do
+    map_size(m1) == map_size(m2) and
+      Enum.all?(m1, fn
+        {k1, v1} -> Map.has_key?(m2, k1) && mal_equal?(v1, Map.get(m2, k1))
+      end)
+  end
+
   defp mal_equal?(a, b),
     do: a == b
 
@@ -287,6 +368,7 @@ defmodule Core do
   defp mal_map(%Mal.Function{closure: f}, %Mal.List{contents: xs}) do
     %Mal.List{contents: Enum.map(xs, fn x -> f.([x]) end)}
   end
+
   defp mal_map(%Mal.Function{closure: f}, %Mal.Vector{vector_map: v}) do
     %Mal.List{contents: Enum.map(v, fn {_i, x} -> f.([x]) end)}
   end

@@ -14,8 +14,10 @@ Choices
   Be careful with ^ and $ as they match start/end of line, not string endings. If you want to match the whole string use: \A and \z. [link]
 
 Macros for :symbol - can we avoid ""
-
 macro for %Mal.List
+macro for set_wrapped_match(pattern)
+
+Simplify core - more lambdas?
 
 Can we have a tigher spec
   @spec def_form(Mal.arguments(), Env.t()) :: Mal.t()
