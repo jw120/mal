@@ -8,7 +8,7 @@ First setup a pythton development environment. For me this means
 
 ```sh
 use_pyenv
-use_venc
+use_venv
 ```
 
 Then install the required modules
@@ -38,14 +38,4 @@ make "perf^jw-python"  # Performance tests
 * Can we mak typing better: Eliminate casts and workrounds, Properly type Callables
 * Standardize __eq__ methods
 * Better error messages - track source line numbers?
-
-# Timings
-
-Performance test for jw-python:
-Running: env STEP=stepA_mal MAL_IMPL=js ../jw-python/run ../tests/perf1.mal
-Elapsed time: 9 msecs
-Running: env STEP=stepA_mal MAL_IMPL=js ../jw-python/run ../tests/perf2.mal
-Elapsed time: 34 msecs
-Running: env STEP=stepA_mal MAL_IMPL=js ../jw-python/run ../tests/perf3.mal
-iters over 10 seconds: 1135
 
