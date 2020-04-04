@@ -8,8 +8,9 @@ defmodule Core.HashMap do
   @doc """
   Add functions for this module to the environment
   """
+  @spec add(Env.t()) :: Env.t()
   def add(env) do
-    wrapN(env, "hash-map", fn
+    wrap_list(env, "hash-map", fn
       args when is_list(args) -> %Mal.HashMap{hashmap_map: Seq.list_to_hashmap_map(args)}
     end)
 
@@ -20,12 +21,12 @@ defmodule Core.HashMap do
 
     wrap2(env, "get", fn
       %Mal.HashMap{hashmap_map: m}, k -> Map.get(m, k)
-      nil, _k -> nil
+      nil, _ -> nil
     end)
 
     wrap2(env, "contains?", fn
       %Mal.HashMap{hashmap_map: m}, k -> Map.has_key?(m, k)
-      nil, _k -> false
+      nil, _ -> false
     end)
 
     wrap1(env, "keys", fn
@@ -38,11 +39,11 @@ defmodule Core.HashMap do
       nil -> %Mal.List{contents: []}
     end)
 
-    wrapN(env, "assoc", fn [%Mal.HashMap{hashmap_map: m} | assoc_list] ->
+    wrap_list(env, "assoc", fn [%Mal.HashMap{hashmap_map: m} | assoc_list] ->
       %Mal.HashMap{hashmap_map: Map.merge(m, Seq.list_to_hashmap_map(assoc_list))}
     end)
 
-    wrapN(env, "dissoc", fn [%Mal.HashMap{hashmap_map: m} | key_list] ->
+    wrap_list(env, "dissoc", fn [%Mal.HashMap{hashmap_map: m} | key_list] ->
       %Mal.HashMap{hashmap_map: Map.drop(m, key_list)}
     end)
   end

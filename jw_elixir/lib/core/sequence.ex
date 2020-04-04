@@ -8,8 +8,9 @@ defmodule Core.Sequence do
   @doc """
   Add functions for this module to the environment
   """
+  @spec add(Env.t()) :: Env.t()
   def add(env) do
-    wrapN(env, "list", &%Mal.List{contents: &1})
+    wrap_list(env, "list", &%Mal.List{contents: &1})
 
     wrap1(env, "empty?", fn
       %Mal.List{contents: xs} -> Enum.empty?(xs)
@@ -32,7 +33,7 @@ defmodule Core.Sequence do
       x, %Mal.Vector{vector_map: v} -> %Mal.List{contents: [x | Seq.vector_map_to_list(v)]}
     end)
 
-    wrapN(env, "concat", fn args ->
+    wrap_list(env, "concat", fn args ->
       args
       |> Enum.map(fn
         %Mal.List{contents: xs} ->
@@ -56,7 +57,7 @@ defmodule Core.Sequence do
 
     wrap2(env, "nth", &mal_nth/2)
 
-    wrapN(env, "vector", fn
+    wrap_list(env, "vector", fn
       xs when is_list(xs) -> %Mal.Vector{vector_map: Seq.list_to_vector_map(xs)}
     end)
 
@@ -81,7 +82,7 @@ defmodule Core.Sequence do
       s when is_bitstring(s) -> %Mal.List{contents: String.graphemes(s)}
     end)
 
-    wrapN(env, "conj", fn
+    wrap_list(env, "conj", fn
       [%Mal.List{contents: xs} | args] ->
         %Mal.List{contents: Enum.reverse(args) ++ xs}
 

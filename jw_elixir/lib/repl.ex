@@ -3,7 +3,7 @@ defmodule Repl do
   Provides read-eval-print loop functionality
   """
 
-  @repl_startup "(println (str \"Mal [\" *host-language* \"]\"))"
+  @repl_startup ~s/(println (str "Mal [" *host-language* "]"))/
 
   @doc """
   Repeatedly prompts the user for input, and then applies the given real, evaluate and print

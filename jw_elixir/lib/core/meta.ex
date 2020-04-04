@@ -9,6 +9,7 @@ defmodule Core.Meta do
   @doc """
   Add functions for this module to the environment
   """
+  @spec add(Env.t()) :: Env.t()
   def add(env) do
     wrap1(env, "meta", fn
       %Mal.Function{meta: m} -> m

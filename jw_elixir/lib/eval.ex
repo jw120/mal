@@ -3,51 +3,37 @@ defmodule Eval do
   Mal evaluation
   """
 
-  alias Eval.SpecialForm
   import Mal, only: :macros
+  alias Eval.SpecialForm
 
   @doc """
   Full evaluation of a mal expression (including apply phase with handling of special forms)
   """
   @spec eval(Mal.t(), Env.t()) :: Mal.t()
-  def eval(ast, env) do
-    case ast do
-      %Mal.List{contents: []} ->
-        ast
-
-      %Mal.List{} ->
-        case macro_expand(ast, env) do
-          %Mal.List{contents: [head | rest]} ->
-            case SpecialForm.invoke(head, rest, env) do
-              {:special, val} ->
-                val
-
-              :not_special ->
-                %Mal.List{contents: evaluated_list} = eval_ast(ast, env)
-
-                case evaluated_list do
-                  [%Mal.Function{closure: f, name: f_name} | rest] ->
-                    try do
-                      f.(rest)
-                    rescue
-                      _e in FunctionClauseError ->
-                        raise MalException, "Bad arguments for #{f_name}"
-                    end
-
-                  _ ->
-                    raise MalException,
-                          "Non-function when evaluating a list: #{inspect(evaluated_list)}"
-                end
-            end
-
-          expanded_ast ->
-            eval_ast(expanded_ast, env)
+  def eval(ast = %Mal.List{contents: [_ | _]}, env) do
+    case macro_expand(ast, env) do
+      %Mal.List{contents: [head | rest]} ->
+        case SpecialForm.invoke(head, rest, env) do
+          {:special, val} -> val
+          :not_special -> apply_ast(eval_ast(ast, env))
         end
 
-      _ ->
-        eval_ast(ast, env)
+      expanded_ast ->
+        eval_ast(expanded_ast, env)
     end
   end
+
+  def eval(ast, env), do: eval_ast(ast, env)
+
+  # Helper function to apply a evaluated list
+  defp apply_ast(%Mal.List{contents: [%Mal.Function{closure: f, name: f_name} | rest]}) do
+    f.(rest)
+  rescue
+    _e in FunctionClauseError ->
+      reraise MalException, "Bad arguments for #{f_name}", __STACKTRACE__
+  end
+
+  defp apply_ast(args), do: raise(MalException, "Applying a non-function: #{inspect(args)}")
 
   @doc """
   Evaluate a mal expression without considering the content of lists (special forms or
@@ -102,5 +88,5 @@ defmodule Eval do
     end
   end
 
-  defp is_macro_call(_, _env), do: false
+  defp is_macro_call(_, _), do: false
 end

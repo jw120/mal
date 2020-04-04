@@ -7,12 +7,13 @@ defmodule Core.Atom do
 
   """
 
-  import Core.Helpers
   use Agent
+  import Core.Helpers
 
   @doc """
   Add functions for this module to the environment
   """
+  @spec add(Env.t()) :: Env.t()
   def add(env) do
     {:ok, agent_pid} = Agent.start_link(fn -> %{} end, name: __MODULE__)
 
@@ -36,7 +37,7 @@ defmodule Core.Atom do
         new_val
     end)
 
-    wrapN(env, "swap!", fn
+    wrap_list(env, "swap!", fn
       [%Mal.Atom{agent: agent, key: key} | [%Mal.Function{closure: f} | other_args]] ->
         old_value = Agent.get(agent, &Map.get(&1, key))
         new_value = f.([old_value | other_args])

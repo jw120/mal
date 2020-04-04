@@ -8,8 +8,9 @@ defmodule Core.IO do
   @doc """
   Add functions for this module to the environment
   """
+  @spec add(Env.t()) :: Env.t()
   def add(env) do
-    wrapN(env, "prn", fn xs when is_list(xs) ->
+    wrap_list(env, "prn", fn xs when is_list(xs) ->
       xs
       |> Enum.map(&Printer.pr_str(&1, true))
       |> Enum.join(" ")
@@ -18,7 +19,7 @@ defmodule Core.IO do
       nil
     end)
 
-    wrapN(env, "println", fn xs when is_list(xs) ->
+    wrap_list(env, "println", fn xs when is_list(xs) ->
       xs
       |> Enum.map(&Printer.pr_str(&1, false))
       |> Enum.join(" ")
@@ -27,13 +28,13 @@ defmodule Core.IO do
       nil
     end)
 
-    wrapN(env, "pr-str", fn xs when is_list(xs) ->
+    wrap_list(env, "pr-str", fn xs when is_list(xs) ->
       xs
       |> Enum.map(&Printer.pr_str(&1, true))
       |> Enum.join(" ")
     end)
 
-    wrapN(env, "str", fn xs when is_list(xs) ->
+    wrap_list(env, "str", fn xs when is_list(xs) ->
       xs
       |> Enum.map(&Printer.pr_str(&1, false))
       |> Enum.join("")

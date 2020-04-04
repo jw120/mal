@@ -8,11 +8,12 @@ defmodule Core.Misc do
   @doc """
   Add functions for this module to the environment
   """
+  @spec add(Env.t()) :: Env.t()
   def add(env) do
     wrap2(env, "=", &mal_equal?/2)
     wrap1(env, "eval", &Eval.eval(&1, env))
     wrap1(env, "throw", &raise(MalException, &1))
-    wrapN(env, "apply", &mal_apply/1)
+    wrap_list(env, "apply", &mal_apply/1)
 
     wrap2(env, "map", fn
       %Mal.Function{closure: f}, %Mal.List{contents: xs} ->
@@ -76,8 +77,7 @@ defmodule Core.Misc do
       _ -> false
     end)
 
-    wrapN(env, "time-ms", fn [] -> System.system_time(:millisecond) end)
-
+    wrap_list(env, "time-ms", fn [] -> System.system_time(:millisecond) end)
   end
 
   @spec mal_equal?(Mal.t(), Mal.t()) :: boolean()

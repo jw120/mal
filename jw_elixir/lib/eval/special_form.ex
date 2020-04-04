@@ -55,7 +55,7 @@ defmodule Eval.SpecialForm do
 
   def do_form(exprs, env) do
     exprs
-    |> Enum.reduce(nil, fn x, _acc -> Eval.eval(x, env) end)
+    |> Enum.reduce(nil, fn x, _ -> Eval.eval(x, env) end)
   end
 
   @doc """
@@ -123,7 +123,7 @@ defmodule Eval.SpecialForm do
   Handle the quote special form
   """
   @spec quote_form(Mal.arguments(), Env.t()) :: Mal.t()
-  def quote_form([val], _env), do: val
+  def quote_form([val], _), do: val
 
   @doc """
   Handle the quasiquote special form
@@ -138,16 +138,12 @@ defmodule Eval.SpecialForm do
   """
   @spec try_form(Mal.arguments(), Env.t()) :: Mal.t()
   def try_form([a, %Mal.List{contents: [sym("catch*"), sym(b), c]}], env) do
-    try do
-      #      IO.puts("try eval1")
-      Eval.eval(a, env)
-    rescue
-      e in MalException ->
-        #        IO.puts("try rescue1 binding #{b}")
-        catch_env = Env.new(env)
-        Env.set!(catch_env, b, e.val)
-        Eval.eval(c, catch_env)
-    end
+    Eval.eval(a, env)
+  rescue
+    e in MalException ->
+      catch_env = Env.new(env)
+      Env.set!(catch_env, b, e.val)
+      Eval.eval(c, catch_env)
   end
 
   def try_form([a], env) do

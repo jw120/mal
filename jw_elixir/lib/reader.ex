@@ -3,8 +3,8 @@ defmodule Reader do
   Provides conversion of a string into a mal type
   """
 
-  alias Reader.Token
   import Mal, only: :macros
+  alias Reader.Token
 
   @doc """
   Converts a string into a mal type.

@@ -1,8 +1,6 @@
-.PHONY: all run repl format lint test step-test repl typecheck
+.PHONY: all run repl format docs lint test step-test host-test repl typecheck
 
-#all: typecheck lint format test step-test
-all: typecheck format test step-test
-
+all: typecheck lint format test step-test host-test
 
 CURRENT_STEP = stepA_mal.exs
 
@@ -14,6 +12,9 @@ repl:
 
 format:
 	mix format
+
+docs:
+	mix docs
 
 lint:
 	mix credo list --format=oneline -a
@@ -37,3 +38,5 @@ step-test:
 	@echo step 9; cd ..; make "test^jw_elixir^step9" | grep "failing tests"
 	@echo step A; cd ..; make "test^jw_elixir^stepA" | grep "failing tests"
 
+host-test:
+	@echo self-host; cd ..; make MAL_IMPL=jw_elixir "test^mal" | grep -E "^TEST RESULTS|failing tests"

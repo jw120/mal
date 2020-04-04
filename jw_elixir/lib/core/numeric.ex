@@ -8,6 +8,7 @@ defmodule Core.Numeric do
   @doc """
   Add functions for this module to the environment
   """
+  @spec add(Env.t()) :: Env.t()
   def add(env) do
     wrap2(env, "+", fn x, y when is_integer(x) and is_integer(y) -> x + y end)
     wrap2(env, "-", &Kernel.-/2)

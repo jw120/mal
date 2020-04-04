@@ -31,8 +31,8 @@ defmodule Core.Helpers do
   @doc """
   Adds a [mal] -> mal function to the environment
   """
-  @spec wrapN(Env.t(), String.t(), Mal.closure()) :: Env.t()
-  def wrapN(env, mal_name, f) do
+  @spec wrap_list(Env.t(), String.t(), Mal.closure()) :: Env.t()
+  def wrap_list(env, mal_name, f) do
     Env.set!(env, mal_name, %Mal.Function{
       closure: f,
       name: mal_name,

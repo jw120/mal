@@ -42,6 +42,7 @@ defmodule Mal do
 end
 
 defmodule Mal.Atom do
+  @moduledoc "Struture for mal atom"
   @enforce_keys [:agent, :key]
 
   @doc """
@@ -52,6 +53,7 @@ defmodule Mal.Atom do
 end
 
 defmodule Mal.Function do
+  @moduledoc "Struture for mal function (or macro)"
   @enforce_keys [:closure, :name, :is_macro]
 
   @doc """
@@ -68,6 +70,7 @@ defmodule Mal.Function do
 end
 
 defmodule Mal.HashMap do
+  @moduledoc "Struture for mal hashmap"
   @enforce_keys [:hashmap_map]
 
   @doc """
@@ -78,6 +81,7 @@ defmodule Mal.HashMap do
 end
 
 defmodule Mal.List do
+  @moduledoc "Struture for mal list"
   @enforce_keys [:contents]
 
   @doc """
@@ -88,6 +92,7 @@ defmodule Mal.List do
 end
 
 defmodule Mal.Vector do
+  @moduledoc "Struture for mal vector"
   @enforce_keys [:vector_map]
 
   @doc """
