@@ -1,5 +1,6 @@
 Todo
 * Review code and prep for step 8 - macros
+* next is macroexpand in eval.c
 
 
 readline

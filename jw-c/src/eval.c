@@ -28,6 +28,19 @@ mal def_special_form(list_node *n, env *e) {
   return evaluated_val;
 }
 
+mal defmacro_special_form(list_node *n, env *e) {
+  DEBUG_INTERNAL_MAL("", mal_list(n));
+  if (n == NULL || !is_sym(n->val) || list_count(n) != 2)
+    return mal_exception_str("Bad arguments to defmacro!");
+  mal evaluated_val = eval(n->next->val, e);
+  RETURN_IF_EXCEPTION(evaluated_val);
+  if (!is_closure(evaluated_val))
+    return mal_exception_str("defmacro! needs a function");
+  evaluated_val.c->is_macro = TRUE;
+  env_set(e, n->val.s, evaluated_val);
+  return evaluated_val;
+}
+
 mal do_special_form(list_node *n, env *e) {
   DEBUG_INTERNAL_MAL("", mal_list(n));
   if (n == NULL)
@@ -219,6 +232,8 @@ mal eval(mal ast, env *e) {
     RETURN_IF_EXCEPTION(head);
     if (mal_equals(head, mal_sym("def!")))
       return def_special_form(rest.n, e);
+    if (mal_equals(head, mal_sym("defmacro!")))
+      return defmacro_special_form(rest.n, e);
     if (mal_equals(head, mal_sym("do"))) {
       ast = do_special_form(rest.n, e);
       continue;
@@ -266,5 +281,15 @@ mal eval(mal ast, env *e) {
       continue; // TCO
     }
     return mal_exception_str("Not a function");
+  }
+}
+
+// Helper function
+bool is_macro_call(mal ast, env *e) {
+  return is_list(ast) && is_closure(ast.n->val) && ast.n->val.c->is_macro;
+}
+
+mal macroexpand(mal ast, env *e) {
+  while (is_macro_call(ast, e)) {
   }
 }
