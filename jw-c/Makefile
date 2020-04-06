@@ -40,7 +40,11 @@ include $(wildcard $(DEP_FILES))
 
 # Top-level targets
 
-build: $(TARGET_DIR)/mal $(TARGET_DIR)/tests
+mkdirs:
+	[[ -d $(TARGET_DIR) ]] || mkdir -p $(TARGET_DIR)
+	[[ -d $(BUILD_DIR) ]] || mkdir -p $(BUILD_DIR)
+
+build: mkdirs $(TARGET_DIR)/mal $(TARGET_DIR)/tests
 
 run: $(TARGET_DIR)/mal
 	-@$(TARGET_DIR)/mal
