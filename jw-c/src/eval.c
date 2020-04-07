@@ -18,6 +18,42 @@
 #include "seq.h"
 #include "utils.h"
 
+// Helper function - is the argument a list whose first element is a symbol that
+// looks up to a macro call
+bool is_macro_call(mal ast, env *e) {
+  DEBUG_INTERNAL_MAL("", ast);
+  if (!is_list(ast))
+    return false;
+  mal head = mal_first(ast);
+  if (!is_sym(head))
+    return false;
+  mal head_lookup = env_get(e, head.s);
+  bool return_val = is_closure(head_lookup) && head_lookup.c->is_macro;
+  DEBUG_INTERNAL_FMT("returning %s", return_val ? "TRUE" : "FALSE");
+  return return_val;
+}
+
+mal macroexpand(mal ast, env *e) {
+  DEBUG_INTERNAL_MAL("", ast);
+  while (is_macro_call(ast, e)) {
+    mal head = mal_first(ast);
+    mal rest = mal_rest(ast);
+    if (!is_sym(head))
+      return mal_exception_str(
+          "Internal failure - not a symbol in macroexpand");
+    mal head_lookup = env_get(e, head.s);
+    DEBUG_INTERNAL_MAL("head_lookup is", head_lookup);
+    DEBUG_INTERNAL_MAL("rest is", rest);
+    DEBUG_INTERNAL_MAL("binds is", mal_list(head_lookup.c->binds));
+    e = env_new2(head_lookup.c->binds, rest.n, head_lookup.c->e);
+    if (e == NULL)
+      return mal_exception_str("Failed to create environment for macro");
+    ast = eval(head_lookup.c->body, e);
+    DEBUG_HIGH_MAL("expanded ast is", ast);
+  }
+  return ast;
+}
+
 mal def_special_form(list_node *n, env *e) {
   DEBUG_INTERNAL_MAL("", mal_list(n));
   if (n == NULL || !is_sym(n->val) || list_count(n) != 2)
@@ -129,6 +165,13 @@ mal let_special_form(list_node *n, env **eptr) {
   return n->next->val;
 }
 
+// mal macroexpand_special_form(list_node *n, env *e) {
+//   DEBUG_INTERNAL_MAL("", mal_list(n));
+//   if (n == NULL || list_count(n) != 1)
+//     return mal_exception_str("Bad arguments to macroexpand form");
+//   return macroexpand(n->val, e);
+// }
+
 mal quasiquote(mal ast) {
   DEBUG_INTERNAL_MAL("", ast);
 
@@ -223,6 +266,10 @@ mal eval(mal ast, env *e) {
     RETURN_IF_EXCEPTION(ast);
     DEBUG_HIGH_ENV(e);
 
+    ast = macroexpand(ast, e);
+    RETURN_IF_EXCEPTION(ast);
+    DEBUG_HIGH_MAL("macro expanded", ast);
+
     if (!is_list(ast) || seq_empty(ast))
       return eval_ast(ast, e);
 
@@ -247,6 +294,11 @@ mal eval(mal ast, env *e) {
     if (mal_equals(head, mal_sym("let*"))) {
       ast = let_special_form(rest.n, &e);
       continue;
+    }
+    if (mal_equals(head, mal_sym("macroexpand"))) {
+      if (list_count(rest.n) != 1)
+        return mal_exception_str("Bad arguments to macroexpand");
+      return macroexpand(rest.n->val, e);
     }
     if (mal_equals(head, mal_sym("quasiquote"))) {
       if (list_count(rest.n) != 1)
@@ -281,15 +333,5 @@ mal eval(mal ast, env *e) {
       continue; // TCO
     }
     return mal_exception_str("Not a function");
-  }
-}
-
-// Helper function
-bool is_macro_call(mal ast, env *e) {
-  return is_list(ast) && is_closure(ast.n->val) && ast.n->val.c->is_macro;
-}
-
-mal macroexpand(mal ast, env *e) {
-  while (is_macro_call(ast, e)) {
   }
 }
