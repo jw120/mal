@@ -116,7 +116,13 @@ mal core_nth(list_node *n, env *_e) {
     return p != NULL ? p->val : mal_exception_str("Bad index for nth");
   }
 
-  return mal_exception_str("Non-list passed to nth");
+  if (is_vec(target)) {
+    if (index < target.v->size)
+      return target.v->buf[index];
+    return mal_exception_str("Bad index for vector nth");
+  }
+
+  return mal_exception_str("Non-sequence passed to nth");
 }
 
 // add sequence-related core functions to the environment

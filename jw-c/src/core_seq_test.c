@@ -108,6 +108,9 @@ const char *core_seq_test() {
   mu_assert_eq("nth '(4 5 6) 0", E("(nth '(4 5 6) 0)"), mal_int(4));
   mu_assert_eq("nth '(4 5 6) 2 ", E("(nth '(4 5 6) 2)"), mal_int(6));
   mu_assert("nth '(4 5 6) 7", is_exception(E("(nth '(4 5 6) 7)")));
+  mu_assert_eq("nth [3 4 5 6] 0", E("(nth [3 4 5 6] 0)"), mal_int(3));
+  mu_assert_eq("nth [3 4 5 6] 2 ", E("(nth [3 4 5 6] 2)"), mal_int(5));
+  mu_assert("nth [3 4 5 6] 7", is_exception(E("(nth [3 4 5 6] 7)")));
 
   return 0;
 }
