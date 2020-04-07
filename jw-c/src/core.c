@@ -11,6 +11,7 @@
 #include "core.h"
 
 #include "core_atom.h"
+#include "core_is.h"
 #include "core_mal.h"
 #include "core_misc.h"
 #include "core_num.h"
@@ -30,6 +31,7 @@ env *core_env() {
     DEBUG_INTERNAL_FMT("created new core environment");
     e = env_new(NULL, NULL);
     add_atom(e);
+    add_is(e);
     add_misc(e);
     add_num(e);
     add_seq(e);

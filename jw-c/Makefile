@@ -65,7 +65,7 @@ step-test: $(TARGET_DIR)/mal
 	-@echo step 6; cd ..; make "test^jw-c^step6" | grep "failing tests"
 	-@echo step 7; cd ..; make "test^jw-c^step7" | grep "failing tests"
 	-@echo step 8; cd ..; make "test^jw-c^step8" | grep "failing tests"
-
+	-@echo step 9; cd ..; make "test^jw-c^step9" | grep "failing tests"
 
 clean:
 	$(RM) $(BUILD_DIR)/*
