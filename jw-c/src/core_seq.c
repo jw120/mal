@@ -96,6 +96,29 @@ mal core_rest(list_node *n, env *e) {
   return mal_rest(n->val);
 }
 
+// C implementation of mal nth
+mal core_nth(list_node *n, env *_e) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) != 2)
+    return mal_exception_str("Need two arguments to nth");
+  if (!is_int(n->next->val))
+    return mal_exception_str("Second argument must be an integer for nth");
+  mal target = n->val;
+  int index = n->next->val.i;
+  if (index < 0)
+    return mal_exception_str("Second argument must be non-negative for nth");
+
+  if (is_list(target)) {
+    list_node *p = target.n;
+    while (index-- > 0 && p != NULL) {
+      p = p->next;
+    }
+    return p != NULL ? p->val : mal_exception_str("Bad index for nth");
+  }
+
+  return mal_exception_str("Non-list passed to nth");
+}
+
 // add sequence-related core functions to the environment
 void add_seq(env *e) {
   env_set(e, "list", mal_fn(list));
@@ -106,4 +129,5 @@ void add_seq(env *e) {
   env_set(e, "concat", mal_fn(core_concat));
   env_set(e, "first", mal_fn(core_first));
   env_set(e, "rest", mal_fn(core_rest));
+  env_set(e, "nth", mal_fn(core_nth));
 }

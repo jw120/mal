@@ -7,6 +7,9 @@
 #include "reader.h"
 #include "seq.h"
 
+#include "printer.h"
+#include <stdio.h>
+
 #define E(s) eval(read_str(s), e)
 
 const char *core_seq_test() {
@@ -98,6 +101,13 @@ const char *core_seq_test() {
   mu_assert_eq("rest [1]", E("(rest [1])"), mal_list(NULL));
   mu_assert_eq("rest [2 3 4]", E("(rest [2 3 4])"),
                mal_cons(mal_int(3), mal_cons(mal_int(4), mal_list(NULL))));
+
+  // nth
+  mu_assert("nth () 0", is_exception(E("(nth () 0)")));
+  mu_assert("nth () 2", is_exception(E("(nth () 2)")));
+  mu_assert_eq("nth '(4 5 6) 0", E("(nth '(4 5 6) 0)"), mal_int(4));
+  mu_assert_eq("nth '(4 5 6) 2 ", E("(nth '(4 5 6) 2)"), mal_int(6));
+  mu_assert("nth '(4 5 6) 7", is_exception(E("(nth '(4 5 6) 7)")));
 
   return 0;
 }
