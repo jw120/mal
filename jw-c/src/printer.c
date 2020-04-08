@@ -81,6 +81,7 @@ static const char *print_vec(vec *v, bool print_readably) {
 
 #define ATOM_PREFIX "(atom "
 #define ATOM_SUFFIX ")"
+#define EXCEPTION_PREFIX "Exception: "
 
 // return a string representation of the mal value
 const char *pr_str(mal m, bool print_readably) {
@@ -92,7 +93,11 @@ const char *pr_str(mal m, bool print_readably) {
   case MISSING:
     return "Internal error - pr_str on a missing value";
   case EXCEPTION:
-    return pr_str(*(m.e), false);
+    buf2 = pr_str(*(m.e), false);
+    buf_size = 1 + strlen(EXCEPTION_PREFIX) + strlen(buf2);
+    buf = checked_malloc(buf_size, "pr_str exception");
+    snprintf(buf, buf_size, "%s%s", EXCEPTION_PREFIX, buf2);
+    return buf;
   case TRUE:
     return "true";
   case FALSE:

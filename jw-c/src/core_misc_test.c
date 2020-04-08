@@ -26,5 +26,9 @@ const char *core_misc_test() {
   const char *s = "(read-string \"22\")";
   mu_assert_eq("core read-string 22", eval(read_str(s), e), mal_int(22));
 
+  // throw
+  mu_assert_eq("throw", eval(read_str("(throw 22)"), e),
+               mal_exception(mal_int(22)));
+
   return 0;
 }

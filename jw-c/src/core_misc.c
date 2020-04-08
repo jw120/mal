@@ -104,6 +104,14 @@ mal slurp(list_node *n, env *e) {
   return mal_exception_str("fread error in slurp");
 }
 
+// C implenetation of mal throw
+mal mal_throw(list_node *n, env *e) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) != 1)
+    return mal_exception_str("Bad arguments to throw");
+  return mal_exception(n->val);
+}
+
 // add misc core functions to the environment
 void add_misc(env *e) {
   env_set(e, "prn", mal_fn(prn));
@@ -113,4 +121,5 @@ void add_misc(env *e) {
   env_set(e, "=", mal_fn(equals));
   env_set(e, "read-string", mal_fn(read_string));
   env_set(e, "slurp", mal_fn(slurp));
+  env_set(e, "throw", mal_fn(mal_throw));
 }

@@ -113,13 +113,13 @@ mal core_nth(list_node *n, env *_e) {
     while (index-- > 0 && p != NULL) {
       p = p->next;
     }
-    return p != NULL ? p->val : mal_exception_str("Bad index for nth");
+    return p != NULL ? p->val : mal_exception_str("Index out of range for nth");
   }
 
   if (is_vec(target)) {
     if (index < target.v->size)
       return target.v->buf[index];
-    return mal_exception_str("Bad index for vector nth");
+    return mal_exception_str("Index out of range for vector nth");
   }
 
   return mal_exception_str("Non-sequence passed to nth");

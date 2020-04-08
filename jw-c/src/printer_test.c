@@ -21,7 +21,7 @@ const char *printer_test() {
 
   mu_assert("pr_str missing",
             strncmp(pr_str(mal_missing(), true), "Internal", 8) == 0);
-  mu_assert_str("pr_str exception", pr_str(e, true), "bad");
+  mu_assert_str("pr_str exception", pr_str(e, true), "Exception: bad");
   mu_assert_str("pr_str true", pr_str(mal_true(), true), "true");
   mu_assert_str("pr_str false", pr_str(mal_false(), true), "false");
   mu_assert_str("pr_str nil", pr_str(mal_nil(), true), "nil");

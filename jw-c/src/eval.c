@@ -165,12 +165,25 @@ mal let_special_form(list_node *n, env **eptr) {
   return n->next->val;
 }
 
-// mal macroexpand_special_form(list_node *n, env *e) {
-//   DEBUG_INTERNAL_MAL("", mal_list(n));
-//   if (n == NULL || list_count(n) != 1)
-//     return mal_exception_str("Bad arguments to macroexpand form");
-//   return macroexpand(n->val, e);
-// }
+mal try_special_form(list_node *n, env *e) {
+  DEBUG_INTERNAL_MAL("", mal_list(n));
+  if (list_count(n) != 2)
+    return mal_exception_str("Bad arguments to try*");
+
+  mal try_value = eval(n->val, e);
+  if (!is_exception(try_value))
+    return try_value;
+
+  mal catch_list = n->next->val;
+  if (!is_list(catch_list) || list_count(catch_list.n) != 3 ||
+      !mal_equals(catch_list.n->val, mal_sym("catch*")) ||
+      !is_sym(catch_list.n->next->val))
+    return mal_exception_str("Bad catch* clause for try");
+  mal catch_env_list = mal_cons(catch_list.n->next->val,
+                                mal_cons(*(try_value.e), mal_list(NULL)));
+  env *catch_env = env_new(catch_env_list.n, e);
+  return eval(catch_list.n->next->next->val, catch_env);
+}
 
 mal quasiquote(mal ast) {
   DEBUG_INTERNAL_MAL("", ast);
@@ -310,6 +323,9 @@ mal eval(mal ast, env *e) {
       if (list_count(rest.n) != 1)
         return mal_exception_str("Bad arguments to quote");
       return rest.n->val;
+    }
+    if (mal_equals(head, mal_sym("try*"))) {
+      return try_special_form(rest.n, e);
     }
 
     // Evaluate all the list elements
