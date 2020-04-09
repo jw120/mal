@@ -125,6 +125,12 @@ mal core_nth(list_node *n, env *_e) {
   return mal_exception_str("Non-sequence passed to nth");
 }
 
+// C implementation of mal vector
+mal core_vector(list_node *n, env *_e) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  return mal_vec(list_to_vec(list_count(n), n));
+}
+
 // add sequence-related core functions to the environment
 void add_seq(env *e) {
   env_set(e, "list", mal_fn(list));
@@ -136,4 +142,5 @@ void add_seq(env *e) {
   env_set(e, "first", mal_fn(core_first));
   env_set(e, "rest", mal_fn(core_rest));
   env_set(e, "nth", mal_fn(core_nth));
+  env_set(e, "vector", mal_fn(core_vector));
 }

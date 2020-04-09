@@ -112,6 +112,26 @@ mal mal_throw(list_node *n, env *e) {
   return mal_exception(n->val);
 }
 
+// C implenetation of mal symbol
+mal mal_symbol(list_node *n, env *e) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) != 1 || !is_str(n->val))
+    return mal_exception_str("Bad arguments to symbol");
+  return mal_sym(n->val.s);
+}
+
+// C implenetation of mal keyword
+mal mal_keyword(list_node *n, env *e) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) != 1)
+    return mal_exception_str("Bad argument number to symbol");
+  if (is_str(n->val))
+    return mal_kw(n->val.s);
+  if (is_kw(n->val))
+    return n->val;
+  return mal_exception_str("Bad argument type to symbol");
+}
+
 // add misc core functions to the environment
 void add_misc(env *e) {
   env_set(e, "prn", mal_fn(prn));
@@ -122,4 +142,6 @@ void add_misc(env *e) {
   env_set(e, "read-string", mal_fn(read_string));
   env_set(e, "slurp", mal_fn(slurp));
   env_set(e, "throw", mal_fn(mal_throw));
+  env_set(e, "symbol", mal_fn(mal_symbol));
+  env_set(e, "keyword", mal_fn(mal_keyword));
 }

@@ -30,5 +30,16 @@ const char *core_misc_test() {
   mu_assert_eq("throw", eval(read_str("(throw 22)"), e),
                mal_exception(mal_int(22)));
 
+  // symbol
+  mu_assert_eq("symbol", eval(read_str("(symbol \"abc\")"), e),
+               eval(read_str("'abc"), e));
+
+  // keyword
+  mu_assert_eq("keyword str", eval(read_str("(keyword \"abc\")"), e),
+               eval(read_str(":abc"), e));
+  mu_assert_eq("keyword keyword", eval(read_str("(keyword :ab)"), e),
+               eval(read_str(":ab"), e));
+  mu_assert("keyword num", is_exception(eval(read_str("(keyword 2)"), e)));
+
   return 0;
 }

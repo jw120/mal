@@ -112,5 +112,9 @@ const char *core_seq_test() {
   mu_assert_eq("nth [3 4 5 6] 2 ", E("(nth [3 4 5 6] 2)"), mal_int(5));
   mu_assert("nth [3 4 5 6] 7", is_exception(E("(nth [3 4 5 6] 7)")));
 
+  // vector
+  mu_assert_eq("(vector)", E("(vector)"), E("[]"));
+  mu_assert_eq("(vector 2 3)", E("(vector 2 3)"), E("[2 3]"));
+
   return 0;
 }
