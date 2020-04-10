@@ -2,7 +2,6 @@ Todo
 
 Next
 * Get tests to pass again
-* core/ subdir
 * Re-factor ttests with mal-specific helper functions in minunit
 
 

@@ -127,7 +127,7 @@ list_node *list_cons(mal m, list_node *n) {
 list_node *array_to_list(count_t count, mal a[]) {
   list_node *n = NULL;
   for (count_t i = 0; i < count; i++)
-    n = list_cons(a[count - i], n);
+    n = list_cons(a[count - i - 1], n);
   return n;
 }
 
