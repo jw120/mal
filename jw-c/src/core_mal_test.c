@@ -10,10 +10,10 @@ const char *core_mal_test() {
   env *e = core_env();
 
   // Tests for not
-  mu_assert_eq("core not true", eval(read_str("(not true)"), e), mal_false());
-  mu_assert_eq("core not false", eval(read_str("(not false)"), e), mal_true());
-  mu_assert_eq("core not false", eval(read_str("(not nil)"), e), mal_true());
-  mu_assert_eq("core not 38", eval(read_str("(not 38)"), e), mal_false());
+  mu_assert_mal(e, "(not true)", mal_false());
+  mu_assert_mal(e, "(not false)", mal_true());
+  mu_assert_mal(e, "(not nil)", mal_true());
+  mu_assert_mal(e, "(not 38)", mal_false());
 
   return 0;
 }

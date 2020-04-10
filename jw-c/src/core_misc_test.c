@@ -13,33 +13,27 @@ const char *core_misc_test() {
   // tests
 
   // Tests for ==
-  mu_assert_eq("core = true", eval(read_str("(= 2 2)"), e), mal_true());
-  mu_assert_eq("core = false", eval(read_str("(= 2 3)"), e), mal_false());
+  mu_assert_mal(e, "(= 2 2)", mal_true());
+  mu_assert_mal(e, "(= 2 3)", mal_false());
 
   // Exceptions propogate in =
-  mu_assert_eq("core = except2", eval(read_str("(= 2 (/ 3 0))"), e),
-               eval(read_str("(/ 4 0)"), e));
-  mu_assert_eq("core = except1", eval(read_str("(= (/ 3 0) 2)"), e),
-               eval(read_str("(/ 4 0)"), e));
+  mu_assert_exception(e, "(= 2 (/ 3 0))");
+  mu_assert_exception(e, "(= (/ 3 0) 2)");
 
   // read-string
   const char *s = "(read-string \"22\")";
-  mu_assert_eq("core read-string 22", eval(read_str(s), e), mal_int(22));
+  mu_assert_mal(e, s, mal_int(22));
 
   // throw
-  mu_assert_eq("throw", eval(read_str("(throw 22)"), e),
-               mal_exception(mal_int(22)));
+  mu_assert_mal(e, "(throw 22)", mal_exception(mal_int(22)));
 
   // symbol
-  mu_assert_eq("symbol", eval(read_str("(symbol \"abc\")"), e),
-               eval(read_str("'abc"), e));
+  mu_assert_mal(e, "(symbol \"abc\")", mal_sym("abc"));
 
   // keyword
-  mu_assert_eq("keyword str", eval(read_str("(keyword \"abc\")"), e),
-               eval(read_str(":abc"), e));
-  mu_assert_eq("keyword keyword", eval(read_str("(keyword :ab)"), e),
-               eval(read_str(":ab"), e));
-  mu_assert("keyword num", is_exception(eval(read_str("(keyword 2)"), e)));
+  mu_assert_mal(e, "(keyword \"abc\")", mal_kw("abc"));
+  mu_assert_mal(e, "(keyword :ab)", mal_kw("ab"));
+  mu_assert_exception(e, "(keyword 2)");
 
   return 0;
 }

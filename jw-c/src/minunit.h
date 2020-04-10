@@ -43,5 +43,19 @@
       return message;                                                          \
   } while (0)
 
+// convemience version with read/eval
+#define mu_assert_mal(e, mal_code, mal_val)                                    \
+  do {                                                                         \
+    asserts_run++;                                                             \
+    if (!mal_equals(eval(read_str(mal_code), e), mal_val))                     \
+      return mal_code;                                                         \
+  } while (0)
+#define mu_assert_exception(e, mal_code)                                       \
+  do {                                                                         \
+    asserts_run++;                                                             \
+    if (!is_exception(eval(read_str(mal_code), e)))                            \
+      return mal_code;                                                         \
+  } while (0)
+
 extern int asserts_run;
 extern int tests_run;

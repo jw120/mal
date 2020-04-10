@@ -12,85 +12,29 @@
 
 #include "debug.h"
 #include "env.h"
-// #include "printer.h"
-// #include "reader.h"
 #include "seq.h"
-// #include "utils.h"
 
-// C implementation of mal list?
-mal list_test(list_node *n, UNUSED(env *e)) {
-  DEBUG_HIGH_MAL("called with", mal_list(n));
-  if (list_count(n) != 1)
-    return mal_exception_str("Need one argument for list?");
-  return mal_bool(is_list(n->val));
-}
+#define DEFINE_IS_SOMETHING_FN(C_fn_name, mal_fn_name, test_fn)                \
+  mal C_fn_name(list_node *n, UNUSED(env *e)) {                                \
+    DEBUG_HIGH_MAL("called with", mal_list(n));                                \
+    if (list_count(n) != 1)                                                    \
+      return mal_exception_str("Need one argument for " mal_fn_name);          \
+    return mal_bool(test_fn(n->val));                                          \
+  }
 
-// C implementation of mal nil?
-static mal core_is_nil(list_node *n, UNUSED(env *e)) {
-  DEBUG_HIGH_MAL("called with", mal_list(n));
-  if (list_count(n) != 1)
-    return mal_exception_str("Need one argument for nil?");
-  return mal_bool(is_nil(n->val));
-}
-
-// C implementation of mal true?
-static mal core_is_true(list_node *n, UNUSED(env *e)) {
-  DEBUG_HIGH_MAL("called with", mal_list(n));
-  if (list_count(n) != 1)
-    return mal_exception_str("Need one argument for true?");
-  return mal_bool(is_true(n->val));
-}
-
-// C implementation of mal false?
-static mal core_is_false(list_node *n, UNUSED(env *e)) {
-  DEBUG_HIGH_MAL("called with", mal_list(n));
-  if (list_count(n) != 1)
-    return mal_exception_str("Need one argument for false?");
-  return mal_bool(is_false(n->val));
-}
-
-// C implementation of mal symbol?
-static mal core_is_sym(list_node *n, UNUSED(env *e)) {
-  DEBUG_HIGH_MAL("called with", mal_list(n));
-  if (list_count(n) != 1)
-    return mal_exception_str("Need one argument for symbol?");
-  return mal_bool(is_sym(n->val));
-}
-
-// C implementation of mal keyword?
-static mal core_is_kw(list_node *n, UNUSED(env *e)) {
-  DEBUG_HIGH_MAL("called with", mal_list(n));
-  if (list_count(n) != 1)
-    return mal_exception_str("Need one argument for keyword?");
-  return mal_bool(is_kw(n->val));
-}
-
-// C implementation of mal vector?
-static mal core_is_vec(list_node *n, UNUSED(env *e)) {
-  DEBUG_HIGH_MAL("called with", mal_list(n));
-  if (list_count(n) != 1)
-    return mal_exception_str("Need one argument for vector?");
-  return mal_bool(is_vec(n->val));
-}
-
-// C implementation of mal sequential?
-static mal core_is_seq(list_node *n, UNUSED(env *e)) {
-  DEBUG_HIGH_MAL("called with", mal_list(n));
-  if (list_count(n) != 1)
-    return mal_exception_str("Need one argument for sequential?");
-  return mal_bool(is_seq(n->val));
-}
-// C implementation of mal map?
-static mal core_is_map(list_node *n, UNUSED(env *e)) {
-  DEBUG_HIGH_MAL("called with", mal_list(n));
-  if (list_count(n) != 1)
-    return mal_exception_str("Need one argument for map?");
-  return mal_bool(is_map(n->val));
-}
+DEFINE_IS_SOMETHING_FN(core_is_list, "list?", is_list)
+DEFINE_IS_SOMETHING_FN(core_is_nil, "nil?", is_nil)
+DEFINE_IS_SOMETHING_FN(core_is_true, "true?", is_true)
+DEFINE_IS_SOMETHING_FN(core_is_false, "false?", is_false)
+DEFINE_IS_SOMETHING_FN(core_is_sym, "symbol?", is_sym)
+DEFINE_IS_SOMETHING_FN(core_is_kw, "keyword?", is_kw)
+DEFINE_IS_SOMETHING_FN(core_is_vec, "vector?", is_vec)
+DEFINE_IS_SOMETHING_FN(core_is_seq, "seq?", is_seq)
+DEFINE_IS_SOMETHING_FN(core_is_map, "map?", is_map)
 
 // add is? core functions to the environment
 void add_is(env *e) {
-  env_set(e, "list?", mal_fn(list_test));
+  env_set(e, "list?", mal_fn(core_is_list));
   env_set(e, "nil?", mal_fn(core_is_nil));
   env_set(e, "true?", mal_fn(core_is_true));
   env_set(e, "false?", mal_fn(core_is_false));
