@@ -1,6 +1,6 @@
 #ifndef CORE_MAL_TEST_H
 #define CORE_MAL_TEST_H
 
-const char *core_mal_test();
+const char *core_mal_test(void);
 
 #endif

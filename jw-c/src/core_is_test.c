@@ -6,7 +6,7 @@
 #include "eval.h"
 #include "reader.h"
 
-const char *core_is_test() {
+const char *core_is_test(void) {
   env *e = core_env();
 
   mu_assert_eq("nil? nil", eval(read_str("(nil? nil)"), e), mal_true());

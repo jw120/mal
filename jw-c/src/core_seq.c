@@ -11,31 +11,25 @@
 #include "seq.h"
 
 // C implementation of mal list
-mal list(list_node *n, env *e) {
+static mal core_list(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   return mal_list(n);
 }
 
-// C implementation of mal list?
-mal list_test(list_node *n, env *e) {
-  DEBUG_HIGH_MAL("called with", mal_list(n));
-  return mal_bool(is_list(n->val));
-}
-
 // C implementation of mal empty?
-mal empty_test(list_node *n, env *e) {
+static mal core_empty(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   return mal_bool(seq_empty(n->val));
 }
 
 // C implementation of mal count
-mal count(list_node *n, env *e) {
+static mal core_count(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
-  return mal_int(seq_count(n->val));
+  return mal_int((int)seq_count(n->val));
 }
 
 // C implementation of mal cons
-mal core_cons(list_node *n, env *e) {
+static mal core_cons(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   if (list_count(n) != 2)
     return mal_exception_str("Bad numbero ofarguments to cons");
@@ -44,7 +38,7 @@ mal core_cons(list_node *n, env *e) {
   if (is_vec(n->next->val)) {
     list_node *new_head = list_cons(n->val, NULL);
     list_node *new_ptr = new_head;
-    for (int i = 0; i < n->next->val.v->size; i++) {
+    for (count_t i = 0; i < n->next->val.v->count; i++) {
       new_ptr = list_extend(n->next->val.v->buf[i], new_ptr);
     }
     return mal_list(new_head);
@@ -53,7 +47,7 @@ mal core_cons(list_node *n, env *e) {
 }
 
 // C implementation of mal concat
-mal core_concat(list_node *n, env *e) {
+static mal core_concat(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   list_node *new_head = NULL;
   list_node *new_ptr = NULL;
@@ -67,7 +61,7 @@ mal core_concat(list_node *n, env *e) {
         sub_list_ptr = sub_list_ptr->next;
       }
     } else if (is_vec(n->val)) {
-      for (int i = 0; i < n->val.v->size; i++) {
+      for (count_t i = 0; i < n->val.v->count; i++) {
         new_ptr = list_extend(n->val.v->buf[i], new_ptr);
         if (new_head == NULL)
           new_head = new_ptr;
@@ -81,7 +75,7 @@ mal core_concat(list_node *n, env *e) {
 }
 
 // C implementation of mal first
-mal core_first(list_node *n, env *e) {
+static mal core_first(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   if (list_count(n) != 1)
     return mal_exception_str("Bad arguments to first");
@@ -89,7 +83,7 @@ mal core_first(list_node *n, env *e) {
 }
 
 // C implementation of mal rest
-mal core_rest(list_node *n, env *e) {
+static mal core_rest(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   if (list_count(n) != 1)
     return mal_exception_str("Bad arguments to rest");
@@ -97,16 +91,16 @@ mal core_rest(list_node *n, env *e) {
 }
 
 // C implementation of mal nth
-mal core_nth(list_node *n, env *_e) {
+static mal core_nth(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   if (list_count(n) != 2)
     return mal_exception_str("Need two arguments to nth");
   if (!is_int(n->next->val))
     return mal_exception_str("Second argument must be an integer for nth");
   mal target = n->val;
-  int index = n->next->val.i;
-  if (index < 0)
+  if (n->next->val.i < 0)
     return mal_exception_str("Second argument must be non-negative for nth");
+  count_t index = (count_t)n->next->val.i;
 
   if (is_list(target)) {
     list_node *p = target.n;
@@ -117,7 +111,7 @@ mal core_nth(list_node *n, env *_e) {
   }
 
   if (is_vec(target)) {
-    if (index < target.v->size)
+    if (index < target.v->count)
       return target.v->buf[index];
     return mal_exception_str("Index out of range for vector nth");
   }
@@ -126,17 +120,16 @@ mal core_nth(list_node *n, env *_e) {
 }
 
 // C implementation of mal vector
-mal core_vector(list_node *n, env *_e) {
+static mal core_vector(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   return mal_vec(list_to_vec(list_count(n), n));
 }
 
 // add sequence-related core functions to the environment
 void add_seq(env *e) {
-  env_set(e, "list", mal_fn(list));
-  env_set(e, "list?", mal_fn(list_test));
-  env_set(e, "empty?", mal_fn(empty_test));
-  env_set(e, "count", mal_fn(count));
+  env_set(e, "list", mal_fn(core_list));
+  env_set(e, "empty?", mal_fn(core_empty));
+  env_set(e, "count", mal_fn(core_count));
   env_set(e, "cons", mal_fn(core_cons));
   env_set(e, "concat", mal_fn(core_concat));
   env_set(e, "first", mal_fn(core_first));

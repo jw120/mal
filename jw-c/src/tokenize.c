@@ -31,10 +31,9 @@
   "\"(?:\\\\.|[^\\\\\"])*\"?|"                                                 \
   ";.*|"                                                                       \
   "[^\\s\\[\\]{}('\"`,;)]*)"
-#define OVEC_SIZE 6
 
 // Search input_string from offset, returning the next token and the next offset
-const token_result *tokenize(const char *input_string, const int offset) {
+const token_result *tokenize(const char *input_string, const size_t offset) {
 
   DEBUG_INTERNAL_FMT("called");
   DEBUG_INTERNAL_FMT("called on %s", input_string + offset);
@@ -80,7 +79,7 @@ const token_result *tokenize(const char *input_string, const int offset) {
   size_t *ovector = pcre2_get_ovector_pointer(match_data);
 
   const char *token_start = input_string + ovector[2];
-  int token_length = ovector[3] - ovector[2];
+  size_t token_length = ovector[3] - ovector[2];
   char *token =
       checked_malloc(token_length + 1, "token allocation in tokenize");
   strncpy(token, token_start, token_length);

@@ -76,8 +76,8 @@ void debug_env(debug_level level, env *e) {
 
   assert(e->lookup != NULL);
   map_record *sym_table = e->lookup->table;
-  size_t sym_table_size = e->lookup->size;
-  for (int i = 0; i < sym_table_size; i++)
+  count_t sym_table_count = e->lookup->count;
+  for (count_t i = 0; i < sym_table_count; i++)
     printf("  %s%s -> %s\n", sym_table[i].is_kw ? ":" : "", sym_table[i].key,
            pr_str(sym_table[i].val, true));
 }

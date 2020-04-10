@@ -12,7 +12,7 @@
  */
 
 // Count the elements in a sequence
-int seq_count(mal);
+count_t seq_count(mal);
 
 // Is the sequence empty
 bool seq_empty(mal m);
@@ -29,7 +29,7 @@ list_node *seq_to_list(mal);
  *
  */
 
-int list_count(list_node *);
+count_t list_count(list_node *);
 bool list_empty(list_node *);
 bool list_equals(list_node *, list_node *);
 
@@ -38,7 +38,7 @@ bool list_equals(list_node *, list_node *);
 list_node *list_cons(mal, list_node *);
 
 // generate a list from an array of mal values
-list_node *array_to_list(size_t size, mal a[]);
+list_node *array_to_list(count_t, mal[]);
 
 // Given a pointer to the last element of a list (or NULL), add the given
 // element and return the new last element
@@ -58,13 +58,13 @@ bool is_pair(mal m);
  *
  */
 
-int vec_count(vec *);
+count_t vec_count(vec *);
 bool vec_empty(vec *);
 bool vec_equals(vec *, vec *);
 
 // Create a vector of the given size with elements from the given list
-vec *list_to_vec(size_t, list_node *);
+vec *list_to_vec(count_t, list_node *);
 // Create a vector with unititialized entries
-vec *uninitialized_vec(size_t);
+vec *uninitialized_vec(count_t);
 
 #endif

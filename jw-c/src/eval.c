@@ -150,7 +150,7 @@ mal let_special_form(list_node *n, env **eptr) {
       p = p->next->next;
     }
   } else {
-    for (int i = 0; i < n->val.v->size; i += 2) {
+    for (count_t i = 0; i < n->val.v->count; i += 2) {
       mal sym = n->val.v->buf[i];
       RETURN_IF_EXCEPTION(sym);
       if (!is_sym(sym))
@@ -247,8 +247,8 @@ mal eval_ast(mal ast, env *e) {
   }
 
   if (is_vec(ast) && !seq_empty(ast)) {
-    vec *to = uninitialized_vec(ast.v->size);
-    for (int i = 0; i < ast.v->size; i++) {
+    vec *to = uninitialized_vec(ast.v->count);
+    for (count_t i = 0; i < ast.v->count; i++) {
       mal m = eval(ast.v->buf[i], e);
       RETURN_IF_EXCEPTION(m);
       to->buf[i] = m;
@@ -257,8 +257,8 @@ mal eval_ast(mal ast, env *e) {
   }
 
   if (is_map(ast)) {
-    map *to = uninitialized_map(ast.m->size);
-    for (int i = 0; i < ast.m->size; i++) {
+    map *to = uninitialized_map(ast.m->count);
+    for (count_t i = 0; i < ast.m->count; i++) {
       mal m = eval(ast.m->table[i].val, e);
       RETURN_IF_EXCEPTION(m);
       to->table[i].key = ast.m->table[i].key;

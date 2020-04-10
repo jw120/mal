@@ -18,7 +18,7 @@
 #include "utils.h"
 
 // ordering on - string, keyword
-int map_record_cmp(void const *lhs, void const *rhs) {
+static int map_record_cmp(void const *lhs, void const *rhs) {
 
   map_record const *const l = lhs;
   map_record const *const r = rhs;
@@ -31,7 +31,7 @@ int map_record_cmp(void const *lhs, void const *rhs) {
 }
 
 // ordering on - string, keyword, index
-int map_record_cmp_with_index(void const *lhs, void const *rhs) {
+static int map_record_cmp_with_index(void const *lhs, void const *rhs) {
 
   map_record const *const l = lhs;
   map_record const *const r = rhs;
@@ -47,29 +47,29 @@ int map_record_cmp_with_index(void const *lhs, void const *rhs) {
 }
 
 // return a new map with no duplicates from the given map (which is sorted)
-map *dedup(map *m) {
+static map *dedup(map *m) {
 
-  DEBUG_INTERNAL_FMT("given map of %d elems", m->size);
-  qsort(m->table, m->size, sizeof(map_record), map_record_cmp_with_index);
+  DEBUG_INTERNAL_FMT("given map of %d elems", m->count);
+  qsort(m->table, m->count, sizeof(map_record), map_record_cmp_with_index);
 
   // count the unique elements
-  int unique_elems = 1;
-  for (int i = 1; i < m->size; i++) {
+  count_t unique_elems = 1;
+  for (count_t i = 1; i < m->count; i++) {
     unique_elems += map_record_cmp(m->table + i - 1, m->table + i) != 0;
   }
   DEBUG_INTERNAL_FMT("%d unique elems", unique_elems);
 
   // create the new map
   map *new_map = checked_malloc(sizeof(map), "dedup map");
-  new_map->size = unique_elems;
+  new_map->count = unique_elems;
   new_map->table =
-      checked_malloc(new_map->size * sizeof(map_record), "dedup table");
+      checked_malloc(new_map->count * sizeof(map_record), "dedup table");
 
   // copy over the elemets
   new_map->table[0] = m->table[0];
   DEBUG_INTERNAL_FMT("copied element with key %s", m->table[0].key);
   int j = 0;
-  for (int i = 1; i < m->size; i++) {
+  for (size_t i = 1; i < m->count; i++) {
     if (map_record_cmp(m->table + i, new_map->table + j) == 0) {
       DEBUG_INTERNAL_FMT("overwrote element on key %s", m->table[i].key);
       new_map->table[j] = m->table[i];
@@ -83,9 +83,9 @@ map *dedup(map *m) {
 }
 
 // Create a map with unititialized entries
-map *uninitialized_map(size_t count) {
+map *uninitialized_map(count_t count) {
   map *new_map = checked_malloc(sizeof(map), "uninit_map map");
-  new_map->size = count;
+  new_map->count = count;
   new_map->table =
       checked_malloc(count * sizeof(map_record), "uninit_map table");
   return new_map;
@@ -97,13 +97,13 @@ map *list_to_map(list_node *n) {
   DEBUG_INTERNAL_FMT("called with %d elements", list_count(n));
 
   // list must have an even number of elements
-  const int list_size = list_count(n);
+  const count_t list_size = list_count(n);
   if (list_size % 2 == 1)
     return NULL;
 
   // create the new map
-  map *new_map = uninitialized_map(list_size / 2);
-  if (new_map->size == 0) {
+  map *new_map = uninitialized_map((count_t)list_size / 2);
+  if (new_map->count == 0) {
     DEBUG_INTERNAL_FMT("returning empty map");
     return new_map;
   }
@@ -151,9 +151,9 @@ map *list2_to_map(list_node *keys, list_node *vals) {
   DEBUG_INTERNAL_FMT("& %s", has_ampersand ? "found" : "not found");
 
   // create the new map
-  int keys_count = has_ampersand ? list_count(keys) - 1 : list_count(keys);
+  count_t keys_count = has_ampersand ? list_count(keys) - 1 : list_count(keys);
   map *new_map = uninitialized_map(keys_count);
-  if (new_map->size == 0) {
+  if (new_map->count == 0) {
     DEBUG_INTERNAL_FMT("returning empty map");
     return new_map;
   }
@@ -192,10 +192,11 @@ map *list2_to_map(list_node *keys, list_node *vals) {
 
 // equality for two maps
 bool map_equals(map *m1, map *m2) {
-  DEBUG_INTERNAL_FMT("called on maps of length %d and %d", m1->size, m2->size);
-  if (m1->size != m2->size)
+  DEBUG_INTERNAL_FMT("called on maps of length %d and %d", m1->count,
+                     m2->count);
+  if (m1->count != m2->count)
     return false;
-  for (int i = 0; i < m1->size; i++) {
+  for (count_t i = 0; i < m1->count; i++) {
     map_record r1 = m1->table[i];
     map_record r2 = m2->table[i];
     if (strcmp(r1.key, r2.key) != 0)
@@ -211,7 +212,7 @@ bool map_equals(map *m1, map *m2) {
 static map_record *find_record(map *hm, mal m) {
   assert(is_str(m) || is_kw(m) || is_sym(m));
   map_record key_record = {.key = m.s, .is_kw = is_kw(m)};
-  return bsearch(&key_record, hm->table, hm->size, sizeof(map_record),
+  return bsearch(&key_record, hm->table, hm->count, sizeof(map_record),
                  map_record_cmp);
 }
 
@@ -229,18 +230,18 @@ void map_set(map *hm, mal key, mal value) {
 
   // if not, then create a new map with one extra key
   DEBUG_INTERNAL_FMT("adding one key");
-  map *new_hm = uninitialized_map(hm->size + 1);
-  for (int i = 0; i < hm->size; i++) {
+  map *new_hm = uninitialized_map(hm->count + 1);
+  for (count_t i = 0; i < hm->count; i++) {
     new_hm->table[i] = hm->table[i];
   }
-  new_hm->table[hm->size].key = key.s;
-  new_hm->table[hm->size].is_kw = is_kw(key);
-  new_hm->table[hm->size].val = value;
-  new_hm->table[hm->size].index = 0;
-  qsort(new_hm->table, new_hm->size, sizeof(map_record), map_record_cmp);
+  new_hm->table[hm->count].key = key.s;
+  new_hm->table[hm->count].is_kw = is_kw(key);
+  new_hm->table[hm->count].val = value;
+  new_hm->table[hm->count].index = 0;
+  qsort(new_hm->table, new_hm->count, sizeof(map_record), map_record_cmp);
 
   // change hm to point to the new table
-  hm->size = new_hm->size;
+  hm->count = new_hm->count;
   hm->table = new_hm->table;
 }
 

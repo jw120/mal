@@ -16,7 +16,8 @@ TEST_OBJ_FILES = $(filter-out %/mal.o,$(OBJ_FILES))
 
 # Command options
 CC = clang
-CFLAGS = -Wall -O2 -std=c17 -I/usr/local/opt/readline/include
+CWARNINGS = -Wall -Wextra -Wunused-macros -Wnewline-eof -Wconversion
+CFLAGS = $(CWARNINGS) -O2 -std=c17 -I/usr/local/opt/readline/include
 DEPFLAGS = -MMD -MT $@
 LIBS= -lreadline -lpcre2-8
 

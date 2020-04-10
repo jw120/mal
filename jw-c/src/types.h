@@ -24,6 +24,8 @@ typedef struct closure_struct closure;
 
 typedef mal fn(list_node *, env *);
 
+typedef unsigned count_t; // For number of elements in a vector or map
+
 enum mal_tag {
   MISSING, // reader may return a missing value, should not be passed to eval or
            // print
@@ -64,7 +66,7 @@ struct list_node_struct {
 };
 
 struct vec_struct {
-  size_t size;
+  count_t count; // Number of mal elements in the vector
   mal *buf;
 };
 
@@ -76,7 +78,7 @@ struct map_record_struct {
 };
 
 struct map_struct {
-  size_t size; // size of table (including duplicate keys)
+  count_t count; // number of mal elements  (including duplicate keys)
   map_record *table;
 };
 
@@ -114,13 +116,13 @@ bool is_atom(const mal);
 bool match_sym(const mal, const char *);
 
 // Constructor functions
-mal mal_missing();
+mal mal_missing(void);
 mal mal_exception(mal);
 mal mal_exception_str(const char *s);
-mal mal_true();
-mal mal_false();
+mal mal_true(void);
+mal mal_false(void);
 mal mal_bool(bool);
-mal mal_nil();
+mal mal_nil(void);
 mal mal_int(int);
 mal mal_str(const char *);
 mal mal_sym(const char *);
@@ -140,5 +142,10 @@ bool mal_equals(mal, mal);
 #define RETURN_IF_EXCEPTION(x)                                                 \
   if (is_exception(x))                                                         \
   return x
+
+// Helper macro to mark function parameters as unused to avoid warnings
+// The unused parameters are needed in the function definition so the
+// function pointer will type check (for fn* above)
+#define UNUSED(x) __attribute__((unused)) x
 
 #endif

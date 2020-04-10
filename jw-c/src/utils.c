@@ -48,7 +48,7 @@ bool is_number(const char *s) {
 // number of characters to include (excluding the null)
 void str_concat(char *buf, const char *source, size_t count) {
   if (source != NULL && buf != NULL) {
-    int current_len = strlen(buf);
+    size_t current_len = strlen(buf);
     strncat(buf + current_len, source, count - current_len);
   }
 }
@@ -103,13 +103,13 @@ mal add_escapes(mal m) {
 
   // need to make one extra char space for every ", \, \n
   const char *s = m.s;
-  int extras_count = 0;
+  size_t extras_count = 0;
   while (*s) {
     if (*s == '\\' || *s == '\"' || *s == '\n')
       extras_count++;
     s++;
   }
-  char *buf = checked_malloc(strlen(m.s) + 1 + extras_count, "add_escapes");
+  char *buf = checked_malloc(strlen(m.s) + 1UL + extras_count, "add_escapes");
 
   char *p = buf;
   s = m.s;
@@ -136,11 +136,11 @@ mal add_escapes(mal m) {
 // Helper function to concat a list of strings with given separator, opener,
 // closer takes counts of number of strings in the list and number of chars
 // (excluding the separators)
-const char *str_join(list_node *s, int chars, int elements, const char *sep,
-                     const char *opener, const char *closer) {
+const char *str_join(list_node *s, size_t chars, count_t elements,
+                     const char *sep, const char *opener, const char *closer) {
 
-  int num_sep = elements > 0 ? elements - 1 : 0;
-  int buf_size =
+  count_t num_sep = elements > 0 ? elements - 1 : 0;
+  size_t buf_size =
       1 + chars + strlen(opener) + strlen(closer) + num_sep * strlen(sep);
   char *buf = checked_malloc(buf_size, "str_join");
 

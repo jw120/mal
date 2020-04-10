@@ -101,7 +101,7 @@ bool match_sym(const mal m, const char *s) {
  */
 
 mal mal_missing() {
-  mal val = {MISSING};
+  mal val = {MISSING, {.i = 0}};
   return val;
 }
 
@@ -121,19 +121,19 @@ mal mal_exception_str(const char *s) {
 }
 
 mal mal_true() {
-  mal val = {TRUE};
+  mal val = {TRUE, {.i = 0}};
   return val;
 }
 
 mal mal_false() {
-  mal val = {FALSE};
+  mal val = {FALSE, {.i = 0}};
   return val;
 }
 
 mal mal_bool(bool b) { return b ? mal_true() : mal_false(); }
 
 mal mal_nil() {
-  mal val = {NIL};
+  mal val = {NIL, {.i = 0}};
   return val;
 }
 

@@ -25,9 +25,9 @@
 // Reader state - used only within this module
 typedef struct {
   const char *input_string; // original input string provided to read_str
-  int input_length;         // length of input_string
+  size_t input_length;      // length of input_string
   const char *current;
-  int offset;
+  size_t offset;
 } reader_state;
 
 // Forward definitions of founctions used within this module
@@ -92,7 +92,7 @@ static mal read_extended(reader_state *state_ptr) {
   // Read the elements as a list, keeping a count of the number read
   list_node *head = NULL;
   list_node *last = NULL;
-  int nodes_count = 0;
+  count_t nodes_count = 0;
   while (true) {
     current = read_form(state_ptr);
     if (match_sym(current, closing_char)) {
@@ -130,7 +130,7 @@ static mal read_atom(reader_state *state_ptr) {
   if (token == NULL) {
     return mal_missing(); // EOF
   }
-  const int token_len = strlen(token);
+  const size_t token_len = strlen(token);
   mal value;
   DEBUG_INTERNAL_FMT("received token %s, length %d", token, token_len);
 
@@ -268,9 +268,9 @@ mal read_str(const char *input_string) {
 #define READER_ERROR_MSG "Reader error:"
 
 static mal mal_reader_exception(const char *msg, reader_state *state_ptr) {
-  const int buf_len = strlen(READER_ERROR_MSG) + strlen(msg) +
-                      state_ptr->input_length - state_ptr->offset +
-                      2; // two spaces
+  const size_t buf_len = strlen(READER_ERROR_MSG) + strlen(msg) +
+                         state_ptr->input_length - state_ptr->offset +
+                         2; // two spaces
   char *buf = checked_malloc(buf_len + 1, "mal_reader_exception");
   snprintf(buf, buf_len, "%s %s %s", READER_ERROR_MSG, msg,
            state_ptr->input_string + state_ptr->offset);

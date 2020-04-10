@@ -3,6 +3,7 @@
 
 #include "reader.h"
 #include "reader_test.h"
+#include "types_test.h"
 
 #include "seq.h"
 

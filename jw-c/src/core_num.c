@@ -31,28 +31,28 @@ static char *validate_2_ints(list_node *n, const char *func_name) {
 }
 
 // C implementation of mal +
-mal add(list_node *n, env *e) {
+static mal core_add(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   ret_if_args_invalid(validate_2_ints(n, __func__));
   return mal_int(n->val.i + n->next->val.i);
 }
 
 // C implementation of mal -
-mal subtract(list_node *n, env *e) {
+static mal core_subtract(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   ret_if_args_invalid(validate_2_ints(n, __func__));
   return mal_int(n->val.i - n->next->val.i);
 }
 
 // C implementation of mal *
-mal times(list_node *n, env *e) {
+static mal core_times(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   ret_if_args_invalid(validate_2_ints(n, __func__));
   return mal_int(n->val.i * n->next->val.i);
 }
 
 // C implementation of mal /
-mal divide(list_node *n, env *e) {
+static mal core_divide(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   ret_if_args_invalid(validate_2_ints(n, __func__));
   if (n->next->val.i == 0)
@@ -62,28 +62,28 @@ mal divide(list_node *n, env *e) {
 }
 
 // C implementation of mal <
-mal lt(list_node *n, env *e) {
+static mal core_lt(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   ret_if_args_invalid(validate_2_ints(n, __func__));
   return mal_bool(n->val.i < n->next->val.i);
 }
 
 // C implementation of mal <=
-mal lte(list_node *n, env *e) {
+static mal core_lte(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   ret_if_args_invalid(validate_2_ints(n, __func__));
   return mal_bool(n->val.i <= n->next->val.i);
 }
 
 // C implementation of mal >
-mal gt(list_node *n, env *e) {
+static mal core_gt(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   ret_if_args_invalid(validate_2_ints(n, __func__));
   return mal_bool(n->val.i > n->next->val.i);
 }
 
 // C implementation of mal >=
-mal gte(list_node *n, env *e) {
+static mal core_gte(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   ret_if_args_invalid(validate_2_ints(n, __func__));
   return mal_bool(n->val.i >= n->next->val.i);
@@ -91,12 +91,12 @@ mal gte(list_node *n, env *e) {
 
 // add number-related core functions to the environment
 void add_num(env *e) {
-  env_set(e, "+", mal_fn(add));
-  env_set(e, "-", mal_fn(subtract));
-  env_set(e, "*", mal_fn(times));
-  env_set(e, "/", mal_fn(divide));
-  env_set(e, "<", mal_fn(lt));
-  env_set(e, "<=", mal_fn(lte));
-  env_set(e, ">", mal_fn(gt));
-  env_set(e, ">=", mal_fn(gte));
+  env_set(e, "+", mal_fn(core_add));
+  env_set(e, "-", mal_fn(core_subtract));
+  env_set(e, "*", mal_fn(core_times));
+  env_set(e, "/", mal_fn(core_divide));
+  env_set(e, "<", mal_fn(core_lt));
+  env_set(e, "<=", mal_fn(core_lte));
+  env_set(e, ">", mal_fn(core_gt));
+  env_set(e, ">=", mal_fn(core_gte));
 }

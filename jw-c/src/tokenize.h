@@ -5,9 +5,9 @@ typedef struct token_result token_result;
 
 struct token_result {
   const char *val;
-  int next_offset;
+  size_t next_offset;
 };
 
-const token_result *tokenize(const char *input_string, const int);
+const token_result *tokenize(const char *input_string, const size_t);
 
 #endif

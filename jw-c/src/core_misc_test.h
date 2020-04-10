@@ -1,6 +1,6 @@
 #ifndef CORE_MISC_TEST_H
 #define CORE_MISC_TEST_H
 
-const char *core_misc_test();
+const char *core_misc_test(void);
 
 #endif

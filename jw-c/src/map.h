@@ -8,7 +8,7 @@ mal map_get(map *, mal);
 void map_set(map *, mal, mal);
 bool map_contains(map *, mal);
 
-map *uninitialized_map(size_t);
+map *uninitialized_map(count_t);
 map *list_to_map(list_node *);
 map *list2_to_map(list_node *, list_node *);
 

@@ -20,8 +20,6 @@
 #include "seq.h"
 #include "utils.h"
 
-#define INPUT_BUFFER_SIZE 200
-
 env *repl_env;
 
 mal READ(const char *s) { return read_str(s); }
@@ -31,7 +29,7 @@ mal EVAL(mal m, env *e) { return eval(m, e); }
 const char *PRINT(mal m) { return pr_str(m, true); }
 
 // C implementation of mal eval
-mal mal_eval(list_node *n, env *e) {
+mal mal_eval(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   if (list_count(n) != 1)
     return mal_exception_str("Bad arguments to eval");

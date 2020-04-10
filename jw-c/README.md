@@ -1,5 +1,10 @@
 Todo
 
+Next
+* Get tests to pass again
+* core/ subdir
+* Re-factor ttests with mal-specific helper functions in minunit
+
 
 readline
 pcre
@@ -8,9 +13,14 @@ more tests than other versions as c is flaky..
 
 Better map
 
-More tests and simpler macros for tests
+Re-factor core_is
 
-Check naming consistentcy: mal_ vs core_
+Better tests
+
+
+
+core_ used to name (static) function in core
+mal_ for functions related to the mal type
 
 Think about how to manage memory
 - mal atoms all on heap? collections with malloc?

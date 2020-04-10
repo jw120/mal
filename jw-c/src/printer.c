@@ -14,15 +14,13 @@
 #include "seq.h"
 #include "utils.h"
 
-#define BUFFER_SIZE_FOR_INT 16
-
 typedef enum { PRINT_LIST, PRINT_VEC, PRINT_MAP } join_mode;
 
 // Print a list
 static const char *print_list(list_node *input_head, bool print_readably) {
   list_node *string_head = NULL;
-  int char_count = 0;
-  int element_count = 0;
+  size_t char_count = 0;
+  count_t element_count = 0;
   list_node *input_node = input_head;
   list_node *string_node = string_head;
   while (input_node != NULL) {
@@ -41,10 +39,10 @@ static const char *print_list(list_node *input_head, bool print_readably) {
 // Print a map
 static const char *print_map(map *m, bool print_readably) {
   list_node *string_head = NULL;
-  int char_count = 0;
-  int element_count = 0;
+  size_t char_count = 0;
+  count_t element_count = 0;
   list_node *string_node = string_head;
-  for (int i = 0; i < m->size; i++) {
+  for (count_t i = 0; i < m->count; i++) {
     mal key =
         m->table[i].is_kw ? mal_kw(m->table[i].key) : mal_str(m->table[i].key);
     const char *s1 = pr_str(key, print_readably);
@@ -65,10 +63,10 @@ static const char *print_vec(vec *v, bool print_readably) {
   if (v == NULL)
     return "[]";
   list_node *string_head = NULL;
-  int char_count = 0;
-  int element_count = 0;
+  size_t char_count = 0;
+  count_t element_count = 0;
   list_node *string_node = string_head;
-  for (int i = 0; i < v->size; i++) {
+  for (count_t i = 0; i < v->count; i++) {
     const char *s = pr_str(v->buf[i], print_readably);
     char_count += strlen(s);
     element_count++;
@@ -85,7 +83,7 @@ static const char *print_vec(vec *v, bool print_readably) {
 
 // return a string representation of the mal value
 const char *pr_str(mal m, bool print_readably) {
-  int buf_size;
+  size_t buf_size;
   char *buf;
   const char *buf2;
 
@@ -106,7 +104,7 @@ const char *pr_str(mal m, bool print_readably) {
     return "nil";
   case INT:
     DEBUG_INTERNAL_FMT("int %d", m.i);
-    buf_size = 1 + snprintf(NULL, 0, "%d", m.i);
+    buf_size = 1 + (size_t)snprintf(NULL, 0, "%d", m.i);
     buf = checked_malloc(buf_size, "pr_str INT");
     snprintf(buf, buf_size, "%d", m.i);
     return buf;
@@ -115,7 +113,7 @@ const char *pr_str(mal m, bool print_readably) {
       return m.s;
     DEBUG_INTERNAL_FMT("str \"%s\"", m.s);
     mal esc_m = add_escapes(mal_str(m.s));
-    buf_size = 1 + snprintf(NULL, 0, "\"%s\"", esc_m.s);
+    buf_size = 1 + (size_t)snprintf(NULL, 0, "\"%s\"", esc_m.s);
     buf = checked_malloc(buf_size, "pr_str STR");
     snprintf(buf, buf_size, "\"%s\"", esc_m.s);
     return buf;
@@ -124,7 +122,7 @@ const char *pr_str(mal m, bool print_readably) {
     return m.s;
   case KW:
     DEBUG_INTERNAL_FMT("kw :%s", m.s);
-    buf_size = 1 + snprintf(NULL, 0, ":%s", m.s);
+    buf_size = 1 + (size_t)snprintf(NULL, 0, ":%s", m.s);
     buf = checked_malloc(buf_size - 1, "pr_str KW");
     snprintf(buf, buf_size, ":%s", m.s);
     return buf;

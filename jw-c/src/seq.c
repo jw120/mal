@@ -21,7 +21,7 @@
  */
 
 // Count the elements in a sequence
-int seq_count(mal m) {
+count_t seq_count(mal m) {
   if (is_list(m))
     return list_count(m.n);
   else if (is_vec(m))
@@ -43,19 +43,19 @@ static bool list_vec_equals(list_node *n, vec *v) {
   if (n == NULL && v == NULL)
     return true;
   if (n == NULL)
-    return v == NULL || v->size == 0;
+    return v == NULL || v->count == 0;
   if (v == NULL)
     return n == NULL;
 
   // check element by element
-  int i = 0;
-  while (i < v->size && n != NULL) {
+  count_t i = 0;
+  while (i < v->count && n != NULL) {
     if (!mal_equals(n->val, v->buf[i]))
       return false;
     i++;
     n = n->next;
   }
-  return i == v->size && n == NULL;
+  return i == v->count && n == NULL;
 }
 
 // Are the two sequences equal
@@ -76,8 +76,8 @@ list_node *seq_to_list(mal m) {
   if (is_list(m))
     return m.n;
   list_node *n = NULL;
-  for (int i = m.v->size - 1; i >= 0; i--) {
-    n = list_cons(m.v->buf[i], n);
+  for (count_t i = 0; i < m.v->count; i++) {
+    n = list_cons(m.v->buf[m.v->count - i - 1], n);
   }
   return n;
 }
@@ -89,8 +89,8 @@ list_node *seq_to_list(mal m) {
  */
 
 // Length of the list
-int list_count(list_node *n) {
-  int count = 0;
+count_t list_count(list_node *n) {
+  count_t count = 0;
   while (n != NULL) {
     n = n->next;
     count++;
@@ -114,8 +114,8 @@ bool list_equals(list_node *a, list_node *b) {
   }
 }
 
-// return a new list whose head is the given element and whose tail is the given
-// list (which may be NULL)
+// return a new list whose head is the given element and whose tail is the
+// given list (which may be NULL)
 list_node *list_cons(mal m, list_node *n) {
   list_node *new_list_node = checked_malloc(sizeof(list_node), "list_cons");
   new_list_node->val = m;
@@ -124,10 +124,10 @@ list_node *list_cons(mal m, list_node *n) {
 }
 
 // generate a list from an array of mal values
-list_node *array_to_list(size_t size, mal a[]) {
+list_node *array_to_list(count_t count, mal a[]) {
   list_node *n = NULL;
-  for (int i = size - 1; i >= 0; i--)
-    n = list_cons(a[i], n);
+  for (count_t i = 0; i < count; i++)
+    n = list_cons(a[count - i], n);
   return n;
 }
 
@@ -145,7 +145,7 @@ mal mal_first(mal m) {
     return m.n->val;
   }
   if (is_vec(m)) {
-    if (m.v == NULL || m.v->size == 0)
+    if (m.v == NULL || m.v->count == 0)
       return mal_nil();
     return m.v->buf[0];
   }
@@ -162,9 +162,9 @@ mal mal_rest(mal m) {
     return mal_list(m.n->next);
   }
   if (is_vec(m)) {
-    if (m.v == NULL || m.v->size < 2)
+    if (m.v == NULL || m.v->count < 2)
       return mal_list(NULL);
-    return mal_rest(mal_list(array_to_list(m.v->size, m.v->buf)));
+    return mal_rest(mal_list(array_to_list(m.v->count, m.v->buf)));
   }
   if (is_nil(m))
     return mal_list(NULL);
@@ -190,33 +190,33 @@ list_node *list_extend(mal m, list_node *n) {
  *
  */
 
-int vec_count(vec *v) { return v == NULL ? 0 : v->size; }
+count_t vec_count(vec *v) { return v == NULL ? 0 : v->count; }
 
-bool vec_empty(vec *v) { return v == NULL ? true : (v->size == 0); }
+bool vec_empty(vec *v) { return v == NULL ? true : (v->count == 0); }
 
 bool vec_equals(vec *a, vec *b) {
   if (a == NULL && b == NULL)
     return true;
-  int a_size = a == NULL ? 0 : a->size;
-  int b_size = b == NULL ? 0 : b->size;
-  if (a->size != b_size)
+  count_t a_size = a == NULL ? 0 : a->count;
+  count_t b_size = b == NULL ? 0 : b->count;
+  if (a->count != b_size)
     return false;
-  for (int i = 0; i < a_size; i++)
+  for (count_t i = 0; i < a_size; i++)
     if (!mal_equals(a->buf[i], b->buf[i]))
       return false;
   return true;
 }
 
 // Create a vector with unititialized entries
-vec *uninitialized_vec(size_t count) {
+vec *uninitialized_vec(count_t count) {
   vec *v = checked_malloc(sizeof(vec), "uninitialized_vec vec");
-  v->size = count;
+  v->count = count;
   v->buf = checked_malloc(count * sizeof(mal), "uninitialized_vec buf");
   return v;
 }
 
 // Create a vector of the given size with elements from the given list
-vec *list_to_vec(size_t count, list_node *n) {
+vec *list_to_vec(count_t count, list_node *n) {
   vec *v = uninitialized_vec(count);
   mal *buf_ptr = v->buf;
   while (n != NULL) {

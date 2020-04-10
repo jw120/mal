@@ -1,3 +1,4 @@
+#include "core_atom_test.h"
 #include "core_num.h"
 #include "core_num_test.h"
 #include "minunit.h"
