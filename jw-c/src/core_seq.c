@@ -8,6 +8,7 @@
 
 #include "debug.h"
 #include "env.h"
+#include "map.h"
 #include "seq.h"
 
 // C implementation of mal list
@@ -125,6 +126,26 @@ static mal core_vector(list_node *n, UNUSED(env *e)) {
   return mal_vec(list_to_vec(list_count(n), n));
 }
 
+// C implementation of mal hash-map
+static mal core_hash_map(list_node *n, UNUSED(env *e)) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) % 2)
+    return mal_exception_str("Need even number of arguments to hash-map");
+  return mal_map(list_to_map(n));
+}
+
+// C implementation of mal get
+static mal core_get(list_node *n, UNUSED(env *e)) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) != 2)
+    return mal_exception_str("Need two arguments to get");
+  if (is_map(n->val))
+    return map_get(n->val.m, n->next->val);
+  if (is_nil(n->val))
+    return mal_nil();
+  return mal_exception_str("Need a map (or nil) as first argument to get");
+}
+
 // add sequence-related core functions to the environment
 void add_seq(env *e) {
   env_set(e, "list", mal_fn(core_list));
@@ -136,4 +157,6 @@ void add_seq(env *e) {
   env_set(e, "rest", mal_fn(core_rest));
   env_set(e, "nth", mal_fn(core_nth));
   env_set(e, "vector", mal_fn(core_vector));
+  env_set(e, "hash-map", mal_fn(core_hash_map));
+  env_set(e, "get", mal_fn(core_get));
 }

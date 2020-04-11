@@ -114,5 +114,12 @@ const char *core_seq_test(void) {
                 mal_vec(list_to_vec(
                     2, list_cons(mal_int(2), list_cons(mal_int(3), NULL)))));
 
+  // hash-map functions
+  mu_assert_mal2(e, "(hash-map :a 2 :b 3)", "{:a 2 :b 3}");
+  mu_assert_mal(e, "(get {:a 1 :b 2} :b)", mal_int(2));
+  mu_assert_mal(e, "(get {:a 1 :b 2} 3)", mal_nil());
+  mu_assert_mal(e, "(get {:a 1 :b 2} :c)", mal_nil());
+  mu_assert_mal(e, "(get nil :c)", mal_nil());
+
   return 0;
 }

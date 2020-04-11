@@ -56,6 +56,13 @@
     if (!is_exception(eval(read_str(mal_code), e)))                            \
       return mal_code;                                                         \
   } while (0)
+#define mu_assert_mal2(e, mal_code1, mal_code2)                                \
+  do {                                                                         \
+    asserts_run++;                                                             \
+    if (!mal_equals(eval(read_str(mal_code1), e),                              \
+                    eval(read_str(mal_code2), e)))                             \
+      return mal_code1 " / " mal_code2;                                        \
+  } while (0)
 
 extern int asserts_run;
 extern int tests_run;
