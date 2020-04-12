@@ -183,8 +183,11 @@ static mal core_map(list_node *n, env *e) {
           env_new2(n->val.c->binds, list_cons(args->val, NULL), n->val.c->e);
       if (closure_env == NULL)
         return mal_exception_str("Failed to create closure environment in map");
+      DEBUG_HIGH_MAL("closure body is", n->val.c->body);
       new_n->val = eval(n->val.c->body, closure_env);
     }
+    if (is_exception(new_n->val))
+      return new_n->val;
     new_n->next = NULL;
     if (prev_n != NULL)
       prev_n->next = new_n;

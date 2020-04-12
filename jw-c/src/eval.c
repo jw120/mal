@@ -22,7 +22,7 @@
 // Helper function - is the argument a list whose first element is a symbol that
 // looks up to a macro call
 bool is_macro_call(mal ast, env *e) {
-  DEBUG_INTERNAL_MAL("", ast);
+  DEBUG_INTERNAL_MAL("called with", ast);
   if (!is_list(ast))
     return false;
   mal head = mal_first(ast);
@@ -35,7 +35,7 @@ bool is_macro_call(mal ast, env *e) {
 }
 
 mal macroexpand(mal ast, env *e) {
-  DEBUG_INTERNAL_MAL("", ast);
+  DEBUG_INTERNAL_MAL("called with", ast);
   while (is_macro_call(ast, e)) {
     mal head = mal_first(ast);
     mal rest = mal_rest(ast);
@@ -107,6 +107,7 @@ mal fn_special_form(list_node *n, env *e) {
   c->body = n->next->val;
   c->e = e;
   c->is_macro = false;
+  DEBUG_HIGH_MAL("in fn* closure body is", c->body);
   return mal_closure(c);
 }
 
@@ -278,7 +279,7 @@ mal eval_ast(mal ast, env *e) {
 mal eval(mal ast, env *e) {
 
   while (true) { // loop to enable TCO
-    DEBUG_HIGH_MAL("", ast);
+    DEBUG_HIGH_MAL("called with", ast);
     RETURN_IF_EXCEPTION(ast);
     DEBUG_HIGH_ENV(e);
 

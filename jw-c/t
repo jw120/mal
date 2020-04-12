@@ -1,0 +1,5 @@
+(prn (map (fn* [& args] (list? args)) [1 2]))
+(prn (map (fn* [args] (list? args)) [1 2]))
+(prn (map list? [1 2]))
+(prn (list (fn* [& args] (list? args))))
+

@@ -33,6 +33,8 @@ static const char *print_list(list_node *input_head, bool print_readably) {
       string_head = string_node;
     input_node = input_node->next;
   }
+  DEBUG_INTERNAL_FMT("returns '%s'", str_join(string_head, char_count,
+                                              element_count, " ", "(", ")"));
   return str_join(string_head, char_count, element_count, " ", "(", ")");
 }
 
@@ -85,6 +87,7 @@ static const char *print_vec(vec *v, bool print_readably) {
 
 // return a string representation of the mal value
 const char *pr_str(mal m, bool print_readably) {
+  DEBUG_INTERNAL_FMT("called with tag %d", m.tag);
   size_t buf_size;
   char *buf;
   const char *buf2;
@@ -132,6 +135,7 @@ const char *pr_str(mal m, bool print_readably) {
     DEBUG_INTERNAL_FMT("sym %s", m.s);
     return m.s;
   case LIST:
+    DEBUG_INTERNAL_FMT("starting print_list");
     return print_list(m.n, print_readably);
   case VEC:
     return print_vec(m.v, print_readably);

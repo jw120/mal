@@ -45,6 +45,8 @@ const char *core_misc_test() {
   mu_assert_mal2(e, "(map list? [1 '(2 3) '()])", "(list false true true)");
   mu_assert_mal2(e, "(map (fn* (a) (+ a 3)) '(1 2 3))", "(list 4 5 6)");
   mu_assert_mal2(e, "(map (fn* (a) (+ a 3)) [0 2 3])", "(list 3 5 6)");
+  mu_assert_mal2(e, "(map (fn* (& args) (list? args)) [1 2])",
+                 "(list true true)");
 
   return 0;
 }
