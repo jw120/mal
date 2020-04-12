@@ -194,6 +194,66 @@ list_node *list_extend(mal m, list_node *n) {
   return new_list_node;
 }
 
+// Create a new list consisting of (at most) the given number of elements
+list_node *list_take(list_node *n, count_t count) {
+  count_t i = 0;
+  list_node *prev_n = NULL;
+  list_node *head = NULL;
+  list_node *new_n = NULL;
+  while (n != NULL && i < count) {
+    new_n = checked_malloc(sizeof(list_node), "list_take");
+    new_n->val = n->val;
+    new_n->next = NULL;
+    if (prev_n != NULL)
+      prev_n->next = new_n;
+    if (head == NULL)
+      head = new_n;
+    prev_n = new_n;
+    n = n->next;
+    i++;
+  }
+  return head;
+}
+
+// Return the last value in  a list
+mal list_last(list_node *n) {
+  if (n == NULL)
+    return mal_exception_str("Last element of empty list");
+  while (n->next != NULL)
+    n = n->next;
+  return n->val;
+}
+
+// Create a new list that combines both lists
+list_node *list_append(list_node *n1, list_node *n2) {
+  list_node *prev_n = NULL;
+  list_node *head = NULL;
+  list_node *new_n = NULL;
+  while (n1 != NULL) {
+    new_n = checked_malloc(sizeof(list_node), "list_append 1");
+    new_n->val = n1->val;
+    new_n->next = NULL;
+    if (prev_n != NULL)
+      prev_n->next = new_n;
+    if (head == NULL)
+      head = new_n;
+    prev_n = new_n;
+    n1 = n1->next;
+  }
+  while (n2 != NULL) {
+    new_n = checked_malloc(sizeof(list_node), "list_append 2");
+    new_n->val = n2->val;
+    new_n->next = NULL;
+    if (prev_n != NULL)
+      prev_n->next = new_n;
+    if (head == NULL)
+      head = new_n;
+    prev_n = new_n;
+    n2 = n2->next;
+  }
+  return head;
+}
+
 /**
  *
  * Vector functions

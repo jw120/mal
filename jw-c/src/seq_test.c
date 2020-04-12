@@ -162,5 +162,23 @@ const char *seq_test() {
   mu_assert("null !contains 5", !list_contains(NULL, mal_int(5)));
   mu_assert("n3 !contains 5", !list_contains(n3, mal_int(5)));
 
+  // list_take
+  mu_assert("n3 take 0", list_equals(list_take(n3, 0), NULL));
+  mu_assert("n3 take 1",
+            list_equals(list_take(n3, 1), list_cons(mal_int(3), NULL)));
+  mu_assert("n3 take 2", list_equals(list_take(n3, 2), n3));
+  mu_assert("n3 take 3", list_equals(list_take(n3, 3), n3));
+  mu_assert("NULL take 3", list_equals(list_take(NULL, 3), NULL));
+
+  // list_last
+  mu_assert_eq("n3 last", list_last(n3), mal_int(4));
+  mu_assert("NULL last", is_exception(list_last(NULL)));
+
+  // list_append
+  mu_assert("append n3 []", list_equals(list_append(n3, NULL), n3));
+  mu_assert("append [] n3", list_equals(list_append(NULL, n3), n3));
+  mu_assert("append [] []", list_append(NULL, NULL) == NULL);
+  mu_assert("append n3 n3", list_count(list_append(n3, n3)) == 4);
+
   return 0;
 }

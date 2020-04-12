@@ -6,7 +6,10 @@
       "iterator": "c",
       "printer.h": "c",
       "stdbool.h": "c",
-      "seq.h": "c"
+      "seq.h": "c",
+      "chrono": "c",
+      "hash_map": "c",
+      "unordered_map": "c"
     },
     "editor.tabSize": 2
 }

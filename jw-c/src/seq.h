@@ -44,6 +44,15 @@ list_node *array_to_list(count_t, mal[]);
 // element and return the new last element
 list_node *list_extend(mal, list_node *n);
 
+// Create a new list consisting of (at most) the given number of elements
+list_node *list_take(list_node *, count_t);
+
+// Return the last value in a list (an exception if NULL)
+mal list_last(list_node *);
+
+// Create a new list that combines both lists
+list_node *list_append(list_node *, list_node *);
+
 // Versions that work on a mal type
 mal mal_cons(mal, mal);
 mal mal_first(mal);

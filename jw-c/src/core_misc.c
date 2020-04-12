@@ -12,6 +12,7 @@
 
 #include "debug.h"
 #include "env.h"
+#include "eval.h"
 #include "printer.h"
 #include "reader.h"
 #include "seq.h"
@@ -132,6 +133,69 @@ static mal core_keyword(list_node *n, UNUSED(env *e)) {
   return mal_exception_str("Bad argument type to symbol");
 }
 
+// C implemetation of mal apply
+static mal core_apply(list_node *n, UNUSED(env *e)) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) < 2)
+    return mal_exception_str("Need two arguments for apply");
+
+  // set up arguments
+  list_node *middle_args = list_take(n->next, list_count(n->next) - 1);
+  mal last_arg = list_last(n->next);
+  list_node *args;
+  if (is_seq(last_arg)) {
+    args = list_append(middle_args, seq_to_list(last_arg));
+  } else {
+    return mal_exception_str("Last argument for apply must be a sequence");
+  }
+
+  if (is_fn(n->val)) // C-defined function
+    return n->val.f(args, e);
+  if (is_closure(n->val)) { // mal-defined function
+    env *closure_env = env_new2(n->val.c->binds, args, n->val.c->e);
+    if (closure_env == NULL)
+      return mal_exception_str("Failed to create closure environment in apply");
+    return eval(n->val.c->body, closure_env);
+  }
+  return mal_exception_str("Need a function or closure for apply");
+}
+
+// C implementation of mal map
+static mal core_map(list_node *n, env *e) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) != 2)
+    return mal_exception_str("map needs two arguments");
+  if (!is_seq(n->next->val))
+    return mal_exception_str("second map argument must be a sequence");
+  if (!is_fn(n->val) && !is_closure(n->val))
+    return mal_exception_str("first map arg must be a function or closure");
+
+  list_node *args = seq_to_list(n->next->val);
+  list_node *prev_n = NULL;
+  list_node *new_n = NULL;
+  list_node *head = NULL;
+  while (args != NULL) {
+    new_n = checked_malloc(sizeof(list_node), "core_map");
+    if (is_fn(n->val)) {
+      new_n->val = n->val.f(list_cons(args->val, NULL), e);
+    } else {
+      env *closure_env =
+          env_new2(n->val.c->binds, list_cons(args->val, NULL), n->val.c->e);
+      if (closure_env == NULL)
+        return mal_exception_str("Failed to create closure environment in map");
+      new_n->val = eval(n->val.c->body, closure_env);
+    }
+    new_n->next = NULL;
+    if (prev_n != NULL)
+      prev_n->next = new_n;
+    if (head == NULL)
+      head = new_n;
+    prev_n = new_n;
+    args = args->next;
+  }
+  return mal_list(head);
+}
+
 // add misc core functions to the environment
 void add_misc(env *e) {
   env_set(e, "prn", mal_fn(core_prn));
@@ -144,4 +208,6 @@ void add_misc(env *e) {
   env_set(e, "throw", mal_fn(core_throw));
   env_set(e, "symbol", mal_fn(core_symbol));
   env_set(e, "keyword", mal_fn(core_keyword));
+  env_set(e, "apply", mal_fn(core_apply));
+  env_set(e, "map", mal_fn(core_map));
 }

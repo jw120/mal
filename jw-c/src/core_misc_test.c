@@ -34,5 +34,17 @@ const char *core_misc_test() {
   mu_assert_mal(e, "(keyword :ab)", mal_kw("ab"));
   mu_assert_exception(e, "(keyword 2)");
 
+  // apply
+  mu_assert_mal(e, "(apply + (list 2 3))", mal_int(5));
+  mu_assert_mal(e, "(apply + 4 (list 5))", mal_int(9));
+  mu_assert_mal(e, "(apply (fn* (a b) (* a b)) (list 2 3))", mal_int(6));
+  mu_assert_mal(e, "(apply (fn* (a b) (/ a b)) 10 (list 5))", mal_int(2));
+
+  // map
+  mu_assert_mal2(e, "(map list? '(1 (2 3) 4))", "(list false true false)");
+  mu_assert_mal2(e, "(map list? [1 '(2 3) '()])", "(list false true true)");
+  mu_assert_mal2(e, "(map (fn* (a) (+ a 3)) '(1 2 3))", "(list 4 5 6)");
+  mu_assert_mal2(e, "(map (fn* (a) (+ a 3)) [0 2 3])", "(list 3 5 6)");
+
   return 0;
 }
