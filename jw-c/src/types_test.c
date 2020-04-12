@@ -1,11 +1,15 @@
 #include "minunit.h"
 #include <string.h>
 
+#include "hash_table.h"
 #include "reader.h"
 #include "reader_test.h"
 #include "types_test.h"
 
 #include "seq.h"
+
+// dummy function for mal_fn test
+static mal dummy_fn(UNUSED(list_node *n), UNUSED(env *e)) { return mal_int(0); }
 
 const char *types_test() {
 
@@ -28,11 +32,11 @@ const char *types_test() {
   mu_assert("types sym", is_sym(mal_sym("abc")));
   mu_assert("types kw", is_sym(mal_sym("def!")));
   mu_assert("types list", is_list(mal_list(NULL)));
-  mu_assert("types vec", is_vec(mal_vec(NULL)));
+  mu_assert("types vec", is_vec(mal_vec(list_to_vec(0, NULL))));
   mu_assert("types seq list", is_seq(mal_list(NULL)));
-  mu_assert("types seq vec", is_seq(mal_vec(NULL)));
-  mu_assert("types map", is_map(mal_map(NULL)));
-  mu_assert("types fn", is_fn(mal_fn(NULL)));
+  mu_assert("types seq vec", is_seq(mal_vec(list_to_vec(0, NULL))));
+  mu_assert("types map", is_map(mal_map(ht_from_alternating_list(NULL))));
+  mu_assert("types fn", is_fn(mal_fn(dummy_fn)));
 
   mu_assert("types !missing", !is_missing(mal_int(2)));
   mu_assert("types !exception", !is_exception(mal_int(2)));
@@ -53,6 +57,16 @@ const char *types_test() {
   mu_assert("match_sym match", match_sym(mal_sym("qq"), "qq"));
   mu_assert("match_sym non-match sym", !match_sym(mal_sym("qq"), "a"));
   mu_assert("match_sym non-match str", !match_sym(mal_str("qq"), "qq"));
+
+  mu_assert("str \"a\"", is_str(mal_str("a")));
+  mu_assert("str \")\"", is_str(mal_str(")")));
+  mu_assert("str :b", !is_str(mal_kw("a")));
+  mu_assert("kw \"a\"", !is_kw(mal_str("a")));
+  mu_assert("kw \")\"", !is_kw(mal_str(")")));
+  mu_assert("kw :b", is_kw(mal_kw("a")));
+  mu_assert("str_or_kw \"a\"", is_str_or_kw(mal_str("a")));
+  mu_assert("str_or_kw \")\"", is_str_or_kw(mal_str(")")));
+  mu_assert("str_or_kw :b", is_str_or_kw(mal_kw("a")));
 
   return 0;
 }

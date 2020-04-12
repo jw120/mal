@@ -21,6 +21,7 @@ typedef struct map_record_struct map_record;
 typedef struct mal_struct mal;
 typedef struct env_struct env;
 typedef struct closure_struct closure;
+typedef struct hash_table hash_table;
 
 typedef mal fn(list_node *, env *);
 
@@ -34,9 +35,8 @@ enum mal_tag {
   FALSE,
   NIL,
   INT,
-  STR,
+  STR_OR_KW, // Keywords are held as a prefixed string
   SYM,
-  KW,
   LIST,
   VEC,
   MAP,
@@ -50,10 +50,10 @@ struct mal_struct {
   union {
     struct mal_struct *e;  // for EXCEPTION
     int i;                 // for INT
-    const char *s;         // for STR, SYM AND KEYWORD
+    const char *s;         // for STR_OR_KW, SYM
     list_node *n;          // for LIST
     vec *v;                // for VEC
-    map *m;                // FOR MAP
+    hash_table *m;         // FOR MAP
     fn *f;                 // FOR FN
     closure *c;            // FOR CLOSURE
     struct mal_struct **a; // FOR ATOM
@@ -106,6 +106,7 @@ bool is_int(const mal);
 bool is_str(const mal);
 bool is_sym(const mal);
 bool is_kw(const mal);
+bool is_str_or_kw(const mal);
 bool is_list(const mal);
 bool is_vec(const mal);
 bool is_seq(const mal);
@@ -130,10 +131,13 @@ mal mal_kw(const char *);
 mal mal_kw(const char *);
 mal mal_list(list_node *);
 mal mal_vec(vec *);
-mal mal_map(map *);
+mal mal_map(hash_table *);
 mal mal_fn(fn *);
 mal mal_closure(closure *);
 mal mal_atom(mal);
+
+// Helper function to skip keyword prefi
+const char *skip_kw_prefix(const char *);
 
 // Equality
 bool mal_equals(mal, mal);

@@ -10,7 +10,7 @@
 #include "printer.h"
 
 #include "debug.h"
-#include "map.h"
+#include "hash_table.h"
 #include "seq.h"
 #include "utils.h"
 
@@ -37,23 +37,25 @@ static const char *print_list(list_node *input_head, bool print_readably) {
 }
 
 // Print a map
-static const char *print_map(map *m, bool print_readably) {
-  list_node *string_head = NULL;
+static const char *print_map(hash_table *ht, bool print_readably) {
   size_t char_count = 0;
   count_t element_count = 0;
+  list_node *keys = ht_keys(ht);
+  list_node *values = ht_values(ht);
+  list_node *string_head = NULL;
   list_node *string_node = string_head;
-  for (count_t i = 0; i < m->count; i++) {
-    mal key =
-        m->table[i].is_kw ? mal_kw(m->table[i].key) : mal_str(m->table[i].key);
-    const char *s1 = pr_str(key, print_readably);
+  while (keys != NULL && values != NULL) {
+    const char *s1 = pr_str(keys->val, print_readably);
     char_count += strlen(s1);
     element_count++;
     string_node = list_extend(mal_str(s1), string_node);
     string_head = (string_head == NULL) ? string_node : string_head;
-    const char *s2 = pr_str(m->table[i].val, print_readably);
+    const char *s2 = pr_str(values->val, print_readably);
     char_count += strlen(s2);
     element_count++;
     string_node = list_extend(mal_str(s2), string_node);
+    keys = keys->next;
+    values = values->next;
   }
   return str_join(string_head, char_count, element_count, " ", "{", "}");
 }
@@ -108,24 +110,27 @@ const char *pr_str(mal m, bool print_readably) {
     buf = checked_malloc(buf_size, "pr_str INT");
     snprintf(buf, buf_size, "%d", m.i);
     return buf;
-  case STR:
-    if (!print_readably)
-      return m.s;
-    DEBUG_INTERNAL_FMT("str \"%s\"", m.s);
-    mal esc_m = add_escapes(mal_str(m.s));
-    buf_size = 1 + (size_t)snprintf(NULL, 0, "\"%s\"", esc_m.s);
-    buf = checked_malloc(buf_size, "pr_str STR");
-    snprintf(buf, buf_size, "\"%s\"", esc_m.s);
-    return buf;
+  case STR_OR_KW:
+    if (is_kw(m)) {
+      const char *kw_s = skip_kw_prefix(m.s);
+      DEBUG_INTERNAL_FMT("kw :%s", kw_s);
+      buf_size = 1 + (size_t)snprintf(NULL, 0, ":%s", kw_s);
+      buf = checked_malloc(buf_size - 1, "pr_str KW");
+      snprintf(buf, buf_size, ":%s", kw_s);
+      return buf;
+    } else {
+      if (!print_readably)
+        return m.s;
+      DEBUG_INTERNAL_FMT("str \"%s\"", m.s);
+      mal esc_m = add_escapes(mal_str(m.s));
+      buf_size = 1 + (size_t)snprintf(NULL, 0, "\"%s\"", esc_m.s);
+      buf = checked_malloc(buf_size, "pr_str STR");
+      snprintf(buf, buf_size, "\"%s\"", esc_m.s);
+      return buf;
+    }
   case SYM:
     DEBUG_INTERNAL_FMT("sym %s", m.s);
     return m.s;
-  case KW:
-    DEBUG_INTERNAL_FMT("kw :%s", m.s);
-    buf_size = 1 + (size_t)snprintf(NULL, 0, ":%s", m.s);
-    buf = checked_malloc(buf_size - 1, "pr_str KW");
-    snprintf(buf, buf_size, ":%s", m.s);
-    return buf;
   case LIST:
     return print_list(m.n, print_readably);
   case VEC:

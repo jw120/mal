@@ -13,6 +13,7 @@
 #include "assert.h"
 #include "debug.h"
 #include "env.h"
+#include "hash_table.h"
 #include "map.h"
 #include "printer.h"
 #include "seq.h"
@@ -257,15 +258,15 @@ mal eval_ast(mal ast, env *e) {
   }
 
   if (is_map(ast)) {
-    map *to = uninitialized_map(ast.m->count);
-    for (count_t i = 0; i < ast.m->count; i++) {
-      mal m = eval(ast.m->table[i].val, e);
-      RETURN_IF_EXCEPTION(m);
-      to->table[i].key = ast.m->table[i].key;
-      to->table[i].is_kw = ast.m->table[i].is_kw;
-      to->table[i].val = m;
+    hash_table *old_ht = ast.m;
+    hash_table *new_ht = ht_new(old_ht->entries);
+    for (list_node *n = ht_keys(old_ht); n != NULL; n = n->next) {
+      const char *old_key = n->val.s;
+      mal old_val = ht_get(old_ht, old_key);
+      mal new_val = eval(old_val, e);
+      ht_put(new_ht, old_key, new_val);
     }
-    return mal_map(to);
+    return mal_map(new_ht);
   }
 
   return ast;

@@ -8,6 +8,7 @@
 
 #include "debug.h"
 #include "env.h"
+#include "hash_table.h"
 #include "map.h"
 #include "seq.h"
 
@@ -131,7 +132,7 @@ static mal core_hash_map(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   if (list_count(n) % 2)
     return mal_exception_str("Need even number of arguments to hash-map");
-  return mal_map(list_to_map(n));
+  return mal_map(ht_from_alternating_list(n));
 }
 
 // C implementation of mal get
@@ -139,11 +140,42 @@ static mal core_get(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   if (list_count(n) != 2)
     return mal_exception_str("Need two arguments to get");
-  if (is_map(n->val))
-    return map_get(n->val.m, n->next->val);
+  if (is_map(n->val) && is_str_or_kw(n->next->val))
+    return (ht_has(n->val.m, n->next->val.s)) ? ht_get(n->val.m, n->next->val.s)
+                                              : mal_nil();
   if (is_nil(n->val))
     return mal_nil();
-  return mal_exception_str("Need a map (or nil) as first argument to get");
+  return mal_exception_str(
+      "Need a map (or nil) and a string or keyword as arguments to get");
+}
+
+// C implementation of mal contains?
+static mal core_contains(list_node *n, UNUSED(env *e)) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) != 2)
+    return mal_exception_str("Need two arguments to get");
+  if (is_map(n->val) && is_str_or_kw(n->next->val))
+    return mal_bool(ht_has(n->val.m, n->next->val.s));
+  if (is_nil(n->val))
+    return mal_nil();
+  return mal_exception_str(
+      "Need a map (or nil) and a string or keyword as arguments to contains?");
+}
+
+// C implementation of mal keys
+static mal core_keys(list_node *n, UNUSED(env *e)) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) != 1 || !is_map(n->val))
+    return mal_exception_str("Need a map for keys");
+  return mal_list(ht_keys(n->val.m));
+}
+
+// C implementation of mal vals
+static mal core_vals(list_node *n, UNUSED(env *e)) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) != 1 || !is_map(n->val))
+    return mal_exception_str("Need a map for vals");
+  return mal_list(ht_values(n->val.m));
 }
 
 // add sequence-related core functions to the environment
@@ -159,4 +191,7 @@ void add_seq(env *e) {
   env_set(e, "vector", mal_fn(core_vector));
   env_set(e, "hash-map", mal_fn(core_hash_map));
   env_set(e, "get", mal_fn(core_get));
+  env_set(e, "contains?", mal_fn(core_contains));
+  env_set(e, "keys", mal_fn(core_keys));
+  env_set(e, "vals", mal_fn(core_vals));
 }

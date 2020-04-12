@@ -4,7 +4,7 @@
 #include "printer.h"
 #include "printer_test.h"
 
-#include "map.h"
+#include "hash_table.h"
 #include "seq.h"
 
 const char *printer_test() {
@@ -17,7 +17,7 @@ const char *printer_test() {
       list_cons(mal_str("a"),
                 list_cons(mal_int(1), list_cons(mal_str("last"),
                                                 list_cons(mal_true(), NULL))));
-  mal hm_map = mal_map(list_to_map(hm_list));
+  mal hm_map = mal_map(ht_from_alternating_list(hm_list));
 
   mu_assert("pr_str missing",
             strncmp(pr_str(mal_missing(), true), "Internal", 8) == 0);
@@ -36,7 +36,9 @@ const char *printer_test() {
   mu_assert_str("pr_str list null", pr_str(mal_list(NULL), true), "()");
   mu_assert_str("pr_str list", pr_str(m, true), "(plus 4 5)");
   mu_assert_str("pr_str vec", pr_str(v, true), "[plus 4 5]");
-  mu_assert_str("pr_str map", pr_str(hm_map, true), "{\"a\" 1 \"last\" true}");
+  const char *pm = pr_str(hm_map, true);
+  mu_assert("pr_str map", strcmp(pm, "{\"a\" 1 \"last\" true}") == 0 ||
+                              strcmp(pm, "{\"last\" true \"a\" 1}") == 0);
   mu_assert_str("pr_str atom", pr_str(mal_atom(mal_int(3)), true), "(atom 3)");
 
   return 0;

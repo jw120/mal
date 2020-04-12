@@ -1,9 +1,7 @@
-// #include <stdio.h>
 
 #include "seq_test.h"
 #include "minunit.h"
 #include "seq.h"
-// #include "printer.h"
 
 const char *seq_test() {
 

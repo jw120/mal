@@ -256,7 +256,7 @@ mal map_get(map *hm, mal m) {
 }
 
 bool map_contains(map *hm, mal m) {
-  DEBUG_INTERNAL_MAL2("called with", mal_map(hm), m);
+  // DEBUG_INTERNAL_MAL2("called with", mal_map(hm), m);
   if (!is_str(m) && !is_kw(m) && !is_sym(m))
     return false;
 

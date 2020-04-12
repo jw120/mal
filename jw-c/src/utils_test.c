@@ -36,7 +36,6 @@ const char *utils_test() {
 
   mu_assert("remove_escapes non-str", is_exception(remove_escapes(mal_int(3))));
   mu_assert("remove_escapes nothing", str_equals(remove_escapes(n), n));
-  // printf("a=%s, r(a)=%s, b=%s\n", a.s, remove_escapes(a).s, b.s);
   mu_assert("remove_escapes quote", str_equals(remove_escapes(a), b));
   mu_assert("remove_escapes nl", str_equals(remove_escapes(c), d));
   mu_assert("remove_escapes slash", str_equals(remove_escapes(e), f));

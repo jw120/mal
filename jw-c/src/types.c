@@ -11,9 +11,13 @@
 
 #include "types.h"
 
-#include "map.h"
+#include "hash_table.h"
 #include "seq.h"
 #include "utils.h"
+
+static const char *kw_prefix =
+    "\xCA\x9E"; // UTF8 for LATIN SMALL LETTER TURNED K
+const char *skip_kw_prefix(const char *s) { return s + strlen(kw_prefix); }
 
 // Value equality (does not propogate exceptions)
 bool mal_equals(mal a, mal b) {
@@ -30,8 +34,7 @@ bool mal_equals(mal a, mal b) {
   case INT:
     return a.tag == b.tag && a.i == b.i;
   case SYM:
-  case STR:
-  case KW:
+  case STR_OR_KW:
     return a.tag == b.tag && strcmp(a.s, b.s) == 0;
   case LIST:
   case VEC:
@@ -40,7 +43,7 @@ bool mal_equals(mal a, mal b) {
     }
     return false;
   case MAP:
-    return a.tag == b.tag && map_equals(a.m, b.m);
+    return a.tag == b.tag && ht_equals(a.m, b.m);
   case FN:
   case CLOSURE:
     return false;
@@ -71,11 +74,17 @@ bool is_nil(const mal m) { return m.tag == NIL; }
 
 bool is_int(const mal m) { return m.tag == INT; }
 
-bool is_str(const mal m) { return m.tag == STR; }
+bool is_str(const mal m) {
+  return m.tag == STR_OR_KW && strncmp(m.s, kw_prefix, strlen(kw_prefix)) != 0;
+}
 
 bool is_sym(const mal m) { return m.tag == SYM; }
 
-bool is_kw(const mal m) { return m.tag == KW; }
+bool is_kw(const mal m) {
+  return m.tag == STR_OR_KW && strncmp(m.s, kw_prefix, strlen(kw_prefix)) == 0;
+}
+
+bool is_str_or_kw(const mal m) { return m.tag == STR_OR_KW; };
 
 bool is_list(const mal m) { return m.tag == LIST; }
 
@@ -114,7 +123,7 @@ mal mal_exception(mal m) {
 
 mal mal_exception_str(const char *s) {
   mal *m_ptr = checked_malloc(sizeof(mal), "mal_exception_str");
-  m_ptr->tag = STR;
+  m_ptr->tag = STR_OR_KW;
   m_ptr->s = s;
   mal val = {EXCEPTION, {.e = m_ptr}};
   return val;
@@ -143,17 +152,27 @@ mal mal_int(int i) {
 }
 
 mal mal_str(const char *s) {
-  mal val = {STR, {.s = s}};
+  if (s == NULL)
+    return mal_exception_str("Null in mal_str");
+  mal val = {STR_OR_KW, {.s = s}};
   return val;
 }
 
 mal mal_sym(const char *s) {
+  if (s == NULL)
+    return mal_exception_str("Null in mal_sym");
   mal val = {SYM, {.s = s}};
   return val;
 }
 
 mal mal_kw(const char *s) {
-  mal val = {KW, {.s = s}};
+  if (s == NULL)
+    return mal_exception_str("Null in mal_kw");
+  size_t buf_size = 1 + strlen(kw_prefix) + strlen(s);
+  char *buf = checked_malloc(buf_size, "mal_kw");
+  strncpy(buf, kw_prefix, buf_size);
+  str_concat(buf, s, buf_size);
+  mal val = {STR_OR_KW, {.s = buf}};
   return val;
 }
 
@@ -163,21 +182,29 @@ mal mal_list(list_node *n) {
 }
 
 mal mal_vec(vec *v) {
+  if (v == NULL)
+    return mal_exception_str("Null in mal_vec");
   mal val = {VEC, {.v = v}};
   return val;
 }
 
-mal mal_map(map *m) {
+mal mal_map(hash_table *m) {
+  if (m == NULL)
+    return mal_exception_str("Null in mal_map");
   mal val = {MAP, {.m = m}};
   return val;
 }
 
 mal mal_fn(fn *f) {
+  if (f == NULL)
+    return mal_exception_str("Null in mal_fn");
   mal val = {FN, {.f = f}};
   return val;
 }
 
 mal mal_closure(closure *c) {
+  if (c == NULL)
+    return mal_exception_str("Null in mal_closure");
   mal val = {CLOSURE, {.c = c}};
   return val;
 }

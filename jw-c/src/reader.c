@@ -17,7 +17,7 @@
 #include "reader.h"
 
 #include "debug.h"
-#include "map.h"
+#include "hash_table.h"
 #include "seq.h"
 #include "tokenize.h"
 #include "utils.h"
@@ -108,17 +108,13 @@ static mal read_extended(reader_state *state_ptr) {
     }
   }
 
-  map *m;
   switch (reading_mode) {
   case READ_LIST:
     return mal_list(head);
   case READ_VEC:
     return mal_vec(list_to_vec(nodes_count, head));
   case READ_MAP:
-    m = list_to_map(head);
-    if (m == NULL)
-      return mal_exception_str("Map creation failed");
-    return mal_map(m);
+    return mal_map(ht_from_alternating_list(head));
   }
 }
 
@@ -142,11 +138,12 @@ static mal read_atom(reader_state *state_ptr) {
 
   if (token[0] == '\"') {
     if (token_len >= 2 && token[token_len - 1] == '\"') {
-      char *buf = checked_malloc(token_len - 1, "STR in read_atom");
+      char *buf = checked_malloc(token_len - 1, "string in read_atom");
       strncpy(buf, token + 1, token_len - 2);
       buf[token_len - 1] = '\0';
+      DEBUG_INTERNAL_FMT("before remove_escapes '%s'", buf);
       mal val = remove_escapes(mal_str(buf));
-      DEBUG_INTERNAL_FMT("returning str %s", val.s);
+      DEBUG_INTERNAL_FMT("returning str '%s'", val.s);
       return val;
     }
     return mal_reader_exception("unbalanced string quote", state_ptr);

@@ -1,11 +1,12 @@
 {
     "editor.formatOnSave": true,
     "files.associations": {
-        "*.Rmd": "markdown",
-        "reader.h": "c",
-        "iterator": "c",
-        "printer.h": "c",
-        "stdbool.h": "c"
+      "*.Rmd": "markdown",
+      "reader.h": "c",
+      "iterator": "c",
+      "printer.h": "c",
+      "stdbool.h": "c",
+      "seq.h": "c"
     },
     "editor.tabSize": 2
 }

@@ -4,7 +4,7 @@
 #include "reader.h"
 #include "reader_test.h"
 
-#include "map.h"
+#include "hash_table.h"
 #include "printer.h"
 #include "seq.h"
 
@@ -28,7 +28,7 @@ const char *reader_test() {
   mu_assert_eq("reader (+ 2 3) whole", actual, expected);
 
   actual = read_str("{\"a\" 2 \"qq\" nil}");
-  expected = mal_map(list_to_map(
+  expected = mal_map(ht_from_alternating_list(
       list_cons(mal_str("a"),
                 list_cons(mal_int(2), list_cons(mal_str("qq"),
                                                 list_cons(mal_nil(), NULL))))));

@@ -1,5 +1,7 @@
 Todo
 
+- Re-wire hash map to use hash table - crashing when printing a map
+- Re-wire env to use hash table
 
 readline
 pcre

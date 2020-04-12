@@ -109,7 +109,7 @@ const char *core_seq_test(void) {
   mu_assert_exception(e, "(nth [3 4 5 6] 7)");
 
   // vector
-  mu_assert_mal(e, "(vector)", mal_vec(NULL));
+  mu_assert_mal(e, "(vector)", mal_vec(list_to_vec(0, NULL)));
   mu_assert_mal(e, "(vector 2 3)",
                 mal_vec(list_to_vec(
                     2, list_cons(mal_int(2), list_cons(mal_int(3), NULL)))));
@@ -117,9 +117,13 @@ const char *core_seq_test(void) {
   // hash-map functions
   mu_assert_mal2(e, "(hash-map :a 2 :b 3)", "{:a 2 :b 3}");
   mu_assert_mal(e, "(get {:a 1 :b 2} :b)", mal_int(2));
-  mu_assert_mal(e, "(get {:a 1 :b 2} 3)", mal_nil());
+  mu_assert_mal(e, "(get {:a 1 :b 2} \"d\")", mal_nil());
   mu_assert_mal(e, "(get {:a 1 :b 2} :c)", mal_nil());
   mu_assert_mal(e, "(get nil :c)", mal_nil());
+  mu_assert_mal(e, "(contains? {:a 1 :b 2} :a)", mal_true());
+  mu_assert_mal(e, "(contains? {:a 1 :b 2} :c)", mal_false());
+  mu_assert_mal2(e, "(keys {:a 2})", "'(:a)");
+  mu_assert_mal2(e, "(vals {:a 2 :b 2})", "'(2 2)");
 
   return 0;
 }

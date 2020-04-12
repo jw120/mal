@@ -34,7 +34,7 @@ const char *eval_test() {
   mal expected_1v = mal_vec(list_to_vec(5, expected_1.n));
   mu_assert_eq("eval_ast vec", eval_ast(input_1v, e), expected_1v);
 
-  // eval_ast applies to values in a hashmap
+  // // eval_ast applies to values in a hashmap
   mal input_m = read_str("{:a 3 :b (* 3 4) :c () :d (+ x y)}");
   mal expected_m = read_str("{:a 3 :b 12 :c () :d 12}");
   mu_assert_eq("eval_ast map", eval_ast(input_m, e), expected_m);

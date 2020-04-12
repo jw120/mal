@@ -20,7 +20,7 @@
 #include "core_seq_test.h"
 #include "env_test.h"
 #include "eval_test.h"
-#include "map_test.h"
+#include "hash_table_test.h"
 #include "printer_test.h"
 #include "reader_test.h"
 #include "seq_test.h"
@@ -42,7 +42,7 @@ const char *run_tests(void) {
   mu_run_test(core_seq_test);
   mu_run_test(env_test);
   mu_run_test(eval_test);
-  mu_run_test(map_test);
+  mu_run_test(hash_table_test);
   mu_run_test(printer_test);
   mu_run_test(reader_test);
   mu_run_test(seq_test);
