@@ -124,6 +124,8 @@ const char *core_seq_test(void) {
   mu_assert_mal(e, "(contains? {:a 1 :b 2} :c)", mal_false());
   mu_assert_mal2(e, "(keys {:a 2})", "'(:a)");
   mu_assert_mal2(e, "(vals {:a 2 :b 2})", "'(2 2)");
+  mu_assert_mal2(e, "(assoc {:a 2} :b 3 :c 4)", "{:a 2 :b 3 :c 4}");
+  mu_assert_mal2(e, "(dissoc {:a 2 :b 3 :c 4} :c :b :d)", "{:a 2}");
 
   return 0;
 }

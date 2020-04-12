@@ -52,6 +52,8 @@ mal mal_rest(mal);
 // Helper function for quasiquote - is this a non-empty list
 bool is_pair(mal m);
 
+bool list_contains(list_node *, mal);
+
 /**
  *
  * Vector functions

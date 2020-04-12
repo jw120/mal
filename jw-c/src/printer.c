@@ -98,9 +98,9 @@ const char *pr_str(mal m, bool print_readably) {
     buf = checked_malloc(buf_size, "pr_str exception");
     snprintf(buf, buf_size, "%s%s", EXCEPTION_PREFIX, buf2);
     return buf;
-  case TRUE:
+  case MAL_TRUE:
     return "true";
-  case FALSE:
+  case MAL_FALSE:
     return "false";
   case NIL:
     return "nil";

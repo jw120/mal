@@ -21,8 +21,7 @@ const char *core_misc_test() {
   mu_assert_exception(e, "(= (/ 3 0) 2)");
 
   // read-string
-  const char *s = "(read-string \"22\")";
-  mu_assert_mal(e, s, mal_int(22));
+  mu_assert_mal(e, "(read-string \"22\")", mal_int(22));
 
   // throw
   mu_assert_mal(e, "(throw 22)", mal_exception(mal_int(22)));

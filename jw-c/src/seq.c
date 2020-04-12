@@ -173,6 +173,16 @@ mal mal_rest(mal m) {
 
 bool is_pair(mal m) { return is_seq(m) && seq_count(m) > 0; }
 
+// Does the list include the given element
+bool list_contains(list_node *n, mal m) {
+  while (n != NULL) {
+    if (mal_equals(n->val, m))
+      return true;
+    n = n->next;
+  }
+  return false;
+}
+
 // Given a pointer to the last element of a list (or NULL), add the given
 // element and return the new last element
 list_node *list_extend(mal m, list_node *n) {

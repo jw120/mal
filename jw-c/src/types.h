@@ -31,8 +31,8 @@ enum mal_tag {
   MISSING, // reader may return a missing value, should not be passed to eval or
            // print
   EXCEPTION, // an error or thrown by the user
-  TRUE,
-  FALSE,
+  MAL_TRUE,
+  MAL_FALSE,
   NIL,
   INT,
   STR_OR_KW, // Keywords are held as a prefixed string

@@ -73,7 +73,7 @@ mal defmacro_special_form(list_node *n, env *e) {
   RETURN_IF_EXCEPTION(evaluated_val);
   if (!is_closure(evaluated_val))
     return mal_exception_str("defmacro! needs a function");
-  evaluated_val.c->is_macro = TRUE;
+  evaluated_val.c->is_macro = true;
   env_set(e, n->val.s, evaluated_val);
   return evaluated_val;
 }
@@ -168,6 +168,8 @@ mal let_special_form(list_node *n, env **eptr) {
 
 mal try_special_form(list_node *n, env *e) {
   DEBUG_INTERNAL_MAL("", mal_list(n));
+  if (list_count(n) == 1)
+    return eval(n->val, e);
   if (list_count(n) != 2)
     return mal_exception_str("Bad arguments to try*");
 

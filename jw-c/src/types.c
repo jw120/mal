@@ -27,8 +27,8 @@ bool mal_equals(mal a, mal b) {
     return false;
   case EXCEPTION:
     return a.tag == b.tag && mal_equals(*a.e, *b.e);
-  case TRUE:
-  case FALSE:
+  case MAL_TRUE:
+  case MAL_FALSE:
   case NIL:
     return a.tag == b.tag;
   case INT:
@@ -62,13 +62,13 @@ bool is_missing(mal m) { return m.tag == MISSING; }
 
 bool is_exception(mal m) { return m.tag == EXCEPTION; }
 
-bool is_bool(const mal m) { return m.tag == TRUE || m.tag == FALSE; }
+bool is_bool(const mal m) { return m.tag == MAL_TRUE || m.tag == MAL_FALSE; }
 
-bool is_true(const mal m) { return m.tag == TRUE; }
+bool is_true(const mal m) { return m.tag == MAL_TRUE; }
 
-bool is_false(const mal m) { return m.tag == FALSE; }
+bool is_false(const mal m) { return m.tag == MAL_FALSE; }
 
-bool is_falsey(const mal m) { return m.tag == FALSE || m.tag == NIL; }
+bool is_falsey(const mal m) { return m.tag == MAL_FALSE || m.tag == NIL; }
 
 bool is_nil(const mal m) { return m.tag == NIL; }
 
@@ -130,12 +130,12 @@ mal mal_exception_str(const char *s) {
 }
 
 mal mal_true() {
-  mal val = {TRUE, {.i = 0}};
+  mal val = {MAL_TRUE, {.i = 0}};
   return val;
 }
 
 mal mal_false() {
-  mal val = {FALSE, {.i = 0}};
+  mal val = {MAL_FALSE, {.i = 0}};
   return val;
 }
 

@@ -178,6 +178,40 @@ static mal core_vals(list_node *n, UNUSED(env *e)) {
   return mal_list(ht_values(n->val.m));
 }
 
+// C implementation of mal assoc
+static mal core_assoc(list_node *n, UNUSED(env *e)) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  count_t args_count = list_count(n) - 1; // arguments after hash-map
+  if (args_count % 2 || !is_map(n->val))
+    return mal_exception_str(
+        "Need a map and an even number of other arguments for assoc");
+  hash_table *new_ht = ht_copy(n->val.m, n->val.m->entries + args_count / 2);
+  list_node *arg = n->next;
+  while (arg != NULL) {
+    if (!is_str_or_kw(arg->val))
+      return mal_exception_str("Keys must be strings or keywords");
+    ht_put(new_ht, arg->val.s, arg->next->val);
+    arg = arg->next->next;
+  }
+  return mal_map(new_ht);
+}
+
+// C implementation of mal dissoc
+static mal core_dissoc(list_node *n, UNUSED(env *e)) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (n == NULL || !is_map(n->val))
+    return mal_exception_str("Need a map for dissoc");
+  hash_table *old_ht = n->val.m;
+  hash_table *new_ht = ht_new(old_ht->entries);
+  list_node *dissoc_list = n->next;
+  for (list_node *n = ht_keys(old_ht); n != NULL; n = n->next) {
+    if (!list_contains(dissoc_list, n->val)) {
+      ht_put(new_ht, n->val.s, ht_get(old_ht, n->val.s));
+    }
+  }
+  return mal_map(new_ht);
+}
+
 // add sequence-related core functions to the environment
 void add_seq(env *e) {
   env_set(e, "list", mal_fn(core_list));
@@ -194,4 +228,6 @@ void add_seq(env *e) {
   env_set(e, "contains?", mal_fn(core_contains));
   env_set(e, "keys", mal_fn(core_keys));
   env_set(e, "vals", mal_fn(core_vals));
+  env_set(e, "assoc", mal_fn(core_assoc));
+  env_set(e, "dissoc", mal_fn(core_dissoc));
 }

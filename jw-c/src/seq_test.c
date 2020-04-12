@@ -156,5 +156,11 @@ const char *seq_test() {
   mu_assert("list(mn2)", list_equals(seq_to_list(mn2), mn2.n));
   mu_assert("list(mv2)", list_equals(seq_to_list(mv2), mn2.n));
 
+  // list_contains
+  mu_assert("n3 contains 3", list_contains(n3, mal_int(3)));
+  mu_assert("n3 contains 4", list_contains(n3, mal_int(4)));
+  mu_assert("null !contains 5", !list_contains(NULL, mal_int(5)));
+  mu_assert("n3 !contains 5", !list_contains(n3, mal_int(5)));
+
   return 0;
 }

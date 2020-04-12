@@ -20,7 +20,6 @@
 // When the load factor increases above RESIZE_LOAD_FACTOR we re-create the
 // hash table with a larger size
 #define RESIZE_LOAD_FACTOR 0.7
-#define RESIZE_SIZE_MULTIPLE 2
 
 // When we create a hash-map from a list of keys, how big should the table be
 // relative to the number of keys in the list
@@ -64,31 +63,31 @@ void ht_put(hash_table *ht, const char *key, mal value) {
   DEBUG_HIGH_FMT("called for key %s", key);
 
   count_t i = hash(key) % ht->size;
-  // printf("ht_put %s hash is %u ", key, i);
-  while (ht->table[i].key != NULL)
+  while (ht->table[i].key != NULL && strcmp(ht->table[i].key, key) != 0)
     i = (i + 1) % ht->size;
   ht->table[i].key = key;
   ht->table[i].value = value;
   ht->entries++;
-  // printf("added to slot %u (entries %u, size %u)\n", i, ht->entries,
-  // ht->size);
 
   if (ht->entries > ht->size * RESIZE_LOAD_FACTOR) {
-    // printf("ht_put resizing (size was %u, will be %u)\n", ht->entries,
-    //  ht->size * RESIZE_SIZE_MULTIPLE);
-    hash_table *new_ht = ht_new(ht->size * RESIZE_SIZE_MULTIPLE);
-    for (count_t j = 0; j < ht->size; j++) {
-      if (ht->table[j].key != NULL) {
-        // printf("transferring %s: ", ht->table[j].key);
-        ht_put(new_ht, ht->table[j].key, ht->table[j].value);
-      }
-    }
+    hash_table *new_ht = ht_copy(ht, ht->entries + 1);
     free(ht->table);
     ht->size = new_ht->size;
     ht->entries = new_ht->entries;
     ht->table = new_ht->table;
     free(new_ht);
   }
+}
+
+// Create a copy of a hash table with space for given number of entries
+hash_table *ht_copy(hash_table *ht, count_t size) {
+  hash_table *new_ht = ht_new((count_t)((double)size * CREATE_SIZE_MULTIPLE));
+  for (count_t i = 0; i < ht->size; i++) {
+    if (ht->table[i].key != NULL) {
+      ht_put(new_ht, ht->table[i].key, ht->table[i].value);
+    }
+  }
+  return new_ht;
 }
 
 // Get the value associated with the given key
@@ -205,17 +204,17 @@ list_node *ht_values(hash_table *ht) {
 bool ht_equals(hash_table *a, hash_table *b) {
 
   if (a->entries != b->entries)
-    return FALSE;
+    return false;
   for (count_t i = 0; i < a->size; i++) {
     const char *a_key = a->table[i].key;
     if (a_key != NULL) {
       if (!ht_has(b, a_key))
-        return FALSE;
+        return false;
       mal a_value = a->table[i].value;
       mal b_value = ht_get(b, a_key);
       if (!mal_equals(a_value, b_value))
-        return FALSE;
+        return false;
     }
   }
-  return TRUE;
+  return true;
 }

@@ -17,10 +17,11 @@ struct hash_table {
 };
 
 hash_table *ht_new(unsigned);
+hash_table *ht_copy(hash_table *, unsigned);
 
+bool ht_has(hash_table *, const char *);
 mal ht_get(hash_table *, const char *);
 void ht_put(hash_table *, const char *, mal);
-bool ht_has(hash_table *, const char *);
 
 hash_table *ht_from_alternating_list(list_node *);
 hash_table *ht_from_lists(list_node *, list_node *);

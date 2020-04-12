@@ -1,14 +1,13 @@
 Todo
 
-- Re-wire hash map to use hash table - crashing when printing a map
 - Re-wire env to use hash table
+- Finish step 9
+- Review code and tidy
 
 readline
 pcre
 using C11 (anonymous unions/structs)
 more tests than other versions as c is flaky..
-
-Better map
 
 core_ used to name (static) function in core
 mal_ for functions related to the mal type

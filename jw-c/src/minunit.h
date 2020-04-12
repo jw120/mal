@@ -8,13 +8,6 @@
  *
  */
 
-#define mu_assert(message, test)                                               \
-  do {                                                                         \
-    asserts_run++;                                                             \
-    if (!(test))                                                               \
-      return message;                                                          \
-  } while (0)
-
 #define mu_run_test(test)                                                      \
   do {                                                                         \
     const char *message = test();                                              \
@@ -23,46 +16,26 @@
       return message;                                                          \
   } while (0)
 
-// convenience versions
-#define mu_assert_str(message, s1, s2)                                         \
+#define mu_assert(message, test)                                               \
   do {                                                                         \
     asserts_run++;                                                             \
-    if (strcmp(s1, s2))                                                        \
-      return message;                                                          \
-  } while (0)
-#define mu_assert_eq(message, m1, m2)                                          \
-  do {                                                                         \
-    asserts_run++;                                                             \
-    if (!mal_equals(m1, m2))                                                   \
-      return message;                                                          \
-  } while (0)
-#define mu_assert_neq(message, m1, m2)                                         \
-  do {                                                                         \
-    asserts_run++;                                                             \
-    if (mal_equals(m1, m2))                                                    \
-      return message;                                                          \
+    if (!(test))                                                               \
+      return __FILE__ ": " message;                                            \
   } while (0)
 
+// convenience versions
+#define mu_assert_str(message, s1, s2) mu_assert(message, strcmp(s1, s2) == 0)
+#define mu_assert_eq(message, m1, m2) mu_assert(message, mal_equals(m1, m2))
+#define mu_assert_neq(message, m1, m2) mu_assert(message, !mal_equals(m1, m2))
+
 // convemience version with read/eval
-#define mu_assert_mal(e, mal_code, mal_val)                                    \
-  do {                                                                         \
-    asserts_run++;                                                             \
-    if (!mal_equals(eval(read_str(mal_code), e), mal_val))                     \
-      return mal_code;                                                         \
-  } while (0)
-#define mu_assert_exception(e, mal_code)                                       \
-  do {                                                                         \
-    asserts_run++;                                                             \
-    if (!is_exception(eval(read_str(mal_code), e)))                            \
-      return mal_code;                                                         \
-  } while (0)
-#define mu_assert_mal2(e, mal_code1, mal_code2)                                \
-  do {                                                                         \
-    asserts_run++;                                                             \
-    if (!mal_equals(eval(read_str(mal_code1), e),                              \
-                    eval(read_str(mal_code2), e)))                             \
-      return mal_code1 " / " mal_code2;                                        \
-  } while (0)
+#define mu_assert_mal(e, code, val)                                            \
+  mu_assert(code, mal_equals(eval(read_str(code), e), val))
+#define mu_assert_exception(e, code)                                           \
+  mu_assert(code, is_exception(eval(read_str(code), e)))
+#define mu_assert_mal2(e, code1, code2)                                        \
+  mu_assert(code1 "/" code2,                                                   \
+            mal_equals(eval(read_str(code1), e), eval(read_str(code2), e)))
 
 extern int asserts_run;
 extern int tests_run;
