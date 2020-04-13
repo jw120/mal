@@ -144,7 +144,7 @@ const char *str_join(list_node *s, size_t chars, count_t elements,
       1 + chars + strlen(opener) + strlen(closer) + num_sep * strlen(sep);
   char *buf = checked_malloc(buf_size, "str_join");
 
-  str_concat(buf, opener, buf_size - 1);
+  strncpy(buf, opener, buf_size);
   while (s != NULL) {
     str_concat(buf, s->val.s, buf_size - 1);
     if (s->next != NULL) {
