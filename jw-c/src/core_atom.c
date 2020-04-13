@@ -4,8 +4,6 @@
  *
  **/
 
-#include <string.h>
-
 #include "core_atom.h"
 
 #include "debug.h"
@@ -20,15 +18,6 @@ static mal core_atom_create(list_node *n, UNUSED(env *e)) {
   if (list_count(n) != 1)
     return mal_exception_str("Bad arguments to atom");
   return mal_atom(n->val);
-}
-
-// C implementation of mal function atom?
-// Takes an argument and returns true if the argument is an atom.
-static mal core_atom_test(list_node *n, UNUSED(env *e)) {
-  DEBUG_HIGH_MAL("called with", mal_list(n));
-  if (list_count(n) != 1)
-    return mal_exception_str("Bad arguments to atom?");
-  return mal_bool(is_atom(n->val));
 }
 
 // C implementation of mal function deref
@@ -74,10 +63,8 @@ static mal core_atom_swap(list_node *n, env *e) {
   return result;
 }
 
-// add number-related core functions to the environment
 void add_atom(env *e) {
   env_set(e, "atom", mal_fn(core_atom_create));
-  env_set(e, "atom?", mal_fn(core_atom_test));
   env_set(e, "deref", mal_fn(core_atom_deref));
   env_set(e, "reset!", mal_fn(core_atom_reset));
   env_set(e, "swap!", mal_fn(core_atom_swap));

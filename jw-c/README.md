@@ -1,7 +1,9 @@
 Todo
 
-- Doxygen?
+- Tidy code (done through core*.*)
+- Function docs in header files only (and in .c for static files)
 - Review code and tidy
+- Check have exception short circurting everywhere (as in equals)
 
 readline
 pcre
@@ -15,3 +17,5 @@ Think about how to manage memory
 - mal atoms all on heap? collections with malloc?
 - do we free strings? on read?
 - do we ever garbage collect?
+
+Comments for extern functions in .h, static functions in .c

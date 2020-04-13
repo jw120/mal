@@ -211,7 +211,6 @@ static mal core_dissoc(list_node *n, UNUSED(env *e)) {
   return mal_map(new_ht);
 }
 
-// add sequence-related core functions to the environment
 void add_seq(env *e) {
   env_set(e, "list", mal_fn(core_list));
   env_set(e, "empty?", mal_fn(core_empty));

@@ -129,11 +129,6 @@ const char *skip_kw_prefix(const char *);
 // Equality
 bool mal_equals(mal, mal);
 
-// Helper macro to propogate exceptions
-#define RETURN_IF_EXCEPTION(x)                                                 \
-  if (is_exception(x))                                                         \
-  return x
-
 // Helper macro to mark function parameters as unused to avoid warnings
 // The unused parameters are needed in the function definition so the
 // function pointer will type check (for fn* above)

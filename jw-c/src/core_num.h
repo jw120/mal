@@ -3,6 +3,7 @@
 
 #include "types.h"
 
+// add numeric core functions to the environment
 void add_num(env *);
 
 #endif

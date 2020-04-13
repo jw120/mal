@@ -1,18 +1,12 @@
 #include "core_misc_test.h"
-#include "core_num.h"
 #include "minunit.h"
 
 #include "core.h"
-#include "eval.h"
-#include "reader.h"
 
 const char *core_misc_test() {
   env *e = core_env();
 
-  // no tests for print functions - as they print to the screen, rely on mal
-  // tests
-
-  // Tests for ==
+  // Tests for =
   mu_assert_mal(e, "(= 2 2)", mal_true());
   mu_assert_mal(e, "(= 2 3)", mal_false());
 

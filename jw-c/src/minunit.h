@@ -8,6 +8,9 @@
  *
  */
 
+#include "eval.h"
+#include "reader.h"
+
 #define mu_run_test(test)                                                      \
   do {                                                                         \
     const char *message = test();                                              \
@@ -36,6 +39,9 @@
 #define mu_assert_mal2(e, code1, code2)                                        \
   mu_assert(code1 "/" code2,                                                   \
             mal_equals(eval(read_str(code1), e), eval(read_str(code2), e)))
+
+// macro to read and evaluate an expression for use in tests
+#define E(expr, e) eval(read_str(expr), e)
 
 extern int asserts_run;
 extern int tests_run;

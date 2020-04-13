@@ -18,6 +18,11 @@
 #include "seq.h"
 #include "utils.h"
 
+// Helper macro to propogate exceptions
+#define RETURN_IF_EXCEPTION(x)                                                 \
+  if (is_exception(x))                                                         \
+  return x
+
 // Helper function - is the argument a list whose first element is a symbol that
 // looks up to a macro call
 bool is_macro_call(mal ast, env *e) {

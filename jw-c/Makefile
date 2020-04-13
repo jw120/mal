@@ -42,8 +42,8 @@ include $(wildcard $(DEP_FILES))
 # Top-level targets
 
 mkdirs:
-	[[ -d $(TARGET_DIR) ]] || mkdir -p $(TARGET_DIR)
-	[[ -d $(BUILD_DIR) ]] || mkdir -p $(BUILD_DIR)
+	@[[ -d $(TARGET_DIR) ]] || mkdir -p $(TARGET_DIR)
+	@[[ -d $(BUILD_DIR) ]] || mkdir -p $(BUILD_DIR)
 
 build: mkdirs $(TARGET_DIR)/mal $(TARGET_DIR)/tests
 

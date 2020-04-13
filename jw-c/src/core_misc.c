@@ -21,14 +21,13 @@
 // C implementation of mal =
 static mal core_equals(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
-  RETURN_IF_EXCEPTION(n->val);
-  RETURN_IF_EXCEPTION(n->next->val);
   return mal_bool(mal_equals(n->val, n->next->val));
 }
 
-// Helper function
-static const char *print_and_join_list(list_node *n, UNUSED(env *e),
-                                       bool print_readably, const char *sep) {
+// Helper function to create a string from applying pr_str to a list of values
+// with the gieven separator string
+static const char *print_and_join_list(list_node *n, bool print_readably,
+                                       const char *sep) {
   list_node *string_head = NULL;
   size_t char_count = 0;
   count_t element_count = 0;
@@ -51,7 +50,7 @@ static const char *print_and_join_list(list_node *n, UNUSED(env *e),
 // string.
 static mal core_pr_str(list_node *n, env *e) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
-  return mal_str(print_and_join_list(n, e, true, " "));
+  return mal_str(print_and_join_list(n, true, " "));
 }
 
 // C implementation of mal prn: calls pr_str on each argument with
@@ -59,7 +58,7 @@ static mal core_pr_str(list_node *n, env *e) {
 // the screen and then returns nil.
 static mal core_prn(list_node *n, env *e) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
-  puts(print_and_join_list(n, e, true, " "));
+  puts(print_and_join_list(n, true, " "));
   return mal_nil();
 }
 
@@ -68,7 +67,7 @@ static mal core_prn(list_node *n, env *e) {
 // separator), and returns the new string.
 static mal core_str(list_node *n, env *e) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
-  return mal_str(print_and_join_list(n, e, false, ""));
+  return mal_str(print_and_join_list(n, false, ""));
 }
 
 // C implementation of mal println: calls pr_str on each argument with
@@ -76,7 +75,7 @@ static mal core_str(list_node *n, env *e) {
 // the screen and then returns nil.
 static mal core_println(list_node *n, env *e) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
-  puts(print_and_join_list(n, e, false, " "));
+  puts(print_and_join_list(n, false, " "));
   return mal_nil();
 }
 

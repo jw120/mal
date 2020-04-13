@@ -4,10 +4,6 @@
  *
  **/
 
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
-
 #include "core.h"
 
 #include "core_atom.h"
@@ -19,8 +15,6 @@
 
 #include "debug.h"
 #include "env.h"
-#include "printer.h"
-#include "seq.h"
 
 // return the core environment, creating it if it does not already exist
 env *core_env() {

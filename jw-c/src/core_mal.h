@@ -3,6 +3,7 @@
 
 #include "types.h"
 
+// add mal-defined core functions to the environment
 void add_mal(env *);
 
 #endif

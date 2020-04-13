@@ -1,10 +1,6 @@
 #include "core_is_test.h"
-#include "core_is.h"
-#include "minunit.h"
-
 #include "core.h"
-#include "eval.h"
-#include "reader.h"
+#include "minunit.h"
 
 const char *core_is_test(void) {
   env *e = core_env();
@@ -39,6 +35,9 @@ const char *core_is_test(void) {
 
   mu_assert_mal(e, "(map? {:a 1})", mal_true());
   mu_assert_mal(e, "(map? 12345)", mal_false());
+
+  mu_assert_mal(e, "(atom? (atom 33))", mal_true());
+  mu_assert_mal(e, "(atom? 33)", mal_false());
 
   return 0;
 }

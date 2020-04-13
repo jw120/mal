@@ -4,18 +4,15 @@
  *
  **/
 
-// #include <errno.h>
-// #include <stdio.h>
-// #include <string.h>
-
 #include "core_is.h"
 
 #include "debug.h"
 #include "env.h"
 #include "seq.h"
 
+// Macro for C implementation for an is? mal function
 #define DEFINE_IS_SOMETHING_FN(C_fn_name, mal_fn_name, test_fn)                \
-  mal C_fn_name(list_node *n, UNUSED(env *e)) {                                \
+  static mal C_fn_name(list_node *n, UNUSED(env *e)) {                         \
     DEBUG_HIGH_MAL("called with", mal_list(n));                                \
     if (list_count(n) != 1)                                                    \
       return mal_exception_str("Need one argument for " mal_fn_name);          \
@@ -31,8 +28,8 @@ DEFINE_IS_SOMETHING_FN(core_is_kw, "keyword?", is_kw)
 DEFINE_IS_SOMETHING_FN(core_is_vec, "vector?", is_vec)
 DEFINE_IS_SOMETHING_FN(core_is_seq, "seq?", is_seq)
 DEFINE_IS_SOMETHING_FN(core_is_map, "map?", is_map)
+DEFINE_IS_SOMETHING_FN(core_is_atom, "atom?", is_atom)
 
-// add is? core functions to the environment
 void add_is(env *e) {
   env_set(e, "list?", mal_fn(core_is_list));
   env_set(e, "nil?", mal_fn(core_is_nil));
@@ -43,4 +40,5 @@ void add_is(env *e) {
   env_set(e, "vector?", mal_fn(core_is_vec));
   env_set(e, "sequential?", mal_fn(core_is_seq));
   env_set(e, "map?", mal_fn(core_is_map));
+  env_set(e, "atom?", mal_fn(core_is_atom));
 }

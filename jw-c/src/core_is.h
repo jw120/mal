@@ -3,6 +3,7 @@
 
 #include "types.h"
 
+// add is-a core functions to the environment
 void add_is(env *);
 
 #endif

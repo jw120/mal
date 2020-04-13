@@ -3,6 +3,7 @@
 
 #include "types.h"
 
+// add misc core functions to the environment
 void add_misc(env *);
 
 #endif

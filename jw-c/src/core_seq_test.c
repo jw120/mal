@@ -42,41 +42,24 @@ const char *core_seq_test(void) {
   mu_assert_mal(e, "(count 44)", mal_int(0));
 
   // cons
-  mu_assert_mal(
-      e, "(cons 1 '(2 3))",
-      mal_cons(mal_int(1),
-               mal_cons(mal_int(2), mal_cons(mal_int(3), mal_list(NULL)))));
-  mu_assert_mal(e, "(cons 1 ())", mal_cons(mal_int(1), mal_list(NULL)));
-  mu_assert_mal(
-      e, "(cons 1 [2 3])",
-      mal_cons(mal_int(1),
-               mal_cons(mal_int(2), mal_cons(mal_int(3), mal_list(NULL)))));
-  mu_assert_mal(e, "(cons 1 [])", mal_cons(mal_int(1), mal_list(NULL)));
+  mu_assert_mal2(e, "(cons 1 '(2 3))", "(list 1 2 3)");
+  mu_assert_mal2(e, "(cons 1 ())", "(list 1)");
+  mu_assert_mal2(e, "(cons 1 [2 3])", "(list 1 2 3) ");
+  mu_assert_mal2(e, "(cons 1 [])", "(list 1)");
 
   // concat
-  eval(read_str(
-           "(do (def! a ()) (def! b '(1)) (def! c '(2 3)) (def! d '(5 6 7)))"),
-       e);
-  mal a = mal_list(NULL);
-  mal ab = mal_cons(mal_int(1), mal_list(NULL));
-  mal bc = mal_cons(mal_int(1),
-                    mal_cons(mal_int(2), mal_cons(mal_int(3), mal_list(NULL))));
-  mal bcd = mal_cons(
-      mal_int(1),
-      mal_cons(
-          mal_int(2),
-          mal_cons(mal_int(3),
-                   mal_cons(mal_int(5),
-                            mal_cons(mal_int(6),
-                                     mal_cons(mal_int(7), mal_list(NULL)))))));
-  mu_assert_mal(e, "(concat)", mal_list(NULL));
-  mu_assert_mal(e, "(concat a)", a);
-  mu_assert_mal(e, "(concat a b)", ab);
-  mu_assert_mal(e, "(concat b c)", bc);
-  mu_assert_mal(e, "(concat b c)", bc);
-  mu_assert_mal(e, "(concat b c d)", bcd);
-  mu_assert_mal(e, "(concat b c d a)", bcd);
-  mu_assert_mal(e, "(concat [1] [2 3] [5 6 7] [])", bcd);
+  E("(do (def! a ()) "
+    "(def! b '(1)) "
+    "(def! c '(2 3)) "
+    "(def! d '(5 6 7)))",
+    e);
+  mu_assert_mal2(e, "(concat)", "()");
+  mu_assert_mal2(e, "(concat a)", "()");
+  mu_assert_mal2(e, "(concat a b)", "'(1)");
+  mu_assert_mal2(e, "(concat b c)", "'(1 2 3)");
+  mu_assert_mal2(e, "(concat b c d)", "'(1 2 3 5 6 7)");
+  mu_assert_mal2(e, "(concat b c d a)", "'(1 2 3 5 6 7)");
+  mu_assert_mal2(e, "(concat [1] [2 3] [5 6 7] [])", "'(1 2 3 5 6 7)");
 
   // first
   mu_assert_mal(e, "(first ())", mal_nil());
@@ -91,12 +74,10 @@ const char *core_seq_test(void) {
   mu_assert_mal(e, "(rest ())", mal_list(NULL));
   mu_assert_mal(e, "(rest nil)", mal_list(NULL));
   mu_assert_mal(e, "(rest '(1))", mal_list(NULL));
-  mu_assert_mal(e, "(rest '(2 3 4))",
-                mal_cons(mal_int(3), mal_cons(mal_int(4), mal_list(NULL))));
+  mu_assert_mal2(e, "(rest '(2 3 4))", "'(3 4)");
   mu_assert_mal(e, "(rest [])", mal_list(NULL));
   mu_assert_mal(e, "(rest [1])", mal_list(NULL));
-  mu_assert_mal(e, "(rest [2 3 4])",
-                mal_cons(mal_int(3), mal_cons(mal_int(4), mal_list(NULL))));
+  mu_assert_mal2(e, "(rest [2 3 4])", "'(3 4)");
 
   // nth
   mu_assert_exception(e, "(nth () 0)");
@@ -109,10 +90,8 @@ const char *core_seq_test(void) {
   mu_assert_exception(e, "(nth [3 4 5 6] 7)");
 
   // vector
-  mu_assert_mal(e, "(vector)", mal_vec(list_to_vec(0, NULL)));
-  mu_assert_mal(e, "(vector 2 3)",
-                mal_vec(list_to_vec(
-                    2, list_cons(mal_int(2), list_cons(mal_int(3), NULL)))));
+  mu_assert_mal2(e, "(vector)", "[]");
+  mu_assert_mal2(e, "(vector 2 3)", "[2 3]");
 
   // hash-map functions
   mu_assert_mal2(e, "(hash-map :a 2 :b 3)", "{:a 2 :b 3}");
