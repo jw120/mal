@@ -1,7 +1,6 @@
 Todo
 
-- Re-wire env to use hash table
-- Finish step 9
+- Doxygen?
 - Review code and tidy
 
 readline

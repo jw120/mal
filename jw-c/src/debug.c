@@ -11,6 +11,7 @@
 
 #include "core.h"
 #include "debug.h"
+#include "hash_table.h"
 #include "printer.h"
 
 static debug_level debug = DEBUG_OFF;
@@ -75,9 +76,5 @@ void debug_env(debug_level level, env *e) {
     printf(" (outer=%x)\n", (unsigned)e->outer & 0xffff);
 
   assert(e->lookup != NULL);
-  map_record *sym_table = e->lookup->table;
-  count_t sym_table_count = e->lookup->count;
-  for (count_t i = 0; i < sym_table_count; i++)
-    printf("  %s%s -> %s\n", sym_table[i].is_kw ? ":" : "", sym_table[i].key,
-           pr_str(sym_table[i].val, true));
+  ht_debug_print(e->lookup, "  ");
 }

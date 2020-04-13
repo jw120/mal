@@ -31,4 +31,6 @@ list_node *ht_values(hash_table *);
 
 bool ht_equals(hash_table *, hash_table *);
 
+void ht_debug_print(hash_table *, const char *);
+
 #endif

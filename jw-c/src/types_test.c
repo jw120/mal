@@ -67,6 +67,13 @@ const char *types_test() {
   mu_assert("str_or_kw \"a\"", is_str_or_kw(mal_str("a")));
   mu_assert("str_or_kw \")\"", is_str_or_kw(mal_str(")")));
   mu_assert("str_or_kw :b", is_str_or_kw(mal_kw("a")));
+  mu_assert("str_or_kw 'a", !is_str_or_kw(mal_sym("a")));
+  mu_assert("str_or_kw 2", !is_str_or_kw(mal_int(2)));
+  mu_assert("string_like \"a\"", is_string_like(mal_str("a")));
+  mu_assert("string_like \")\"", is_string_like(mal_str(")")));
+  mu_assert("string_like :b", is_string_like(mal_kw("a")));
+  mu_assert("string_like 'a", is_string_like(mal_sym("a")));
+  mu_assert("string_like 2", !is_string_like(mal_int(2)));
 
   return 0;
 }

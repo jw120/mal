@@ -11,9 +11,11 @@
 
 #include "hash_table.h"
 #include "debug.h"
+#include "printer.h"
 #include "seq.h"
 #include "utils.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -132,7 +134,7 @@ hash_table *ht_from_alternating_list(list_node *n) {
   hash_table *ht = ht_new(list_size / 2);
 
   while (n != NULL) {
-    if (!is_str_or_kw(n->val)) {
+    if (!is_string_like(n->val)) {
       return NULL;
     }
     ht_put(ht, n->val.s, n->next->val);
@@ -145,23 +147,36 @@ hash_table *ht_from_alternating_list(list_node *n) {
 // returns NULL if list is invalid
 hash_table *ht_from_lists(list_node *ks, list_node *vs) {
 
-  count_t ks_count = list_count(ks);
-  count_t vs_count = list_count(vs);
+  DEBUG_HIGH_FMT("called with %u %u keys", list_count(ks), list_count(vs));
 
-  DEBUG_HIGH_FMT("called with %d, %d elements", ks_count, vs_count);
+  hash_table *ht = ht_new(list_count(ks));
 
-  if (ks_count != vs_count)
-    return NULL;
-
-  hash_table *ht = ht_new(ks_count);
-
-  while (ks != NULL && vs != NULL) {
-    if (!is_str(ks->val)) {
+  while (ks != NULL) {
+    DEBUG_INTERNAL_FMT("in while");
+    if (!is_string_like(ks->val)) {
+      return NULL;
+    }
+    if (mal_equals(ks->val, mal_sym("&"))) {
+      DEBUG_INTERNAL_FMT("found &");
+      if (list_count(ks->next) != 1 || !is_sym(ks->next->val)) {
+        DEBUG_INTERNAL_FMT("bad & clause %d %d", list_count(ks->next),
+                           is_sym(ks->next->val));
+        return NULL;
+      }
+      ht_put(ht, ks->next->val.s, mal_list(vs));
+      return ht;
+    }
+    if (vs == NULL) {
+      DEBUG_INTERNAL_FMT("Unbalanced lists - not enough values");
       return NULL;
     }
     ht_put(ht, ks->val.s, vs->val);
     ks = ks->next;
     vs = vs->next;
+  }
+  if (vs != NULL) {
+    DEBUG_INTERNAL_FMT("Unbalanced lists - excess values");
+    return NULL;
   }
   return ht;
 }
@@ -217,4 +232,14 @@ bool ht_equals(hash_table *a, hash_table *b) {
     }
   }
   return true;
+}
+
+// Print all the table's contents
+void ht_debug_print(hash_table *ht, const char *prefix) {
+  assert(ht != NULL);
+  for (count_t i = 0; i < ht->size; i++) {
+    if (ht->table[i].key != NULL)
+      printf("%s%s -> %s\n", prefix, pr_str(mal_str(ht->table[i].key), true),
+             pr_str(ht->table[i].value, true));
+  }
 }

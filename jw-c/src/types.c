@@ -86,6 +86,8 @@ bool is_kw(const mal m) {
 
 bool is_str_or_kw(const mal m) { return m.tag == STR_OR_KW; };
 
+bool is_string_like(const mal m) { return m.tag == STR_OR_KW || m.tag == SYM; }
+
 bool is_list(const mal m) { return m.tag == LIST; }
 
 bool is_vec(const mal m) { return m.tag == VEC; }

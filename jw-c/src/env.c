@@ -12,7 +12,7 @@
 #include "env.h"
 
 #include "debug.h"
-#include "map.h"
+#include "hash_table.h"
 #include "seq.h"
 #include "utils.h"
 
@@ -22,11 +22,12 @@ env *env_new(list_node *elems, env *outer) {
                      outer);
 
   env *e = checked_malloc(sizeof(env), "env_new");
-  e->lookup = list_to_map(elems);
+  e->lookup = ht_from_alternating_list(elems);
   e->outer = outer;
   if (e->lookup == NULL)
     return NULL;
 
+  DEBUG_INTERNAL_FMT("returning %p", e);
   return e;
 }
 
@@ -35,11 +36,12 @@ env *env_new2(list_node *binds, list_node *vals, env *outer) {
   DEBUG_INTERNAL_FMT("called with outer %p", outer);
 
   env *e = checked_malloc(sizeof(env), "env_new2");
-  e->lookup = list2_to_map(binds, vals);
+  e->lookup = ht_from_lists(binds, vals);
   e->outer = outer;
   if (e->lookup == NULL)
     return NULL;
 
+  DEBUG_INTERNAL_FMT("returning %p", e);
   return e;
 }
 
@@ -54,18 +56,17 @@ void env_free(env *e) {
 void env_set(env *e, const char *sym, mal val) {
   DEBUG_INTERNAL_MAL2("setting", mal_sym(sym), val);
   assert(e != NULL);
-  map_set(e->lookup, mal_sym(sym), val);
+  ht_put(e->lookup, sym, val);
 }
 
 // Return the environment where the sym is defined (in its our chain) or NULL
 env *env_find(env *e, const char *sym) {
   DEBUG_INTERNAL_FMT("finding %s in %p", sym, e);
-  if (e == NULL)
-    return NULL;
-  if (map_contains(e->lookup, mal_str(sym)))
-    return e;
-  if (e->outer != NULL)
-    return env_find(e->outer, sym);
+  while (e != NULL) {
+    if (ht_has(e->lookup, sym))
+      return e;
+    e = e->outer;
+  }
   return NULL;
 }
 
@@ -81,7 +82,7 @@ mal env_get(env *e, const char *sym) {
     snprintf(not_found_buf, NOT_FOUND_BUF_SIZE, "'%s' not found", sym);
     return mal_exception_str(not_found_buf);
   }
-  mal ret = map_get(found_e->lookup, mal_str(sym));
+  mal ret = ht_get(found_e->lookup, sym);
   DEBUG_HIGH_MAL2("returning", mal_sym(sym), ret);
   return ret;
 }

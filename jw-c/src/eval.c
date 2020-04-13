@@ -14,7 +14,6 @@
 #include "debug.h"
 #include "env.h"
 #include "hash_table.h"
-#include "map.h"
 #include "printer.h"
 #include "seq.h"
 #include "utils.h"

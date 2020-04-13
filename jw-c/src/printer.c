@@ -33,8 +33,7 @@ static const char *print_list(list_node *input_head, bool print_readably) {
       string_head = string_node;
     input_node = input_node->next;
   }
-  DEBUG_INTERNAL_FMT("returns '%s'", str_join(string_head, char_count,
-                                              element_count, " ", "(", ")"));
+
   return str_join(string_head, char_count, element_count, " ", "(", ")");
 }
 
@@ -87,7 +86,7 @@ static const char *print_vec(vec *v, bool print_readably) {
 
 // return a string representation of the mal value
 const char *pr_str(mal m, bool print_readably) {
-  DEBUG_INTERNAL_FMT("called with tag %d", m.tag);
+  // DEBUG_INTERNAL_FMT("called with tag %d", m.tag);
   size_t buf_size;
   char *buf;
   const char *buf2;
@@ -108,7 +107,7 @@ const char *pr_str(mal m, bool print_readably) {
   case NIL:
     return "nil";
   case INT:
-    DEBUG_INTERNAL_FMT("int %d", m.i);
+    // DEBUG_INTERNAL_FMT("int %d", m.i);
     buf_size = 1 + (size_t)snprintf(NULL, 0, "%d", m.i);
     buf = checked_malloc(buf_size, "pr_str INT");
     snprintf(buf, buf_size, "%d", m.i);
@@ -116,7 +115,7 @@ const char *pr_str(mal m, bool print_readably) {
   case STR_OR_KW:
     if (is_kw(m)) {
       const char *kw_s = skip_kw_prefix(m.s);
-      DEBUG_INTERNAL_FMT("kw :%s", kw_s);
+      // DEBUG_INTERNAL_FMT("kw :%s", kw_s);
       buf_size = 1 + (size_t)snprintf(NULL, 0, ":%s", kw_s);
       buf = checked_malloc(buf_size - 1, "pr_str KW");
       snprintf(buf, buf_size, ":%s", kw_s);
@@ -124,7 +123,7 @@ const char *pr_str(mal m, bool print_readably) {
     } else {
       if (!print_readably)
         return m.s;
-      DEBUG_INTERNAL_FMT("str \"%s\"", m.s);
+      // DEBUG_INTERNAL_FMT("str \"%s\"", m.s);
       mal esc_m = add_escapes(mal_str(m.s));
       buf_size = 1 + (size_t)snprintf(NULL, 0, "\"%s\"", esc_m.s);
       buf = checked_malloc(buf_size, "pr_str STR");
@@ -132,10 +131,10 @@ const char *pr_str(mal m, bool print_readably) {
       return buf;
     }
   case SYM:
-    DEBUG_INTERNAL_FMT("sym %s", m.s);
+    // DEBUG_INTERNAL_FMT("sym %s", m.s);
     return m.s;
   case LIST:
-    DEBUG_INTERNAL_FMT("starting print_list");
+    // DEBUG_INTERNAL_FMT("starting print_list");
     return print_list(m.n, print_readably);
   case VEC:
     return print_vec(m.v, print_readably);

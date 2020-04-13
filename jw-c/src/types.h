@@ -16,8 +16,6 @@
 struct list_node;
 typedef struct list_node_struct list_node;
 typedef struct vec_struct vec;
-typedef struct map_struct map;
-typedef struct map_record_struct map_record;
 typedef struct mal_struct mal;
 typedef struct env_struct env;
 typedef struct closure_struct closure;
@@ -70,20 +68,8 @@ struct vec_struct {
   mal *buf;
 };
 
-struct map_record_struct {
-  const char *key;
-  bool is_kw; // is the key a keyword (not just a string)
-  int index;  // used to de-duplicate the map (by keeping highest index)
-  mal val;
-};
-
-struct map_struct {
-  count_t count; // number of mal elements  (including duplicate keys)
-  map_record *table;
-};
-
 struct env_struct {
-  map *lookup;
+  hash_table *lookup;
   struct env_struct *outer;
 };
 
@@ -107,6 +93,7 @@ bool is_str(const mal);
 bool is_sym(const mal);
 bool is_kw(const mal);
 bool is_str_or_kw(const mal);
+bool is_string_like(const mal);
 bool is_list(const mal);
 bool is_vec(const mal);
 bool is_seq(const mal);

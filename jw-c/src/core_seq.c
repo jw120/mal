@@ -9,7 +9,6 @@
 #include "debug.h"
 #include "env.h"
 #include "hash_table.h"
-#include "map.h"
 #include "seq.h"
 
 // C implementation of mal list
