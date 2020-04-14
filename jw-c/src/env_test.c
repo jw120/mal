@@ -1,7 +1,5 @@
-#include <stdio.h>
-
-#include "env.h"
 #include "env_test.h"
+#include "env.h"
 #include "minunit.h"
 
 #include "seq.h"

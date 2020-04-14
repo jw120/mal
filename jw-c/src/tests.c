@@ -56,8 +56,7 @@ bool debug_mode;
 
 int main(UNUSED(int argc), UNUSED(char **_argv)) {
 
-  // Turn on debug mode if the environment variable is set
-  set_debug_level(getenv("DEBUG"));
+  set_debug_level_from_env();
 
   const char *result = run_tests();
 

@@ -48,7 +48,7 @@ static const char *print_and_join_list(list_node *n, bool print_readably,
 // C implementation of mal pr-str: calls pr_str on each argument with
 // print_readably set to true, joins the results with " " and returns the new
 // string.
-static mal core_pr_str(list_node *n, env *e) {
+static mal core_pr_str(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   return mal_str(print_and_join_list(n, true, " "));
 }
@@ -56,7 +56,7 @@ static mal core_pr_str(list_node *n, env *e) {
 // C implementation of mal prn: calls pr_str on each argument with
 // print_readably set to true, joins the results with " ", prints the string to
 // the screen and then returns nil.
-static mal core_prn(list_node *n, env *e) {
+static mal core_prn(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   puts(print_and_join_list(n, true, " "));
   return mal_nil();
@@ -65,7 +65,7 @@ static mal core_prn(list_node *n, env *e) {
 // C implementation of mal str: calls pr_str on each argument with
 // print_readably set to false, concatenates the results together (""
 // separator), and returns the new string.
-static mal core_str(list_node *n, env *e) {
+static mal core_str(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   return mal_str(print_and_join_list(n, false, ""));
 }
@@ -73,7 +73,7 @@ static mal core_str(list_node *n, env *e) {
 // C implementation of mal println: calls pr_str on each argument with
 // print_readably set to false, joins the results with " ", prints the string to
 // the screen and then returns nil.
-static mal core_println(list_node *n, env *e) {
+static mal core_println(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   puts(print_and_join_list(n, false, " "));
   return mal_nil();

@@ -1,6 +1,6 @@
 Todo
 
-- Tidy code (done through core*.*)
+- Tidy code (done through env_test)
 - Function docs in header files only (and in .c for static files)
 - Review code and tidy
 - Check have exception short circurting everywhere (as in equals)

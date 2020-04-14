@@ -93,8 +93,7 @@ mal load_file(char *filename, env *e) {
 
 int main(int argc, char *argv[]) {
 
-  // Turn on debug mode if the environment variable is set
-  set_debug_level(getenv("DEBUG"));
+  set_debug_level_from_env();
 
   // To pass step 0 and step 1 tests we need to restrict functionality
   enum { ECHO, READ_PRINT, FULL } mode = FULL;

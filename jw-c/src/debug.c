@@ -16,8 +16,8 @@
 
 static debug_level debug = DEBUG_OFF;
 
-// set the global debugging level
-void set_debug_level(const char *setting) {
+void set_debug_level_from_env() {
+  const char *setting = getenv("DEBUG");
   if (setting == NULL)
     return;
   if (strncmp(setting, "1", 1) == 0)
@@ -26,7 +26,6 @@ void set_debug_level(const char *setting) {
     debug = DEBUG_ALL;
 }
 
-// print a debugging message
 void debug_fmt(const char *func, debug_level level, const char *restrict fmt,
                ...) {
   if (level > debug)
@@ -39,7 +38,6 @@ void debug_fmt(const char *func, debug_level level, const char *restrict fmt,
   fflush(stdout);
 }
 
-// print a debugging message and a mal value
 void debug_mal(const char *func, debug_level level, const char *msg, mal m) {
   if (level > debug)
     return;
@@ -47,7 +45,6 @@ void debug_mal(const char *func, debug_level level, const char *msg, mal m) {
   fflush(stdout);
 }
 
-// print a debugging message and two mal values
 void debug_mal2(const char *func, debug_level level, const char *msg, mal m1,
                 mal m2) {
   if (level > debug)
@@ -56,7 +53,6 @@ void debug_mal2(const char *func, debug_level level, const char *msg, mal m1,
   fflush(stdout);
 }
 
-// Print the environment
 void debug_env(debug_level level, env *e) {
   if (level > debug)
     return;
