@@ -34,25 +34,23 @@ int tests_run = 0;
 const char *run_tests(void);
 
 const char *run_tests(void) {
-  mu_run_test(core_atom_test);
-  mu_run_test(core_is_test);
-  mu_run_test(core_mal_test);
-  mu_run_test(core_misc_test);
-  mu_run_test(core_num_test);
-  mu_run_test(core_seq_test);
-  mu_run_test(env_test);
-  mu_run_test(eval_test);
-  mu_run_test(hash_table_test);
-  mu_run_test(printer_test);
-  mu_run_test(reader_test);
-  mu_run_test(seq_test);
-  mu_run_test(tokenize_test);
-  mu_run_test(types_test);
-  mu_run_test(utils_test);
+  mu_run_test_function(core_atom_test);
+  mu_run_test_function(core_is_test);
+  mu_run_test_function(core_mal_test);
+  mu_run_test_function(core_misc_test);
+  mu_run_test_function(core_num_test);
+  mu_run_test_function(core_seq_test);
+  mu_run_test_function(env_test);
+  mu_run_test_function(eval_test);
+  mu_run_test_function(hash_table_test);
+  mu_run_test_function(printer_test);
+  mu_run_test_function(reader_test);
+  mu_run_test_function(seq_test);
+  mu_run_test_function(tokenize_test);
+  mu_run_test_function(types_test);
+  mu_run_test_function(utils_test);
   return 0;
 }
-
-bool debug_mode;
 
 int main(UNUSED(int argc), UNUSED(char **_argv)) {
 

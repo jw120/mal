@@ -1,8 +1,10 @@
 Todo
 
-- Tidy code (done through env_test)
+- Tidy code (done upto reader.c)
+- Add asserts more thorogulhly
+
 - Function docs in header files only (and in .c for static files)
-- Review code and tidy
+
 - Check have exception short circurting everywhere (as in equals)
 
 readline

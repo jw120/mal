@@ -38,6 +38,7 @@ const char *hash_table_test() {
   mu_assert_eq("get c", ht_get(h, "c"), c);
   mu_assert_eq("get d", ht_get(h, "d"), d);
   mu_assert_eq("get e", ht_get(h, "e"), e);
+  mu_assert("get f", is_exception(ht_get(h, "f")));
   mu_assert("has a", ht_has(h, "a"));
   mu_assert("has b", ht_has(h, "b"));
   mu_assert("has c", ht_has(h, "c"));

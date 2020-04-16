@@ -19,8 +19,6 @@ const char *printer_test() {
                                                 list_cons(mal_true(), NULL))));
   mal hm_map = mal_map(ht_from_alternating_list(hm_list));
 
-  mu_assert("pr_str missing",
-            strncmp(pr_str(mal_missing(), true), "Internal", 8) == 0);
   mu_assert_str("pr_str exception", pr_str(e, true), "Exception: bad");
   mu_assert_str("pr_str true", pr_str(mal_true(), true), "true");
   mu_assert_str("pr_str false", pr_str(mal_false(), true), "false");

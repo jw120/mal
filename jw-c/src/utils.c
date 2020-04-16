@@ -5,7 +5,6 @@
  **/
 
 #include <assert.h>
-#include <ctype.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -14,33 +13,28 @@
 
 #include "utils.h"
 
-void *checked_malloc(size_t size, const char *restrict fmt, ...) {
-  void *ptr = malloc(size);
-  if (ptr == NULL) {
-    fprintf(stderr, "Malloc failed - ");
-    va_list args;
-    va_start(args, fmt);
-    vprintf(fmt, args);
-    printf("\n");
-    fflush(stdout);
-    exit(1);
-  }
-  return ptr;
+_Noreturn static void
+print_err_and_exit(const char *prefix, const char *restrict fmt, va_list args) {
+  fprintf(stderr, "%s - ", prefix);
+  vfprintf(stderr, fmt, args);
+  fprintf(stderr, "\n");
+  fflush(stderr);
+  exit(EXIT_FAILURE);
 }
 
-bool is_number(const char *s) {
+void *checked_malloc(size_t size, const char *restrict fmt, ...) {
+  void *ptr = malloc(size);
+  if (ptr != NULL)
+    return ptr;
+  va_list args;
+  va_start(args, fmt);
+  print_err_and_exit("Malloc failed", fmt, args);
+}
 
-  assert(s != NULL);
-
-  if (strlen(s) == 0)
-    return false;
-  if (s[0] == '-')
-    return is_number(s + 1);
-  for (const char *p = s; *p; p++) {
-    if (!isdigit(*p))
-      return false;
-  }
-  return true;
+_Noreturn void internal_error(const char *restrict fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  print_err_and_exit("Internal error", fmt, args);
 }
 
 // Concatenates the source string onto the end of the buffer which is

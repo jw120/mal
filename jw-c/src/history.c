@@ -21,7 +21,6 @@
 
 char *history_filename = NULL;
 
-// called before history tracking starts, reads history file
 void pre_history() {
 
   // set the file name for our history file
@@ -42,7 +41,6 @@ void pre_history() {
                        history_filename, history_errno);
 }
 
-// called after history tracking finishes, writes history file
 void post_history() {
 
   assert(history_filename != NULL);

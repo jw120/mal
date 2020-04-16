@@ -22,23 +22,32 @@
 
 env *repl_env;
 
-mal READ(const char *s) { return read_str(s); }
+// Fundamental function to convert a string into a mal ast
+// Defined by the https://github.com/kanaka/mal instructions
+static mal READ(const char *s) { return read_str(s); }
 
-mal EVAL(mal m, env *e) { return eval(m, e); }
+// Fundamental function to value a mal ast to a mal value
+// Defined by the https://github.com/kanaka/mal instructions
+static mal EVAL(mal m, env *e) { return eval(m, e); }
 
-const char *PRINT(mal m) { return pr_str(m, true); }
+// Fundamental function to convert a mal value into a string
+// Defined by the https://github.com/kanaka/mal instructions
+static const char *PRINT(mal m) { return pr_str(m, true); }
 
-// C implementation of mal eval
-mal mal_eval(list_node *n, UNUSED(env *e)) {
+// C implementation of mal eval to be added to the environment
+static mal mal_eval(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   if (list_count(n) != 1)
     return mal_exception_str("Bad arguments to eval");
   return EVAL(n->val, repl_env);
 }
 
+// Name of the arguments symbol in mal
 #define ARGV_NAME "*ARGV*"
 
-void setup_mal_argv(int count, char *args[], env *e) {
+// Called from main to set the arguments that the C program was called with
+// in the mal environment
+static void setup_mal_argv(int count, char *args[], env *e) {
 
   DEBUG_INTERNAL_FMT("adding argv with %d args", count);
   list_node *args_list_head = NULL;
@@ -66,13 +75,11 @@ void setup_mal_argv(int count, char *args[], env *e) {
   }
 }
 
-// (a b c) = a : b : c : []
-// (a (b c)) = a : (b : c : [])
-
 #define LOAD_FILE_PREFIX "(load-file \""
 #define LOAD_FILE_SUFFIX "\")"
 
-mal load_file(char *filename, env *e) {
+// Called from main to load a file on startup
+static mal load_file(char *filename, env *e) {
 
   DEBUG_INTERNAL_FMT("loading file %s", filename);
   size_t buf_size = strlen(LOAD_FILE_PREFIX) + strlen(filename) +
@@ -88,6 +95,7 @@ mal load_file(char *filename, env *e) {
     PRINT(ret);
     exit(EXIT_FAILURE);
   }
+  free(buf);
   return ret;
 }
 

@@ -16,10 +16,9 @@
 #include "seq.h"
 #include "utils.h"
 
-// creata a new envionment given an alternating sym/val list (NULL if fails)
 env *env_new(list_node *elems, env *outer) {
-  DEBUG_INTERNAL_FMT("called with %d elements and outer %p", list_count(elems),
-                     outer);
+  DEBUG_HIGH_FMT("called with %d elements and outer %p", list_count(elems),
+                 outer);
 
   env *e = checked_malloc(sizeof(env), "env_new");
   e->lookup = ht_from_alternating_list(elems);
@@ -31,9 +30,8 @@ env *env_new(list_node *elems, env *outer) {
   return e;
 }
 
-// creata a new envionment given a list of binds and values (NULL if fails)
 env *env_new2(list_node *binds, list_node *vals, env *outer) {
-  DEBUG_INTERNAL_FMT("called with outer %p", outer);
+  DEBUG_HIGH_FMT("called with outer %p", outer);
 
   env *e = checked_malloc(sizeof(env), "env_new2");
   e->lookup = ht_from_lists(binds, vals);
@@ -45,21 +43,18 @@ env *env_new2(list_node *binds, list_node *vals, env *outer) {
   return e;
 }
 
-// free an environemtn and its table
 void env_free(env *e) {
-  DEBUG_INTERNAL_FMT("called");
+  DEBUG_HIGH_FMT("called on %p", e);
   free(e->lookup);
   free(e);
 }
 
-// NYI - set a value in the environment
 void env_set(env *e, const char *sym, mal val) {
   DEBUG_INTERNAL_MAL2("setting", mal_sym(sym), val);
   assert(e != NULL);
   ht_put(e->lookup, sym, val);
 }
 
-// Return the environment where the sym is defined (in its our chain) or NULL
 env *env_find(env *e, const char *sym) {
   DEBUG_INTERNAL_FMT("finding %s in %p", sym, e);
   while (e != NULL) {
@@ -73,7 +68,6 @@ env *env_find(env *e, const char *sym) {
 #define NOT_FOUND_BUF_SIZE 80
 static char not_found_buf[NOT_FOUND_BUF_SIZE];
 
-// Return the value associtated with the given symbol, exception if not found
 mal env_get(env *e, const char *sym) {
   DEBUG_INTERNAL_FMT("getting %s", sym);
   env *found_e = env_find(e, sym);

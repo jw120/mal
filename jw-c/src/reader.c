@@ -8,6 +8,8 @@
  *
  **/
 
+#include <assert.h>
+#include <ctype.h>
 #include <pcre.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -34,6 +36,7 @@ typedef struct {
 static mal read_form(reader_state *);
 static mal read_atom(reader_state *);
 static mal mal_reader_exception(const char *, reader_state *);
+static bool is_number(const char *s);
 
 // Return the pre-fetched token without advancing it
 static const char *reader_peek(const reader_state *state_ptr) {
@@ -272,4 +275,25 @@ static mal mal_reader_exception(const char *msg, reader_state *state_ptr) {
   snprintf(buf, buf_len, "%s %s %s", READER_ERROR_MSG, msg,
            state_ptr->input_string + state_ptr->offset);
   return mal_exception_str(buf);
+}
+
+// Helper function - does the string represent a valid number
+static bool is_number(const char *s) {
+  assert(s != NULL);
+
+  // Leading minus sign is OK; just skip
+  if (*s == '-')
+    s++;
+
+  // Fail if any empty string
+  if (strlen(s) == 0)
+    return false;
+
+  // Fail if any character is not a digit
+  for (const char *p = s; *p; p++) {
+    if (!isdigit(*p))
+      return false;
+  }
+
+  return true;
 }

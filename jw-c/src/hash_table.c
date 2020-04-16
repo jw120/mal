@@ -29,7 +29,7 @@
 #define CREATE_SIZE_MIN 8
 
 // Jenkins hash function (wikipedia via stackoverflow)
-uint32_t hash(const char *s) {
+static uint32_t hash(const char *s) {
   uint32_t hash = 0;
   uint32_t len = (uint32_t)strlen(s);
   for (uint32_t i = 0; i < len; ++i) {
@@ -43,7 +43,6 @@ uint32_t hash(const char *s) {
   return hash;
 }
 
-// Create a new hash_table with capacity for the given number of entries
 hash_table *ht_new(count_t entries) {
   DEBUG_HIGH_FMT("called for %u entries", entries);
 
@@ -60,8 +59,19 @@ hash_table *ht_new(count_t entries) {
   return ht;
 }
 
-// Add key and value to the hash table
+hash_table *ht_copy(hash_table *ht, count_t size) {
+  assert(ht != NULL);
+  hash_table *new_ht = ht_new((count_t)((double)size * CREATE_SIZE_MULTIPLE));
+  for (count_t i = 0; i < ht->size; i++) {
+    if (ht->table[i].key != NULL) {
+      ht_put(new_ht, ht->table[i].key, ht->table[i].value);
+    }
+  }
+  return new_ht;
+}
+
 void ht_put(hash_table *ht, const char *key, mal value) {
+  assert(ht != NULL);
   DEBUG_HIGH_FMT("called for key %s", key);
 
   count_t i = hash(key) % ht->size;
@@ -81,34 +91,25 @@ void ht_put(hash_table *ht, const char *key, mal value) {
   }
 }
 
-// Create a copy of a hash table with space for given number of entries
-hash_table *ht_copy(hash_table *ht, count_t size) {
-  hash_table *new_ht = ht_new((count_t)((double)size * CREATE_SIZE_MULTIPLE));
-  for (count_t i = 0; i < ht->size; i++) {
-    if (ht->table[i].key != NULL) {
-      ht_put(new_ht, ht->table[i].key, ht->table[i].value);
-    }
-  }
-  return new_ht;
-}
-
-// Get the value associated with the given key
-// Crashes if the key is missing - use ht_has first
 mal ht_get(hash_table *ht, const char *key) {
+  assert(ht != NULL);
   DEBUG_HIGH_FMT("called for key %s", key);
 
   count_t i = hash(key) % ht->size;
+  count_t initial_i = i;
   while (true) {
     if (ht->table[i].key == NULL)
       return mal_exception_str("No such key in ht_get");
     if (strcmp(key, ht->table[i].key) == 0)
       return ht->table[i].value;
     i = (i + 1) % ht->size;
+    if (i == initial_i)
+      return mal_exception_str("Failure in ht_get");
   }
 }
 
-// Is the key in the hash table
 bool ht_has(hash_table *ht, const char *key) {
+  assert(ht != NULL);
   DEBUG_HIGH_FMT("called for key %s", key);
 
   count_t i = hash(key) % ht->size;
@@ -121,10 +122,7 @@ bool ht_has(hash_table *ht, const char *key) {
   }
 }
 
-// create a map from an alternating list of elements [key, val, key, val,...]
-// returns NULL if list is invalid
 hash_table *ht_from_alternating_list(list_node *n) {
-
   DEBUG_HIGH_FMT("called with %d elements", list_count(n));
 
   const count_t list_size = list_count(n);
@@ -143,10 +141,7 @@ hash_table *ht_from_alternating_list(list_node *n) {
   return ht;
 }
 
-// create a map from a pair of lists [key, key, ...] [val, val, ...]
-// returns NULL if list is invalid
 hash_table *ht_from_lists(list_node *ks, list_node *vs) {
-
   DEBUG_HIGH_FMT("called with %u %u keys", list_count(ks), list_count(vs));
 
   hash_table *ht = ht_new(list_count(ks));
@@ -181,8 +176,8 @@ hash_table *ht_from_lists(list_node *ks, list_node *vs) {
   return ht;
 }
 
-// Return all the table's keys as a mal linked list
 list_node *ht_keys(hash_table *ht) {
+  assert(ht != NULL);
   DEBUG_HIGH_FMT("called on table with %u entries", ht->entries);
 
   list_node *n = NULL;
@@ -198,8 +193,8 @@ list_node *ht_keys(hash_table *ht) {
   return n;
 }
 
-// Return all the table's values as a mal linked list
 list_node *ht_values(hash_table *ht) {
+  assert(ht != NULL);
   DEBUG_HIGH_FMT("called on table with %u entries", ht->entries);
 
   list_node *n = NULL;
@@ -215,8 +210,9 @@ list_node *ht_values(hash_table *ht) {
   return n;
 }
 
-// Do the two hash tables have the same keys and values
 bool ht_equals(hash_table *a, hash_table *b) {
+  assert(a != NULL);
+  assert(b != NULL);
 
   if (a->entries != b->entries)
     return false;
@@ -234,7 +230,6 @@ bool ht_equals(hash_table *a, hash_table *b) {
   return true;
 }
 
-// Print all the table's contents
 void ht_debug_print(hash_table *ht, const char *prefix) {
   assert(ht != NULL);
   for (count_t i = 0; i < ht->size; i++) {

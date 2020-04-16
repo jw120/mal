@@ -84,7 +84,8 @@ static mal core_read_string(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   if (list_count(n) != 1 || !is_str(n->val))
     return mal_exception_str("Bad arguments to read-string");
-  return read_str(n->val.s);
+  mal m = read_str(n->val.s);
+  return is_missing(m) ? mal_nil() : m;
 }
 
 #define SLURP_BUFFER_SIZE 65536

@@ -10,11 +10,9 @@
 
 #include "eval.h"
 
-#include "assert.h"
 #include "debug.h"
 #include "env.h"
 #include "hash_table.h"
-#include "printer.h"
 #include "seq.h"
 #include "utils.h"
 
@@ -23,9 +21,9 @@
   if (is_exception(x))                                                         \
   return x
 
-// Helper function - is the argument a list whose first element is a symbol that
+// Is the argument a list whose first element is a symbol that
 // looks up to a macro call
-bool is_macro_call(mal ast, env *e) {
+static bool is_macro_call(mal ast, env *e) {
   DEBUG_INTERNAL_MAL("called with", ast);
   if (!is_list(ast))
     return false;
@@ -38,14 +36,14 @@ bool is_macro_call(mal ast, env *e) {
   return return_val;
 }
 
-mal macroexpand(mal ast, env *e) {
+// Macroexpand (repeatedly) the ast
+static mal macroexpand(mal ast, env *e) {
   DEBUG_INTERNAL_MAL("called with", ast);
   while (is_macro_call(ast, e)) {
     mal head = mal_first(ast);
     mal rest = mal_rest(ast);
     if (!is_sym(head))
-      return mal_exception_str(
-          "Internal failure - not a symbol in macroexpand");
+      internal_error("not a symbol in macroexpand");
     mal head_lookup = env_get(e, head.s);
     DEBUG_INTERNAL_MAL("head_lookup is", head_lookup);
     DEBUG_INTERNAL_MAL("rest is", rest);
@@ -59,7 +57,8 @@ mal macroexpand(mal ast, env *e) {
   return ast;
 }
 
-mal def_special_form(list_node *n, env *e) {
+// Handle the def! special form
+static mal def_special_form(list_node *n, env *e) {
   DEBUG_INTERNAL_MAL("", mal_list(n));
   if (n == NULL || !is_sym(n->val) || list_count(n) != 2)
     return mal_exception_str("Bad arguments to def!");
@@ -69,7 +68,8 @@ mal def_special_form(list_node *n, env *e) {
   return evaluated_val;
 }
 
-mal defmacro_special_form(list_node *n, env *e) {
+// Handle the defmacro! special form
+static mal defmacro_special_form(list_node *n, env *e) {
   DEBUG_INTERNAL_MAL("", mal_list(n));
   if (n == NULL || !is_sym(n->val) || list_count(n) != 2)
     return mal_exception_str("Bad arguments to defmacro!");
@@ -82,28 +82,23 @@ mal defmacro_special_form(list_node *n, env *e) {
   return evaluated_val;
 }
 
-mal do_special_form(list_node *n, env *e) {
+// Handle the do special form. Last form is returned without
+// evaluation to be handled in eval()'s TCO loop
+static mal do_special_form_before_continue(list_node *n, env *e) {
   DEBUG_INTERNAL_MAL("", mal_list(n));
   if (n == NULL)
     return mal_exception_str("Bad arguments to do");
-  mal ret = mal_exception_str("Internal failure");
   while (n != NULL && n->next != NULL) {
-    ret = eval(n->val, e);
+    mal ret = eval(n->val, e);
     RETURN_IF_EXCEPTION(ret);
     n = n->next;
   }
-  return n->val; // last value passed back for TCO
+  return n->val;
 }
 
-mal fn_special_form(list_node *n, env *e) {
-  DEBUG_INTERNAL_FMT("hi1");
-
+// Handle the fn* special form
+static mal fn_special_form(list_node *n, env *e) {
   DEBUG_INTERNAL_MAL("", mal_list(n));
-  DEBUG_INTERNAL_FMT("hi2");
-
-  DEBUG_INTERNAL_FMT("count %d, seq(head) %d", list_count(n), n->val.tag);
-  DEBUG_INTERNAL_FMT("hi3");
-
   if (list_count(n) != 2 || !is_seq(n->val))
     return mal_exception_str("Bad arguments to fn*");
   closure *c = checked_malloc(sizeof(closure), "fn*");
@@ -115,36 +110,39 @@ mal fn_special_form(list_node *n, env *e) {
   return mal_closure(c);
 }
 
-mal if_special_form(list_node *n, env *e) {
+// Handle the if special form, returning an ast for further evaluation
+// in eval()'s TCO loop
+static mal if_special_form_before_continue(list_node *n, env *e) {
   DEBUG_INTERNAL_MAL("", mal_list(n));
   if (n == NULL || list_count(n) < 2 || list_count(n) > 3)
     return mal_exception_str("Bad arguments to if");
   mal condition = eval(n->val, e);
-  RETURN_IF_EXCEPTION(condition);
-  if (!is_falsey(condition))
-    return n->next->val; // for TCO
-  return (n->next->next == NULL) ? mal_nil() : n->next->next->val;
+  mal if_ast = n->next->val;
+  mal else_ast = (n->next->next == NULL) ? mal_nil() : n->next->next->val;
+  if (is_exception(condition)) {
+    return condition;
+  } else if (is_falsey(condition)) {
+    return else_ast;
+  } else {
+    return if_ast;
+  }
 }
 
-mal let_special_form(list_node *n, env **eptr) {
+// Handle the let* special form, returning an ast for further evaluation
+// in eval()'s TCO loop and modifying the environment
+static mal let_special_form_before_continue(list_node *n, env **eptr) {
   DEBUG_INTERNAL_MAL("", mal_list(n));
-  if (n == NULL)
-    return mal_exception_str("No arguments to let");
+  if (list_count(n) != 2)
+    return mal_exception_str("Bad arguments to let*");
   RETURN_IF_EXCEPTION(n->val);
-  if (!is_seq(n->val) || list_count(n) != 2)
-    return mal_exception_str("Bad arguments to let");
   RETURN_IF_EXCEPTION(n->next->val);
-  if (seq_count(n->val) % 2)
-    return mal_exception_str("Odd length argument list in let");
+  if (!is_seq(n->val) || seq_count(n->val) % 2)
+    return mal_exception_str("Bad arguments to let*");
 
   // Create our new enviornment for the let*
   *eptr = env_new(NULL, *eptr);
-
-  // Walk over the binding list or vector adding symbols to the new environment
   if (is_list(n->val)) {
-    list_node *p = n->val.n;
-    while (p != NULL) // walk two nodes at a time
-    {
+    for (list_node *p = n->val.n; p != NULL; p = p->next->next) {
       mal sym = p->val;
       RETURN_IF_EXCEPTION(sym);
       if (!is_sym(sym))
@@ -153,9 +151,8 @@ mal let_special_form(list_node *n, env **eptr) {
       mal evaluated_val = eval(val, *eptr);
       RETURN_IF_EXCEPTION(evaluated_val);
       env_set(*eptr, sym.s, evaluated_val);
-      p = p->next->next;
     }
-  } else {
+  } else { // vector
     for (count_t i = 0; i < n->val.v->count; i += 2) {
       mal sym = n->val.v->buf[i];
       RETURN_IF_EXCEPTION(sym);
@@ -167,13 +164,13 @@ mal let_special_form(list_node *n, env **eptr) {
       env_set(*eptr, sym.s, evaluated_val);
     }
   }
-
   return n->next->val;
 }
 
-mal try_special_form(list_node *n, env *e) {
+// Handle the try* special form
+static mal try_special_form(list_node *n, env *e) {
   DEBUG_INTERNAL_MAL("", mal_list(n));
-  if (list_count(n) == 1)
+  if (list_count(n) == 1) // try* without catch*
     return eval(n->val, e);
   if (list_count(n) != 2)
     return mal_exception_str("Bad arguments to try*");
@@ -193,7 +190,8 @@ mal try_special_form(list_node *n, env *e) {
   return eval(catch_list.n->next->next->val, catch_env);
 }
 
-mal quasiquote(mal ast) {
+// Handle the quasiquote special form (calls itself recursively)
+static mal quasiquote(mal ast) {
   DEBUG_INTERNAL_MAL("", ast);
 
   // a non-sequence (or empty sequence) is just quoted
@@ -214,7 +212,7 @@ mal quasiquote(mal ast) {
   mal ast_rest = mal_rest(ast);
   DEBUG_INTERNAL_MAL("ast_rest is", ast_rest);
 
-  // splice-unquote the element wiht concat
+  // splice-unquote the element with concat
   if (is_pair(ast_head)) {
     mal ast_head_head = ast_head.n->val;
     mal ast_head_second = ast_head.n->next->val;
@@ -231,15 +229,14 @@ mal quasiquote(mal ast) {
                            mal_cons(quasiquote(ast_rest), mal_list(NULL))));
 }
 
-// evaluation function that does not apply
 mal eval_ast(mal ast, env *e) {
   DEBUG_INTERNAL_MAL("called with", ast);
 
-  if (is_sym(ast)) {
+  if (is_sym(ast)) { // lookup a symbol
     return env_get(e, ast.s);
   }
 
-  if (is_list(ast) && !seq_empty(ast)) {
+  if (is_list(ast) && !seq_empty(ast)) { // evaluate list's contents
     list_node *to_head = NULL;
     list_node *to = to_head;
     list_node *from = ast.n;
@@ -254,7 +251,7 @@ mal eval_ast(mal ast, env *e) {
     return mal_list(to_head);
   }
 
-  if (is_vec(ast) && !seq_empty(ast)) {
+  if (is_vec(ast) && !seq_empty(ast)) { // evaluate vector's contents
     vec *to = uninitialized_vec(ast.v->count);
     for (count_t i = 0; i < ast.v->count; i++) {
       mal m = eval(ast.v->buf[i], e);
@@ -264,22 +261,22 @@ mal eval_ast(mal ast, env *e) {
     return mal_vec(to);
   }
 
-  if (is_map(ast)) {
+  if (is_map(ast)) { // evaluate a map's values
     hash_table *old_ht = ast.m;
     hash_table *new_ht = ht_new(old_ht->entries);
     for (list_node *n = ht_keys(old_ht); n != NULL; n = n->next) {
       const char *old_key = n->val.s;
       mal old_val = ht_get(old_ht, old_key);
       mal new_val = eval(old_val, e);
+      RETURN_IF_EXCEPTION(new_val);
       ht_put(new_ht, old_key, new_val);
     }
     return mal_map(new_ht);
   }
 
-  return ast;
+  return ast; // Otherwise just return the atom
 }
 
-// top-level evaluation function
 mal eval(mal ast, env *e) {
 
   while (true) { // loop to enable TCO
@@ -291,7 +288,7 @@ mal eval(mal ast, env *e) {
     RETURN_IF_EXCEPTION(ast);
     DEBUG_HIGH_MAL("macro expanded", ast);
 
-    if (!is_list(ast) || seq_empty(ast))
+    if (!is_list(ast) || list_empty(ast.n))
       return eval_ast(ast, e);
 
     // Check for special forms
@@ -303,17 +300,17 @@ mal eval(mal ast, env *e) {
     if (mal_equals(head, mal_sym("defmacro!")))
       return defmacro_special_form(rest.n, e);
     if (mal_equals(head, mal_sym("do"))) {
-      ast = do_special_form(rest.n, e);
+      ast = do_special_form_before_continue(rest.n, e);
       continue;
     }
     if (mal_equals(head, mal_sym("fn*")))
       return fn_special_form(rest.n, e);
     if (mal_equals(head, mal_sym("if"))) {
-      ast = if_special_form(rest.n, e);
+      ast = if_special_form_before_continue(rest.n, e);
       continue;
     }
     if (mal_equals(head, mal_sym("let*"))) {
-      ast = let_special_form(rest.n, &e);
+      ast = let_special_form_before_continue(rest.n, &e);
       continue;
     }
     if (mal_equals(head, mal_sym("macroexpand"))) {
