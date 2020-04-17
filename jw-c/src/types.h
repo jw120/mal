@@ -102,6 +102,8 @@ bool is_seq(const mal);
 bool is_map(const mal);
 bool is_fn(const mal);
 bool is_closure(const mal);
+bool is_non_macro_callable(const mal); // for mal fn?
+bool is_macro(const mal);
 bool is_atom(const mal);
 bool match_sym(const mal, const char *);
 

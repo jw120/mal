@@ -98,6 +98,14 @@ bool is_fn(const mal m) { return m.tag == FN; }
 
 bool is_closure(const mal m) { return m.tag == CLOSURE; }
 
+bool is_non_macro_callable(const mal m) {
+  return m.tag == FN || (m.tag == CLOSURE && m.c != NULL && !m.c->is_macro);
+}
+
+bool is_macro(const mal m) {
+  return m.tag == CLOSURE && m.c != NULL && m.c->is_macro;
+}
+
 bool is_atom(const mal m) { return m.tag == ATOM; }
 
 bool match_sym(const mal m, const char *s) {

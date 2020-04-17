@@ -20,5 +20,8 @@ const char *core_mal_test() {
   mu_assert_mal(e, "(cond false 2 true 3)", mal_int(3));
   mu_assert_mal(e, "(cond false 2 false 3 \"else\" 4)", mal_int(4));
 
+  // *host-language*
+  mu_assert_mal(e, "*host-language*", mal_str("jw-c"));
+
   return 0;
 }

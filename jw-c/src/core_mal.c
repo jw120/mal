@@ -25,8 +25,11 @@ static char *s3 = "(defmacro! cond (fn* (& xs) (if (> (count xs) 0) "
                   "(throw \"odd number of forms to cond\")) (cons 'cond (rest "
                   "(rest xs)))))))";
 
+static char *s4 = "(def! *host-language* \"jw-c\")";
+
 void add_mal(env *e) {
   assert(!is_exception(eval(read_str(s1), e)));
   assert(!is_exception(eval(read_str(s2), e)));
   assert(!is_exception(eval(read_str(s3), e)));
+  assert(!is_exception(eval(read_str(s4), e)));
 }

@@ -39,5 +39,22 @@ const char *core_is_test(void) {
   mu_assert_mal(e, "(atom? (atom 33))", mal_true());
   mu_assert_mal(e, "(atom? 33)", mal_false());
 
+  mu_assert_mal(e, "(number? 22)", mal_true());
+  mu_assert_mal(e, "(number? :x)", mal_false());
+
+  mu_assert_mal(e, "(string? \"abc\")", mal_true());
+  mu_assert_mal(e, "(string? :kw)", mal_false());
+  mu_assert_mal(e, "(string? 33)", mal_false());
+
+  mu_assert_mal(e, "(fn? +)", mal_true());
+  mu_assert_mal(e, "(fn? (fn* [] 2))", mal_true());
+  E("(defmacro! m (fn* [] 22))", e);
+  mu_assert_mal(e, "(fn? m)", mal_false());
+  mu_assert_mal(e, "(fn? 2)", mal_false());
+
+  mu_assert_mal(e, "(macro? m)", mal_true());
+  mu_assert_mal(e, "(macro? (fn* [x] x))", mal_false());
+  mu_assert_mal(e, "(macro? 22)", mal_false());
+
   return 0;
 }

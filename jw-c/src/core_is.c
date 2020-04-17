@@ -29,6 +29,10 @@ DEFINE_IS_SOMETHING_FN(core_is_vec, "vector?", is_vec)
 DEFINE_IS_SOMETHING_FN(core_is_seq, "seq?", is_seq)
 DEFINE_IS_SOMETHING_FN(core_is_map, "map?", is_map)
 DEFINE_IS_SOMETHING_FN(core_is_atom, "atom?", is_atom)
+DEFINE_IS_SOMETHING_FN(core_is_string, "string?", is_str)
+DEFINE_IS_SOMETHING_FN(core_is_number, "number?", is_int)
+DEFINE_IS_SOMETHING_FN(core_is_fn, "fn?", is_non_macro_callable)
+DEFINE_IS_SOMETHING_FN(core_is_macro, "macro?", is_macro)
 
 void add_is(env *e) {
   env_set(e, "list?", mal_fn(core_is_list));
@@ -41,4 +45,8 @@ void add_is(env *e) {
   env_set(e, "sequential?", mal_fn(core_is_seq));
   env_set(e, "map?", mal_fn(core_is_map));
   env_set(e, "atom?", mal_fn(core_is_atom));
+  env_set(e, "number?", mal_fn(core_is_number));
+  env_set(e, "string?", mal_fn(core_is_string));
+  env_set(e, "fn?", mal_fn(core_is_fn));
+  env_set(e, "macro?", mal_fn(core_is_macro));
 }
