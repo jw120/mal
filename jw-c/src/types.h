@@ -12,7 +12,7 @@
  *
  **/
 
-// Forward declaration
+// Forward declarations
 struct list_node;
 typedef struct list_node_struct list_node;
 typedef struct vec_struct vec;
@@ -23,12 +23,13 @@ typedef struct hash_table hash_table;
 
 typedef mal fn(list_node *, env *);
 
-typedef unsigned count_t; // For number of elements in a vector or map
+// Used for the number of elements in, e.g., a vector or map
+typedef unsigned count_t;
 
+// Union-discriminating tag for our main mal_struct type
 enum mal_tag {
-  MISSING, // reader may return a missing value, should not be passed to eval or
-           // print
-  EXCEPTION, // an error or thrown by the user
+  MISSING,   // reader can return no value; should not reach eval or print
+  EXCEPTION, // either an error or an exception thrown by the user
   MAL_TRUE,
   MAL_FALSE,
   NIL,
@@ -43,6 +44,7 @@ enum mal_tag {
   ATOM
 };
 
+// Discriminated union type for all our mal values
 struct mal_struct {
   enum mal_tag tag;
   union {
@@ -123,13 +125,15 @@ mal mal_fn(fn *);
 mal mal_closure(closure *);
 mal mal_atom(mal);
 
-// Helper function to skip keyword prefi
+// Helper function to skip keyword prefix (so the actual keyword value can be
+// read).
 const char *skip_kw_prefix(const char *);
 
-// Equality
+// Equality function for mal. Value deep equality that treats lists and vectors
+// as equivalent
 bool mal_equals(mal, mal);
 
-// Helper macro to mark function parameters as unused to avoid warnings
+// Helper macro to mark function parameters as unused to avoid clang warnings
 // The unused parameters are needed in the function definition so the
 // function pointer will type check (for fn* above)
 #define UNUSED(x) __attribute__((unused)) x

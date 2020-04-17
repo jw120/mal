@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "minunit.h"
+#include "seq.h"
 #include "utils.h"
 #include "utils_test.h"
 
@@ -8,19 +9,10 @@
 
 const char *utils_test() {
 
-  // char buf[MAX_CHARS + 1] = "abc";
-
-  // str_concat(buf, "de", MAX_CHARS);
-  // mu_assert("str_concat de", strcmp(buf, "abcde") == 0);
-  // str_concat(buf, NULL, MAX_CHARS);
-  // mu_assert("str_concat NULL 2", strcmp(buf, "abcde") == 0);
-  // str_concat(buf, "fg", MAX_CHARS);
-  // mu_assert("str_concat fg", strcmp(buf, "abcdefg") == 0);
-  // str_concat(buf, "hi", MAX_CHARS);
-  // mu_assert("str_concat hi", strcmp(buf, "abcdefgh") == 0);
-
-  // str_concat(NULL, "abc", MAX_CHARS);
-  // mu_assert("str_concat NULL first", strcmp(buf, "abcdefgh") == 0);
+  list_node *n = list_cons(mal_str("a"), list_cons(mal_str("bc"), NULL));
+  mu_assert("str_join",
+            strcmp(str_join(n, 3, 2, "!", "<", ">"), "<a!bc>") == 0);
+  mu_assert("str_join", strcmp(str_join(NULL, 0, 0, "!", "<", ">"), "<>") == 0);
 
   return 0;
 }

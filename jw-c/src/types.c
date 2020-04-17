@@ -19,12 +19,10 @@ static const char *kw_prefix =
     "\xCA\x9E"; // UTF8 for LATIN SMALL LETTER TURNED K
 const char *skip_kw_prefix(const char *s) { return s + strlen(kw_prefix); }
 
-// Value equality (does not propogate exceptions)
 bool mal_equals(mal a, mal b) {
   switch (a.tag) {
   case MISSING:
-    assert(0); // Missing tag in mal_equals
-    return false;
+    internal_error("mal_equals called on a missing value");
   case EXCEPTION:
     return a.tag == b.tag && mal_equals(*a.e, *b.e);
   case MAL_TRUE:
@@ -219,7 +217,3 @@ mal mal_atom(mal m) {
   mal val = {ATOM, {.a = m_ptr_ptr}};
   return val;
 }
-
-// Constants to simplify evaluation
-mal opening_paren = {SYM, {.s = "("}};
-mal closing_paren = {SYM, {.s = ")"}};

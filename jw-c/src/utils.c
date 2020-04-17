@@ -37,10 +37,7 @@ _Noreturn void internal_error(const char *restrict fmt, ...) {
   print_err_and_exit("Internal error", fmt, args);
 }
 
-// Helper function to concat a list of strings with given separator, opener,
-// closer takes counts of number of strings in the list and number of chars
-// (excluding the separators)
-const char *str_join(list_node *s, size_t chars, count_t elements,
+const char *str_join(list_node *n, size_t chars, count_t elements,
                      const char *sep, const char *opener, const char *closer) {
 
   count_t num_sep = elements > 0 ? elements - 1 : 0;
@@ -51,14 +48,16 @@ const char *str_join(list_node *s, size_t chars, count_t elements,
 
   strncpy(buf, opener, buf_size);
   buf_capacity_remaining -= strlen(opener);
-  while (s != NULL) {
-    strncat(buf, s->val.s, buf_capacity_remaining);
-    buf_capacity_remaining -= strlen(s->val.s);
-    if (s->next != NULL) {
+
+  while (n != NULL) {
+    assert(is_string_like(n->val));
+    strncat(buf, n->val.s, buf_capacity_remaining);
+    buf_capacity_remaining -= strlen(n->val.s);
+    if (n->next != NULL) { // add separator if this is not the last element
       strncat(buf, sep, buf_capacity_remaining);
       buf_capacity_remaining -= strlen(sep);
     }
-    s = s->next;
+    n = n->next;
   }
   strncat(buf, closer, buf_capacity_remaining);
   return buf;

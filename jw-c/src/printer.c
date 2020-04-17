@@ -182,6 +182,6 @@ const char *pr_str(mal m, bool print_readably) {
     return buf;
 
   default:
-    internal_error("Internal error - unexpected tag %d in pr_str\n", m.tag);
+    internal_error("unexpected tag %d in pr_str\n", m.tag);
   }
 }

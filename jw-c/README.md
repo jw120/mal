@@ -1,7 +1,9 @@
 Todo
 
-- Tidy code (done upto reader.c)
-- Add tests for str_join in utils_test
+- Tidy code, TODO
+  - Seq
+  - Reader
+  - Token
 - Add asserts more thorogulhly
 
 - Function docs in header files only (and in .c for static files)
@@ -12,6 +14,8 @@ readline
 pcre
 using C11 (anonymous unions/structs)
 more tests than other versions as c is flaky..
+checking for exceptions manually
+Discriminated union
 
 core_ used to name (static) function in core
 mal_ for functions related to the mal type
