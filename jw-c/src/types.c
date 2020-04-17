@@ -173,7 +173,7 @@ mal mal_kw(const char *s) {
   size_t buf_size = 1 + strlen(kw_prefix) + strlen(s);
   char *buf = checked_malloc(buf_size, "mal_kw");
   strncpy(buf, kw_prefix, buf_size);
-  str_concat(buf, s, buf_size);
+  strncat(buf, s, buf_size - strlen(buf));
   mal val = {STR_OR_KW, {.s = buf}};
   return val;
 }

@@ -19,6 +19,7 @@
 #include "reader.h"
 
 #include "debug.h"
+#include "escapes.h"
 #include "hash_table.h"
 #include "seq.h"
 #include "tokenize.h"
@@ -145,7 +146,7 @@ static mal read_atom(reader_state *state_ptr) {
       strncpy(buf, token + 1, token_len - 2);
       buf[token_len - 1] = '\0';
       DEBUG_INTERNAL_FMT("before remove_escapes '%s'", buf);
-      mal val = remove_escapes(mal_str(buf));
+      mal val = remove_escapes(buf);
       DEBUG_INTERNAL_FMT("returning str '%s'", val.s);
       return val;
     }

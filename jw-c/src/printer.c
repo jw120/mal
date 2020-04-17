@@ -11,6 +11,7 @@
 #include "printer.h"
 
 #include "debug.h"
+#include "escapes.h"
 #include "hash_table.h"
 #include "seq.h"
 #include "utils.h"
@@ -151,10 +152,10 @@ const char *pr_str(mal m, bool print_readably) {
     } else {
       if (!print_readably)
         return m.s;
-      mal esc_m = add_escapes(mal_str(m.s));
-      buf_size = 1 + (size_t)snprintf(NULL, 0, "\"%s\"", esc_m.s);
+      const char *esc_str = add_escapes(m.s);
+      buf_size = 1 + (size_t)snprintf(NULL, 0, "\"%s\"", esc_str);
       buf = checked_malloc(buf_size, "pr_str STR");
-      snprintf(buf, buf_size, "\"%s\"", esc_m.s);
+      snprintf(buf, buf_size, "\"%s\"", esc_str);
       return buf;
     }
   case SYM:

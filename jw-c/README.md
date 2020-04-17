@@ -1,6 +1,7 @@
 Todo
 
 - Tidy code (done upto reader.c)
+- Add tests for str_join in utils_test
 - Add asserts more thorogulhly
 
 - Function docs in header files only (and in .c for static files)

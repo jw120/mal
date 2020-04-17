@@ -19,6 +19,7 @@
 #include "core_num_test.h"
 #include "core_seq_test.h"
 #include "env_test.h"
+#include "escapes_test.h"
 #include "eval_test.h"
 #include "hash_table_test.h"
 #include "printer_test.h"
@@ -40,6 +41,7 @@ const char *run_tests(void) {
   mu_run_test_function(core_misc_test);
   mu_run_test_function(core_num_test);
   mu_run_test_function(core_seq_test);
+  mu_run_test_function(escapes_test);
   mu_run_test_function(env_test);
   mu_run_test_function(eval_test);
   mu_run_test_function(hash_table_test);
