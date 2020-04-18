@@ -41,7 +41,7 @@ void debug_fmt(const char *func, debug_level level, const char *restrict fmt,
 void debug_mal(const char *func, debug_level level, const char *msg, mal m) {
   if (level > debug)
     return;
-  printf("%16s: '%s' '%s'\n", func, msg, pr_str(m, true));
+  printf("%16s: %s %s\n", func, msg, pr_str(m, true));
   fflush(stdout);
 }
 

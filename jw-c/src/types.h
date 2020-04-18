@@ -140,4 +140,9 @@ bool mal_equals(mal, mal);
 // function pointer will type check (for fn* above)
 #define UNUSED(x) __attribute__((unused)) x
 
+// Helper macro to propogate exceptions
+#define RETURN_IF_EXCEPTION(x)                                                 \
+  if (is_exception(x))                                                         \
+  return x
+
 #endif

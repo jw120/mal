@@ -134,7 +134,7 @@ static mal core_keyword(list_node *n, UNUSED(env *e)) {
 }
 
 // C implemetation of mal apply
-static mal core_apply(list_node *n, UNUSED(env *e)) {
+mal core_apply(list_node *n, env *e) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   if (list_count(n) < 2)
     return mal_exception_str("Need two arguments for apply");
@@ -149,15 +149,7 @@ static mal core_apply(list_node *n, UNUSED(env *e)) {
     return mal_exception_str("Last argument for apply must be a sequence");
   }
 
-  if (is_fn(n->val)) // C-defined function
-    return n->val.f(args, e);
-  if (is_closure(n->val)) { // mal-defined function
-    env *closure_env = env_new2(n->val.c->binds, args, n->val.c->e);
-    if (closure_env == NULL)
-      return mal_exception_str("Failed to create closure environment in apply");
-    return eval(n->val.c->body, closure_env);
-  }
-  return mal_exception_str("Need a function or closure for apply");
+  return apply(n->val, args, e);
 }
 
 // C implementation of mal map
@@ -199,6 +191,30 @@ static mal core_map(list_node *n, env *e) {
   return mal_list(head);
 }
 
+#define READLINE_BUFFER_SIZE 1024
+static char readline_buffer[READLINE_BUFFER_SIZE];
+
+// C implementation of mal readline
+static mal core_readline(list_node *n, UNUSED(env *e)) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) != 1 || !is_str(n->val))
+    return mal_exception_str("readline takes a string");
+  printf("%s ", n->val.s);
+  char *result = fgets(readline_buffer, READLINE_BUFFER_SIZE, stdin);
+  if (result == NULL) {
+    if (feof(stdin)) { // control-d
+      clearerr(stdin);
+      return mal_nil();
+    }
+    internal_error("failure in gets");
+  }
+  size_t result_len = strlen(result);
+  char *new_str = checked_malloc(result_len, "readline");
+  strncpy(new_str, result, result_len - 1); // skip trailing "\n"
+  new_str[result_len - 1] = '\0';
+  return mal_str(new_str);
+}
+
 // add misc core functions to the environment
 void add_misc(env *e) {
   env_set(e, "prn", mal_fn(core_prn));
@@ -213,4 +229,5 @@ void add_misc(env *e) {
   env_set(e, "keyword", mal_fn(core_keyword));
   env_set(e, "apply", mal_fn(core_apply));
   env_set(e, "map", mal_fn(core_map));
+  env_set(e, "readline", mal_fn(core_readline));
 }

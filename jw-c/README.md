@@ -2,6 +2,7 @@ Todo
 
 - Tidy code, TODO
 - Add asserts more thoroughlly?
+- Check exception propogation - done in core_atom
 - check use of strncat srncpy. (copying null). use _s c11 version?
 
 - Function docs in header files only (and in .c for static files)

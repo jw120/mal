@@ -44,7 +44,7 @@ static uint32_t hash(const char *s) {
 }
 
 hash_table *ht_new(count_t entries) {
-  DEBUG_HIGH_FMT("called for %u entries", entries);
+  DEBUG_INTERNAL_FMT("called for %u entries", entries);
 
   count_t size = (count_t)(CREATE_SIZE_MULTIPLE * (double)entries);
   if (size < CREATE_SIZE_MIN)
@@ -72,7 +72,7 @@ hash_table *ht_copy(hash_table *ht, count_t size) {
 
 void ht_put(hash_table *ht, const char *key, mal value) {
   assert(ht != NULL);
-  DEBUG_HIGH_FMT("called for key %s", key);
+  DEBUG_INTERNAL_FMT("called for key %s", key);
 
   count_t i = hash(key) % ht->size;
   while (ht->table[i].key != NULL && strcmp(ht->table[i].key, key) != 0)
@@ -93,7 +93,7 @@ void ht_put(hash_table *ht, const char *key, mal value) {
 
 mal ht_get(hash_table *ht, const char *key) {
   assert(ht != NULL);
-  DEBUG_HIGH_FMT("called for key %s", key);
+  DEBUG_INTERNAL_FMT("called for key %s", key);
 
   count_t i = hash(key) % ht->size;
   count_t initial_i = i;
@@ -110,7 +110,7 @@ mal ht_get(hash_table *ht, const char *key) {
 
 bool ht_has(hash_table *ht, const char *key) {
   assert(ht != NULL);
-  DEBUG_HIGH_FMT("called for key %s", key);
+  DEBUG_INTERNAL_FMT("called for key %s", key);
 
   count_t i = hash(key) % ht->size;
   while (true) {
@@ -123,7 +123,7 @@ bool ht_has(hash_table *ht, const char *key) {
 }
 
 hash_table *ht_from_alternating_list(list_node *n) {
-  DEBUG_HIGH_FMT("called with %d elements", list_count(n));
+  DEBUG_INTERNAL_FMT("called with %d elements", list_count(n));
 
   const count_t list_size = list_count(n);
   if (list_size % 2 == 1)
@@ -142,7 +142,7 @@ hash_table *ht_from_alternating_list(list_node *n) {
 }
 
 hash_table *ht_from_lists(list_node *ks, list_node *vs) {
-  DEBUG_HIGH_FMT("called with %u %u keys", list_count(ks), list_count(vs));
+  DEBUG_INTERNAL_FMT("called with %u %u keys", list_count(ks), list_count(vs));
 
   hash_table *ht = ht_new(list_count(ks));
 
@@ -178,7 +178,7 @@ hash_table *ht_from_lists(list_node *ks, list_node *vs) {
 
 list_node *ht_keys(hash_table *ht) {
   assert(ht != NULL);
-  DEBUG_HIGH_FMT("called on table with %u entries", ht->entries);
+  DEBUG_INTERNAL_FMT("called on table with %u entries", ht->entries);
 
   list_node *n = NULL;
   for (count_t i = 0; i < ht->size; i++) {
@@ -195,7 +195,7 @@ list_node *ht_keys(hash_table *ht) {
 
 list_node *ht_values(hash_table *ht) {
   assert(ht != NULL);
-  DEBUG_HIGH_FMT("called on table with %u entries", ht->entries);
+  DEBUG_INTERNAL_FMT("called on table with %u entries", ht->entries);
 
   list_node *n = NULL;
   for (count_t i = 0; i < ht->size; i++) {

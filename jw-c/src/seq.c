@@ -108,7 +108,7 @@ list_node *array_to_list(count_t count, mal a[]) {
 }
 
 mal mal_first(mal m) {
-  DEBUG_HIGH_MAL("called with", m);
+  DEBUG_INTERNAL_MAL("called with", m);
   if (is_list(m)) {
     if (m.n == NULL)
       return mal_nil();
@@ -125,7 +125,7 @@ mal mal_first(mal m) {
 }
 
 mal mal_rest(mal m) {
-  DEBUG_HIGH_MAL("called with", m);
+  DEBUG_INTERNAL_MAL("called with", m);
   if (is_list(m)) {
     if (m.n == NULL)
       return mal_list(NULL);

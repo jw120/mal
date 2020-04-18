@@ -17,6 +17,7 @@ static mal core_atom_create(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   if (list_count(n) != 1)
     return mal_exception_str("Bad arguments to atom");
+  RETURN_IF_EXCEPTION(n->val);
   return mal_atom(n->val);
 }
 
@@ -24,6 +25,7 @@ static mal core_atom_create(list_node *n, UNUSED(env *e)) {
 // Takes an atom argument and returns the Mal value referenced by this atom
 static mal core_atom_deref(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
+  RETURN_IF_EXCEPTION(n->val);
   if (list_count(n) != 1 || !is_atom(n->val))
     return mal_exception_str("Bad arguments to deref");
   return **n->val.a;
@@ -34,7 +36,11 @@ static mal core_atom_deref(list_node *n, UNUSED(env *e)) {
 // given Mal value. The Mal value is returned.
 static mal core_atom_reset(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
-  if (list_count(n) != 2 || !is_atom(n->val))
+  if (list_count(n) != 2)
+    return mal_exception_str("Need two arguments to deref");
+  RETURN_IF_EXCEPTION(n->val);
+  RETURN_IF_EXCEPTION(n->next->val);
+  if (!is_atom(n->val))
     return mal_exception_str("Bad arguments to deref");
   **n->val.a = n->next->val;
   return n->next->val;
@@ -52,13 +58,19 @@ static mal core_atom_swap(list_node *n, env *e) {
 
   mal a = n->val;
   mal f = n->next->val;
+  list_node *rest = n->next->next;
+  RETURN_IF_EXCEPTION(a);
+  RETURN_IF_EXCEPTION(f);
+  if (rest != NULL)
+    RETURN_IF_EXCEPTION(rest->val);
+
   if (!is_atom(a))
     return mal_exception_str("Expected an atom in swap");
   if (!is_fn(f) && !is_closure(f))
     return mal_exception_str("Expected a function in swap");
 
-  mal fn_with_args = mal_cons(f, mal_cons(**a.a, mal_list(n->next->next)));
-  mal result = eval(fn_with_args, e);
+  mal result = apply(f, list_cons(**a.a, rest), e);
+  RETURN_IF_EXCEPTION(result);
   **a.a = result;
   return result;
 }

@@ -69,11 +69,6 @@ const char *seq_test() {
   mu_assert_eq("mal_head vec []", mal_first(xv0), mal_nil());
   mu_assert_eq("mal_tail vec []", mal_rest(xv0), mal_list(NULL));
 
-  // is_pair
-  mu_assert("is_pair (1)", is_pair(mal_cons(mal_int(1), mal_list(NULL))));
-  mu_assert("is_pair ()", !is_pair(mal_list(NULL)));
-  mu_assert("is_pair 23", !is_pair(mal_int(23)));
-
   // Test of equality for lists
   mu_assert("n0 != n0", list_equals(n0, n0));
   mu_assert("n0 == n1", !list_equals(n0, n1));

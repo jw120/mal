@@ -11,4 +11,7 @@ mal eval(mal, env *);
 // applying functions or special forms)
 mal eval_ast(mal, env *);
 
+// Evalulate a function or closure with the given list of arguments
+mal apply(mal, list_node *, env *);
+
 #endif

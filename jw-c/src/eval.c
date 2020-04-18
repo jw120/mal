@@ -16,11 +16,6 @@
 #include "seq.h"
 #include "utils.h"
 
-// Helper macro to propogate exceptions
-#define RETURN_IF_EXCEPTION(x)                                                 \
-  if (is_exception(x))                                                         \
-  return x
-
 // Is the argument a list whose first element is a symbol that
 // looks up to a macro call
 static bool is_macro_call(mal ast, env *e) {
@@ -52,7 +47,7 @@ static mal macroexpand(mal ast, env *e) {
     if (e == NULL)
       return mal_exception_str("Failed to create environment for macro");
     ast = eval(head_lookup.c->body, e);
-    DEBUG_HIGH_MAL("expanded ast is", ast);
+    DEBUG_INTERNAL_MAL("expanded ast is", ast);
   }
   return ast;
 }
@@ -291,7 +286,7 @@ mal eval(mal ast, env *e) {
 
     ast = macroexpand(ast, e);
     RETURN_IF_EXCEPTION(ast);
-    DEBUG_HIGH_MAL("macro expanded", ast);
+    DEBUG_INTERNAL_MAL("macro expanded", ast);
 
     if (!is_list(ast) || list_empty(ast.n))
       return eval_ast(ast, e);
@@ -360,4 +355,17 @@ mal eval(mal ast, env *e) {
     }
     return mal_exception_str("Not a function");
   }
+}
+
+mal apply(mal m, list_node *args_list, env *e) {
+
+  if (is_fn(m)) // C-defined function
+    return m.f(args_list, e);
+  if (is_closure(m)) { // mal-defined function
+    env *closure_env = env_new2(m.c->binds, args_list, m.c->e);
+    if (closure_env == NULL)
+      return mal_exception_str("Failed to create closure environment in apply");
+    return eval(m.c->body, closure_env);
+  }
+  return mal_exception_str("Need a function or closure for apply");
 }
