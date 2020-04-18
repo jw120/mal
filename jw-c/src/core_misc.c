@@ -215,6 +215,11 @@ static mal core_readline(list_node *n, UNUSED(env *e)) {
   return mal_str(new_str);
 }
 
+static mal nyi(UNUSED(list_node *n), UNUSED(env *e)) {
+  printf("NYI\n");
+  return mal_nil();
+}
+
 // add misc core functions to the environment
 void add_misc(env *e) {
   env_set(e, "prn", mal_fn(core_prn));
@@ -230,4 +235,9 @@ void add_misc(env *e) {
   env_set(e, "apply", mal_fn(core_apply));
   env_set(e, "map", mal_fn(core_map));
   env_set(e, "readline", mal_fn(core_readline));
+  env_set(e, "time-ms", mal_fn(nyi));
+  env_set(e, "meta", mal_fn(nyi));
+  env_set(e, "with-meta", mal_fn(nyi));
+  env_set(e, "seq", mal_fn(nyi));
+  env_set(e, "conj", mal_fn(nyi));
 }

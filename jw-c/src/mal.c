@@ -6,6 +6,7 @@
 
 #include <stdio.h> // stdio has to be before readline/history.h
 
+#include <assert.h>
 #include <readline/history.h>
 #include <readline/readline.h>
 #include <stdbool.h>
@@ -131,6 +132,11 @@ int main(int argc, char *argv[]) {
       return EXIT_SUCCESS;
     }
   }
+
+  if (mode == FULL)
+    assert(eval(read_str("(println (str \"Mal [\" *host-language* \"]\"))"),
+                repl_env)
+               .tag == NIL);
 
   pre_history();
   while (true) {
