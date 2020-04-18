@@ -32,14 +32,12 @@
   ";.*|"                                                                       \
   "[^\\s\\[\\]{}('\"`,;)]*)"
 
-// Search input_string from offset, returning the next token and the next offset
-const token_result *tokenize(const char *input_string, const size_t offset) {
+const tokenize_result *tokenize(const char *input_string, const size_t offset) {
 
-  DEBUG_INTERNAL_FMT("called");
   DEBUG_INTERNAL_FMT("called on %s", input_string + offset);
 
-  static pcre2_code *token_regexp = NULL;
-  static pcre2_match_data *match_data = NULL;
+  static pcre2_code *token_regexp = NULL;     // Compiled regex
+  static pcre2_match_data *match_data = NULL; // Will point to space for matches
 
   if (token_regexp == NULL) { // Compile the regexp if has not been done
 
@@ -69,7 +67,7 @@ const token_result *tokenize(const char *input_string, const size_t offset) {
     return NULL;
   }
 
-  // Fail if anyother error or more than one matched group
+  // Fail if any other error or more than one matched group
   assert(regexp_result == 2);
 
   // Get the matches
@@ -84,8 +82,8 @@ const token_result *tokenize(const char *input_string, const size_t offset) {
       checked_malloc(token_length + 1, "token allocation in tokenize");
   strncpy(token, token_start, token_length);
   token[token_length] = '\0';
-  token_result *result =
-      checked_malloc(sizeof(token_result), "result allocation in tokenize");
+  tokenize_result *result =
+      checked_malloc(sizeof(tokenize_result), "result allocation in tokenize");
   result->val = token;
   result->next_offset = ovector[1];
   DEBUG_INTERNAL_FMT("returning %s", result);

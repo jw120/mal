@@ -4,7 +4,7 @@
  *string
  *
  * Operates by tokenizing the input and holding a state which holds the input
- *s tring, an index into it for the current location and a current token.
+ * string, an index into it for the current location and a current token.
  *
  **/
 
@@ -29,38 +29,64 @@
 typedef struct {
   const char *input_string; // original input string provided to read_str
   size_t input_length;      // length of input_string
-  const char *current;
-  size_t offset;
+  const char *current;      // pre-fetched token
+  size_t offset;            // offset into input_string for next fetch
 } reader_state;
 
-// Forward definitions of founctions used within this module
+// Forward definition of read_form
+
+// Read any mal form (mutating the reader state)
 static mal read_form(reader_state *);
-static mal read_atom(reader_state *);
-static mal mal_reader_exception(const char *, reader_state *);
-static bool is_number(const char *s);
+
+#define READER_ERROR_MSG "Reader error:"
+
+// Helper function to create an exception
+static mal mal_reader_exception(const char *msg, reader_state *state_ptr) {
+  const size_t buf_len = strlen(READER_ERROR_MSG) + strlen(msg) +
+                         state_ptr->input_length - state_ptr->offset +
+                         2; // two spaces
+  char *buf = checked_malloc(buf_len + 1, "mal_reader_exception");
+  snprintf(buf, buf_len, "%s %s %s", READER_ERROR_MSG, msg,
+           state_ptr->input_string + state_ptr->offset);
+  return mal_exception_str(buf);
+}
+
+// Helper function - does the string represent a valid mal number
+static bool is_number(const char *s) {
+  assert(s != NULL);
+
+  // Leading minus sign is OK; just skip
+  if (*s == '-')
+    s++;
+
+  // Fail if any empty string
+  if (strlen(s) == 0)
+    return false;
+
+  // Fail if any character is not a digit
+  for (const char *p = s; *p; p++) {
+    if (!isdigit(*p))
+      return false;
+  }
+
+  return true;
+}
 
 // Return the pre-fetched token without advancing it
 static const char *reader_peek(const reader_state *state_ptr) {
   return state_ptr->current == NULL ? "" : state_ptr->current;
 }
 
-// Return the previously fetched token and fetch the next one
+// Return the previously fetched token and fetch the next one (mutates the
+// argument)
 static const char *reader_next(reader_state *state_ptr) {
-
-  DEBUG_INTERNAL_FMT("called with state_ptr %p", state_ptr);
-  DEBUG_INTERNAL_FMT("called with state_ptr->input_string %s",
-                     state_ptr->input_string);
-  DEBUG_INTERNAL_FMT("called with state_ptr->input_length %d",
-                     state_ptr->input_length);
-  DEBUG_INTERNAL_FMT("called with state_ptr->current %p", state_ptr->current);
-  DEBUG_INTERNAL_FMT("called with state_ptr->offset %p", state_ptr->offset);
 
   // We return this pre-fetched current match
   const char *pre_fetched_current = state_ptr->current;
 
   // Read the next token (if input string is not exhausted) and store as current
   if (state_ptr->offset < state_ptr->input_length) {
-    const token_result *next =
+    const tokenize_result *next =
         tokenize(state_ptr->input_string, state_ptr->offset);
     state_ptr->current = next->val;
     state_ptr->offset = next->next_offset;
@@ -68,58 +94,6 @@ static const char *reader_next(reader_state *state_ptr) {
     state_ptr->current = NULL;
 
   return pre_fetched_current;
-}
-
-enum read_type { READ_LIST, READ_VEC, READ_MAP };
-
-// Read a list, vector or map
-static mal read_extended(reader_state *state_ptr) {
-
-  mal current = read_atom(state_ptr);
-  enum read_type reading_mode;
-  char *closing_char;
-  if (match_sym(current, "(")) {
-    DEBUG_INTERNAL_FMT("list");
-    reading_mode = READ_LIST;
-    closing_char = ")";
-  } else if (match_sym(current, "[")) {
-    DEBUG_INTERNAL_FMT("vec");
-    reading_mode = READ_VEC;
-    closing_char = "]";
-  } else if (match_sym(current, "{")) {
-    DEBUG_INTERNAL_FMT("map");
-    reading_mode = READ_MAP;
-    closing_char = "}";
-  } else
-    return mal_reader_exception("read_extended no opener", state_ptr);
-
-  // Read the elements as a list, keeping a count of the number read
-  list_node *head = NULL;
-  list_node *last = NULL;
-  count_t nodes_count = 0;
-  while (true) {
-    current = read_form(state_ptr);
-    if (match_sym(current, closing_char)) {
-      break;
-    }
-    if (is_missing(current)) {
-      return mal_reader_exception("EOF in list", state_ptr);
-    }
-    nodes_count++;
-    last = list_extend(current, last);
-    if (head == NULL) {
-      head = last;
-    }
-  }
-
-  switch (reading_mode) {
-  case READ_LIST:
-    return mal_list(head);
-  case READ_VEC:
-    return mal_vec(list_to_vec(nodes_count, head));
-  case READ_MAP:
-    return mal_map(ht_from_alternating_list(head));
-  }
 }
 
 // read a non-list
@@ -222,6 +196,56 @@ static mal read_atom(reader_state *state_ptr) {
                               state_ptr);
 }
 
+// Read a list, vector or map (mutating the reader state)
+static mal read_extended(reader_state *state_ptr) {
+
+  mal current = read_atom(state_ptr);
+  enum { READ_LIST, READ_VEC, READ_MAP } reading_mode;
+  char *closing_char;
+  if (match_sym(current, "(")) {
+    DEBUG_INTERNAL_FMT("list");
+    reading_mode = READ_LIST;
+    closing_char = ")";
+  } else if (match_sym(current, "[")) {
+    DEBUG_INTERNAL_FMT("vec");
+    reading_mode = READ_VEC;
+    closing_char = "]";
+  } else if (match_sym(current, "{")) {
+    DEBUG_INTERNAL_FMT("map");
+    reading_mode = READ_MAP;
+    closing_char = "}";
+  } else
+    return mal_reader_exception("read_extended no opener", state_ptr);
+
+  // Read the elements as a list, keeping a count of the number read
+  list_node *head = NULL;
+  list_node *last = NULL;
+  count_t nodes_count = 0;
+  while (true) {
+    current = read_form(state_ptr);
+    if (match_sym(current, closing_char)) {
+      break;
+    }
+    if (is_missing(current)) {
+      return mal_reader_exception("EOF in list", state_ptr);
+    }
+    nodes_count++;
+    last = list_extend(current, last);
+    if (head == NULL) {
+      head = last;
+    }
+  }
+
+  switch (reading_mode) {
+  case READ_LIST:
+    return mal_list(head);
+  case READ_VEC:
+    return mal_vec(list_to_vec(nodes_count, head));
+  case READ_MAP:
+    return mal_map(ht_from_alternating_list(head));
+  }
+}
+
 static mal read_form(reader_state *state_ptr) {
 
   while (true) { // loop to skip over comments
@@ -247,7 +271,9 @@ static mal read_form(reader_state *state_ptr) {
   }
 }
 
-// Top-level
+// Top-level interface for reader module. Returns a mal value read from the
+// string. Returns the missing mal value if the input is empty (or is just white
+// space and comments)
 mal read_str(const char *input_string) {
 
   DEBUG_INTERNAL_FMT("called on '%s'", input_string);
@@ -260,41 +286,8 @@ mal read_str(const char *input_string) {
   state_ptr->current = NULL;
   state_ptr->offset = 0;
 
-  // first call of reader_next sets current and provides no output
+  // first call of reader_next sets current and provides no useful output
   reader_next(state_ptr);
 
   return read_form(state_ptr);
-}
-
-#define READER_ERROR_MSG "Reader error:"
-
-static mal mal_reader_exception(const char *msg, reader_state *state_ptr) {
-  const size_t buf_len = strlen(READER_ERROR_MSG) + strlen(msg) +
-                         state_ptr->input_length - state_ptr->offset +
-                         2; // two spaces
-  char *buf = checked_malloc(buf_len + 1, "mal_reader_exception");
-  snprintf(buf, buf_len, "%s %s %s", READER_ERROR_MSG, msg,
-           state_ptr->input_string + state_ptr->offset);
-  return mal_exception_str(buf);
-}
-
-// Helper function - does the string represent a valid number
-static bool is_number(const char *s) {
-  assert(s != NULL);
-
-  // Leading minus sign is OK; just skip
-  if (*s == '-')
-    s++;
-
-  // Fail if any empty string
-  if (strlen(s) == 0)
-    return false;
-
-  // Fail if any character is not a digit
-  for (const char *p = s; *p; p++) {
-    if (!isdigit(*p))
-      return false;
-  }
-
-  return true;
 }

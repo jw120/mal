@@ -35,10 +35,16 @@ bool mal_equals(mal a, mal b) {
   case STR_OR_KW:
     return a.tag == b.tag && strcmp(a.s, b.s) == 0;
   case LIST:
+    if (b.tag == LIST)
+      return list_equals(a.n, b.n);
+    if (b.tag == VEC)
+      return list_vec_equals(a.n, b.v);
+    return false;
   case VEC:
-    if (b.tag == LIST || b.tag == VEC) {
-      return seq_equals(a, b);
-    }
+    if (b.tag == LIST)
+      return list_vec_equals(b.n, a.v);
+    if (b.tag == VEC)
+      return vec_equals(a.v, b.v);
     return false;
   case MAP:
     return a.tag == b.tag && ht_equals(a.m, b.m);

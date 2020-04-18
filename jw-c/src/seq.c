@@ -38,8 +38,7 @@ bool seq_empty(mal m) {
   return true;
 }
 
-// Helper function to compare a list to a vector
-static bool list_vec_equals(list_node *n, vec *v) {
+bool list_vec_equals(list_node *n, vec *v) {
   if (n == NULL && v == NULL)
     return true;
   if (n == NULL)
@@ -56,19 +55,6 @@ static bool list_vec_equals(list_node *n, vec *v) {
     n = n->next;
   }
   return i == v->count && n == NULL;
-}
-
-// Are the two sequences equal
-bool seq_equals(mal x, mal y) {
-  if (is_list(x) && is_list(y))
-    return list_equals(x.n, y.n);
-  if (is_vec(x) && is_vec(y))
-    return vec_equals(x.v, y.v);
-  if (is_list(x) && is_vec(y))
-    return list_vec_equals(x.n, y.v);
-  if (is_vec(x) && is_list(y))
-    return list_vec_equals(y.n, x.v);
-  assert(0); // Non-seq passed to seq_equals
 }
 
 list_node *seq_to_list(mal m) {

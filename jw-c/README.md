@@ -1,9 +1,7 @@
 Todo
 
 - Tidy code, TODO
-  - Seq
-  - Reader
-  - Token
+  - Seq. Consider list_extend and how we iterate through lists
 - Add asserts more thorogulhly
 
 - Function docs in header files only (and in .c for static files)
