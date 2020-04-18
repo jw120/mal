@@ -190,6 +190,11 @@ static mal try_special_form(list_node *n, env *e) {
   return eval(catch_list.n->next->next->val, catch_env);
 }
 
+// Helper functin for quasi-quote is the argument a non-empty sequence
+bool is_pair(mal m) {
+  return (is_list(m) && !list_empty(m.n)) || (is_vec(m) && !vec_empty(m.v));
+}
+
 // Handle the quasiquote special form (calls itself recursively)
 static mal quasiquote(mal ast) {
   DEBUG_INTERNAL_MAL("", ast);
@@ -236,7 +241,7 @@ mal eval_ast(mal ast, env *e) {
     return env_get(e, ast.s);
   }
 
-  if (is_list(ast) && !seq_empty(ast)) { // evaluate list's contents
+  if (is_list(ast) && !list_empty(ast.n)) { // evaluate list's contents
     list_node *to_head = NULL;
     list_node *to = to_head;
     list_node *from = ast.n;
@@ -251,7 +256,7 @@ mal eval_ast(mal ast, env *e) {
     return mal_list(to_head);
   }
 
-  if (is_vec(ast) && !seq_empty(ast)) { // evaluate vector's contents
+  if (is_vec(ast) && !list_empty(ast.n)) { // evaluate vector's contents
     vec *to = uninitialized_vec(ast.v->count);
     for (count_t i = 0; i < ast.v->count; i++) {
       mal m = eval(ast.v->buf[i], e);

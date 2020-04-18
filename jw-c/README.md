@@ -1,8 +1,8 @@
 Todo
 
 - Tidy code, TODO
-  - Seq. Consider list_extend and how we iterate through lists
-- Add asserts more thorogulhly
+- Add asserts more thoroughlly?
+- check use of strncat srncpy. (copying null). use _s c11 version?
 
 - Function docs in header files only (and in .c for static files)
 

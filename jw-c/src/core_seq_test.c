@@ -31,7 +31,7 @@ const char *core_seq_test(void) {
   mu_assert_mal(e, "(empty? [1 2])", mal_false());
   mu_assert_mal(e, "(empty? [])", mal_true());
   mu_assert_mal(e, "(empty? nil)", mal_true());
-  mu_assert_mal(e, "(empty? 33)", mal_true());
+  mu_assert_exception(e, "(empty? 33)");
 
   // count
   mu_assert_mal(e, "(count '(1 2))", mal_int(2));

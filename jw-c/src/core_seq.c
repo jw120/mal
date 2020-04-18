@@ -20,7 +20,15 @@ static mal core_list(list_node *n, UNUSED(env *e)) {
 // C implementation of mal empty?
 static mal core_empty(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
-  return mal_bool(seq_empty(n->val));
+  if (list_count(n) != 1)
+    return mal_exception_str("Bad number of arguments to empty?");
+  if (is_list(n->val))
+    return mal_bool(list_empty(n->val.n));
+  if (is_vec(n->val))
+    return mal_bool(vec_empty(n->val.v));
+  if (is_nil(n->val))
+    return mal_true();
+  return mal_exception_str("Need a list, vector or nil as argument for empty?");
 }
 
 // C implementation of mal count
@@ -33,7 +41,7 @@ static mal core_count(list_node *n, UNUSED(env *e)) {
 static mal core_cons(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
   if (list_count(n) != 2)
-    return mal_exception_str("Bad numbero ofarguments to cons");
+    return mal_exception_str("Bad number of arguments to cons");
   if (is_list(n->next->val))
     return mal_cons(n->val, n->next->val);
   if (is_vec(n->next->val)) {

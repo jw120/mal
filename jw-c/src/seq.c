@@ -16,45 +16,16 @@
 
 /**
  *
- * Sequence functions (for both a list of vector)
+ * Sequence functions (for both a list or vector)
  *
  */
 
-// Count the elements in a sequence
 count_t seq_count(mal m) {
   if (is_list(m))
     return list_count(m.n);
   else if (is_vec(m))
     return vec_count(m.v);
   return 0;
-}
-
-// Is the sequence empty
-bool seq_empty(mal m) {
-  if (is_list(m))
-    return list_empty(m.n);
-  else if (is_vec(m))
-    return vec_empty(m.v);
-  return true;
-}
-
-bool list_vec_equals(list_node *n, vec *v) {
-  if (n == NULL && v == NULL)
-    return true;
-  if (n == NULL)
-    return v == NULL || v->count == 0;
-  if (v == NULL)
-    return n == NULL;
-
-  // check element by element
-  count_t i = 0;
-  while (i < v->count && n != NULL) {
-    if (!mal_equals(n->val, v->buf[i]))
-      return false;
-    i++;
-    n = n->next;
-  }
-  return i == v->count && n == NULL;
 }
 
 list_node *seq_to_list(mal m) {
@@ -68,13 +39,30 @@ list_node *seq_to_list(mal m) {
   return n;
 }
 
+bool list_vec_equals(list_node *n, vec *v) {
+  if (n == NULL && v == NULL)
+    return true;
+  if (n == NULL)
+    return v == NULL || v->count == 0;
+  if (v == NULL)
+    return n == NULL;
+
+  count_t i = 0;
+  while (i < v->count && n != NULL) {
+    if (!mal_equals(n->val, v->buf[i]))
+      return false;
+    i++;
+    n = n->next;
+  }
+  return i == v->count && n == NULL;
+}
+
 /**
  *
  * List functions
  *
  */
 
-// Length of the list
 count_t list_count(list_node *n) {
   count_t count = 0;
   while (n != NULL) {
@@ -84,7 +72,6 @@ count_t list_count(list_node *n) {
   return count;
 }
 
-// Is the list empty
 bool list_empty(list_node *n) { return n == NULL; }
 
 bool list_equals(list_node *a, list_node *b) {
@@ -100,8 +87,6 @@ bool list_equals(list_node *a, list_node *b) {
   }
 }
 
-// return a new list whose head is the given element and whose tail is the
-// given list (which may be NULL)
 list_node *list_cons(mal m, list_node *n) {
   list_node *new_list_node = checked_malloc(sizeof(list_node), "list_cons");
   new_list_node->val = m;
@@ -109,18 +94,17 @@ list_node *list_cons(mal m, list_node *n) {
   return new_list_node;
 }
 
-// generate a list from an array of mal values
+mal mal_cons(mal m, mal n) {
+  if (!is_list(n))
+    return mal_exception_str("non-list in mal_cons");
+  return mal_list(list_cons(m, n.n));
+}
+
 list_node *array_to_list(count_t count, mal a[]) {
   list_node *n = NULL;
   for (count_t i = 0; i < count; i++)
     n = list_cons(a[count - i - 1], n);
   return n;
-}
-
-mal mal_cons(mal m, mal n) {
-  if (!is_list(n))
-    return mal_exception_str("non-list in mal_cons");
-  return mal_list(list_cons(m, n.n));
 }
 
 mal mal_first(mal m) {
@@ -157,9 +141,6 @@ mal mal_rest(mal m) {
   return mal_exception_str("non-sequence in mal_first");
 }
 
-bool is_pair(mal m) { return is_seq(m) && seq_count(m) > 0; }
-
-// Does the list include the given element
 bool list_contains(list_node *n, mal m) {
   while (n != NULL) {
     if (mal_equals(n->val, m))
@@ -169,8 +150,6 @@ bool list_contains(list_node *n, mal m) {
   return false;
 }
 
-// Given a pointer to the last element of a list (or NULL), add the given
-// element and return the new last element
 list_node *list_extend(mal m, list_node *n) {
   list_node *new_list_node = checked_malloc(sizeof(list_node), "list_cons");
   new_list_node->val = m;
@@ -180,12 +159,11 @@ list_node *list_extend(mal m, list_node *n) {
   return new_list_node;
 }
 
-// Create a new list consisting of (at most) the given number of elements
 list_node *list_take(list_node *n, count_t count) {
-  count_t i = 0;
-  list_node *prev_n = NULL;
-  list_node *head = NULL;
-  list_node *new_n = NULL;
+  count_t i = 0;            // number of elements taken so far
+  list_node *prev_n = NULL; // pointer to the element before n
+  list_node *head = NULL;   // head of the new list
+  list_node *new_n = NULL;  // pointer into the new list
   while (n != NULL && i < count) {
     new_n = checked_malloc(sizeof(list_node), "list_take");
     new_n->val = n->val;
@@ -201,7 +179,6 @@ list_node *list_take(list_node *n, count_t count) {
   return head;
 }
 
-// Return the last value in  a list
 mal list_last(list_node *n) {
   if (n == NULL)
     return mal_exception_str("Last element of empty list");
@@ -210,11 +187,10 @@ mal list_last(list_node *n) {
   return n->val;
 }
 
-// Create a new list that combines both lists
 list_node *list_append(list_node *n1, list_node *n2) {
-  list_node *prev_n = NULL;
-  list_node *head = NULL;
-  list_node *new_n = NULL;
+  list_node *prev_n = NULL; // Previous element in the source list
+  list_node *head = NULL;   // Head of the new combined list
+  list_node *new_n = NULL;  // Points into the new combined list
   while (n1 != NULL) {
     new_n = checked_malloc(sizeof(list_node), "list_append 1");
     new_n->val = n1->val;
@@ -263,7 +239,6 @@ bool vec_equals(vec *a, vec *b) {
   return true;
 }
 
-// Create a vector with unititialized entries
 vec *uninitialized_vec(count_t count) {
   vec *v = checked_malloc(sizeof(vec), "uninitialized_vec vec");
   v->count = count;
@@ -271,7 +246,6 @@ vec *uninitialized_vec(count_t count) {
   return v;
 }
 
-// Create a vector of the given size with elements from the given list
 vec *list_to_vec(count_t count, list_node *n) {
   vec *v = uninitialized_vec(count);
   mal *buf_ptr = v->buf;

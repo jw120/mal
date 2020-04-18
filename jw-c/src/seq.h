@@ -11,14 +11,15 @@
  *
  */
 
-// Count the elements in a sequence
+// Count the elements in a list or vector
 count_t seq_count(mal);
-
-// Is the sequence empty
-bool seq_empty(mal m);
 
 // Convert a list or vector to list
 list_node *seq_to_list(mal);
+
+// Do the list and vector have the same length with the correpsonding elements
+// all mal_equal? Handles NULL lists (which are equal to zero element vectors)
+bool list_vec_equals(list_node *n, vec *v);
 
 /**
  *
@@ -39,26 +40,13 @@ bool list_equals(list_node *, list_node *);
 // return a new list with given head and tail
 list_node *list_cons(mal, list_node *);
 
-// generate a list from an array of mal values
-list_node *array_to_list(count_t, mal[]);
-
-// Given a pointer to the last element of a list (or NULL), add the given
-// element and return the new last element
-list_node *list_extend(mal, list_node *n);
-
-// Create a new list consisting of (at most) the given number of elements
-// from the front of the given list
-list_node *list_take(list_node *, count_t);
-
-// Return the last value in a list (or an exception if NULL)
-mal list_last(list_node *);
-
-// Create a new list that combines both lists
-list_node *list_append(list_node *, list_node *);
-
 // Create a list whose head is the first argument and whose tail is the second
-// argument Returns an exception if the second argument is not a list
+// argument. Returns an exception if the second argument is not a list
 mal mal_cons(mal, mal);
+
+// generate a list from an array of mal values. 0'th element of the vector
+// is the head of the list with other elements following in sequence
+list_node *array_to_list(count_t, mal[]);
 
 // Return the first value of the given mal value which should be a list, vector
 // or nil. Gives nil if the sequence is empty (or nil) and an exception if the
@@ -70,11 +58,22 @@ mal mal_first(mal);
 // argument is a different type
 mal mal_rest(mal);
 
-// Helper function for quasiquote - is this a non-empty list
-bool is_pair(mal m);
-
 // Does the list include a value that is mal_equal to the given value
 bool list_contains(list_node *, mal);
+
+// Given a pointer to the last element of a list (or NULL), add a new node (with
+// the given value) to the end of the list and return the new list node
+list_node *list_extend(mal, list_node *n);
+
+// Create a new list consisting of (at most) the given number of elements
+// from the front of the given list
+list_node *list_take(list_node *, count_t);
+
+// Return the last value in a list (or an exception if NULL)
+mal list_last(list_node *);
+
+// Create a new list that combines both lists
+list_node *list_append(list_node *, list_node *);
 
 /**
  *
@@ -91,10 +90,6 @@ bool vec_empty(vec *);
 // Are the two vectors equal (i.e., the same size and with corresponding
 // elements mal_equal)
 bool vec_equals(vec *, vec *);
-
-// Do the list and vector have the same length with the correpsonding elements
-// all mal_equal? Handles NULL lists (which are equal to zero element vectors)
-bool list_vec_equals(list_node *n, vec *v);
 
 // Create a vector of the given size with elements from the given list
 vec *list_to_vec(count_t, list_node *);
