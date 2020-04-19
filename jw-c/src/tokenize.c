@@ -34,7 +34,8 @@
 
 const tokenize_result *tokenize(const char *input_string, const size_t offset) {
 
-  DEBUG_INTERNAL_FMT("called on %s", input_string + offset);
+  DEBUG_INTERNAL_FMT("called on '%s' (offset %u)", input_string + offset,
+                     offset);
 
   static pcre2_code *token_regexp = NULL;     // Compiled regex
   static pcre2_match_data *match_data = NULL; // Will point to space for matches
@@ -78,14 +79,21 @@ const tokenize_result *tokenize(const char *input_string, const size_t offset) {
 
   const char *token_start = input_string + ovector[2];
   size_t token_length = ovector[3] - ovector[2];
+
+  if (token_length == 0) {
+    DEBUG_INTERNAL_FMT("found nothing (zero length token)");
+    return NULL;
+  }
+
   char *token =
       checked_malloc(token_length + 1, "token allocation in tokenize");
-  strncpy(token, token_start, token_length);
+  strncpy(token, token_start, token_length + 1);
   token[token_length] = '\0';
   tokenize_result *result =
       checked_malloc(sizeof(tokenize_result), "result allocation in tokenize");
   result->val = token;
   result->next_offset = ovector[1];
-  DEBUG_INTERNAL_FMT("returning %s", result);
+  DEBUG_INTERNAL_FMT("returning '%s' (length %d)", result->val,
+                     strlen(result->val));
   return result;
 }

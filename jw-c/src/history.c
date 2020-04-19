@@ -18,6 +18,7 @@
 
 #define HISTORY_FILENAME ".c_mal_history"
 #define HISTORY_MAX_SIZE 100
+#define HISTORY_SEP "/"
 
 char *history_filename = NULL;
 
@@ -26,12 +27,13 @@ void pre_history() {
   // set the file name for our history file
   const char *home = getenv("HOME");
   assert(home != NULL);
-  history_filename = checked_malloc(strlen(home) + strlen(HISTORY_FILENAME) + 2,
-                                    "start_history");
-  strncat(history_filename, home, strlen(home));
-  strncat(history_filename + strlen(home), "/", 1);
-  strncat(history_filename + strlen(home) + 1, HISTORY_FILENAME,
-          strlen(HISTORY_FILENAME) + 1);
+  const size_t buf_size =
+      strlen(home) + strlen(HISTORY_FILENAME) + strlen(HISTORY_SEP) + 1;
+  history_filename = checked_malloc(buf_size, "start_history");
+  strncpy(history_filename, home, buf_size);
+  strncat(history_filename, HISTORY_SEP, buf_size - strlen(history_filename));
+  strncat(history_filename, HISTORY_FILENAME,
+          buf_size - strlen(HISTORY_FILENAME));
 
   int history_errno = read_history(history_filename);
   if (history_errno == 0)

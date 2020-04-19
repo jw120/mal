@@ -1,0 +1,789 @@
+         env_new: called with 0 elements and outer 0x0
+            eval: called with (def! not (fn* (a) (if a false true)))
+environment: core (outer=NULL)
+  "atom?" -> <function>
+  "deref" -> <function>
+  "read-string" -> <function>
+  "cons" -> <function>
+  "concat" -> <function>
+  "rest" -> <function>
+  "string?" -> <function>
+  "vals" -> <function>
+  "with-meta" -> <function>
+  "*" -> <function>
+  "symbol" -> <function>
+  "swap!" -> <function>
+  "throw" -> <function>
+  "contains?" -> <function>
+  "reset!" -> <function>
+  "/" -> <function>
+  "list" -> <function>
+  "seq" -> <function>
+  "keyword" -> <function>
+  "prn" -> <function>
+  "map?" -> <function>
+  "time-ms" -> <function>
+  "hash-map" -> <function>
+  "true?" -> <function>
+  "pr-str" -> <function>
+  "+" -> <function>
+  "first" -> <function>
+  "list?" -> <function>
+  "false?" -> <function>
+  "readline" -> <function>
+  "symbol?" -> <function>
+  "empty?" -> <function>
+  ">=" -> <function>
+  "fn?" -> <function>
+  "=" -> <function>
+  "nil?" -> <function>
+  "keys" -> <function>
+  "vector?" -> <function>
+  "<=" -> <function>
+  "slurp" -> <function>
+  "macro?" -> <function>
+  "atom" -> <function>
+  "str" -> <function>
+  "map" -> <function>
+  "keyword?" -> <function>
+  "dissoc" -> <function>
+  "println" -> <function>
+  "count" -> <function>
+  "meta" -> <function>
+  ">" -> <function>
+  "conj" -> <function>
+  "number?" -> <function>
+  "vector" -> <function>
+  "get" -> <function>
+  "sequential?" -> <function>
+  "assoc" -> <function>
+  "apply" -> <function>
+  "nth" -> <function>
+  "<" -> <function>
+  "-" -> <function>
+            eval: called with (fn* (a) (if a false true))
+environment: core (outer=NULL)
+  "atom?" -> <function>
+  "deref" -> <function>
+  "read-string" -> <function>
+  "cons" -> <function>
+  "concat" -> <function>
+  "rest" -> <function>
+  "string?" -> <function>
+  "vals" -> <function>
+  "with-meta" -> <function>
+  "*" -> <function>
+  "symbol" -> <function>
+  "swap!" -> <function>
+  "throw" -> <function>
+  "contains?" -> <function>
+  "reset!" -> <function>
+  "/" -> <function>
+  "list" -> <function>
+  "seq" -> <function>
+  "keyword" -> <function>
+  "prn" -> <function>
+  "map?" -> <function>
+  "time-ms" -> <function>
+  "hash-map" -> <function>
+  "true?" -> <function>
+  "pr-str" -> <function>
+  "+" -> <function>
+  "first" -> <function>
+  "list?" -> <function>
+  "false?" -> <function>
+  "readline" -> <function>
+  "symbol?" -> <function>
+  "empty?" -> <function>
+  ">=" -> <function>
+  "fn?" -> <function>
+  "=" -> <function>
+  "nil?" -> <function>
+  "keys" -> <function>
+  "vector?" -> <function>
+  "<=" -> <function>
+  "slurp" -> <function>
+  "macro?" -> <function>
+  "atom" -> <function>
+  "str" -> <function>
+  "map" -> <function>
+  "keyword?" -> <function>
+  "dissoc" -> <function>
+  "println" -> <function>
+  "count" -> <function>
+  "meta" -> <function>
+  ">" -> <function>
+  "conj" -> <function>
+  "number?" -> <function>
+  "vector" -> <function>
+  "get" -> <function>
+  "sequential?" -> <function>
+  "assoc" -> <function>
+  "apply" -> <function>
+  "nth" -> <function>
+  "<" -> <function>
+  "-" -> <function>
+ fn_special_form: in fn* closure body is (if a false true)
+            eval: called with (def! load-file (fn* (f) (eval (read-string (str "(do " (slurp f) "\nnil) ")))))
+environment: core (outer=NULL)
+  "atom?" -> <function>
+  "deref" -> <function>
+  "read-string" -> <function>
+  "cons" -> <function>
+  "concat" -> <function>
+  "rest" -> <function>
+  "string?" -> <function>
+  "vals" -> <function>
+  "with-meta" -> <function>
+  "*" -> <function>
+  "symbol" -> <function>
+  "swap!" -> <function>
+  "throw" -> <function>
+  "contains?" -> <function>
+  "reset!" -> <function>
+  "/" -> <function>
+  "list" -> <function>
+  "seq" -> <function>
+  "keyword" -> <function>
+  "prn" -> <function>
+  "map?" -> <function>
+  "time-ms" -> <function>
+  "hash-map" -> <function>
+  "true?" -> <function>
+  "pr-str" -> <function>
+  "+" -> <function>
+  "first" -> <function>
+  "list?" -> <function>
+  "false?" -> <function>
+  "readline" -> <function>
+  "symbol?" -> <function>
+  "empty?" -> <function>
+  ">=" -> <function>
+  "fn?" -> <function>
+  "=" -> <function>
+  "nil?" -> <function>
+  "keys" -> <function>
+  "vector?" -> <function>
+  "<=" -> <function>
+  "slurp" -> <function>
+  "macro?" -> <function>
+  "atom" -> <function>
+  "str" -> <function>
+  "map" -> <function>
+  "keyword?" -> <function>
+  "not" -> <function>
+  "dissoc" -> <function>
+  "println" -> <function>
+  "count" -> <function>
+  "meta" -> <function>
+  ">" -> <function>
+  "conj" -> <function>
+  "number?" -> <function>
+  "vector" -> <function>
+  "get" -> <function>
+  "sequential?" -> <function>
+  "assoc" -> <function>
+  "apply" -> <function>
+  "nth" -> <function>
+  "<" -> <function>
+  "-" -> <function>
+            eval: called with (fn* (f) (eval (read-string (str "(do " (slurp f) "\nnil) "))))
+environment: core (outer=NULL)
+  "atom?" -> <function>
+  "deref" -> <function>
+  "read-string" -> <function>
+  "cons" -> <function>
+  "concat" -> <function>
+  "rest" -> <function>
+  "string?" -> <function>
+  "vals" -> <function>
+  "with-meta" -> <function>
+  "*" -> <function>
+  "symbol" -> <function>
+  "swap!" -> <function>
+  "throw" -> <function>
+  "contains?" -> <function>
+  "reset!" -> <function>
+  "/" -> <function>
+  "list" -> <function>
+  "seq" -> <function>
+  "keyword" -> <function>
+  "prn" -> <function>
+  "map?" -> <function>
+  "time-ms" -> <function>
+  "hash-map" -> <function>
+  "true?" -> <function>
+  "pr-str" -> <function>
+  "+" -> <function>
+  "first" -> <function>
+  "list?" -> <function>
+  "false?" -> <function>
+  "readline" -> <function>
+  "symbol?" -> <function>
+  "empty?" -> <function>
+  ">=" -> <function>
+  "fn?" -> <function>
+  "=" -> <function>
+  "nil?" -> <function>
+  "keys" -> <function>
+  "vector?" -> <function>
+  "<=" -> <function>
+  "slurp" -> <function>
+  "macro?" -> <function>
+  "atom" -> <function>
+  "str" -> <function>
+  "map" -> <function>
+  "keyword?" -> <function>
+  "not" -> <function>
+  "dissoc" -> <function>
+  "println" -> <function>
+  "count" -> <function>
+  "meta" -> <function>
+  ">" -> <function>
+  "conj" -> <function>
+  "number?" -> <function>
+  "vector" -> <function>
+  "get" -> <function>
+  "sequential?" -> <function>
+  "assoc" -> <function>
+  "apply" -> <function>
+  "nth" -> <function>
+  "<" -> <function>
+  "-" -> <function>
+ fn_special_form: in fn* closure body is (eval (read-string (str "(do " (slurp f) "\nnil) ")))
+            eval: called with (defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list (quote if) (first xs) (if (> (count xs) 1) (nth xs 1) (throw "odd number of forms to cond")) (cons (quote cond) (rest (rest xs)))))))
+environment: core (outer=NULL)
+  "atom?" -> <function>
+  "deref" -> <function>
+  "read-string" -> <function>
+  "cons" -> <function>
+  "concat" -> <function>
+  "rest" -> <function>
+  "string?" -> <function>
+  "vals" -> <function>
+  "with-meta" -> <function>
+  "*" -> <function>
+  "symbol" -> <function>
+  "swap!" -> <function>
+  "throw" -> <function>
+  "contains?" -> <function>
+  "reset!" -> <function>
+  "/" -> <function>
+  "list" -> <function>
+  "seq" -> <function>
+  "keyword" -> <function>
+  "prn" -> <function>
+  "map?" -> <function>
+  "time-ms" -> <function>
+  "hash-map" -> <function>
+  "true?" -> <function>
+  "pr-str" -> <function>
+  "+" -> <function>
+  "first" -> <function>
+  "list?" -> <function>
+  "false?" -> <function>
+  "readline" -> <function>
+  "symbol?" -> <function>
+  "empty?" -> <function>
+  ">=" -> <function>
+  "fn?" -> <function>
+  "=" -> <function>
+  "nil?" -> <function>
+  "keys" -> <function>
+  "vector?" -> <function>
+  "<=" -> <function>
+  "slurp" -> <function>
+  "load-file" -> <function>
+  "macro?" -> <function>
+  "atom" -> <function>
+  "str" -> <function>
+  "map" -> <function>
+  "keyword?" -> <function>
+  "not" -> <function>
+  "dissoc" -> <function>
+  "println" -> <function>
+  "count" -> <function>
+  "meta" -> <function>
+  ">" -> <function>
+  "conj" -> <function>
+  "number?" -> <function>
+  "vector" -> <function>
+  "get" -> <function>
+  "sequential?" -> <function>
+  "assoc" -> <function>
+  "apply" -> <function>
+  "nth" -> <function>
+  "<" -> <function>
+  "-" -> <function>
+            eval: called with (fn* (& xs) (if (> (count xs) 0) (list (quote if) (first xs) (if (> (count xs) 1) (nth xs 1) (throw "odd number of forms to cond")) (cons (quote cond) (rest (rest xs))))))
+environment: core (outer=NULL)
+  "atom?" -> <function>
+  "deref" -> <function>
+  "read-string" -> <function>
+  "cons" -> <function>
+  "concat" -> <function>
+  "rest" -> <function>
+  "string?" -> <function>
+  "vals" -> <function>
+  "with-meta" -> <function>
+  "*" -> <function>
+  "symbol" -> <function>
+  "swap!" -> <function>
+  "throw" -> <function>
+  "contains?" -> <function>
+  "reset!" -> <function>
+  "/" -> <function>
+  "list" -> <function>
+  "seq" -> <function>
+  "keyword" -> <function>
+  "prn" -> <function>
+  "map?" -> <function>
+  "time-ms" -> <function>
+  "hash-map" -> <function>
+  "true?" -> <function>
+  "pr-str" -> <function>
+  "+" -> <function>
+  "first" -> <function>
+  "list?" -> <function>
+  "false?" -> <function>
+  "readline" -> <function>
+  "symbol?" -> <function>
+  "empty?" -> <function>
+  ">=" -> <function>
+  "fn?" -> <function>
+  "=" -> <function>
+  "nil?" -> <function>
+  "keys" -> <function>
+  "vector?" -> <function>
+  "<=" -> <function>
+  "slurp" -> <function>
+  "load-file" -> <function>
+  "macro?" -> <function>
+  "atom" -> <function>
+  "str" -> <function>
+  "map" -> <function>
+  "keyword?" -> <function>
+  "not" -> <function>
+  "dissoc" -> <function>
+  "println" -> <function>
+  "count" -> <function>
+  "meta" -> <function>
+  ">" -> <function>
+  "conj" -> <function>
+  "number?" -> <function>
+  "vector" -> <function>
+  "get" -> <function>
+  "sequential?" -> <function>
+  "assoc" -> <function>
+  "apply" -> <function>
+  "nth" -> <function>
+  "<" -> <function>
+  "-" -> <function>
+ fn_special_form: in fn* closure body is (if (> (count xs) 0) (list (quote if) (first xs) (if (> (count xs) 1) (nth xs 1) (throw "odd number of forms to cond")) (cons (quote cond) (rest (rest xs)))))
+            eval: called with (def! *host-language* "jw-c")
+environment: core (outer=NULL)
+  "atom?" -> <function>
+  "deref" -> <function>
+  "read-string" -> <function>
+  "cons" -> <function>
+  "concat" -> <function>
+  "rest" -> <function>
+  "string?" -> <function>
+  "vals" -> <function>
+  "with-meta" -> <function>
+  "*" -> <function>
+  "symbol" -> <function>
+  "swap!" -> <function>
+  "throw" -> <function>
+  "contains?" -> <function>
+  "reset!" -> <function>
+  "/" -> <function>
+  "list" -> <function>
+  "seq" -> <function>
+  "keyword" -> <function>
+  "prn" -> <function>
+  "map?" -> <function>
+  "time-ms" -> <function>
+  "hash-map" -> <function>
+  "true?" -> <function>
+  "pr-str" -> <function>
+  "+" -> <function>
+  "first" -> <function>
+  "list?" -> <function>
+  "false?" -> <function>
+  "readline" -> <function>
+  "symbol?" -> <function>
+  "empty?" -> <function>
+  ">=" -> <function>
+  "fn?" -> <function>
+  "=" -> <function>
+  "nil?" -> <function>
+  "keys" -> <function>
+  "vector?" -> <function>
+  "<=" -> <function>
+  "slurp" -> <function>
+  "load-file" -> <function>
+  "macro?" -> <function>
+  "atom" -> <function>
+  "str" -> <function>
+  "map" -> <function>
+  "keyword?" -> <function>
+  "not" -> <function>
+  "dissoc" -> <function>
+  "println" -> <function>
+  "count" -> <function>
+  "meta" -> <function>
+  ">" -> <function>
+  "conj" -> <function>
+  "number?" -> <function>
+  "vector" -> <function>
+  "get" -> <function>
+  "sequential?" -> <function>
+  "assoc" -> <function>
+  "apply" -> <function>
+  "nth" -> <function>
+  "<" -> <function>
+  "-" -> <function>
+  "cond" -> <function>
+            eval: called with "jw-c"
+environment: core (outer=NULL)
+  "atom?" -> <function>
+  "deref" -> <function>
+  "read-string" -> <function>
+  "cons" -> <function>
+  "concat" -> <function>
+  "rest" -> <function>
+  "string?" -> <function>
+  "vals" -> <function>
+  "with-meta" -> <function>
+  "*" -> <function>
+  "symbol" -> <function>
+  "swap!" -> <function>
+  "throw" -> <function>
+  "contains?" -> <function>
+  "reset!" -> <function>
+  "/" -> <function>
+  "list" -> <function>
+  "seq" -> <function>
+  "keyword" -> <function>
+  "prn" -> <function>
+  "map?" -> <function>
+  "time-ms" -> <function>
+  "hash-map" -> <function>
+  "true?" -> <function>
+  "pr-str" -> <function>
+  "+" -> <function>
+  "first" -> <function>
+  "list?" -> <function>
+  "false?" -> <function>
+  "readline" -> <function>
+  "symbol?" -> <function>
+  "empty?" -> <function>
+  ">=" -> <function>
+  "fn?" -> <function>
+  "=" -> <function>
+  "nil?" -> <function>
+  "keys" -> <function>
+  "vector?" -> <function>
+  "<=" -> <function>
+  "slurp" -> <function>
+  "load-file" -> <function>
+  "macro?" -> <function>
+  "atom" -> <function>
+  "str" -> <function>
+  "map" -> <function>
+  "keyword?" -> <function>
+  "not" -> <function>
+  "dissoc" -> <function>
+  "println" -> <function>
+  "count" -> <function>
+  "meta" -> <function>
+  ">" -> <function>
+  "conj" -> <function>
+  "number?" -> <function>
+  "vector" -> <function>
+  "get" -> <function>
+  "sequential?" -> <function>
+  "assoc" -> <function>
+  "apply" -> <function>
+  "nth" -> <function>
+  "<" -> <function>
+  "-" -> <function>
+  "cond" -> <function>
+environment: core (outer=NULL)
+  "atom?" -> <function>
+  "deref" -> <function>
+  "read-string" -> <function>
+  "cons" -> <function>
+  "concat" -> <function>
+  "rest" -> <function>
+  "string?" -> <function>
+  "vals" -> <function>
+  "with-meta" -> <function>
+  "*" -> <function>
+  "symbol" -> <function>
+  "swap!" -> <function>
+  "throw" -> <function>
+  "contains?" -> <function>
+  "reset!" -> <function>
+  "/" -> <function>
+  "list" -> <function>
+  "seq" -> <function>
+  "keyword" -> <function>
+  "prn" -> <function>
+  "map?" -> <function>
+  "time-ms" -> <function>
+  "hash-map" -> <function>
+  "true?" -> <function>
+  "pr-str" -> <function>
+  "+" -> <function>
+  "first" -> <function>
+  "list?" -> <function>
+  "false?" -> <function>
+  "readline" -> <function>
+  "symbol?" -> <function>
+  "empty?" -> <function>
+  ">=" -> <function>
+  "fn?" -> <function>
+  "=" -> <function>
+  "nil?" -> <function>
+  "keys" -> <function>
+  "vector?" -> <function>
+  "<=" -> <function>
+  "slurp" -> <function>
+  "load-file" -> <function>
+  "macro?" -> <function>
+  "atom" -> <function>
+  "str" -> <function>
+  "map" -> <function>
+  "keyword?" -> <function>
+  "not" -> <function>
+  "dissoc" -> <function>
+  "println" -> <function>
+  "count" -> <function>
+  "meta" -> <function>
+  ">" -> <function>
+  "conj" -> <function>
+  "number?" -> <function>
+  "vector" -> <function>
+  "get" -> <function>
+  "*host-language*" -> "jw-c"
+  "sequential?" -> <function>
+  "assoc" -> <function>
+  "apply" -> <function>
+  "nth" -> <function>
+  "<" -> <function>
+  "-" -> <function>
+  "cond" -> <function>
+         env_new: called with 0 elements and outer 0x7fd607405860
+            eval: called with (def! *ARGV* (quote ()))
+environment: e980 (outer=core)
+  "*ARGV*" -> ()
+            eval: called with (quote ())
+environment: e980 (outer=core)
+  "*ARGV*" -> ()
+            eval: called with (load-file "../mal/step8_macros.mal")
+environment: e980 (outer=core)
+  "*ARGV*" -> ()
+         env_get: returning load-file <function>
+            eval: called with load-file
+environment: e980 (outer=core)
+  "*ARGV*" -> ()
+         env_get: returning load-file <function>
+            eval: called with "../mal/step8_macros.mal"
+environment: e980 (outer=core)
+  "*ARGV*" -> ()
+        env_new2: called with outer 0x7fd607405860
+            eval: called with (eval (read-string (str "(do " (slurp f) "\nnil) ")))
+environment: f010 (outer=core)
+  "f" -> "../mal/step8_macros.mal"
+         env_get: returning eval <function>
+            eval: called with eval
+environment: f010 (outer=core)
+  "f" -> "../mal/step8_macros.mal"
+         env_get: returning eval <function>
+            eval: called with (read-string (str "(do " (slurp f) "\nnil) "))
+environment: f010 (outer=core)
+  "f" -> "../mal/step8_macros.mal"
+         env_get: returning read-string <function>
+            eval: called with read-string
+environment: f010 (outer=core)
+  "f" -> "../mal/step8_macros.mal"
+         env_get: returning read-string <function>
+            eval: called with (str "(do " (slurp f) "\nnil) ")
+environment: f010 (outer=core)
+  "f" -> "../mal/step8_macros.mal"
+         env_get: returning str <function>
+            eval: called with str
+environment: f010 (outer=core)
+  "f" -> "../mal/step8_macros.mal"
+         env_get: returning str <function>
+            eval: called with "(do "
+environment: f010 (outer=core)
+  "f" -> "../mal/step8_macros.mal"
+            eval: called with (slurp f)
+environment: f010 (outer=core)
+  "f" -> "../mal/step8_macros.mal"
+         env_get: returning slurp <function>
+            eval: called with slurp
+environment: f010 (outer=core)
+  "f" -> "../mal/step8_macros.mal"
+         env_get: returning slurp <function>
+            eval: called with f
+environment: f010 (outer=core)
+  "f" -> "../mal/step8_macros.mal"
+         env_get: returning f "../mal/step8_macros.mal"
+      core_slurp: called with ("../mal/step8_macros.mal")
+            eval: called with "\nnil) "
+environment: f010 (outer=core)
+  "f" -> "../mal/step8_macros.mal"
+        core_str: called with ("(do " "(load-file \"../mal/env.mal\")\n(load-file \"../mal/core.mal\")\n\n;; read\n(def! READ read-string)\n\n\n;; eval\n(def! is-pair (fn* [x]\n  (if (sequential? x)\n    (not (empty? x)))))\n\n(def! QUASIQUOTE (fn* [ast]\n  (if (not (is-pair ast))\n    (list 'quote ast)\n    (let* [a0 (first ast)]\n      (cond\n       (= 'unquote a0)\n       (nth ast 1)\n\n       (if (is-pair a0) (= 'splice-unquote (first a0))) ; `if` means `and`\n       (list 'concat (nth a0 1) (QUASIQUOTE (rest ast)))\n\n       \"else\"\n       (list 'cons (QUASIQUOTE a0) (QUASIQUOTE (rest ast))))))))\n\n(def! MACROEXPAND (fn* [ast env]\n  (let* [a0 (if (list? ast) (first ast))\n         e  (if (symbol? a0) (env-find env a0))\n         m  (if e (env-get e a0))]\n    (if (_macro? m)\n      (MACROEXPAND (apply (get m :__MAL_MACRO__) (rest ast)) env)\n      ast))))\n\n(def! eval-ast (fn* [ast env]\n  ;; (do (prn \"eval-ast\" ast \"/\" (keys env)) )\n  (cond\n    (symbol? ast) (env-get env ast)\n\n    (list? ast)   (map (fn* [exp] (EVAL exp env)) ast)\n\n    (vector? ast) (apply vector (map (fn* [exp] (EVAL exp env)) ast))\n\n    (map? ast)    (apply hash-map\n                    (apply concat\n                      (map (fn* [k] [k (EVAL (get ast k) env)])\n                           (keys ast))))\n\n    \"else\"        ast)))\n\n(def! LET (fn* [env binds form]\n  (if (empty? binds)\n    (EVAL form env)\n    (do\n      (env-set env (first binds) (EVAL (nth binds 1) env))\n      (LET env (rest (rest binds)) form)))))\n\n(def! EVAL (fn* [ast env]\n  ;; (do (prn \"EVAL\" ast \"/\" (keys @env)) )\n  (let* [ast (MACROEXPAND ast env)]\n    (if (not (list? ast))\n      (eval-ast ast env)\n\n      ;; apply list\n      (let* [a0 (first ast)]\n        (cond\n          (empty? ast)\n          ast\n\n          (= 'def! a0)\n          (env-set env (nth ast 1) (EVAL (nth ast 2) env))\n\n          (= 'let* a0)\n          (LET (new-env env) (nth ast 1) (nth ast 2))\n\n          (= 'quote a0)\n          (nth ast 1)\n\n          (= 'quasiquote a0)\n          (EVAL (QUASIQUOTE (nth ast 1)) env)\n\n          (= 'defmacro! a0)\n          (env-set env (nth ast 1) (hash-map :__MAL_MACRO__\n                                             (EVAL (nth ast 2) env)))\n\n          (= 'macroexpand a0)\n          (MACROEXPAND (nth ast 1) env)\n\n          (= 'do a0)\n          (let* [el (eval-ast (rest ast) env)]\n            (nth el (- (count el) 1)))\n\n          (= 'if a0)\n          (if (EVAL (nth ast 1) env)\n            (EVAL (nth ast 2) env)\n            (if (> (count ast) 3)\n              (EVAL (nth ast 3) env)))\n\n          (= 'fn* a0)\n          (fn* [& args] (EVAL (nth ast 2) (new-env env (nth ast 1) args)))\n\n          \"else\"\n          (let* [el (eval-ast ast env)]\n            (apply (first el) (rest el)))))))))\n\n\n;; print\n(def! PRINT pr-str)\n\n;; repl\n(def! repl-env (new-env))\n(def! rep (fn* [strng]\n  (PRINT (EVAL (READ strng) repl-env))))\n\n;; core.mal: defined directly using mal\n(map (fn* [data] (apply env-set repl-env data)) core_ns)\n(env-set repl-env 'eval (fn* [ast] (EVAL ast repl-env)))\n(env-set repl-env '*ARGV* (rest *ARGV*))\n\n;; core.mal: defined using the new language itself\n(rep \"(def! not (fn* [a] (if a false true)))\")\n(rep \"(def! load-file (fn* (f) (eval (read-string (str \\\"(do \\\" (slurp f) \\\"\\nnil)\\\")))))\")\n(rep \"(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \\\"odd number of forms to cond\\\")) (cons 'cond (rest (rest xs)))))))\")\n\n;; repl loop\n(def! repl-loop (fn* [line]\n  (if line\n    (do\n      (if (not (= \"\" line))\n        (try*\n          (println (rep line))\n          (catch* exc\n            (println \"Uncaught exception:\" exc))))\n      (repl-loop (readline \"mal-user> \"))))))\n\n;; main\n(if (empty? *ARGV*)\n  (repl-loop \"\")\n  (rep (str \"(load-file \\\"\" (first *ARGV*) \"\\\")\")))\n" "\nnil) ")
+core_read_string: called with ("(do (load-file \"../mal/env.mal\")\n(load-file \"../mal/core.mal\")\n\n;; read\n(def! READ read-string)\n\n\n;; eval\n(def! is-pair (fn* [x]\n  (if (sequential? x)\n    (not (empty? x)))))\n\n(def! QUASIQUOTE (fn* [ast]\n  (if (not (is-pair ast))\n    (list 'quote ast)\n    (let* [a0 (first ast)]\n      (cond\n       (= 'unquote a0)\n       (nth ast 1)\n\n       (if (is-pair a0) (= 'splice-unquote (first a0))) ; `if` means `and`\n       (list 'concat (nth a0 1) (QUASIQUOTE (rest ast)))\n\n       \"else\"\n       (list 'cons (QUASIQUOTE a0) (QUASIQUOTE (rest ast))))))))\n\n(def! MACROEXPAND (fn* [ast env]\n  (let* [a0 (if (list? ast) (first ast))\n         e  (if (symbol? a0) (env-find env a0))\n         m  (if e (env-get e a0))]\n    (if (_macro? m)\n      (MACROEXPAND (apply (get m :__MAL_MACRO__) (rest ast)) env)\n      ast))))\n\n(def! eval-ast (fn* [ast env]\n  ;; (do (prn \"eval-ast\" ast \"/\" (keys env)) )\n  (cond\n    (symbol? ast) (env-get env ast)\n\n    (list? ast)   (map (fn* [exp] (EVAL exp env)) ast)\n\n    (vector? ast) (apply vector (map (fn* [exp] (EVAL exp env)) ast))\n\n    (map? ast)    (apply hash-map\n                    (apply concat\n                      (map (fn* [k] [k (EVAL (get ast k) env)])\n                           (keys ast))))\n\n    \"else\"        ast)))\n\n(def! LET (fn* [env binds form]\n  (if (empty? binds)\n    (EVAL form env)\n    (do\n      (env-set env (first binds) (EVAL (nth binds 1) env))\n      (LET env (rest (rest binds)) form)))))\n\n(def! EVAL (fn* [ast env]\n  ;; (do (prn \"EVAL\" ast \"/\" (keys @env)) )\n  (let* [ast (MACROEXPAND ast env)]\n    (if (not (list? ast))\n      (eval-ast ast env)\n\n      ;; apply list\n      (let* [a0 (first ast)]\n        (cond\n          (empty? ast)\n          ast\n\n          (= 'def! a0)\n          (env-set env (nth ast 1) (EVAL (nth ast 2) env))\n\n          (= 'let* a0)\n          (LET (new-env env) (nth ast 1) (nth ast 2))\n\n          (= 'quote a0)\n          (nth ast 1)\n\n          (= 'quasiquote a0)\n          (EVAL (QUASIQUOTE (nth ast 1)) env)\n\n          (= 'defmacro! a0)\n          (env-set env (nth ast 1) (hash-map :__MAL_MACRO__\n                                             (EVAL (nth ast 2) env)))\n\n          (= 'macroexpand a0)\n          (MACROEXPAND (nth ast 1) env)\n\n          (= 'do a0)\n          (let* [el (eval-ast (rest ast) env)]\n            (nth el (- (count el) 1)))\n\n          (= 'if a0)\n          (if (EVAL (nth ast 1) env)\n            (EVAL (nth ast 2) env)\n            (if (> (count ast) 3)\n              (EVAL (nth ast 3) env)))\n\n          (= 'fn* a0)\n          (fn* [& args] (EVAL (nth ast 2) (new-env env (nth ast 1) args)))\n\n          \"else\"\n          (let* [el (eval-ast ast env)]\n            (apply (first el) (rest el)))))))))\n\n\n;; print\n(def! PRINT pr-str)\n\n;; repl\n(def! repl-env (new-env))\n(def! rep (fn* [strng]\n  (PRINT (EVAL (READ strng) repl-env))))\n\n;; core.mal: defined directly using mal\n(map (fn* [data] (apply env-set repl-env data)) core_ns)\n(env-set repl-env 'eval (fn* [ast] (EVAL ast repl-env)))\n(env-set repl-env '*ARGV* (rest *ARGV*))\n\n;; core.mal: defined using the new language itself\n(rep \"(def! not (fn* [a] (if a false true)))\")\n(rep \"(def! load-file (fn* (f) (eval (read-string (str \\\"(do \\\" (slurp f) \\\"\\nnil)\\\")))))\")\n(rep \"(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \\\"odd number of forms to cond\\\")) (cons 'cond (rest (rest xs)))))))\")\n\n;; repl loop\n(def! repl-loop (fn* [line]\n  (if line\n    (do\n      (if (not (= \"\" line))\n        (try*\n          (println (rep line))\n          (catch* exc\n            (println \"Uncaught exception:\" exc))))\n      (repl-loop (readline \"mal-user> \"))))))\n\n;; main\n(if (empty? *ARGV*)\n  (repl-loop \"\")\n  (rep (str \"(load-file \\\"\" (first *ARGV*) \"\\\")\")))\n\nnil) ")
+        mal_eval: called with ((do (load-file "../mal/env.mal") (load-file "../mal/core.mal") (def! READ read-string) (def! is-pair (fn* [x] (if (sequential? x) (not (empty? x))))) (def! QUASIQUOTE (fn* [ast] (if (not (is-pair ast)) (list (quote quote) ast) (let* [a0 (first ast)] (cond (= (quote unquote) a0) (nth ast 1) (if (is-pair a0) (= (quote splice-unquote) (first a0))) (list (quote concat) (nth a0 1) (QUASIQUOTE (rest ast))) "else" (list (quote cons) (QUASIQUOTE a0) (QUASIQUOTE (rest ast)))))))) (def! MACROEXPAND (fn* [ast env] (let* [a0 (if (list? ast) (first ast)) e (if (symbol? a0) (env-find env a0)) m (if e (env-get e a0))] (if (_macro? m) (MACROEXPAND (apply (get m :__MAL_MACRO__) (rest ast)) env) ast)))) (def! eval-ast (fn* [ast env] (cond (symbol? ast) (env-get env ast) (list? ast) (map (fn* [exp] (EVAL exp env)) ast) (vector? ast) (apply vector (map (fn* [exp] (EVAL exp env)) ast)) (map? ast) (apply hash-map (apply concat (map (fn* [k] [k (EVAL (get ast k) env)]) (keys ast)))) "else" ast))) (def! LET (fn* [env binds form] (if (empty? binds) (EVAL form env) (do (env-set env (first binds) (EVAL (nth binds 1) env)) (LET env (rest (rest binds)) form))))) (def! EVAL (fn* [ast env] (let* [ast (MACROEXPAND ast env)] (if (not (list? ast)) (eval-ast ast env) (let* [a0 (first ast)] (cond (empty? ast) ast (= (quote def!) a0) (env-set env (nth ast 1) (EVAL (nth ast 2) env)) (= (quote let*) a0) (LET (new-env env) (nth ast 1) (nth ast 2)) (= (quote quote) a0) (nth ast 1) (= (quote quasiquote) a0) (EVAL (QUASIQUOTE (nth ast 1)) env) (= (quote defmacro!) a0) (env-set env (nth ast 1) (hash-map :__MAL_MACRO__ (EVAL (nth ast 2) env))) (= (quote macroexpand) a0) (MACROEXPAND (nth ast 1) env) (= (quote do) a0) (let* [el (eval-ast (rest ast) env)] (nth el (- (count el) 1))) (= (quote if) a0) (if (EVAL (nth ast 1) env) (EVAL (nth ast 2) env) (if (> (count ast) 3) (EVAL (nth ast 3) env))) (= (quote fn*) a0) (fn* [& args] (EVAL (nth ast 2) (new-env env (nth ast 1) args))) "else" (let* [el (eval-ast ast env)] (apply (first el) (rest el))))))))) (def! PRINT pr-str) (def! repl-env (new-env)) (def! rep (fn* [strng] (PRINT (EVAL (READ strng) repl-env)))) (map (fn* [data] (apply env-set repl-env data)) core_ns) (env-set repl-env (quote eval) (fn* [ast] (EVAL ast repl-env))) (env-set repl-env (quote *ARGV*) (rest *ARGV*)) (rep "(def! not (fn* [a] (if a false true)))") (rep "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\nnil)\")))))") (rep "(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) (cons 'cond (rest (rest xs)))))))") (def! repl-loop (fn* [line] (if line (do (if (not (= "" line)) (try* (println (rep line)) (catch* exc (println "Uncaught exception:" exc)))) (repl-loop (readline "mal-user> ")))))) (if (empty? *ARGV*) (repl-loop "") (rep (str "(load-file \"" (first *ARGV*) "\")"))) nil))
+            eval: called with (do (load-file "../mal/env.mal") (load-file "../mal/core.mal") (def! READ read-string) (def! is-pair (fn* [x] (if (sequential? x) (not (empty? x))))) (def! QUASIQUOTE (fn* [ast] (if (not (is-pair ast)) (list (quote quote) ast) (let* [a0 (first ast)] (cond (= (quote unquote) a0) (nth ast 1) (if (is-pair a0) (= (quote splice-unquote) (first a0))) (list (quote concat) (nth a0 1) (QUASIQUOTE (rest ast))) "else" (list (quote cons) (QUASIQUOTE a0) (QUASIQUOTE (rest ast)))))))) (def! MACROEXPAND (fn* [ast env] (let* [a0 (if (list? ast) (first ast)) e (if (symbol? a0) (env-find env a0)) m (if e (env-get e a0))] (if (_macro? m) (MACROEXPAND (apply (get m :__MAL_MACRO__) (rest ast)) env) ast)))) (def! eval-ast (fn* [ast env] (cond (symbol? ast) (env-get env ast) (list? ast) (map (fn* [exp] (EVAL exp env)) ast) (vector? ast) (apply vector (map (fn* [exp] (EVAL exp env)) ast)) (map? ast) (apply hash-map (apply concat (map (fn* [k] [k (EVAL (get ast k) env)]) (keys ast)))) "else" ast))) (def! LET (fn* [env binds form] (if (empty? binds) (EVAL form env) (do (env-set env (first binds) (EVAL (nth binds 1) env)) (LET env (rest (rest binds)) form))))) (def! EVAL (fn* [ast env] (let* [ast (MACROEXPAND ast env)] (if (not (list? ast)) (eval-ast ast env) (let* [a0 (first ast)] (cond (empty? ast) ast (= (quote def!) a0) (env-set env (nth ast 1) (EVAL (nth ast 2) env)) (= (quote let*) a0) (LET (new-env env) (nth ast 1) (nth ast 2)) (= (quote quote) a0) (nth ast 1) (= (quote quasiquote) a0) (EVAL (QUASIQUOTE (nth ast 1)) env) (= (quote defmacro!) a0) (env-set env (nth ast 1) (hash-map :__MAL_MACRO__ (EVAL (nth ast 2) env))) (= (quote macroexpand) a0) (MACROEXPAND (nth ast 1) env) (= (quote do) a0) (let* [el (eval-ast (rest ast) env)] (nth el (- (count el) 1))) (= (quote if) a0) (if (EVAL (nth ast 1) env) (EVAL (nth ast 2) env) (if (> (count ast) 3) (EVAL (nth ast 3) env))) (= (quote fn*) a0) (fn* [& args] (EVAL (nth ast 2) (new-env env (nth ast 1) args))) "else" (let* [el (eval-ast ast env)] (apply (first el) (rest el))))))))) (def! PRINT pr-str) (def! repl-env (new-env)) (def! rep (fn* [strng] (PRINT (EVAL (READ strng) repl-env)))) (map (fn* [data] (apply env-set repl-env data)) core_ns) (env-set repl-env (quote eval) (fn* [ast] (EVAL ast repl-env))) (env-set repl-env (quote *ARGV*) (rest *ARGV*)) (rep "(def! not (fn* [a] (if a false true)))") (rep "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\nnil)\")))))") (rep "(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) (cons 'cond (rest (rest xs)))))))") (def! repl-loop (fn* [line] (if line (do (if (not (= "" line)) (try* (println (rep line)) (catch* exc (println "Uncaught exception:" exc)))) (repl-loop (readline "mal-user> ")))))) (if (empty? *ARGV*) (repl-loop "") (rep (str "(load-file \"" (first *ARGV*) "\")"))) nil)
+environment: e980 (outer=core)
+  "*ARGV*" -> ()
+            eval: called with (load-file "../mal/env.mal")
+environment: e980 (outer=core)
+  "*ARGV*" -> ()
+         env_get: returning load-file <function>
+            eval: called with load-file
+environment: e980 (outer=core)
+  "*ARGV*" -> ()
+         env_get: returning load-file <function>
+            eval: called with "../mal/env.mal"
+environment: e980 (outer=core)
+  "*ARGV*" -> ()
+        env_new2: called with outer 0x7fd607405860
+            eval: called with (eval (read-string (str "(do " (slurp f) "\nnil) ")))
+environment: 6890 (outer=core)
+  "f" -> "../mal/env.mal"
+         env_get: returning eval <function>
+            eval: called with eval
+environment: 6890 (outer=core)
+  "f" -> "../mal/env.mal"
+         env_get: returning eval <function>
+            eval: called with (read-string (str "(do " (slurp f) "\nnil) "))
+environment: 6890 (outer=core)
+  "f" -> "../mal/env.mal"
+         env_get: returning read-string <function>
+            eval: called with read-string
+environment: 6890 (outer=core)
+  "f" -> "../mal/env.mal"
+         env_get: returning read-string <function>
+            eval: called with (str "(do " (slurp f) "\nnil) ")
+environment: 6890 (outer=core)
+  "f" -> "../mal/env.mal"
+         env_get: returning str <function>
+            eval: called with str
+environment: 6890 (outer=core)
+  "f" -> "../mal/env.mal"
+         env_get: returning str <function>
+            eval: called with "(do "
+environment: 6890 (outer=core)
+  "f" -> "../mal/env.mal"
+            eval: called with (slurp f)
+environment: 6890 (outer=core)
+  "f" -> "../mal/env.mal"
+         env_get: returning slurp <function>
+            eval: called with slurp
+environment: 6890 (outer=core)
+  "f" -> "../mal/env.mal"
+         env_get: returning slurp <function>
+            eval: called with f
+environment: 6890 (outer=core)
+  "f" -> "../mal/env.mal"
+         env_get: returning f "../mal/env.mal"
+      core_slurp: called with ("../mal/env.mal")
+            eval: called with "\nnil) "
+environment: 6890 (outer=core)
+  "f" -> "../mal/env.mal"
+        core_str: called with ("(do " "(def! bind-env (fn* [env b e]\n  (if (empty? b)\n    env\n    (let* [b0 (first b)]\n      (if (= '& b0)\n        (assoc env (str (nth b 1)) e)\n        (bind-env (assoc env (str b0) (first e)) (rest b) (rest e)))))))\n\n(def! new-env (fn* [& args]\n  (if (<= (count args) 1)\n    (atom {:outer (first args)})\n    (atom (apply bind-env {:outer (first args)} (rest args))))))\n\n(def! env-find (fn* [env k]\n  (env-find-str env (str k))))\n\n(def! env-find-str (fn* [env ks]\n  (if env\n    (let* [data @env]\n      (if (contains? data ks)\n        env\n        (env-find-str (get data :outer) ks))))))\n\n(def! env-get (fn* [env k]\n  (let* [ks (str k)\n         e (env-find-str env ks)]\n    (if e\n      (get @e ks)\n      (throw (str \"'\" ks \"' not found\"))))))\n\n(def! env-set (fn* [env k v]\n  (do\n    (swap! env assoc (str k) v)\n    v)))\n" "\nnil) ")
+core_read_string: called with ("(do (def! bind-env (fn* [env b e]\n  (if (empty? b)\n    env\n    (let* [b0 (first b)]\n      (if (= '& b0)\n        (assoc env (str (nth b 1)) e)\n        (bind-env (assoc env (str b0) (first e)) (rest b) (rest e)))))))\n\n(def! new-env (fn* [& args]\n  (if (<= (count args) 1)\n    (atom {:outer (first args)})\n    (atom (apply bind-env {:outer (first args)} (rest args))))))\n\n(def! env-find (fn* [env k]\n  (env-find-str env (str k))))\n\n(def! env-find-str (fn* [env ks]\n  (if env\n    (let* [data @env]\n      (if (contains? data ks)\n        env\n        (env-find-str (get data :outer) ks))))))\n\n(def! env-get (fn* [env k]\n  (let* [ks (str k)\n         e (env-find-str env ks)]\n    (if e\n      (get @e ks)\n      (throw (str \"'\" ks \"' not found\"))))))\n\n(def! env-set (fn* [env k v]\n  (do\n    (swap! env assoc (str k) v)\n    v)))\n\nnil) ")
+        mal_eval: called with ((do (def! bind-env (fn* [env b e] (if (empty? b) env (let* [b0 (first b)] (if (= (quote &) b0) (assoc env (str (nth b 1)) e) (bind-env (assoc env (str b0) (first e)) (rest b) (rest e))))))) (def! new-env (fn* [& args] (if (<= (count args) 1) (atom {:outer (first args)}) (atom (apply bind-env {:outer (first args)} (rest args)))))) (def! env-find (fn* [env k] (env-find-str env (str k)))) (def! env-find-str (fn* [env ks] (if env (let* [data (deref env)] (if (contains? data ks) env (env-find-str (get data :outer) ks)))))) (def! env-get (fn* [env k] (let* [ks (str k) e (env-find-str env ks)] (if e (get (deref e) ks) (throw (str "'" ks "' not found")))))) (def! env-set (fn* [env k v] (do (swap! env assoc (str k) v) v)))  nil))
+            eval: called with (do (def! bind-env (fn* [env b e] (if (empty? b) env (let* [b0 (first b)] (if (= (quote &) b0) (assoc env (str (nth b 1)) e) (bind-env (assoc env (str b0) (first e)) (rest b) (rest e))))))) (def! new-env (fn* [& args] (if (<= (count args) 1) (atom {:outer (first args)}) (atom (apply bind-env {:outer (first args)} (rest args)))))) (def! env-find (fn* [env k] (env-find-str env (str k)))) (def! env-find-str (fn* [env ks] (if env (let* [data (deref env)] (if (contains? data ks) env (env-find-str (get data :outer) ks)))))) (def! env-get (fn* [env k] (let* [ks (str k) e (env-find-str env ks)] (if e (get (deref e) ks) (throw (str "'" ks "' not found")))))) (def! env-set (fn* [env k v] (do (swap! env assoc (str k) v) v)))  nil)
+environment: e980 (outer=core)
+  "*ARGV*" -> ()
+            eval: called with (def! bind-env (fn* [env b e] (if (empty? b) env (let* [b0 (first b)] (if (= (quote &) b0) (assoc env (str (nth b 1)) e) (bind-env (assoc env (str b0) (first e)) (rest b) (rest e)))))))
+environment: e980 (outer=core)
+  "*ARGV*" -> ()
+            eval: called with (fn* [env b e] (if (empty? b) env (let* [b0 (first b)] (if (= (quote &) b0) (assoc env (str (nth b 1)) e) (bind-env (assoc env (str b0) (first e)) (rest b) (rest e))))))
+environment: e980 (outer=core)
+  "*ARGV*" -> ()
+ fn_special_form: in fn* closure body is (if (empty? b) env (let* [b0 (first b)] (if (= (quote &) b0) (assoc env (str (nth b 1)) e) (bind-env (assoc env (str b0) (first e)) (rest b) (rest e)))))
+            eval: called with (def! new-env (fn* [& args] (if (<= (count args) 1) (atom {:outer (first args)}) (atom (apply bind-env {:outer (first args)} (rest args))))))
+environment: e980 (outer=core)
+  "*ARGV*" -> ()
+  "bind-env" -> <function>
+            eval: called with (fn* [& args] (if (<= (count args) 1) (atom {:outer (first args)}) (atom (apply bind-env {:outer (first args)} (rest args)))))
+environment: e980 (outer=core)
+  "*ARGV*" -> ()
+  "bind-env" -> <function>
+ fn_special_form: in fn* closure body is (if (<= (count args) 1) (atom {:outer (first args)}) (atom (apply bind-env {:outer (first args)} (rest args))))
+            eval: called with (def! env-find (fn* [env k] (env-find-str env (str k))))
+environment: e980 (outer=core)
+  "*ARGV*" -> ()
+  "bind-env" -> <function>
+  "new-env" -> <function>
+            eval: called with (fn* [env k] (env-find-str env (str k)))
+environment: e980 (outer=core)
+  "*ARGV*" -> ()
+  "bind-env" -> <function>
+  "new-env" -> <function>
+ fn_special_form: in fn* closure body is (env-find-str env (str k))
+            eval: called with (def! env-find-str (fn* [env ks] (if env (let* [data (deref env)] (if (contains? data ks) env (env-find-str (get data :outer) ks))))))
+environment: e980 (outer=core)
+  "*ARGV*" -> ()
+  "bind-env" -> <function>
+  "env-find" -> <function>
+  "new-env" -> <function>
+            eval: called with (fn* [env ks] (if env (let* [data (deref env)] (if (contains? data ks) env (env-find-str (get data :outer) ks)))))
+environment: e980 (outer=core)
+  "*ARGV*" -> ()
+  "bind-env" -> <function>
+  "env-find" -> <function>
+  "new-env" -> <function>
+ fn_special_form: in fn* closure body is (if env (let* [data (deref env)] (if (contains? data ks) env (env-find-str (get data :outer) ks))))
+            eval: called with (def! env-get (fn* [env k] (let* [ks (str k) e (env-find-str env ks)] (if e (get (deref e) ks) (throw (str "'" ks "' not found"))))))
+environment: e980 (outer=core)
+  "*ARGV*" -> ()
+  "env-find-str" -> <function>
+  "new-env" -> <function>
+  "bind-env" -> <function>
+  "env-find" -> <function>
+            eval: called with (fn* [env k] (let* [ks (str k) e (env-find-str env ks)] (if e (get (deref e) ks) (throw (str "'" ks "' not found")))))
+environment: e980 (outer=core)
+  "*ARGV*" -> ()
+  "env-find-str" -> <function>
+  "new-env" -> <function>
+  "bind-env" -> <function>
+  "env-find" -> <function>
+ fn_special_form: in fn* closure body is (let* [ks (str k) e (env-find-str env ks)] (if e (get (deref e) ks) (throw (str "'" ks "' not found"))))
+            eval: called with (def! env-set (fn* [env k v] (do (swap! env assoc (str k) v) v)))
+environment: e980 (outer=core)
+  "env-get" -> <function>
+  "*ARGV*" -> ()
+  "env-find-str" -> <function>
+  "new-env" -> <function>
+  "bind-env" -> <function>
+  "env-find" -> <function>
+            eval: called with (fn* [env k v] (do (swap! env assoc (str k) v) v))
+environment: e980 (outer=core)
+  "env-get" -> <function>
+  "*ARGV*" -> ()
+  "env-find-str" -> <function>
+  "new-env" -> <function>
+  "bind-env" -> <function>
+  "env-find" -> <function>
+ fn_special_form: in fn* closure body is (do (swap! env assoc (str k) v) v)
+            eval: called with 
+environment: e980 (outer=core)
+  "env-get" -> <function>
+  "*ARGV*" -> ()
+  "env-find-str" -> <function>
+  "env-set" -> <function>
+  "new-env" -> <function>
+  "bind-env" -> <function>
+  "env-find" -> <function>
+            eval: called with Exception: '' not found
+            eval: called with Exception: '' not found

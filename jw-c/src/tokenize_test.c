@@ -22,7 +22,7 @@ const char *tokenize_test() {
   mu_assert("tokenize str offset ", t_str->next_offset == 18);
 
   const tokenize_result *t_null = tokenize(t, 18);
-  mu_assert("tokenize null value", strcmp(t_null->val, "") == 0);
+  mu_assert("tokenize null value", t_null == NULL);
 
   return 0;
 }

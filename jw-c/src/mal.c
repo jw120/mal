@@ -87,8 +87,8 @@ static mal load_file(char *filename, env *e) {
                     strlen(LOAD_FILE_SUFFIX) + 1;
   char *buf = checked_malloc(buf_size, "load_file filename");
   strncpy(buf, LOAD_FILE_PREFIX, buf_size);
-  strncat(buf, filename, buf_size);
-  strncat(buf, LOAD_FILE_SUFFIX, buf_size);
+  strncat(buf, filename, buf_size - strlen(buf));
+  strncat(buf, LOAD_FILE_SUFFIX, buf_size - strlen(buf));
   DEBUG_INTERNAL_FMT("read-eval  %s", buf);
 
   mal ret = EVAL(READ(buf), e);

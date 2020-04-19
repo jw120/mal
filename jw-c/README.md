@@ -1,16 +1,14 @@
 Todo
 
-- Intermittent failures in steps 6 and 9
-- Steps 8 and beyond fail in self-hosting
+- Intermittent failures in step 9
+(try* abc (catch* exc (prn "exc is:" exc))) gives "exc is:\xe0"
+- Intermittent failures in steps 6, A
 
 - Add nyi functions
 
 - Add asserts more thoroughlly?
 - Check exception propogation - done in core_atom
-- check use of strncat srncpy. (copying null).
 
-
-- Check have exception short circurting everywhere (as in equals)
 
 readline
 pcre

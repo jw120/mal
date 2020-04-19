@@ -88,7 +88,7 @@ static mal core_read_string(list_node *n, UNUSED(env *e)) {
   return is_missing(m) ? mal_nil() : m;
 }
 
-#define SLURP_BUFFER_SIZE 65536
+#define SLURP_BUFFER_SIZE 10000000
 
 // C implementation of mal slurp
 static mal core_slurp(list_node *n, UNUSED(env *e)) {
@@ -209,9 +209,14 @@ static mal core_readline(list_node *n, UNUSED(env *e)) {
     internal_error("failure in gets");
   }
   size_t result_len = strlen(result);
-  char *new_str = checked_malloc(result_len, "readline");
-  strncpy(new_str, result, result_len - 1); // skip trailing "\n"
-  new_str[result_len - 1] = '\0';
+  char *new_str = checked_malloc(result_len + 1, "readline");
+  strncpy(new_str, result, result_len + 1);
+  if (new_str[result_len - 1] == '\n') // truncate trailing newline
+    new_str[result_len - 1] = '\0';
+  else {
+    internal_error("No newline at end of return from fgets '%s'\n", result);
+  }
+
   return mal_str(new_str);
 }
 

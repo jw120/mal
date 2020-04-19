@@ -8,6 +8,8 @@
  *
  */
 
+#include <stdio.h>
+
 #include "eval.h"
 #include "reader.h"
 

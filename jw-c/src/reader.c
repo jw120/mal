@@ -88,8 +88,12 @@ static const char *reader_next(reader_state *state_ptr) {
   if (state_ptr->offset < state_ptr->input_length) {
     const tokenize_result *next =
         tokenize(state_ptr->input_string, state_ptr->offset);
-    state_ptr->current = next->val;
-    state_ptr->offset = next->next_offset;
+    if (next == NULL)
+      state_ptr->current = NULL;
+    else {
+      state_ptr->current = next->val;
+      state_ptr->offset = next->next_offset;
+    }
   } else
     state_ptr->current = NULL;
 
@@ -188,7 +192,7 @@ static mal read_atom(reader_state *state_ptr) {
   if (token_len >= 1) {
     value = mal_sym(checked_malloc(token_len + 1, "SYM in read_atom"));
     strncpy((char *)value.s, token, token_len + 1);
-    DEBUG_INTERNAL_FMT("returning sym %s", value.s);
+    DEBUG_INTERNAL_FMT("returning sym '%s'", value.s);
     return value;
   }
 

@@ -1,6 +1,6 @@
-.PHONY: all build clean distclean format run test step-test run-debug
+.PHONY: all build clean distclean format run test step-test self-host-test run-debug
 
-all: build test step-test
+all: build test step-test self-host-test
 
 # Directories - executables go in target, *.o and *.d in build
 TARGET_DIR := ./exec
@@ -68,6 +68,9 @@ step-test: $(TARGET_DIR)/mal
 	-@echo step 8; cd ..; make "test^jw-c^step8" | grep "failing tests"
 	-@echo step 9; cd ..; make "test^jw-c^step9" | grep "failing tests"
 	-@echo step A; cd ..; make "test^jw-c^stepA" | grep "failing tests"
+
+self-host-test:
+	@cd ..; make MAL_IMPL=jw-c "test^mal" | grep "TEST RESULTS\|failing tests"
 
 clean:
 	$(RM) $(BUILD_DIR)/*
