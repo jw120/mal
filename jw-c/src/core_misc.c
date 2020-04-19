@@ -220,6 +220,46 @@ static mal core_readline(list_node *n, UNUSED(env *e)) {
   return mal_str(new_str);
 }
 
+// C implementation of mal meta
+static mal core_meta(list_node *n, UNUSED(env *e)) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) != 1)
+    return mal_exception_str("meta takes one argument");
+  return get_meta(n->val);
+}
+
+// C implementation of mal with-meta
+static mal core_with_meta(list_node *n, UNUSED(env *e)) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) != 2)
+    return mal_exception_str("with-meta takes two argument");
+  mal old_value = n->val;
+  mal new_value = mal_nil();
+  mal new_meta_value = n->next->val;
+  if (is_fn(old_value)) {
+    new_value = mal_fn(old_value.f);
+  } else if (is_closure(old_value)) {
+    closure *new_closure = checked_malloc(sizeof(closure), "with-meta");
+    new_closure->binds = old_value.c->binds;
+    new_closure->body = old_value.c->body;
+    new_closure->e = old_value.c->e;
+    new_closure->is_macro = old_value.c->is_macro;
+    new_value = mal_closure(new_closure);
+  } else if (is_list(old_value)) {
+    new_value = mal_list(old_value.n);
+  } else if (is_vec(old_value)) {
+    new_value = mal_vec(old_value.v);
+  } else if (is_map(old_value)) {
+    new_value = mal_map(old_value.m);
+  } else if (is_atom(old_value)) {
+    new_value = mal_atom(**(old_value.a));
+  } else {
+    return mal_exception_str("invalid target for with-meta");
+  }
+  set_meta(&(new_value), new_meta_value);
+  return new_value;
+}
+
 static mal nyi(UNUSED(list_node *n), UNUSED(env *e)) {
   printf("NYI\n");
   return mal_nil();
@@ -241,8 +281,8 @@ void add_misc(env *e) {
   env_set(e, "map", mal_fn(core_map));
   env_set(e, "readline", mal_fn(core_readline));
   env_set(e, "time-ms", mal_fn(nyi));
-  env_set(e, "meta", mal_fn(nyi));
-  env_set(e, "with-meta", mal_fn(nyi));
+  env_set(e, "meta", mal_fn(core_meta));
+  env_set(e, "with-meta", mal_fn(core_with_meta));
   env_set(e, "seq", mal_fn(nyi));
   env_set(e, "conj", mal_fn(nyi));
 }

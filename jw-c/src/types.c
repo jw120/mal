@@ -124,14 +124,14 @@ bool match_sym(const mal m, const char *s) {
  */
 
 mal mal_missing() {
-  mal val = {MISSING, {.i = 0}};
+  mal val = {MISSING, NULL, {.i = 0}};
   return val;
 }
 
 mal mal_exception(mal m) {
   mal *m_ptr = checked_malloc(sizeof(mal), "mal_exception");
   *m_ptr = m;
-  mal val = {EXCEPTION, {.e = m_ptr}};
+  mal val = {EXCEPTION, NULL, {.e = m_ptr}};
   return val;
 }
 
@@ -139,43 +139,43 @@ mal mal_exception_str(const char *s) {
   mal *m_ptr = checked_malloc(sizeof(mal), "mal_exception_str");
   m_ptr->tag = STR_OR_KW;
   m_ptr->s = s;
-  mal val = {EXCEPTION, {.e = m_ptr}};
+  mal val = {EXCEPTION, NULL, {.e = m_ptr}};
   return val;
 }
 
 mal mal_true() {
-  mal val = {MAL_TRUE, {.i = 0}};
+  mal val = {MAL_TRUE, NULL, {.i = 0}};
   return val;
 }
 
 mal mal_false() {
-  mal val = {MAL_FALSE, {.i = 0}};
+  mal val = {MAL_FALSE, NULL, {.i = 0}};
   return val;
 }
 
 mal mal_bool(bool b) { return b ? mal_true() : mal_false(); }
 
 mal mal_nil() {
-  mal val = {NIL, {.i = 0}};
+  mal val = {NIL, NULL, {.i = 0}};
   return val;
 }
 
 mal mal_int(int i) {
-  mal val = {INT, {.i = i}};
+  mal val = {INT, NULL, {.i = i}};
   return val;
 }
 
 mal mal_str(const char *s) {
   if (s == NULL)
     return mal_exception_str("Null in mal_str");
-  mal val = {STR_OR_KW, {.s = s}};
+  mal val = {STR_OR_KW, NULL, {.s = s}};
   return val;
 }
 
 mal mal_sym(const char *s) {
   if (s == NULL)
     return mal_exception_str("Null in mal_sym");
-  mal val = {SYM, {.s = s}};
+  mal val = {SYM, NULL, {.s = s}};
   return val;
 }
 
@@ -186,40 +186,40 @@ mal mal_kw(const char *s) {
   char *buf = checked_malloc(buf_size, "mal_kw");
   strncpy(buf, kw_prefix, buf_size);
   strncat(buf, s, buf_size - strlen(buf));
-  mal val = {STR_OR_KW, {.s = buf}};
+  mal val = {STR_OR_KW, NULL, {.s = buf}};
   return val;
 }
 
 mal mal_list(list_node *n) {
-  mal val = {LIST, {.n = n}};
+  mal val = {LIST, NULL, {.n = n}};
   return val;
 }
 
 mal mal_vec(vec *v) {
   if (v == NULL)
     return mal_exception_str("Null in mal_vec");
-  mal val = {VEC, {.v = v}};
+  mal val = {VEC, NULL, {.v = v}};
   return val;
 }
 
 mal mal_map(hash_table *m) {
   if (m == NULL)
     return mal_exception_str("Null in mal_map");
-  mal val = {MAP, {.m = m}};
+  mal val = {MAP, NULL, {.m = m}};
   return val;
 }
 
 mal mal_fn(fn *f) {
   if (f == NULL)
     return mal_exception_str("Null in mal_fn");
-  mal val = {FN, {.f = f}};
+  mal val = {FN, NULL, {.f = f}};
   return val;
 }
 
 mal mal_closure(closure *c) {
   if (c == NULL)
     return mal_exception_str("Null in mal_closure");
-  mal val = {CLOSURE, {.c = c}};
+  mal val = {CLOSURE, NULL, {.c = c}};
   return val;
 }
 
@@ -228,6 +228,14 @@ mal mal_atom(mal m) {
   mal **m_ptr_ptr = checked_malloc(sizeof(mal *), "mal_exception m_ptr_ptr");
   *m_ptr = m;
   *m_ptr_ptr = m_ptr;
-  mal val = {ATOM, {.a = m_ptr_ptr}};
+  mal val = {ATOM, NULL, {.a = m_ptr_ptr}};
   return val;
 }
+
+void set_meta(mal *mp, mal new_meta) {
+  mal *new_meta_copy_ptr = checked_malloc(sizeof(mal), "set_meta");
+  memcpy(new_meta_copy_ptr, &new_meta, sizeof(mal));
+  mp->meta = new_meta_copy_ptr;
+}
+
+mal get_meta(mal m) { return m.meta == NULL ? mal_nil() : *m.meta; }

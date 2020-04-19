@@ -7,6 +7,7 @@
 #include "types_test.h"
 
 #include "seq.h"
+#include "utils.h"
 
 // dummy function for mal_fn test
 static mal dummy_fn(UNUSED(list_node *n), UNUSED(env *e)) { return mal_int(0); }
@@ -74,6 +75,11 @@ const char *types_test() {
   mu_assert("string_like :b", is_string_like(mal_kw("a")));
   mu_assert("string_like 'a", is_string_like(mal_sym("a")));
   mu_assert("string_like 2", !is_string_like(mal_int(2)));
+
+  mal m1 = mal_list(list_cons(mal_int(6), NULL));
+  mu_assert("get meta", get_meta(m1).tag == NIL);
+  set_meta(&m1, mal_int(9));
+  mu_assert("get after set meta", get_meta(m1).tag == INT);
 
   return 0;
 }

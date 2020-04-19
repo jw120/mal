@@ -1,10 +1,11 @@
 Todo
 
-- Intermittent failures in step 9
+- Fix intermittent
+- in step 9
 (try* abc (catch* exc (prn "exc is:" exc))) gives "exc is:\xe0"
 - Intermittent failures in steps 6, A
 
-- Add nyi functions
+- Add nyi functions - seq and conj
 
 - Add asserts more thoroughlly?
 - Check exception propogation - done in core_atom

@@ -47,6 +47,7 @@ enum mal_tag {
 // Discriminated union type for all our mal values
 struct mal_struct {
   enum mal_tag tag;
+  struct mal_struct *meta; // only used for fn, closure, list, vec, map, atoms
   union {
     struct mal_struct *e;  // for EXCEPTION
     int i;                 // for INT
@@ -126,6 +127,14 @@ mal mal_map(hash_table *);
 mal mal_fn(fn *);
 mal mal_closure(closure *);
 mal mal_atom(mal);
+
+// Functions for meta
+
+// Mutate the first argument to have the second as its meta value
+void set_meta(mal *, mal);
+
+// Return the meta value of the argument (nil if none)
+mal get_meta(mal);
 
 // Helper function to skip keyword prefix (so the actual keyword value can be
 // read).

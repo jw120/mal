@@ -42,5 +42,16 @@ const char *core_misc_test() {
   mu_assert_mal2(e, "(map (fn* (& args) (list? args)) [1 2])",
                  "(list true true)");
 
+  // with-meta and meta
+  mu_assert_mal2(e, "(meta (with-meta + 3))", "3");
+  mu_assert_mal2(e, "(meta (with-meta (fn* [x] (* x x)) 4))", "4");
+  mu_assert_mal2(e, "(meta (with-meta [2 3] 5))", "5");
+  mu_assert_mal2(e, "(meta (with-meta {:x 2} 8))", "8");
+  mu_assert_mal2(e, "(meta (with-meta '(1 2 3) 9))", "9");
+  mu_assert_mal2(e, "(meta (with-meta (atom 7) 10))", "10");
+
+  mu_assert_mal2(e, "(meta (with-meta '(1 2 3) {:y 7}))", "{:y 7}");
+  mu_assert_mal2(e, "(meta '(1 2 3))", "nil");
+
   return 0;
 }
