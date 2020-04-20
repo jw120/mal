@@ -70,11 +70,17 @@ static mal defmacro_special_form(list_node *n, env *e) {
     return mal_exception_str("Bad arguments to defmacro!");
   mal evaluated_val = eval(n->next->val, e);
   RETURN_IF_EXCEPTION(evaluated_val);
-  if (!is_closure(evaluated_val))
+  if (!is_closure(evaluated_val) || is_macro(evaluated_val))
     return mal_exception_str("defmacro! needs a function");
-  evaluated_val.c->is_macro = true;
-  env_set(e, n->val.s, evaluated_val);
-  return evaluated_val;
+  // copy closure, setting is_macro
+  closure *new_closure = checked_malloc(sizeof(closure), "defmacro");
+  new_closure->binds = evaluated_val.c->binds;
+  new_closure->body = evaluated_val.c->body;
+  new_closure->e = evaluated_val.c->e;
+  new_closure->is_macro = true;
+  mal new_val = mal_closure(new_closure);
+  env_set(e, n->val.s, new_val);
+  return new_val;
 }
 
 // Handle the do special form. Last form is returned without
