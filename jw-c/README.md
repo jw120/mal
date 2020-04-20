@@ -1,32 +1,15 @@
-Todo
-
-- Fix intermittent
-- in step 9
-(try* abc (catch* exc (prn "exc is:" exc))) gives "exc is:\xe0"
-- Intermittent failures in steps 6, A
-- Performance tests 1-2 seg fault
-
-- Add nyi functions - seq and conj
-
-- Add asserts more thoroughlly?
-- Check exception propogation - done in core_atom
+Notes:
+- Extern functions are documented in the header files (which are then picked up
+  by VS Code and shown in mouseovers), static functions documented in their .c files
+- Name prefix `core_` used for C functions which provide mal functionality and
+  are bound to the repl environment from core.c
+- Name prefix `mal_` used for C functions which manipluate the main `mal` type
+  which is a discriminated union
 
 
-readline
-pcre
-using C11 (anonymous unions/structs)
-more tests than other versions as c is flaky..
-checking for exceptions manually
-Discriminated union
-
-
-- Function docs in header files only (and in .c for static files)
-core_ used to name (static) function in core
-mal_ for functions related to the mal type
-
-Think about how to manage memory
-- mal atoms all on heap? collections with malloc?
-- do we free strings? on read?
-- do we ever garbage collect?
-
-Comments for extern functions in .h, static functions in .c
+Potential TODOs:
+- Add asserts more thoroughly
+- Check exception propogation more thorougly - as done in core_atom
+- See if intermittent failures reeappear in tests 6, 9, A
+- Add some `free()` calls when we are sure we don't need the value any more
+- Add refernece counting or similar for proper memory management

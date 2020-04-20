@@ -221,10 +221,11 @@ static mal quasiquote(mal ast) {
   // splice-unquote the element with concat
   if (is_pair(ast_head)) {
     mal ast_head_head = ast_head.n->val;
-    mal ast_head_second = ast_head.n->next->val;
     if (mal_equals(ast_head_head, mal_sym("splice-unquote"))) {
+      if (ast_head.n->next == NULL)
+        return mal_exception_str("Missing argument for splice-unquote");
       return mal_cons(mal_sym("concat"),
-                      mal_cons(ast_head_second,
+                      mal_cons(ast_head.n->next->val,
                                mal_cons(quasiquote(ast_rest), mal_list(NULL))));
     }
   }

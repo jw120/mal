@@ -9,18 +9,17 @@ In order of completion these were
 * Python
 * Racket (excludes meta-data support)
 * Elixir
-* C (not complete)
+* C
 * Racket-br (failed attempt to make a mal-to-racket compliler a la Beautiful Racket)
 
 Each should be able to be run by cd'ing into the directory and running `make` to build and run tests (implementations
 include only limited native tests and rely mostly on the mal project step tests)
 
-Relative peformance of my implenetations is:
+Relative peformance of my implemntations is: (use `jw-perf.sh` to run)
 
-Racket (fastest, 9869/s) > elixir (6433) > haskell (3953) > python (1051)
+C > Racket (9869) > elixir (6433) > haskell (3953) > python (1051)
 
 TODO
-- Finish C
 - Use macros in elixir (to replace wrapping functions and to simplify `list()`)
 - Compare performance of my versions with provided versions
 - Compare my versions with provided versions
@@ -94,6 +93,13 @@ Installed on my mac using `brew install elixir`
 
 ## C
 
-WIP
+Implementation choices:
+- Use a discriminated union for main `mal` type
+- Use GNU readline and PCRE libraries
+- Use modern C (C11/C17) as much as possible
+- More unit tests that other implementations as C is error-prone
+- Exceptions handled by returning an exception type and manually ensuring
+  exceptions propogate during evaluation
+- No garbage collection is done, we call `malloc()` many times but almost never `free()`
 
 Edited with VS Code and the Microsoft C/C++ addon
