@@ -4,12 +4,16 @@
  *
  **/
 
+#include <assert.h>
+#include <string.h>
+
 #include "core_seq.h"
 
 #include "debug.h"
 #include "env.h"
 #include "hash_table.h"
 #include "seq.h"
+#include "utils.h"
 
 // C implementation of mal list
 static mal core_list(list_node *n, UNUSED(env *e)) {
@@ -219,6 +223,58 @@ static mal core_dissoc(list_node *n, UNUSED(env *e)) {
   return mal_map(new_ht);
 }
 
+// C implementation of mal seq
+static mal core_seq(list_node *n, UNUSED(env *e)) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) != 1)
+    return mal_exception_str("Need one argument for seq");
+  if (is_nil(n->val) || (is_seq(n->val) && seq_count(n->val) == 0) ||
+      (is_str(n->val) && strlen(n->val.s) == 0))
+    return mal_nil();
+  if (is_list(n->val))
+    return n->val;
+  if (is_vec(n->val))
+    return mal_list(seq_to_list(n->val));
+  if (is_str(n->val)) {
+    list_node *head = NULL;
+    size_t last_char = strlen(n->val.s) - 1;
+    assert(last_char >= 0);
+    for (int i = (int)last_char; i >= 0; i--) {
+      char *s = checked_malloc((size_t)2, "seq str");
+      *s = n->val.s[i];
+      *(s + 1) = '\0';
+      head = list_cons(mal_str(s), head);
+    }
+    return mal_list(head);
+  }
+  return mal_exception_str("Need sequence, string or nil as argument for seq");
+}
+
+// C implementation of mal conj
+static mal core_conj(list_node *n, UNUSED(env *e)) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) < 2)
+    return mal_exception_str("Need at last two arguments for conj");
+  if (is_list(n->val)) { // add rest of conj arguments to first arg
+    list_node *head = n->val.n;
+    for (list_node *arg = n->next; arg != NULL; arg = arg->next)
+      head = list_cons(arg->val, head);
+    return mal_list(head);
+  }
+  if (is_vec(n->val)) {
+    count_t new_size = vec_count(n->val.v) + list_count(n->next);
+    vec *new_vec = uninitialized_vec(new_size);
+    count_t i;
+    for (i = 0; i < vec_count(n->val.v); i++)
+      new_vec->buf[i] = n->val.v->buf[i];
+    for (list_node *arg = n->next; arg != NULL; arg = arg->next)
+      new_vec->buf[i++] = arg->val;
+    assert(i == new_size);
+    return mal_vec(new_vec);
+  }
+  return mal_exception_str("NYI");
+}
+
 void add_seq(env *e) {
   env_set(e, "list", mal_fn(core_list));
   env_set(e, "empty?", mal_fn(core_empty));
@@ -236,4 +292,6 @@ void add_seq(env *e) {
   env_set(e, "vals", mal_fn(core_vals));
   env_set(e, "assoc", mal_fn(core_assoc));
   env_set(e, "dissoc", mal_fn(core_dissoc));
+  env_set(e, "seq", mal_fn(core_seq));
+  env_set(e, "conj", mal_fn(core_conj));
 }

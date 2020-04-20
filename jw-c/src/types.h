@@ -84,6 +84,8 @@ struct closure_struct {
 };
 
 // Test functions
+
+// Is the value tagged missing
 bool is_missing(const mal);
 bool is_exception(const mal);
 bool is_bool(const mal);
@@ -99,6 +101,7 @@ bool is_str_or_kw(const mal);
 bool is_string_like(const mal);
 bool is_list(const mal);
 bool is_vec(const mal);
+// Is the value a list or vector
 bool is_seq(const mal);
 bool is_map(const mal);
 bool is_fn(const mal);

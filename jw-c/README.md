@@ -4,6 +4,7 @@ Todo
 - in step 9
 (try* abc (catch* exc (prn "exc is:" exc))) gives "exc is:\xe0"
 - Intermittent failures in steps 6, A
+- Performance tests 1-2 seg fault
 
 - Add nyi functions - seq and conj
 

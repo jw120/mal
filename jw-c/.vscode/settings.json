@@ -10,7 +10,8 @@
       "chrono": "c",
       "hash_map": "c",
       "unordered_map": "c",
-      "core.h": "c"
+      "core.h": "c",
+      "complex": "c"
     },
     "editor.tabSize": 2
 }

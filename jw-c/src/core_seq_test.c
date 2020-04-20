@@ -106,5 +106,18 @@ const char *core_seq_test(void) {
   mu_assert_mal2(e, "(assoc {:a 2} :b 3 :c 4)", "{:a 2 :b 3 :c 4}");
   mu_assert_mal2(e, "(dissoc {:a 2 :b 3 :c 4} :c :b :d)", "{:a 2}");
 
+  // seq
+  mu_assert_mal2(e, "(seq \"\")", "nil");
+  mu_assert_mal2(e, "(seq ())", "nil");
+  mu_assert_mal2(e, "(seq [])", "nil");
+  mu_assert_mal2(e, "(seq nil)", "nil");
+  mu_assert_mal2(e, "(seq \"ab\")", "(list \"a\" \"b\")");
+  mu_assert_mal2(e, "(seq '(1 2 3))", "'(1 2 3)");
+  mu_assert_mal2(e, "(seq [4 5 6])", "[4 5 6]");
+
+  // conj
+  mu_assert_mal2(e, "(conj (list 2 3) 4 5 6)", "'(6 5 4 2 3)");
+  mu_assert_mal2(e, "(conj [2 3] 4 5 6)", "[2 3 4 5 6]");
+
   return 0;
 }

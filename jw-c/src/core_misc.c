@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include "core_misc.h"
 
@@ -260,9 +261,14 @@ static mal core_with_meta(list_node *n, UNUSED(env *e)) {
   return new_value;
 }
 
-static mal nyi(UNUSED(list_node *n), UNUSED(env *e)) {
-  printf("NYI\n");
-  return mal_nil();
+static mal core_time_ms(list_node *n, UNUSED(env *e)) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (n != NULL)
+    return mal_exception_str("time-ms expects no arguments");
+  struct timeval t;
+  gettimeofday(&t, NULL);
+  time_t milliseconds = t.tv_sec * 1000 + t.tv_usec / 1000;
+  return mal_int((int)milliseconds);
 }
 
 // add misc core functions to the environment
@@ -280,9 +286,7 @@ void add_misc(env *e) {
   env_set(e, "apply", mal_fn(core_apply));
   env_set(e, "map", mal_fn(core_map));
   env_set(e, "readline", mal_fn(core_readline));
-  env_set(e, "time-ms", mal_fn(nyi));
+  env_set(e, "time-ms", mal_fn(core_time_ms));
   env_set(e, "meta", mal_fn(core_meta));
   env_set(e, "with-meta", mal_fn(core_with_meta));
-  env_set(e, "seq", mal_fn(nyi));
-  env_set(e, "conj", mal_fn(nyi));
 }

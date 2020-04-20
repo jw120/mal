@@ -49,9 +49,11 @@ const char *core_misc_test() {
   mu_assert_mal2(e, "(meta (with-meta {:x 2} 8))", "8");
   mu_assert_mal2(e, "(meta (with-meta '(1 2 3) 9))", "9");
   mu_assert_mal2(e, "(meta (with-meta (atom 7) 10))", "10");
-
   mu_assert_mal2(e, "(meta (with-meta '(1 2 3) {:y 7}))", "{:y 7}");
   mu_assert_mal2(e, "(meta '(1 2 3))", "nil");
+
+  // time-ms
+  mu_assert_mal(e, "(number? (time-ms))", mal_true());
 
   return 0;
 }
