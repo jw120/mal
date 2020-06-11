@@ -1,6 +1,8 @@
 // jw-swift implementation of mal
 //
 // (C) Joe Watson 2020-06-11
+//
+// step 0 - basic repl
 
 func READ(_ input: String) -> String {
     return input
