@@ -1,0 +1,2 @@
+#!/bin/bash
+swift $(dirname $0)/src/${STEP:-stepA_mal}.swift "${@}"

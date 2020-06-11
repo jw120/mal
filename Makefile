@@ -95,7 +95,7 @@ IMPLS = ada ada.2 awk bash basic bbc-basic c chuck clojure coffee common-lisp cp
 	matlab miniMAL nasm nim objc objpascal ocaml perl perl6 php picolisp pike plpgsql \
 	plsql powershell ps python python.2 r racket rexx rpython ruby rust scala scheme skew \
 	swift swift3 swift4 tcl ts vala vb vhdl vimscript wasm wren yorick \
-	jw-haskell jw-python jw-c jw-racket jw-racket-br jw_elixir
+	jw-haskell jw-python jw-c jw-racket jw-racket-br jw_elixir jw-swift
 
 EXTENSION = .mal
 
@@ -271,6 +271,7 @@ jw_elixir_STEP_TO_PROG = jw_elixir/$($(1)).exs
 jw-racket_br_STEP_TO_PROG = jw-racket-br/README.md
 jw-python_STEP_TO_PROG = jw-python/src/$($(1)).py
 jw-c_STEP_TO_PROG = jw-c/src/$($(1)).c
+jw-swift_STEP_TO_PROG = jw-swift/src/$($(1)).swift
 
 #
 # General settings and utility functions
