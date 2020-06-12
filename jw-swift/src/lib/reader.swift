@@ -4,25 +4,29 @@
 //
 // reader - read an AST from a string
 
-import parser
+public enum ReadResult {
+    case value(Mal)
+    case err(String)
+    case nothing
+}
 
-public func read_str(_ s: String) -> String {
+public func read_str(_ s: String) -> ReadResult {
     switch expr(Substring.init(s)) {
-        case ParserResult.success(let e, let remaining):
-            return e
-        case ParserFailure.failure(let failMessage, let failPoint):
-           return failMessage
+        case ParserResult.success(let e, _):
+            return .value(e)
+        case ParserResult.failure(let message, _):
+            return .err(message)
     }
 }
 
-let expr : Parser<String> = spaces *> choice [
+let expr : Parser<Mal> = spaces *> choice(
     int,
     list
-]
+)
 
-let int : Parser<Int> =  { (cs) -> Int(String(s))! } <$1> many1(digit)
+let int : Parser<Mal> =  { cs in Mal.int(Int(String(cs))!) } <^> many1(digit)
 
-let digit : Parser<Character> = satisfy { (c) -> c.isAscii() && c.isNumber() }
+let digit : Parser<Character> = satisfy({ c in c.isASCII && c.isNumber })
 
-let list : Parser<[Int]> = between(open: char("("), close: char(")"), contents: many(expr))
+let list : Parser<Mal> = {es in Mal.list(es)} <^> between(open: char("("), close: char(")"), contents: many(expr))
 
