@@ -41,18 +41,38 @@ public func choice<T>(_ parsers: Parser<T>...) -> Parser<T> {
 }
 
 // many
-public func many<T>(_ p: Parser<T>) -> Parser<[T]> {
+public func many<T>(_ p: @escaping Parser<T>) -> Parser<[T]> {
     return {
         (input: Substring) -> ParserResult<[T]> in
-        return ParserResult<[T]>.failure("NYI", input)
+        var results : [T] = []
+        var remaining = input
+        while true {
+            switch p(remaining) {
+            case .success(let successVal, let successRemaining):
+                results.append(successVal)
+                remaining = successRemaining
+            case .failure(_, _):
+                return .success(results, remaining)
+            }
+        }
     }
 }
 
 // many1
-public func many1<T>(_ p: Parser<T>) -> Parser<[T]> {
+public func many1<T>(_ p: @escaping Parser<T>) -> Parser<[T]> {
     return {
         (input: Substring) -> ParserResult<[T]> in
-        return ParserResult<[T]>.failure("NYI", input)
+        var results : [T] = []
+        var remaining = input
+        while true {
+            switch p(remaining) {
+                case .success(let successVal, let successRemaining):
+                    results.append(successVal)
+                    remaining = successRemaining
+                case .failure(let failMessage, _):
+                    return results.count == 0 ? .failure(failMessage, input) : .success(results, remaining)
+            }
+        }
     }
 }
 
@@ -130,28 +150,3 @@ public func string(_ s: String) -> Parser<String> {
     }
 }
 
-
-//
-// Unit tests
-//
-
-/*
- 
-func test<T>(_ description: String, parser: Parser<T>, input: String, expected: ParserResult<T>) {
-    let result = parser(Substring.init(input))
-    if result == expected {
-        print("OK: \(description)")
-    } else {
-        print("Failed: \(description), received \(result) expected \(expected)")
-    }
-}
-
-// char
-test("char z present", parser: char("z"), input: "zoo", expected: ParserResult.success("z", "oo"))
-test("char z missing", parser: char("z"), input: "abc", expected: ParserResult.failure("Expected 'z'", "abc"))
-test("char z empty", parser: char("z"), input: "", expected: ParserResult.failure("Expected 'z'", ""))
-test("char a present", parser: char("a"), input: "azoo", expected: ParserResult.success("a", "zoo"))
-test("char a missing", parser: char("a"), input: "zabc", expected: ParserResult.failure("Expected 'a'", "zabc"))
-test("char a empty", parser: char("a"), input: "", expected: ParserResult.failure("Expected 'a'", ""))
-
- */
