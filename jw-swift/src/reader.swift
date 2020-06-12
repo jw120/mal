@@ -4,35 +4,25 @@
 //
 // reader - read an AST from a string
 
-struct Reader {
-    let tokens : [String]
-    var index : Int = 0
+import parser
 
-    init(fromStringArray: [String]) {
-        tokens = fromStringArray
-    }
-
-    mutating func next() -> String {
-        let val = tokens[index]
-        self.index += 1
-        return val
-    }
-
-    func peek() -> String {
-        return tokens[index]
+public func read_str(_ s: String) -> String {
+    switch expr(Substring.init(s)) {
+        case ParserResult.success(let e, let remaining):
+            return e
+        case ParserFailure.failure(let failMessage, let failPoint):
+           return failMessage
     }
 }
 
-func read_str(_ s: String) -> String {
-    let r = Reader(fromStringArray: tokenize(s))
-    return read_form(r)
-}
+let expr : Parser<String> = spaces *> choice [
+    int,
+    list
+]
 
-func read_form(_ r: Reader) -> String {
-    return "NYI"
-}
+let int : Parser<Int> =  { (cs) -> Int(String(s))! } <$1> many1(digit)
 
-// [\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]*)
-func tokenize(_ s: String) -> [String] {
-    return ["(", "+", "2", "2", ")"]
-}
+let digit : Parser<Character> = satisfy { (c) -> c.isAscii() && c.isNumber() }
+
+let list : Parser<[Int]> = between(open: char("("), close: char(")"), contents: many(expr))
+

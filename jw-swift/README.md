@@ -1,5 +1,7 @@
 TODO - Parser a la Haskell
 
+- Minimal parser for lists and ints
+- Operator precedence
 
 
 
