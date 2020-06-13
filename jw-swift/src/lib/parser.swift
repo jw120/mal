@@ -7,27 +7,9 @@
 public enum ParserResult<T: Equatable>: Equatable {
     case success(T, Substring) // Matched value and remaining input
     case failure(String, Substring) // Error message and input at failure
-
-    func isSuccess() -> Bool {
-        switch self {
-        case .success:
-            return true
-        case .failure:
-            return false
-        }
-    }
 }
 
 public typealias Parser<T: Equatable> = (Substring) -> ParserResult<T>
-
-func parse<T>(_ p: Parser<T>, _ s: String) {
-    switch p(Substring(s)) {
-    case.success(let match, let remainder):
-        print("Success found '\(match)' with remainder '\(remainder)'")
-    case .failure(let message, let input):
-        print("Failed with error '\(message)'  parsing '\(input)'")
-    }
-}
 
 //
 // Combinators

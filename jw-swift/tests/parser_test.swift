@@ -16,6 +16,8 @@ class ParserTests: XCTestCase {
         XCTAssertEqual(s3("defgh"), .success("def", "gh"))
         XCTAssertEqual(s3("axe!!"), .success("axe", "!!"))
         XCTAssertEqual(s3("pqr"), .failure("Expected one of multiple choices", "pqr"))
+        let ms: [Parser<Mal>] = []
+        XCTAssertEqual(choice(ms)(""), .failure("No parsers found in choice", ""))
     }
 
     func testMany() throws {
@@ -59,6 +61,13 @@ class ParserTests: XCTestCase {
         XCTAssertEqual(p("abdefgh"), .failure("Expected 'abc'", "abdefgh"))
         XCTAssertEqual(p("abceh"), .failure("Expected 'def'", "eh"))
     }
+
+    func testRevStar() throws {
+         let p = string("abc") <* string("def")
+         XCTAssertEqual(p("abcdefgh"), .success("abc", "gh"))
+         XCTAssertEqual(p("abdefgh"), .failure("Expected 'abc'", "abdefgh"))
+         XCTAssertEqual(p("abceh"), .failure("Expected 'def'", "eh"))
+     }
 
     // Char and string combinators
 

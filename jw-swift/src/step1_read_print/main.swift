@@ -12,25 +12,21 @@ func EVAL(_ ast: Mal) -> Mal {
     ast
 }
 
-func PRINT(_ _: Mal) -> String {
-    "PRINT NYI"
-}
-
-func rep(_ s: String) -> String {
-    switch READ(s) {
-    case .value(let e):
-        return PRINT(EVAL(e))
-    case .err(let msg):
-        return msg
-    case .nothing:
-        return ""
-    }
+func PRINT(_ ast: Mal) -> String {
+    pr_str(ast)
 }
 
 while true {
     print("user> ", terminator: "")
     if let s = readLine() {
-        print(rep(s))
+        switch READ(s) {
+        case .value(let e):
+            print(PRINT(EVAL(e)))
+        case .err(let msg):
+            print(msg)
+        case .nothing:
+            break
+        }
     } else {
         break
     }
