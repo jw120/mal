@@ -1,13 +1,10 @@
+// jw-swift implementation of mal
 //
-//  types.swift
-//  step0_repl
+// (C) Joe Watson 2020-06-11
 //
-//  Created by Joe Watson on 2020/06/12.
-//  Copyright © 2020 Joe Watson. All rights reserved.
-//
+// types - program-wide types
 
-public indirect enum Mal : Equatable {
+indirect enum Mal: Equatable {
     case int(Int)
     case list([Mal])
 }
-

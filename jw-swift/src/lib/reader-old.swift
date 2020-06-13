@@ -5,8 +5,8 @@
 // reader - read an AST from a string
 
 struct Reader {
-    let tokens : [String]
-    var index : Int = 0
+    let tokens: [String]
+    var index: Int = 0
 
     init(fromStringArray: [String]) {
         tokens = fromStringArray
@@ -19,7 +19,7 @@ struct Reader {
     }
 
     func peek() -> String {
-        return tokens[index]
+        tokens[index]
     }
 }
 
@@ -29,10 +29,10 @@ func read_str(_ s: String) -> String {
 }
 
 func read_form(_ r: Reader) -> String {
-    return "NYI"
+    "NYI"
 }
 
 // [\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]*)
 func tokenize(_ s: String) -> [String] {
-    return ["(", "+", "2", "2", ")"]
+    ["(", "+", "2", "2", ")"]
 }

@@ -52,6 +52,7 @@
 		D8657C862493CE0C004BCC3E /* tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D8657C882493CE0C004BCC3E /* parser_test.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = parser_test.swift; sourceTree = "<group>"; };
 		D8657C8A2493CE0C004BCC3E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		D8657C902494C6CC004BCC3E /* .swiftlint.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = .swiftlint.yml; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -83,6 +84,7 @@
 			isa = PBXGroup;
 			children = (
 				D8657C7D2493B593004BCC3E /* parser.swift */,
+				D8657C902494C6CC004BCC3E /* .swiftlint.yml */,
 				D8657C7F2493C89B004BCC3E /* types.swift */,
 				D8657C7B2493B572004BCC3E /* reader.swift */,
 				D8657C772493B4E5004BCC3E /* main.swift */,
@@ -158,6 +160,7 @@
 				D8657C822493CE0C004BCC3E /* Sources */,
 				D8657C832493CE0C004BCC3E /* Frameworks */,
 				D8657C842493CE0C004BCC3E /* Resources */,
+				D8657C8F2494C5F4004BCC3E /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -218,6 +221,26 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		D8657C8F2494C5F4004BCC3E /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if which swiftlint >/dev/null; then\n  swiftlint\nelse\n  echo \"warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		D8657C492493ABB1004BCC3E /* Sources */ = {

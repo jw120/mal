@@ -4,29 +4,38 @@
 //
 // reader - read an AST from a string
 
-public enum ReadResult {
+import Foundation
+
+enum ReadResult {
     case value(Mal)
     case err(String)
     case nothing
 }
 
-public func read_str(_ s: String) -> ReadResult {
-    switch expr(Substring.init(s)) {
-        case ParserResult.success(let e, _):
-            return .value(e)
-        case ParserResult.failure(let message, _):
-            return .err(message)
+func read_str(_ s: String) -> ReadResult {
+    switch expr(Substring(s)) {
+    case ParserResult.success(let e, _):
+        return .value(e)
+    case ParserResult.failure(let message, _):
+        return .err(message)
     }
 }
 
-let expr : Parser<Mal> = spaces *> choice(
+let expr: Parser<Mal> = spaces *> choice(
     int,
     list
 )
 
-let int : Parser<Mal> =  { cs in Mal.int(Int(String(cs))!) } <^> many1(digit)
+private func digitsToMal(_ cs: [Character]) -> Mal {
+    if let i = Int(String(cs)) {
+        return .int(i)
+    }
+    print("Internal error - digits should be an int")
+    abort()
+}
 
-let digit : Parser<Character> = satisfy({ c in c.isASCII && c.isNumber })
+let int: Parser<Mal> = digitsToMal <^> many1(digit)
 
-let list : Parser<Mal> = {es in Mal.list(es)} <^> between(open: char("("), close: char(")"), contents: many(expr))
+let digit: Parser<Character> = satisfy { c in c.isASCII && c.isNumber }
 
+let list: Parser<Mal> = { es in Mal.list(es) } <^> between(open: char("("), close: char(")"), contents: many(expr))

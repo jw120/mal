@@ -5,19 +5,19 @@
 // step 0 - basic repl
 
 func READ(_ input: String) -> String {
-    return input
+    input
 }
 
 func EVAL(_ ast: String) -> String {
-    return ast
+    ast
 }
 
 func PRINT(_ ast: String) -> String {
-    return ast
+    ast
 }
 
 func rep(_ s: String) -> String {
-    return PRINT(EVAL(READ(s)))
+    PRINT(EVAL(READ(s)))
 }
 
 while true {

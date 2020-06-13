@@ -9,21 +9,21 @@ func READ(_ input: String) -> ReadResult {
 }
 
 func EVAL(_ ast: Mal) -> Mal {
-    return ast
+    ast
 }
 
 func PRINT(_ _: Mal) -> String {
-    return "PRINT NYI"
+    "PRINT NYI"
 }
 
 func rep(_ s: String) -> String {
     switch READ(s) {
-        case .value(let e):
-            return PRINT(EVAL(e))
-        case .err(let msg):
-            return msg
-        case .nothing:
-            return ""
+    case .value(let e):
+        return PRINT(EVAL(e))
+    case .err(let msg):
+        return msg
+    case .nothing:
+        return ""
     }
 }
 
