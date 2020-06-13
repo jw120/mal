@@ -4,7 +4,7 @@
 //
 // types - program-wide types
 
-indirect enum Mal: Equatable {
+public indirect enum Mal: Equatable {
     case int(Int)
     case list([Mal])
 }

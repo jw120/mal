@@ -6,13 +6,13 @@
 
 import Foundation
 
-enum ReadResult {
+public enum ReadResult {
     case value(Mal)
     case err(String)
     case nothing
 }
 
-func read_str(_ s: String) -> ReadResult {
+public func read_str(_ s: String) -> ReadResult {
     switch expr(Substring(s)) {
     case ParserResult.success(let e, _):
         return .value(e)
@@ -21,10 +21,10 @@ func read_str(_ s: String) -> ReadResult {
     }
 }
 
-let expr: Parser<Mal> = spaces *> choice(
+public let expr: Parser<Mal> = spaces *> choice([
     int,
     list
-)
+])
 
 private func digitsToMal(_ cs: [Character]) -> Mal {
     if let i = Int(String(cs)) {
@@ -34,8 +34,19 @@ private func digitsToMal(_ cs: [Character]) -> Mal {
     abort()
 }
 
-let int: Parser<Mal> = digitsToMal <^> many1(digit)
+public let int: Parser<Mal> = "Expected an integer" <!> (digitsToMal <^> many1(digit))
 
-let digit: Parser<Character> = satisfy { c in c.isASCII && c.isNumber }
+public let digit: Parser<Character> = "Expected a digit" <!> satisfy { c in c.isASCII && c.isNumber }
 
-let list: Parser<Mal> = { es in Mal.list(es) } <^> between(many(expr), open: char("("), close: char(")"))
+//public let list: Parser<Mal> = { es in Mal.list(es) } <^>
+//    between(many(expr), open: char("("), close: spaces *> char(")"))
+
+public func list(_ s: Substring) -> ParserResult<Mal> {
+    let r = between(many(expr), open: char("("), close: spaces *> char(")"))(s)
+    switch r {
+    case .success(let xs, let remaining):
+        return .success(Mal.list(xs), remaining)
+    case .failure(let msg, let remaining):
+        return .failure(msg, remaining)
+    }
+}

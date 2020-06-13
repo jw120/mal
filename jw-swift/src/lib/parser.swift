@@ -4,7 +4,7 @@
 //
 // parser - DIY parser combinator library
 
-enum ParserResult<T: Equatable>: Equatable {
+public enum ParserResult<T: Equatable>: Equatable {
     case success(T, Substring) // Matched value and remaining input
     case failure(String, Substring) // Error message and input at failure
 
@@ -18,7 +18,7 @@ enum ParserResult<T: Equatable>: Equatable {
     }
 }
 
-typealias Parser<T: Equatable> = (Substring) -> ParserResult<T>
+public typealias Parser<T: Equatable> = (Substring) -> ParserResult<T>
 
 func parse<T>(_ p: Parser<T>, _ s: String) {
     switch p(Substring(s)) {
@@ -34,13 +34,18 @@ func parse<T>(_ p: Parser<T>, _ s: String) {
 //
 
 // Create a parser that tries each of the given parsers in sequence and return the first successful match
-func choice<T>(_ parsers: Parser<T>...) -> Parser<T> { {
+func choice<T>(_ parsers: [Parser<T>]) -> Parser<T> { {
     (input: Substring) -> ParserResult<T> in
-        var r = ParserResult<T>.failure("No parsers found in choice", input)
+        if parsers.isEmpty {
+            return .failure("No parsers found in choice", input)
+        }
         for p in parsers {
-            r = p(input)
-            if r.isSuccess() {
+            let r = p(input)
+            switch r {
+            case .success:
                 return r
+            case .failure:
+                break
             }
         }
         return .failure("Expected one of multiple choices", input)
@@ -132,7 +137,7 @@ func <* <T1, T2> (_ p1: @escaping Parser<T1>, _ p2: @escaping Parser<T2>) -> Par
 
 // Change the failure message of the given parser
 infix operator <!>
-private func <!> <T> (_ s: String, p: @escaping Parser<T>) -> Parser<T> { {
+func <!> <T> (_ s: String, p: @escaping Parser<T>) -> Parser<T> { {
     (input: Substring) -> ParserResult<T> in
         switch p(input) {
         case .success(let val, let rest):

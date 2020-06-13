@@ -11,7 +11,7 @@ class ParserTests: XCTestCase {
     // Combinators
 
     func testChoice() throws {
-        let s3: Parser<String> = choice(string("abc"), string("def"), string("axe"))
+        let s3: Parser<String> = choice([string("abc"), string("def"), string("axe")])
         XCTAssertEqual(s3("abcde"), .success("abc", "de"))
         XCTAssertEqual(s3("defgh"), .success("def", "gh"))
         XCTAssertEqual(s3("axe!!"), .success("axe", "!!"))
@@ -31,7 +31,7 @@ class ParserTests: XCTestCase {
     }
 
     func testBetween() throws {
-        let p = many(choice(char("a"), char("b")))
+        let p = many(choice([char("a"), char("b")]))
         XCTAssertEqual(
             between(p, open: string("<<"), close: string(">>"))("<<abba>>Q"),
             .success(["a", "b", "b", "a"], "Q"))

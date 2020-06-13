@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D80324372494FD2A00D34D78 /* reader_test.swift in Sources */ = {isa = PBXBuildFile; fileRef = D80324362494FD2900D34D78 /* reader_test.swift */; };
+		D80324382494FF1000D34D78 /* reader.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8657C7B2493B572004BCC3E /* reader.swift */; };
+		D80324392494FF2A00D34D78 /* types.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8657C7F2493C89B004BCC3E /* types.swift */; };
 		D8657C782493B4E5004BCC3E /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8657C772493B4E5004BCC3E /* main.swift */; };
 		D8657C7A2493B508004BCC3E /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8657C792493B508004BCC3E /* main.swift */; };
 		D8657C7C2493B572004BCC3E /* reader.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8657C7B2493B572004BCC3E /* reader.swift */; };
@@ -39,6 +42,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		D80324362494FD2900D34D78 /* reader_test.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = reader_test.swift; path = tests/reader_test.swift; sourceTree = "<group>"; };
 		D8657C4D2493ABB1004BCC3E /* step0_repl */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = step0_repl; sourceTree = BUILT_PRODUCTS_DIR; };
 		D8657C5D2493B276004BCC3E /* step1_read_print */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = step1_read_print; sourceTree = BUILT_PRODUCTS_DIR; };
 		D8657C642493B295004BCC3E /* lib */ = {isa = PBXFileReference; lastKnownFileType = folder; name = lib; path = src/lib; sourceTree = "<group>"; };
@@ -84,9 +88,11 @@
 			isa = PBXGroup;
 			children = (
 				D8657C7D2493B593004BCC3E /* parser.swift */,
+				D8657C882493CE0C004BCC3E /* parser_test.swift */,
+				D8657C7B2493B572004BCC3E /* reader.swift */,
+				D80324362494FD2900D34D78 /* reader_test.swift */,
 				D8657C902494C6CC004BCC3E /* .swiftlint.yml */,
 				D8657C7F2493C89B004BCC3E /* types.swift */,
-				D8657C7B2493B572004BCC3E /* reader.swift */,
 				D8657C772493B4E5004BCC3E /* main.swift */,
 				D8657C792493B508004BCC3E /* main.swift */,
 				D8657C6A2493B35B004BCC3E /* step0_repl */,
@@ -110,7 +116,6 @@
 		D8657C872493CE0C004BCC3E /* tests */ = {
 			isa = PBXGroup;
 			children = (
-				D8657C882493CE0C004BCC3E /* parser_test.swift */,
 				D8657C8A2493CE0C004BCC3E /* Info.plist */,
 			);
 			path = tests;
@@ -267,6 +272,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D80324392494FF2A00D34D78 /* types.swift in Sources */,
+				D80324382494FF1000D34D78 /* reader.swift in Sources */,
+				D80324372494FD2A00D34D78 /* reader_test.swift in Sources */,
 				D8657C8E2493CF70004BCC3E /* parser.swift in Sources */,
 				D8657C892493CE0C004BCC3E /* parser_test.swift in Sources */,
 			);
