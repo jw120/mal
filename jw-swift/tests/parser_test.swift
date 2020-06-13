@@ -30,7 +30,21 @@ class ParserTests: XCTestCase {
         XCTAssertEqual(many1(char("a"))(""), .failure("Expected 'a'", ""))
     }
 
-    // between
+    func testBetween() throws {
+        let p = many(choice(char("a"), char("b")))
+        XCTAssertEqual(
+            between(p, open: string("<<"), close: string(">>"))("<<abba>>Q"),
+            .success(["a", "b", "b", "a"], "Q"))
+        XCTAssertEqual(
+            between(p, open: string("<<"), close: string(">>"))("<<abba>Q"),
+            .failure("Expected '>>'", ">Q"))
+        XCTAssertEqual(
+            between(p, open: string("<<"), close: string(">>"))("<<abbda>>Q"),
+            .failure("Expected '>>'", "da>>Q"))
+        XCTAssertEqual(
+            between(p, open: string("<<"), close: string(">>"))("<abba>>Q"),
+            .failure("Expected '<<'", "<abba>>Q"))
+    }
 
     func testMap() throws {
         func addX(_ s: String) -> String { s + "X" }
@@ -64,8 +78,31 @@ class ParserTests: XCTestCase {
         XCTAssertEqual(string("abc")(""), .failure("Expected 'abc'", ""))
     }
 
-    // spaces
+    func testSpace() throws {
+        XCTAssertEqual(space(" a"), .success(" ", "a"))
+        XCTAssertEqual(space("\ta"), .success("\t", "a"))
+        XCTAssertEqual(space("\ra"), .success("\r", "a"))
+        XCTAssertEqual(space("\na"), .success("\n", "a"))
+        XCTAssertEqual(space("a"), .failure("Expected whitespace", "a"))
+        XCTAssertEqual(space(""), .failure("Expected whitespace", ""))
+    }
 
-    // satsify
+    func testSpaces() throws {
+        XCTAssertEqual(spaces("   a"), .success("   ", "a"))
+        XCTAssertEqual(spaces("a"), .success("", "a"))
+        XCTAssertEqual(spaces(""), .success("", ""))
+    }
+
+    func testSpaces1() throws {
+        XCTAssertEqual(spaces1("   a"), .success("   ", "a"))
+        XCTAssertEqual(spaces1("a"), .failure("Expected whitespace", "a"))
+        XCTAssertEqual(spaces1(""), .failure("Expected whitespace", ""))
+    }
+
+    func testSatisfy() throws {
+        let p: Parser<Character> = satisfy { (c: Character) -> Bool in c.isLetter }
+        XCTAssertEqual(p("abc"), .success("a", "bc"))
+        XCTAssertEqual(p("1abc"), .failure("Expectation not satisfied", "1abc"))
+    }
 
 }

@@ -80,10 +80,11 @@ func many1<T>(_ p: @escaping Parser<T>) -> Parser<[T]> { {
 }
 
 // between
-func between<T, U, V>(open: Parser<T>, close: Parser<U>, contents: Parser<V>) -> Parser<V> { {
-    (input: Substring) -> ParserResult<V> in
-        .failure("NYI", input)
-    }
+func between<T, U, V>(
+    _ contents: @escaping Parser<T>,
+    open: @escaping Parser<U>,
+    close: @escaping Parser<V>) -> Parser<T> {
+    open *> (contents <* close)
 }
 
 infix operator <^>
@@ -92,8 +93,8 @@ func <^> <T1, T2> (_ f: @escaping (T1) -> T2, _ p: @escaping Parser<T1>) -> Pars
         switch p(input) {
         case .success(let val, let remaining):
             return .success(f(val), remaining)
-        case .failure(let message, _):
-            return .failure(message, input)
+        case .failure(let message, let remaining):
+            return .failure(message, remaining)
         }
     }
 }
@@ -105,8 +106,39 @@ func *> <T1, T2> (_ p1: @escaping Parser<T1>, _ p2: @escaping Parser<T2>) -> Par
         switch p1(input) {
         case .success(_, let remaining):
             return p2(remaining)
-        case .failure(let message, _):
-            return .failure(message, input)
+        case .failure(let message, let remaining):
+            return .failure(message, remaining)
+        }
+    }
+}
+
+// Combine two parsers into one that matches them in sequence, discarding the second result
+infix operator <*
+func <* <T1, T2> (_ p1: @escaping Parser<T1>, _ p2: @escaping Parser<T2>) -> Parser<T1> { {
+    (input: Substring) -> ParserResult<T1> in
+        switch p1(input) {
+        case .success(let firstVal, let firstRemaining):
+            switch p2(firstRemaining) {
+            case .success(_, let secondRemaining):
+                return .success(firstVal, secondRemaining)
+            case .failure(let message, let secondRemaining):
+                return .failure(message, secondRemaining)
+            }
+        case .failure(let message, let remaining):
+            return .failure(message, remaining)
+        }
+    }
+}
+
+// Change the failure message of the given parser
+infix operator <!>
+private func <!> <T> (_ s: String, p: @escaping Parser<T>) -> Parser<T> { {
+    (input: Substring) -> ParserResult<T> in
+        switch p(input) {
+        case .success(let val, let rest):
+            return .success(val, rest)
+        case .failure(_, let rest):
+            return .failure(s, rest)
         }
     }
 }
@@ -135,8 +167,14 @@ func string(_ s: String) -> Parser<String> { {
     }
 }
 
+// space
+var space: Parser<Character> = "Expected whitespace" <!> satisfy { c in c.isWhitespace }
+
 // spaces
-var spaces: Parser<String> = { cs in String(cs) } <^> many(char(" "))
+var spaces: Parser<String> = { cs in String(cs) } <^> many(space)
+
+// spaces1
+var spaces1: Parser<String> = { cs in String(cs) } <^> many1(space)
 
 // satisfy
 func satisfy(_ f: @escaping (Character) -> Bool) -> Parser<Character> { {
@@ -146,6 +184,6 @@ func satisfy(_ f: @escaping (Character) -> Bool) -> Parser<Character> { {
                 return .success(firstChar, input.dropFirst())
             }
         }
-        return .failure("Expectation not satisfied'", input)
+        return .failure("Expectation not satisfied", input)
     }
 }

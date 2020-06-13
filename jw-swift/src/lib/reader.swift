@@ -38,4 +38,4 @@ let int: Parser<Mal> = digitsToMal <^> many1(digit)
 
 let digit: Parser<Character> = satisfy { c in c.isASCII && c.isNumber }
 
-let list: Parser<Mal> = { es in Mal.list(es) } <^> between(open: char("("), close: char(")"), contents: many(expr))
+let list: Parser<Mal> = { es in Mal.list(es) } <^> between(many(expr), open: char("("), close: char(")"))
