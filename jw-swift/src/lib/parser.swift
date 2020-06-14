@@ -154,8 +154,13 @@ func string(_ s: String) -> Parser<String> { {
     }
 }
 
+// In Mal comma counts as a space
+public func isMalSpace(_ c: Character) -> Bool {
+    c.isWhitespace || c == ","
+}
+
 // space
-var space: Parser<Character> = "Expected whitespace" <!> satisfy { c in c.isWhitespace }
+var space: Parser<Character> = "Expected whitespace" <!> satisfy(isMalSpace)
 
 // spaces
 var spaces: Parser<String> = { cs in String(cs) } <^> many(space)

@@ -19,6 +19,7 @@ class ReaderTests: XCTestCase {
     func testExpr() throws {
         XCTAssertEqual(expr("23QQ"), .success(.int(23), "QQ"))
         XCTAssertEqual(expr("(2 3)Q"), .success(.list([.int(2), .int(3)]), "Q"))
+        XCTAssertEqual(expr("(+ 2 3)"), .success(.list([.sym("+"), .int(2), .int(3)]), ""))
     }
 
     func testInt() throws {
@@ -39,6 +40,15 @@ class ReaderTests: XCTestCase {
         XCTAssertEqual(list("( 2   3 4 )Q"), .success(.list([.int(2), .int(3), .int(4)]), "Q"))
         XCTAssertEqual(list("()Z"), .success(.list([]), "Z"))
         XCTAssertEqual(list("(2 (3 4) 5)Z"), .success(.list([.int(2), .list([.int(3), .int(4)]), .int(5)]), "Z"))
+    }
+
+    func testSym() {
+        XCTAssertEqual(symbol("true"), .success(.bool(true), ""))
+        XCTAssertEqual(symbol("false"), .success(.bool(false), ""))
+        XCTAssertEqual(symbol("nil"), .success(.null, ""))
+        XCTAssertEqual(symbol("+"), .success(.sym("+"), ""))
+        XCTAssertEqual(symbol("-"), .success(.sym("-"), ""))
+        XCTAssertEqual(symbol("abc"), .success(.sym("abc"), ""))
     }
 
 }

@@ -41,18 +41,9 @@ public func read_str(_ s: String) -> ReadResult {
 
 public let expr: Parser<Mal> = spaces *> choice([
     int,
-    list
+    list,
+    symbol
 ])
-
-//private func digitsToMal(_ cs: [Character]) -> Mal {
-//    if let i = Int(String(cs)) {
-//        return .int(i)
-//    }
-//    print("Internal error - digits should be an int")
-//    abort()
-//}
-
-//public let int: Parser<Mal> = "Expected an integer" <!> (digitsToMal <^> many1(digit))
 
 public let digit: Parser<Character> = "Expected a digit" <!> satisfy { c in c.isASCII && c.isNumber }
 
@@ -79,9 +70,6 @@ public func int(_ input: Substring) -> ParserResult<Mal> {
     }
 }
 
-//public let list: Parser<Mal> = { es in Mal.list(es) } <^>
-//    between(many(expr), open: char("("), close: spaces *> char(")"))
-
 public func list(_ s: Substring) -> ParserResult<Mal> {
     let r = between(many(expr), open: char("("), close: spaces *> char(")"))(s)
     switch r {
@@ -90,4 +78,32 @@ public func list(_ s: Substring) -> ParserResult<Mal> {
     case .failure(let msg, let remaining):
         return .failure(msg, remaining)
     }
+}
+
+public func symbol(_ s: Substring) -> ParserResult<Mal> {
+
+    let specials =  "[]{}()'`~^@"
+
+    func isNormal(_ c: Character) -> Bool {
+        !isMalSpace(c) && !specials.contains(c)
+    }
+
+    let p: Parser<[Character]> = many1(satisfy(isNormal))
+    switch p(s) {
+    case .success(let symChars, let rest):
+        let symStr = String(symChars)
+        switch symStr {
+        case "true":
+            return .success(.bool(true), rest)
+        case "false":
+            return .success(.bool(false), rest)
+        case "nil":
+            return .success(.null, rest)
+        default:
+            return .success(.sym(symStr), rest)
+        }
+    case .failure(let msg, let rest):
+        return .failure(msg, rest)
+    }
+
 }
