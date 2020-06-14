@@ -1,5 +1,9 @@
 TODO - Parser a la Haskell
 
+- Should we make our parser non-backtracking (so we catch end of input errors for missing " or ()
+- Use more combinators - or remove them
+- Make sure all our parsers consume trailing spaces
+
 - Finish parser
 - Minimal parser for lists and ints
 

@@ -42,6 +42,7 @@ public func read_str(_ s: String) -> ReadResult {
 public let expr: Parser<Mal> = spaces *> choice([
     int,
     list,
+    string,
     symbol
 ])
 
@@ -71,12 +72,18 @@ public func int(_ input: Substring) -> ParserResult<Mal> {
 }
 
 public func list(_ s: Substring) -> ParserResult<Mal> {
-    let r = between(many(expr), open: char("("), close: spaces *> char(")"))(s)
-    switch r {
-    case .success(let xs, let remaining):
-        return .success(Mal.list(xs), remaining)
+    let p1 = char("(") *> many(expr)
+    switch p1(s) {
     case .failure(let msg, let remaining):
         return .failure(msg, remaining)
+    case .success(let xs, let remaining):
+        let p2 = spaces *> char(")")
+        switch p2(remaining) {
+        case .success(_, let final):
+            return .success(Mal.list(xs), final)
+        case .failure(_, let final):
+            return .failure("Parentheses unbalanced", final)
+        }
     }
 }
 
@@ -104,6 +111,27 @@ public func symbol(_ s: Substring) -> ParserResult<Mal> {
         }
     case .failure(let msg, let rest):
         return .failure(msg, rest)
+    }
+
+}
+
+public func string(_ s: Substring) -> ParserResult<Mal> {
+
+    func notDoubleQuote(_ c: Character) -> Bool {
+        c != "\""
+    }
+
+    let p = char("\"") *> many(satisfy(notDoubleQuote))
+    switch p(s) {
+    case .failure(let msg, let rest):
+        return .failure(msg, rest)
+    case .success(let contents, let rest):
+        switch char("\"")(rest) {
+        case .success(_, let final):
+            return .success(.str(String(contents)), final)
+        case .failure(_, let final):
+            return .failure("Double quotes unbalanced", final)
+        }
     }
 
 }

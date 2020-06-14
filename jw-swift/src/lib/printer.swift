@@ -14,6 +14,8 @@ public func pr_str(_ ast: Mal, readable: Bool = false) -> String {
         return val ? "true" : "false"
     case .null:
         return "nil"
+    case .str(let val):
+        return "\"" + val + "\""
     case .sym(let val):
         return val
     }

@@ -9,5 +9,6 @@ public indirect enum Mal: Equatable {
     case list([Mal])
     case bool(Bool)
     case null // Can't use nil as it is used in Swift
+    case str(String)
     case sym(String)
 }
