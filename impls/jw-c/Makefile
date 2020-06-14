@@ -57,20 +57,20 @@ test: $(TARGET_DIR)/tests
 	-@$(TARGET_DIR)/tests
 
 step-test: $(TARGET_DIR)/mal
-	-@echo step 0; cd ..; make "test^jw-c^step0" | grep "failing tests"
-	-@echo step 1; cd ..; make "test^jw-c^step1" | grep "failing tests"
-	-@echo step 2; cd ..; make "test^jw-c^step2" | grep "failing tests"
-	-@echo step 3; cd ..; make "test^jw-c^step3" | grep "failing tests"
-	-@echo step 4; cd ..; make "test^jw-c^step4" | grep "failing tests"
-	-@echo step 5; cd ..; make "test^jw-c^step5" | grep "failing tests"
-	-@echo step 6; cd ..; make "test^jw-c^step6" | grep "failing tests"
-	-@echo step 7; cd ..; make "test^jw-c^step7" | grep "failing tests"
-	-@echo step 8; cd ..; make "test^jw-c^step8" | grep "failing tests"
-	-@echo step 9; cd ..; make "test^jw-c^step9" | grep "failing tests"
-	-@echo step A; cd ..; make "test^jw-c^stepA" | grep "failing tests"
+	-@echo step 0; cd ../..; make "test^jw-c^step0" | grep "failing tests"
+	-@echo step 1; cd ../..; make "test^jw-c^step1" | grep "failing tests"
+	-@echo step 2; cd ../..; make "test^jw-c^step2" | grep "failing tests"
+	-@echo step 3; cd ../..; make "test^jw-c^step3" | grep "failing tests"
+	-@echo step 4; cd ../..; make "test^jw-c^step4" | grep "failing tests"
+	-@echo step 5; cd ../..; make "test^jw-c^step5" | grep "failing tests"
+	-@echo step 6; cd ../..; make "test^jw-c^step6" | grep "failing tests"
+	-@echo step 7; cd ../..; make "test^jw-c^step7" | grep "failing tests"
+	-@echo step 8; cd ../..; make "test^jw-c^step8" | grep "failing tests"
+	-@echo step 9; cd ../..; make "test^jw-c^step9" | grep "failing tests"
+	-@echo step A; cd ../..; make "test^jw-c^stepA" | grep "failing tests"
 
 self-host-test:
-	@cd ..; make MAL_IMPL=jw-c "test^mal" | grep "TEST RESULTS\|failing tests"
+	@cd ../..; make MAL_IMPL=jw-c "test^mal" | grep "TEST RESULTS\|failing tests"
 
 clean:
 	$(RM) $(BUILD_DIR)/*

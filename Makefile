@@ -271,13 +271,13 @@ wren_STEP_TO_PROG =          impls/wren/$($(1)).wren
 yorick_STEP_TO_PROG =        impls/yorick/$($(1)).i
 xslt_STEP_TO_PROG =          impls/xslt/$($(1))
 zig_STEP_TO_PROG =           impls/zig/$($(1))
-jw-haskell_STEP_TO_PROG = jw-haskell/app/$($(1)).hs
-jw-racket_STEP_TO_PROG = jw-racket/src/$($(1)).rkt
-jw_elixir_STEP_TO_PROG = jw_elixir/$($(1)).exs
-jw-racket_br_STEP_TO_PROG = jw-racket-br/README.md
-jw-python_STEP_TO_PROG = jw-python/src/$($(1)).py
-jw-c_STEP_TO_PROG = jw-c/src/$($(1)).c
-jw-swift_STEP_TO_PROG = jw-swift/src/$($(1))/main.swift
+jw-haskell_STEP_TO_PROG = 	 impls/jw-haskell/app/$($(1)).hs
+jw-racket_STEP_TO_PROG =     impls/jw-racket/src/$($(1)).rkt
+jw_elixir_STEP_TO_PROG =     impls/jw_elixir/$($(1)).exs
+jw-racket_br_STEP_TO_PROG =  impls/jw-racket-br/README.md
+jw-python_STEP_TO_PROG =     impls/jw-python/src/$($(1)).py
+jw-c_STEP_TO_PROG =          impls/jw-c/src/$($(1)).c
+jw-swift_STEP_TO_PROG =      impls/jw-swift/src/$($(1))/main.swift
 
 #
 # General settings and utility functions
