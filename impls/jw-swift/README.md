@@ -4,6 +4,8 @@ TODO - Parser a la Haskell
 - Use more combinators - or remove them
 - Make sure all our parsers consume trailing spaces
 
+- Vector and List both based on Array?
+
 - Finish parser
 - Minimal parser for lists and ints
 

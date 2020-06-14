@@ -10,6 +10,10 @@ public func pr_str(_ ast: Mal, readable: Bool = false) -> String {
         return String(i)
     case .list(let elements):
         return join_between(elements.map { pr_str($0, readable: readable) }, open: "(", close: ")")
+    case .vec(let elements):
+        return join_between(elements.map { pr_str($0, readable: readable) }, open: "[", close: "]")
+    case .hashmap(let elements):
+        return join_between(elements.map { pr_str($0, readable: readable) }, open: "{", close: "}")
     case .bool(let val):
         return val ? "true" : "false"
     case .null:

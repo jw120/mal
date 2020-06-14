@@ -42,6 +42,8 @@ public func read_str(_ s: String) -> ReadResult {
 public let expr: Parser<Mal> = spaces *> choice([
     int,
     list,
+    vector,
+    hashmap,
     string,
     symbol
 ])
@@ -83,6 +85,38 @@ public func list(_ s: Substring) -> ParserResult<Mal> {
             return .success(Mal.list(xs), final)
         case .failure(_, let final):
             return .failure("Parentheses unbalanced", final)
+        }
+    }
+}
+
+public func vector(_ s: Substring) -> ParserResult<Mal> {
+    let p1 = char("[") *> many(expr)
+    switch p1(s) {
+    case .failure(let msg, let remaining):
+        return .failure(msg, remaining)
+    case .success(let xs, let remaining):
+        let p2 = spaces *> char("]")
+        switch p2(remaining) {
+        case .success(_, let final):
+            return .success(Mal.vec(xs), final)
+        case .failure(_, let final):
+            return .failure("Square brackets unbalanced", final)
+        }
+    }
+}
+
+public func hashmap(_ s: Substring) -> ParserResult<Mal> {
+    let p1 = char("{") *> many(expr)
+    switch p1(s) {
+    case .failure(let msg, let remaining):
+        return .failure(msg, remaining)
+    case .success(let xs, let remaining):
+        let p2 = spaces *> char("}")
+        switch p2(remaining) {
+        case .success(_, let final):
+            return .success(Mal.hashmap(xs), final)
+        case .failure(_, let final):
+            return .failure("Square brackets unbalanced", final)
         }
     }
 }
