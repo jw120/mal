@@ -5,6 +5,7 @@
 // printer_tests - tests for the printer module
 
 import XCTest
+import mal
 
 class PrinterTests: XCTestCase {
 

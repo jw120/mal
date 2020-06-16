@@ -5,6 +5,7 @@
 // reader_tests - tests for the reader module
 
 import XCTest
+import mal
 
 class ReaderTests: XCTestCase {
 

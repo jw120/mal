@@ -277,7 +277,7 @@ jw_elixir_STEP_TO_PROG =     impls/jw_elixir/$($(1)).exs
 jw-racket_br_STEP_TO_PROG =  impls/jw-racket-br/README.md
 jw-python_STEP_TO_PROG =     impls/jw-python/src/$($(1)).py
 jw-c_STEP_TO_PROG =          impls/jw-c/src/$($(1)).c
-jw-swift_STEP_TO_PROG =      impls/jw-swift/src/$($(1))/main.swift
+jw-swift_STEP_TO_PROG =      impls/jw-swift/Sources/$($(1))/main.swift
 
 #
 # General settings and utility functions

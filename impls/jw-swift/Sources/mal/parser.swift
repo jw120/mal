@@ -16,7 +16,7 @@ public typealias Parser<T: Equatable> = (Substring) -> ParserResult<T>
 //
 
 // Create a parser that tries each of the given parsers in sequence and return the first successful match
-func choice<T>(_ parsers: [Parser<T>]) -> Parser<T> { {
+public func choice<T>(_ parsers: [Parser<T>]) -> Parser<T> { {
     (input: Substring) -> ParserResult<T> in
         if parsers.isEmpty {
             return .failure("No parsers found in choice", input)
@@ -34,7 +34,7 @@ func choice<T>(_ parsers: [Parser<T>]) -> Parser<T> { {
     }
 }
 
-func many<T>(_ p: @escaping Parser<T>) -> Parser<[T]> { {
+public func many<T>(_ p: @escaping Parser<T>) -> Parser<[T]> { {
     (input: Substring) -> ParserResult<[T]> in
         var results: [T] = []
         var remaining = input
@@ -50,7 +50,7 @@ func many<T>(_ p: @escaping Parser<T>) -> Parser<[T]> { {
     }
 }
 
-func many1<T>(_ p: @escaping Parser<T>) -> Parser<[T]> { {
+public func many1<T>(_ p: @escaping Parser<T>) -> Parser<[T]> { {
     (input: Substring) -> ParserResult<[T]> in
         var results: [T] = []
         var remaining = input
@@ -67,7 +67,7 @@ func many1<T>(_ p: @escaping Parser<T>) -> Parser<[T]> { {
 }
 
 // between
-func between<T, U, V>(
+public func between<T, U, V>(
     _ contents: @escaping Parser<T>,
     open: @escaping Parser<U>,
     close: @escaping Parser<V>) -> Parser<T> {
@@ -75,7 +75,7 @@ func between<T, U, V>(
 }
 
 infix operator <^>
-func <^> <T1, T2> (_ f: @escaping (T1) -> T2, _ p: @escaping Parser<T1>) -> Parser<T2> { {
+public func <^> <T1, T2> (_ f: @escaping (T1) -> T2, _ p: @escaping Parser<T1>) -> Parser<T2> { {
     (input: Substring) -> ParserResult<T2> in
         switch p(input) {
         case .success(let val, let remaining):
@@ -88,7 +88,7 @@ func <^> <T1, T2> (_ f: @escaping (T1) -> T2, _ p: @escaping Parser<T1>) -> Pars
 
 // Combine two parsers into one that matches them in sequence, discarding the first result
 infix operator *>
-func *> <T1, T2> (_ p1: @escaping Parser<T1>, _ p2: @escaping Parser<T2>) -> Parser<T2> { {
+public func *> <T1, T2> (_ p1: @escaping Parser<T1>, _ p2: @escaping Parser<T2>) -> Parser<T2> { {
     (input: Substring) -> ParserResult<T2> in
         switch p1(input) {
         case .success(_, let remaining):
@@ -101,7 +101,7 @@ func *> <T1, T2> (_ p1: @escaping Parser<T1>, _ p2: @escaping Parser<T2>) -> Par
 
 // Combine two parsers into one that matches them in sequence, discarding the second result
 infix operator <*
-func <* <T1, T2> (_ p1: @escaping Parser<T1>, _ p2: @escaping Parser<T2>) -> Parser<T1> { {
+public func <* <T1, T2> (_ p1: @escaping Parser<T1>, _ p2: @escaping Parser<T2>) -> Parser<T1> { {
     (input: Substring) -> ParserResult<T1> in
         switch p1(input) {
         case .success(let firstVal, let firstRemaining):
@@ -119,7 +119,7 @@ func <* <T1, T2> (_ p1: @escaping Parser<T1>, _ p2: @escaping Parser<T2>) -> Par
 
 // Change the failure message of the given parser
 infix operator <!>
-func <!> <T> (_ s: String, p: @escaping Parser<T>) -> Parser<T> { {
+public func <!> <T> (_ s: String, p: @escaping Parser<T>) -> Parser<T> { {
     (input: Substring) -> ParserResult<T> in
         switch p(input) {
         case .success(let val, let rest):
@@ -134,7 +134,7 @@ func <!> <T> (_ s: String, p: @escaping Parser<T>) -> Parser<T> { {
 // Character and string parsers
 //
 
-func char(_ c: Character) -> Parser<Character> { {
+public func char(_ c: Character) -> Parser<Character> { {
     (input: Substring) -> ParserResult<Character> in
         if let firstChar = input.first {
             if firstChar == c {
@@ -145,7 +145,7 @@ func char(_ c: Character) -> Parser<Character> { {
     }
 }
 
-func string(_ s: String) -> Parser<String> { {
+public func string(_ s: String) -> Parser<String> { {
     (input: Substring) -> ParserResult<String> in
         if input.hasPrefix(s) {
             return .success(s, input.dropFirst(s.count))
@@ -160,16 +160,16 @@ public func isMalSpace(_ c: Character) -> Bool {
 }
 
 // space
-var space: Parser<Character> = "Expected whitespace" <!> satisfy(isMalSpace)
+public var space: Parser<Character> = "Expected whitespace" <!> satisfy(isMalSpace)
 
 // spaces
-var spaces: Parser<String> = { cs in String(cs) } <^> many(space)
+public var spaces: Parser<String> = { cs in String(cs) } <^> many(space)
 
 // spaces1
-var spaces1: Parser<String> = { cs in String(cs) } <^> many1(space)
+public var spaces1: Parser<String> = { cs in String(cs) } <^> many1(space)
 
 // satisfy
-func satisfy(_ f: @escaping (Character) -> Bool) -> Parser<Character> { {
+public func satisfy(_ f: @escaping (Character) -> Bool) -> Parser<Character> { {
     (input: Substring) -> ParserResult<Character> in
         if let firstChar = input.first {
             if f(firstChar) {

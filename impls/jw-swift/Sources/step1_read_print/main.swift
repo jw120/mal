@@ -4,6 +4,8 @@
 //
 // step 1 - read and print
 
+import mal
+
 func READ(_ input: String) -> ReadResult {
     read_str(input)
 }

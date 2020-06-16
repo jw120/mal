@@ -1,6 +1,6 @@
-Build/
-DerivedData/
 .DS_Store
+/.build
+/Packages
+/*.xcodeproj
 xcuserdata/
-.build/
-*.profraw
+/.swiftpm

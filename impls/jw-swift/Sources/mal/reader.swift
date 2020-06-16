@@ -11,7 +11,7 @@ public enum ReadResult: Equatable {
     case err(String)
     case nothing
 
-    func isErr() -> Bool {
+    public func isErr() -> Bool {
         switch self {
         case .err:
             return true

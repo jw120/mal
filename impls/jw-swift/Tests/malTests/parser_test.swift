@@ -5,6 +5,7 @@
 // parser_tests - tests for the parser module
 
 import XCTest
+import mal
 
 class ParserTests: XCTestCase {
 
