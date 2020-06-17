@@ -11,10 +11,6 @@
 // * All in on combinators
 // * Follow megaparsec
 
-// TODO
-// eof
-// try?
-
 // Combinators implements
 // Here     Haskell
 // <^>      <$>     Apply function to returned value
@@ -23,33 +19,53 @@
 // *>       *>      Combine parsers, discarding success value from first
 // <*       <*      Combine parsers, discarding success value from second
 // <^       <$      Replace value of success
-
-
 // <!>
-// <?>    Same as Megaparsec <?>    Replace the lookingFor
+
+// <?> NYI   Same as Megaparsec <?>    Replace the lookingFor
 
 // Available operator character: / = - + ! * % < > & | ^ ~ ?
 
 // many
 // many1
 // manyTill
+// eof
 // optional
-// try
 
+// why equatable?
+public typealias Parser<T: Equatable> = (ParseState) -> (ParseState, Result<T, ParseError>)
 
-public typealias Parser<T: Equatable> = (Substring) -> (Substring, Result<T, ParseError>)
+struct ParseState {
+    var row: Int
+    var col: Int
+    var input: Substring
 
-enum ParseErrorKind {
-    case eof // Found EOF unexpectedly
-    case unexpected // Found non-EOF unexpectedly whe looking for string
+    init(s: String) {
+        row = 0
+        col = 0
+        input = s
+    }
+
+    mutating func advance(n: Int = 1) {
+        for c in input.prefix(n) {
+            if c.isNewline {
+                row += 1
+                col = 0
+            } else {
+                col += 1
+            }
+        }
+        input.dropFirst(n)
+    }
+
 }
+
 
 struct ParseError: Error {
-    let kind: ParseErrorKind
-    let lookingFor: Substring // Megaparsec (label) suggests to be used only when parserFails without consuming any input?
-    let startedAt: SubString?
-    let failedAt: Substring
+
+    let state: ParseState
+    let label: String // Megaparsec (label) suggests to be used only when parserFails without consuming any input?
 }
+
 
 //
 // Combinators
@@ -58,35 +74,41 @@ struct ParseError: Error {
 // Apply function to parser's success result
 infix operator <^> MultiplicationPrecedence
 func <^> <T1, T2> (_ f: @escaping (T1) -> T2, _ p: @escaping Parser<T1>) -> Parser<T2> { {
-    (input: Substring) -> ParserResult<T2> in
-        let r = p(input)
+    (state: PareserState) -> ParserResult<T2> in
+        let r = p(state)
         switch r {
-        case (let rest, .success(let val)):
-            return (rest, .success(f(val))
+        case (updatedState, .success(let val)):
+            return (updatedState, .success(f(val))
         case (_, .failure):
             return r
         }
     }
 }
 
+infix operator <*> MultiplicationPrecedence
+func <*> <T1, T2> (_ f: @escaping (T1) -> T2, _ p: @escaping Parser<T1>) -> Parser<T2> { {
+    NYI
+}
+
+
 // Alternative
 infix operator <|> AdditionPrecedence
 func <|> <T> (_ p1: @escaping Parser<T>, _ p2: @escaping Parser<T>) -> Parser<T> { {
-    (input: Substring) -> ParserResult<T2> in
-        let r1 = p1(input)
+    (state: ParserState) -> ParserResult<T2> in
+        let r1 = p1(state)
         switch r1 {
         case (_, .success)
             return r1
-        case (let rest1, .failure(let err1)):
-            let r2 = p2(rest1):
+        case (let state1, .failure(let err1)):
+            let r2 = p2(state1):
             switch r2 {
                 case (_, .success):
                     return r2
-                case (let rest2, .failure(let err2)):
+                case (let state2, .failure(let err2)):
                     // Return failure from the parser that consumed the most input
-                    let consumed1 = rest1.startIndex - input.startIndex
-                    let consumed2 = rest2.startIndex - rest1.startIndex
-                    return consumed1 > consumed2 ? .failure(rest2, err1) : .failure(rest2, err2)
+                    let consumed1 = state1.input.startIndex - state.input.startIndex
+                    let consumed2 = state2.input.startIndex - state1.input.startIndex
+                    return (state2, consumed1 > consumed2 ? .failure(err1) : .failure(err2))
             }
         }
     }
@@ -95,11 +117,11 @@ func <|> <T> (_ p1: @escaping Parser<T>, _ p2: @escaping Parser<T>) -> Parser<T>
 // Combine two parsers into one that matches them in sequence, discarding the first result
 infix operator *> MultiplicationPrecedence
 func *> <T1, T2> (_ p1: @escaping Parser<T1>, _ p2: @escaping Parser<T2>) -> Parser<T2> { {
-    (input: Substring) -> ParserResult<T2> in
-        let r1 = p1(input)
+    (state: ParserState) -> ParserResult<T2> in
+        let r1 = p1(state)
         switch r1 {
-        case (let rest, .success):
-            return p2(rest)
+        case (let state1, .success):
+            return p2(state1)
         case (_, .failure)
             return r1
         }
@@ -109,19 +131,33 @@ func *> <T1, T2> (_ p1: @escaping Parser<T1>, _ p2: @escaping Parser<T2>) -> Par
 // Combine two parsers into one that matches them in sequence, discarding the second result
 infix operator <* MultiplicationPrecedence
 func <* <T1, T2> (_ p1: @escaping Parser<T1>, _ p2: @escaping Parser<T2>) -> Parser<T1> { {
-    (input: Substring) -> ParserResult<T1> in
-        let r1 = p1(input)
+    (state: ParserState) -> ParserResult<T1> in
+        let r1 = p1(state)
         switch r1 {
         case (_, .failure):
             return r1
-        case (rest1, .success(let val1)):
-            let r2 = p1(rest1)
+        case (state1, .success(let val1)):
+            let r2 = p1(state1)
             switch r2 {
             case (_, .failure)
                 return r2
-            case (let rest2, .success):
-                return (rest2, .success(val1))
+            case (let state2, .success):
+                return (state2, .success(val1))
             }
+        }
+    }
+}
+
+// Replace success value
+infix operator <^ AdditionPrecedence
+func <^ <T1, T2> (_ t: T1, _ p2: @escaping Parser<T2>) -> Parser<T1> { {
+    (state: ParserState) -> ParserResult<T1> in
+        let r2 = p2(state)
+        switch r2 {
+        case (state2, .success)
+            return (state2, .success(t))
+        case (_, .failure)
+            return r2
         }
     }
 }
@@ -129,43 +165,66 @@ func <* <T1, T2> (_ p1: @escaping Parser<T1>, _ p2: @escaping Parser<T2>) -> Par
 // Change the error of the given parser
 infix operator <!>
 func <!> <T> (_ e: ParseError, p: @escaping Parser<T>) -> Parser<T> { {
-    (input: Substring) -> ParserResult<T> in
-        let r = p(input)
+    (state: ParserState) -> ParserResult<T> in
+        let r = p(state)
         switch r {
         case (_, .success):
             return r
-        case (let rest, .failure)
-            return (rest, e)
+        case (let updatedState, .failure)
+            return (updatedState, e)
         }
     }
 }
 
 func many<T>(_ p: @escaping Parser<T>) -> Parser<[T]> { {
-    (input: Substring) -> ParserResult<[T]> in
+    (state: ParserState) -> ParserResult<[T]> in
+        var state = state
         var results: [T] = []
-        var remaining = input
         while true {
-            switch p(remaining) {
-            case (let rest, .success(let val)):
+            switch p(state) {
+            case (let updatedState, .success(let val)):
                 results.append(val)
-                remaining = rest
-            case (let rest, .failure):
-                return (rest, .success(results))
+                state = updatedState
+            case (let updatedState, .failure):
+                return (updatedState, .success(results))
             }
         }
     }
 }
 
 func many1<T>(_ p: @escaping Parser<T>) -> Parser<[T]> { {
-    (input: Substring) -> ParserResult<[T]> in
-        let r = many(p)(input)
-        switch r {
-            case (let rest, .success(let xs)):
-                return xs.isEmpty ? p("") : r
-            case (_, .failure):
-                return r
+    (state: ParserState) -> ParserResult<[T]> in
+        var state = state
+        var results: [T] = []
+        while true {
+            switch p(state) {
+            case (let updatedState, .success(let val)):
+                results.append(val)
+                state = updatedState
+            case (let updatedState, .failure(let err)):
+                return (updatedState, results.isEmpty ? .failure(err) ? .success(results))
+            }
         }
     }
+}
+
+fun optional<T>(_ p: @escaping Parser<T>) -> Parser<T?> { {
+    (state: ParserState) -> ParserResult<T?> in
+        let r = p(state)
+        switch p(state) {
+            case (_ , .success):
+                return r
+            case (let updatedState, .failure)
+                return (updatedState, .success(nil))
+        }
+    }
+}
+
+func eof(_ state: ParserState) -> ParserResult<Void> {
+    if state.input.isEmpty {
+        return (state, .success(()))
+    }
+    return (state, .failure(state: state, label: "Expected EOF"))
 }
 
 //
@@ -182,41 +241,37 @@ let lexeme<T, U>: (_ p: Parser<T>, spaceConsumer: Parser<U>) -> Parser<T> =
 //
 
 func char(_ c: Character) -> Parser<Character> { {
-    (input: Substring) -> ParserResult<Character> in
-        if let firstChar = input.first {
-            if firstChar == c {
-                return .success(firstChar, input.dropFirst())
-            }
+    (state: ParserState) -> ParserResult<Character> in
+        guard let firstChar = state.input.first && firstChar == c else {
+            return (state, .failure(state: state, label: "Expected '\(c)''"))
         }
-        return .failure("Expected '\(c)'", input)
+        return (state.advance(), .success(firstChar))
     }
 }
 
-func anyChar(_ input: Substring) -> ParserResult<Character> {
-    if input.isEmpty {
-        return .failure("Expected any character")
-    } else {
-        return .success()
+func anyChar(_ state: ParserState) -> ParserResult<Character> {
+    guard state.input.isEmpty else {
+        return (state, .failure(state: state, label: "Expected any character"))
     }
+    return (state.advance(), .success(input.first))
 }
 
 func string(_ s: String) -> Parser<String> { {
-    (input: Substring) -> ParserResult<String> in
-        if input.hasPrefix(s) {
-            return .success(s, input.dropFirst(s.count))
+    (state: ParserState) -> ParserResult<String> in
+        if state.input.hasPrefix(s) {
+            return (state.advance(s.count)), .success(s))
         }
         return .failure("Expected '\(s)'", input)
     }
 }
 
-// satisfy
 func satisfy(_ f: @escaping (Character) -> Bool) -> Parser<Character> { {
-    (input: Substring) -> ParserResult<Character> in
-        if let firstChar = input.first {
-            if f(firstChar) {
-                return .success(firstChar, input.dropFirst())
-            }
+    (state: ParserState) -> ParserResult<Character> in
+        if let firstChar = input.first  && f(firstChar) {
+                return (state.advance(), .success(firstChar))
         }
-        return .failure("Expectation not satisfied", input)
+        return (state, .failure(state: state, label: "Expectation not satisfied")
     }
 }
+
+let eol = satisfy {c in c.isNewline }

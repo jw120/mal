@@ -22,20 +22,20 @@ public enum ReadResult: Equatable {
 }
 
 public func read_str(_ s: String) -> ReadResult {
-    // If the input is empty (only spaces), then return nothing
-    switch spaces(Substring(s)) {
-    case .success(_, ""):
+
+    // Remove leading spaces/comments (and give up if nothing to parse)
+    let (state, _) = malSpaceConsumer(ParserState(s))
+    if (state.isEmpty) {
         return .nothing
-    default:
-        break
     }
 
-    // otherwise parse an expression
-    switch expr(Substring(s)) {
-    case ParserResult.success(let e, _):
-        return .value(e)
-    case ParserResult.failure(let message, _):
-        return .err(message)
+    switch expr(state) {
+    case ("", .success(let val)):
+        return .value(val)
+    case (_, ParserResult.failure(let e):
+        return .err("\(e.label) at \(e.state.row),\(e.state.col)")
+    case (leftover, .success)
+        return .err("Unexpected leftovers at \(leftover.row),\(leftover.col)")
     }
 }
 
@@ -44,12 +44,12 @@ internal func isMalWhitespace(_ c: Character) -> Bool {
 }
 internal let malWhitespace: Parser<Character> = "Expected whitespace" <!> satisfy(isMalWhitespace)
 internal let comment: Parser<[Character]> = char(";") *> manyTill(anyChar, eol <|> eof)
-internal let malSpaceConsumer: Parser<Void> = () <^ many(many1(malWhitespace) <|> comment)
+internal let malSpaceConsumer: Parser<Void> = () <^ many(malWhitespace <|> comment)
 internal let lex = lexeme(malSpaceConsumer)
 
-public let expr: Parser<Mal> = spaces *> (int <|> list <|> vector <|> hashmap <|> string <|> symbol)
+public let expr: Parser<Mal> = lex(int <|> list <|> vector <|> hashmap <|> string <|> symbol)
 
-public func int(_ input: Substring) -> (Substring, Result<Mal, ParserError>) {
+public func int(_ state: ParserState) -> (ParserState, ParserResult<Mal>) {
 
     let negativeSign: Parser<Character?> = optional(char("-"))
 
