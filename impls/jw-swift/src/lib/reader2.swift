@@ -49,27 +49,18 @@ internal let lex = lexeme(malSpaceConsumer)
 
 public let expr: Parser<Mal> = lex(int <|> list <|> vector <|> hashmap <|> string <|> symbol)
 
-public func int(_ state: ParserState) -> (ParserState, ParserResult<Mal>) {
-
-    let negativeSign: Parser<Character?> = optional(char("-"))
-
-    let digit: Parser<Character> = "Expected a digit" <!> satisfy { c in c.isASCII && c.isNumber }
-
-    func combine(_ negative: Character?)(_ digits: [Character]) -> Mal {
-        switch (negative, Int(String(digits))) {
-            case (.none, .some(let val)):
-                return .int(val)
-            case (.some, .some(let val)):
-                return .int(-val)
-            case (_, .none):
-                print("Internal error - digits should be an int")
-                abort()
-        }
+public let int: Parser<Mal> = lex(intCombine <^> negativeSign <*> many1(digit))
+internal let negativeSign: Parser<Character?> = optional(char("-"))
+internal let digit: Parser<Character> = "Expected a digit" <!> satisfy { c in c.isASCII && c.isNumber }
+internal func intCombine(_ negative: Character?)(_ digits: [Character]) -> Mal {
+    switch (negative, Int(String(digits))) {
+    case (.none, .some(let val)):
+        return .int(val)
+    case (.some, .some(let val)):
+        return .int(-val)
+    case (_, .none):
+        assert("Internal error - digits should be an int")
     }
-
-    let p : Parser<Mal> = malLexeme(combine <^> negativeSign <*> many1(digit))
-
-    return p(input)
 }
 
 public func list(_ input: Substring) -> (Substring, Result<Mal, ParserError>) {

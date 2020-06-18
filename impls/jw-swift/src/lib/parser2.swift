@@ -86,10 +86,23 @@ func <^> <T1, T2> (_ f: @escaping (T1) -> T2, _ p: @escaping Parser<T1>) -> Pars
 }
 
 infix operator <*> MultiplicationPrecedence
-func <*> <T1, T2> (_ f: @escaping (T1) -> T2, _ p: @escaping Parser<T1>) -> Parser<T2> { {
-    NYI
+func <*> <T1, T2> (_ p1: @escaping Parser<(T2) -> T1>, _ p2: @escaping Parser<T2>) -> Parser<T1> { {
+    (state: PareserState) -> ParserResult<T1> in
+        let r2 = p2(state)
+        switch r2 {
+        case (let updatedState, .success(let val)):
+            let r1 = p1(updatedState)
+            switch r1 {
+            case (let finalState, let f):
+                return (finalState, .success(f(val)))
+            case (_, .failure):
+                return r1
+            }
+        case (_, .failure):
+            return r2
+        }
+    }
 }
-
 
 // Alternative
 infix operator <|> AdditionPrecedence
