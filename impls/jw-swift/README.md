@@ -1,5 +1,7 @@
 TODO - Parser a la Haskell
 
+Next - get parser and reader to pass full set of tests
+
 - Makefile - to run step-tests
 - Makefile - to Build from command line
 
