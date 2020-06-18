@@ -1,12 +1,17 @@
 TODO - Parser a la Haskell
 
+- Makefile - to run step-tests
+- Makefile - to Build from command line
 
+How to do Precedence for operators
 
 - Should we make our parser non-backtracking (so we catch end of input errors for missing " or ()
 - Use more combinators - or remove them
 - Make sure all our parsers consume trailing spaces
 
 - Vector and List both based on Array?
+
+- Use StringProtocol?
 
 - Finish parser
 - Minimal parser for lists and ints

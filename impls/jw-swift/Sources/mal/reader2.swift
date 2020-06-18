@@ -11,7 +11,7 @@ public enum ReadResult: Equatable {
     case err(String)
     case nothing
 
-    public func isErr() -> Bool {
+    func isErr() -> Bool {
         switch self {
         case .err:
             return true
@@ -22,74 +22,68 @@ public enum ReadResult: Equatable {
 }
 
 public func read_str(_ s: String) -> ReadResult {
-    // If the input is empty (only spaces), then return nothing
-    switch spaces(Substring(s)) {
-    case .success(_, ""):
+
+    // Remove leading spaces/comments (and give up if nothing to parse)
+    let (state, _) = malSpaceConsumer(ParseState(Substring(s)))
+    if (state.input.isEmpty) {
         return .nothing
-    default:
-        break
     }
 
-    // otherwise parse an expression
-    switch expr(Substring(s)) {
-    case ParserResult.success(let e, _):
-        return .value(e)
-    case ParserResult.failure(let message, _):
-        return .err(message)
-    }
-}
-
-public let expr: Parser<Mal> = spaces *> choice([
-    int,
-    list,
-    vector,
-    hashmap,
-    string,
-    symbol
-])
-
-public let digit: Parser<Character> = "Expected a digit" <!> satisfy { c in c.isASCII && c.isNumber }
-
-public func int(_ input: Substring) -> ParserResult<Mal> {
-    var sign = 1
-    var digitInput = input
-    switch char("-")(input) {
-    case .success(_, let remaining):
-        sign = -1
-        digitInput = remaining
-    default:
-        break
-    }
-
-    switch many1(digit)(digitInput) {
-    case .success(let cs, let remaining):
-        if let i = Int(String(cs)) {
-            return .success(.int(i * sign), remaining)
-        }
-        print("Internal error - digits should be an int")
-        abort()
-    case .failure(_, let remaining):
-        return .failure("Expected an integer", remaining)
-    }
-}
-
-public func list(_ s: Substring) -> ParserResult<Mal> {
-    let p1 = char("(") *> many(expr)
-    switch p1(s) {
-    case .failure(let msg, let remaining):
-        return .failure(msg, remaining)
-    case .success(let xs, let remaining):
-        let p2 = spaces *> char(")")
-        switch p2(remaining) {
-        case .success(_, let final):
-            return .success(Mal.list(xs), final)
-        case .failure(_, let final):
-            return .failure("Parentheses unbalanced", final)
+    switch expr(state) {
+    case (_, .failure(let e)):
+        return .err("\(e.label) at \(e.state.row),\(e.state.col)")
+    case (let updatedState, .success(let val)):
+        if (updatedState.input.isEmpty) {
+            return .value(val)
+        } else {
+            return .err("Unexpected leftovers at \(updatedState.row),\(updatedState.col)")
         }
     }
 }
 
-public func vector(_ s: Substring) -> ParserResult<Mal> {
+internal func isMalWhitespace(_ c: Character) -> Bool {
+    c.isWhitespace || c == ","
+}
+internal let malWhitespace: Parser<Void> = "Expected whitespace" <!> () <^ satisfy(isMalWhitespace)
+internal let comment: Parser<Void> = char(";") *> (() <^ manyTill(anyChar, eol <|> eof))
+internal let malSpaceConsumer: Parser<Void> = () <^ many(malWhitespace <|> comment)
+internal func lex<T>(_ p: @escaping Parser<T>) -> Parser<T> {
+    lexeme(p, spaceConsumer: malSpaceConsumer)
+}
+
+public let expr: Parser<Mal> = lex(int) // <|> list <|> vector <|> hashmap <|> string <|> symbol)
+
+public let int: Parser<Mal> = lex(intCombine <^> negativeSign <*> many1(digit))
+internal let negativeSign: Parser<Character?> = optional(char("-"))
+internal let digit: Parser<Character> = "Expected a digit" <!> satisfy { c in c.isASCII && c.isNumber }
+internal func intCombine(_ negative: Character?) -> ([Character]) -> Mal {
+    {
+        switch (negative, Int(String($0))) {
+        case (.none, .some(let val)):
+            return .int(val)
+        case (.some, .some(let val)):
+            return .int(-val)
+        case (_, .none):
+            fatalError("Internal error - digits should be an int")
+        }
+    }
+}
+
+/*
+
+public func list(_ input: Substring) -> (Substring, Result<Mal, ParseError>) {
+
+    func combine(_ xs: [Mal]) -> Mal {
+        .list(xs)
+    }
+    let opener = lex(char("("))
+    let closer = lex(char(")"))
+    let p: Parser<Mal> = combine <^> (opener *> many(expr) <* closer)
+
+    return p(input)
+}
+
+public func vector(_ s: Substring) -> ParseResult<Mal> {
     let p1 = char("[") *> many(expr)
     switch p1(s) {
     case .failure(let msg, let remaining):
@@ -169,3 +163,5 @@ public func string(_ s: Substring) -> ParserResult<Mal> {
     }
 
 }
+
+ */
