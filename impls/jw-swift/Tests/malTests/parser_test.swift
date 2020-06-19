@@ -7,19 +7,95 @@
 import XCTest
 import mal
 
+// Helper function to create a new ParseState
+func i(_ s: String) -> ParseState { ParseState(s) }
+
+// Helper function to convert succeeding ParseState in result to a string
+func s<T>(_ (s, r): (ParseState, ParseResult<T>)) -> T {
+    switch r {
+    case .success(let val):
+        if s.input == "" {
+            return (s.input, val)
+        } else {
+            throw "Leftovers"
+        }
+    case .failure()
+        throw "Expected success"
+    }
+}
+
+// Helper function to convert succeeding ParseState in result to a string with leftovers
+func sl<T>(_ (s, r): (ParseState, ParseResult<T>)) -> (String, T) {
+    switch r {
+    case .success(let val):
+        return (s.input, val)
+    case .failure()
+        throw "Expected success"
+    }
+}
+
+
+// Helper function to convert failing ParseState in result to a simple string pair
+func f<T>(_ (s, r): (ParseState, ParseResult<T>)) -> (String, String) {
+    switch r {
+    case .success:
+        throw "Expected failure"
+    case .failure(let e)
+        guard s == e.state else {
+            throw "Mismatched states"
+        }
+        return (s.input, e.label)
+    }
+}
+
 class ParserTests: XCTestCase {
 
-    // Combinators
+    func testAdvance() throws {
+        XCTAssertEqual(string("abc")(i("abcde")), .(ParseState("de", row: 0, col: 3), .success("abc")))
+        XCTAssertEqual(string("a\nc")(i("a\ncde")), .(ParseState("de", row: 1, col: 1), .success("a\nc")))
+    }
+
+    func testApply() throws {
+        func addPling(_ s: String) { s + "!"}
+        let p = addPling <^> string("abc")
+        XCTAssertEqual(s(p("abc")), "abc!")
+        XCTAssertEqual(f(p("xyz")), "Expected \'abc\'")
+    }
 
     func testChoice() throws {
-        let s3: Parser<String> = choice([string("abc"), string("def"), string("axe")])
-        XCTAssertEqual(s3("abcde"), .success("abc", "de"))
-        XCTAssertEqual(s3("defgh"), .success("def", "gh"))
-        XCTAssertEqual(s3("axe!!"), .success("axe", "!!"))
-        XCTAssertEqual(s3("pqr"), .failure("Expected one of multiple choices", "pqr"))
-        let ms: [Parser<Mal>] = []
-        XCTAssertEqual(choice(ms)(""), .failure("No parsers found in choice", ""))
+        let choice3: Parser<String> = string("abc") <|> string("def") <|> string("axe")
+        XCTAssertEqual(s(choice3("abc")), "abc")
+        XCTAssertEqual(s(choice3("def")), "def")
+        XCTAssertEqual(sl(choice3("axe!!")), ("!!", "axe"))
+        XCTAssertEqual(f(choice3("pqr")), ("pqr", "Expected one of multiple choices"))
     }
+
+   func testStar() throws {
+        let p = string("abc") *> string("def")
+        XCTAssertEqual(sl(p("abcdefgh")), ("gh", "def"))
+        XCTAssertEqual(f("abdefgh"), "Expected 'abc'")
+        XCTAssertEqual(f("abceh"), "Expected 'def'")
+    }
+
+    func testRevStar() throws {
+         let p = string("abc") <* string("def")
+         XCTAssertEqual(sl(p("abcdefgh")), ("gh", "abc"))
+         XCTAssertEqual(f(p("abdefgh")), "Expected 'abc'", "abdefgh")
+         XCTAssertEqual(f(p("abceh")), "Expected 'def'")
+     }
+
+/ <^>      <$>     Apply function to returned value
+// <*>              Combine arguments to use with a (curried) function
+// <|>              Alternatives (no back-tracking). Return error from parser that consumed more
+// *>               Combine parsers, discarding success value from first
+// <*               Combine parsers, discarding success value from second
+// <^               Replace value of success
+// <!       label   Replace value of failure
+// many
+// many1
+// manyTill
+// optional
+// eof
 
     func testMany() throws {
         XCTAssertEqual(many(char("a"))("aaabc"), .success(["a", "a", "a"], "bc"))
@@ -56,19 +132,7 @@ class ParserTests: XCTestCase {
         XCTAssertEqual(p("ab"), .failure("Expected 'abc'", "ab"))
     }
 
-    func testStar() throws {
-        let p = string("abc") *> string("def")
-        XCTAssertEqual(p("abcdefgh"), .success("def", "gh"))
-        XCTAssertEqual(p("abdefgh"), .failure("Expected 'abc'", "abdefgh"))
-        XCTAssertEqual(p("abceh"), .failure("Expected 'def'", "eh"))
-    }
 
-    func testRevStar() throws {
-         let p = string("abc") <* string("def")
-         XCTAssertEqual(p("abcdefgh"), .success("abc", "gh"))
-         XCTAssertEqual(p("abdefgh"), .failure("Expected 'abc'", "abdefgh"))
-         XCTAssertEqual(p("abceh"), .failure("Expected 'def'", "eh"))
-     }
 
     // Char and string combinators
 

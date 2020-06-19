@@ -2,36 +2,27 @@
 //
 // (C) Joe Watson 2020-06-11
 //
-// parser - DIY parser combinator library
+// parser - DIY parser combinator library.
+//
+// Modelled roughly on Megaparsec (Haskell). No backtracking
 
-// Revised version
-// * Tuple as type
-// * Non backtracking
-// * Try to do better error messages (start of parse that fails)
-// * All in on combinators
-// * Follow megaparsec
-
-// Combinators implements
-// Here     Haskell
+// Combinators implemented
+//
+// Here     Haskell (if different)
+//
 // <^>      <$>     Apply function to returned value
-// <*>      <*>             (need's a curried function)
-// <|>      <|>     Alternatives (no back-tracking). Return error from parser that consumed more
-// *>       *>      Combine parsers, discarding success value from first
-// <*       <*      Combine parsers, discarding success value from second
-// <^       <$      Replace value of success
-// <!>
-
-// <?> NYI   Same as Megaparsec <?>    Replace the lookingFor
-
-// Available operator character: / = - + ! * % < > & | ^ ~ ?
-
+// <*>              Combine arguments to use with a (curried) function
+// <|>              Alternatives (no back-tracking). Return error from parser that consumed more
+// *>               Combine parsers, discarding success value from first
+// <*               Combine parsers, discarding success value from second
+// <^               Replace value of success
+// <!       label   Replace value of failure
 // many
 // many1
 // manyTill
-// eof
 // optional
+// eof
 
-// why equatable?
 public typealias ParseResult<T> = Result<T, ParseError>
 public typealias Parser<T> = (ParseState) -> (ParseState, Result<T, ParseError>)
 
@@ -176,7 +167,7 @@ func <^ <T1, T2> (_ t: T1, _ p2: @escaping Parser<T2>) -> Parser<T1> { {
 }
 
 // Change the error label of the given parser
-infix operator <!>: AdditionPrecedence
+infix operator <!: AdditionPrecedence
 func <!> <T> (_ s: String, p: @escaping Parser<T>) -> Parser<T> { {
     (state: ParseState) -> (ParseState, ParseResult<T>) in
         let (updatedState, r) = p(state)
