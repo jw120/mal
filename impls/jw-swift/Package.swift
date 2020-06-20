@@ -3,18 +3,19 @@
 
 import PackageDescription
 
-let package = Package(
+/// Package for SwiftPM
+public let package = Package(
     name: "jw-swift",
     products: [
         .executable(name: "step0_repl", targets: ["step0_repl"]),
         .executable(name: "step1_read_print", targets: ["step1_read_print"]),
-        .library(name: "mal", targets: ["mal"]),
+        .library(name: "mal", targets: ["mal"])
     ],
     dependencies: [],
     targets: [
         .target(name: "step0_repl", dependencies: []),
         .target(name: "step1_read_print", dependencies: ["mal"]),
         .target(name: "mal", dependencies: []),
-        .testTarget(name: "malTests", dependencies: ["mal"]),
+        .testTarget(name: "malTests", dependencies: ["mal"])
     ]
 )

@@ -1,6 +1,10 @@
 TODO - Parser a la Haskell
 
-Next - get parser and reader to pass full set of tests
+Swiftlint
+Source formatting?
+Get step 1 done
+Back to main branch
+
 
 - Makefile - to run step-tests
 - Makefile - to Build from command line

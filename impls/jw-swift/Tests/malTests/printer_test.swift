@@ -4,16 +4,14 @@
 //
 // printer_tests - tests for the printer module
 
-import XCTest
 import mal
+import XCTest
 
-class PrinterTests: XCTestCase {
-
-    func testPrStr() throws {
+public class PrinterTests: XCTestCase {
+    public func testPrStr() throws {
         XCTAssertEqual(pr_str(.int(23)), "23")
         XCTAssertEqual(pr_str(.list([])), "()")
         XCTAssertEqual(pr_str(.list([.int(2)])), "(2)")
         XCTAssertEqual(pr_str(.list([.int(2), .int(3)])), "(2 3)")
     }
-
 }

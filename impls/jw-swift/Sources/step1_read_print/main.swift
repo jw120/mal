@@ -6,15 +6,15 @@
 
 import mal
 
-func READ(_ input: String) -> ReadResult {
+internal func READ(_ input: String) -> ReadResult {
     read_str(input)
 }
 
-func EVAL(_ ast: Mal) -> Mal {
+internal func EVAL(_ ast: Mal) -> Mal {
     ast
 }
 
-func PRINT(_ ast: Mal) -> String {
+internal func PRINT(_ ast: Mal) -> String {
     pr_str(ast)
 }
 

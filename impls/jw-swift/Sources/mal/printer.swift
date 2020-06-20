@@ -4,6 +4,7 @@
 //
 // printer - convert an AST to a string
 
+/// Return a string representation of the given Mal value
 public func pr_str(_ ast: Mal, readable: Bool = false) -> String {
     switch ast {
     case .int(let i):

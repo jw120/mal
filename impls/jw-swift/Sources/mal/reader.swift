@@ -11,29 +11,32 @@ public enum ReadResult: Equatable {
     case err(String)
     case nothing
 
-    func isErr() -> Bool {
+    public func isErr() -> Bool {
         switch self {
         case .err:
             return true
         default:
             return false
-         }
-     }
+        }
+    }
 }
 
+/// Attempt to convert the String into a Mal value. May return an error if
+/// the input is mal-formed or nothing if there is nothing there (except
+/// Mal white space or comments)
 public func read_str(_ s: String) -> ReadResult {
-
     // Remove leading spaces/comments (and give up if nothing to parse)
     let (state, _) = malSpaceConsumer(ParseState(Substring(s)))
-    if (state.input.isEmpty) {
+    if state.input.isEmpty {
         return .nothing
     }
 
-    switch expr(state) {
-    case (_, .failure(let e)):
+    let (updatedState, result) = expr(state)
+    switch result {
+    case failure(let e):
         return .err("\(e.label) at \(e.state.row),\(e.state.col)")
-    case (let updatedState, .success(let val)):
-        if (updatedState.input.isEmpty) {
+    case .success(let val):
+        if updatedState.input.isEmpty {
             return .value(val)
         } else {
             return .err("Unexpected leftovers at \(updatedState.row),\(updatedState.col)")
@@ -44,7 +47,7 @@ public func read_str(_ s: String) -> ReadResult {
 // Handle white-space
 
 fileprivate func isMalWhitespace(_ c: Character) -> Bool {
-    return c.isWhitespace || c == ","
+    c.isWhitespace || c == ","
 }
 
 fileprivate let malWhitespace: Parser<Void> =
@@ -62,14 +65,16 @@ fileprivate func lex<T>(_ p: @escaping Parser<T>) -> Parser<T> {
 
 // Top-level parser
 
-// Defining as a function rather than with let as mutually recursive lets seem to kill swift
+/// Parser that matches a Mal expression
 public func expr(_ state: ParseState) -> (ParseState, ParseResult<Mal>) {
+    // Defining as a function rather than with let as mutually recursive lets seem to kill swift
     let p = int <|> list  <|> vector <|> hashmap <|> str <|> sym
     return p(state)
 }
 
 // Integer parser
 
+/// Parser that matches a Mal integer
 public let int: Parser<Mal> =
     lex(intCombine <^> negativeSign <*> many1(digit))
 
@@ -94,18 +99,21 @@ fileprivate func intCombine(_ negative: Character?) -> ([Character]) -> Mal { {
 
 // Collection parsers
 
+/// Parser that matches a Mal list
 public let list: Parser<Mal> =
-    lex({xs in .list(xs)} <^> (lex(char("(")) *> many(expr) <* lex(char(")"))))
+    lex({ xs in .list(xs) } <^> (lex(char("(")) *> many(expr) <* lex(char(")"))))
 
+/// Parser that matches a Mal vector
 public let vector: Parser<Mal> =
-    lex({xs in .vec(xs)} <^> (lex(char("[")) *> many(expr) <* lex(char("]"))))
+    lex({ xs in .vec(xs) } <^> (lex(char("[")) *> many(expr) <* lex(char("]"))))
 
+/// Parser that matches a Mal hashmap
 public let hashmap: Parser<Mal> =
-    lex({xs in .hashmap(xs)} <^> (lex(char("{")) *> many(expr) <* lex(char("}"))))
-
+    lex({ xs in .hashmap(xs) } <^> (lex(char("{")) *> many(expr) <* lex(char("}"))))
 
 // Symbol parser
 
+/// Parser that matches a Mal symbol
 public let sym: Parser<Mal> =
     lex(symCombine <^> many1(satisfy(isNormalChar)))
 
@@ -129,7 +137,6 @@ fileprivate func symCombine(_ cs: [Character]) -> Mal {
 
 // String parser
 
+/// Parser that matches a Mal string
 public let str: Parser<Mal> =
-    lex({cs in .str(String(cs))} <^> (char("\"") *> manyTill(anyChar, char("\""))))
-
-
+    lex({ cs in .str(String(cs)) } <^> (char("\"") *> manyTill(anyChar, char("\""))))

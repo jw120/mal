@@ -4,19 +4,19 @@
 //
 // step 0 - basic repl
 
-func READ(_ input: String) -> String {
+internal func READ(_ input: String) -> String {
     input
 }
 
-func EVAL(_ ast: String) -> String {
+internal func EVAL(_ ast: String) -> String {
     ast
 }
 
-func PRINT(_ ast: String) -> String {
+internal func PRINT(_ ast: String) -> String {
     ast
 }
 
-func rep(_ s: String) -> String {
+internal func rep(_ s: String) -> String {
     PRINT(EVAL(READ(s)))
 }
 
