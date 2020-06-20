@@ -9,65 +9,108 @@ import mal
 
 class ReaderTests: XCTestCase {
 
-/*
-
-    func testReadStr() throws {
-        XCTAssertEqual(read_str("22"), ReadResult.value(.int(22)))
-        XCTAssert(read_str("(").isErr())
-        XCTAssertFalse(read_str("2").isErr())
-        XCTAssertEqual(read_str("  "), ReadResult.nothing)
-        XCTAssertEqual(read_str(""), ReadResult.nothing)
-    }
-
     func testExpr() throws {
-        XCTAssertEqual(expr("23QQ"), .success(.int(23), "QQ"))
-        XCTAssertEqual(expr("(2 3)Q"), .success(.list([.int(2), .int(3)]), "Q"))
-        XCTAssertEqual(expr("(+ 2 3)"), .success(.list([.sym("+"), .int(2), .int(3)]), ""))
-        XCTAssertEqual(expr("[0,1]"), .success(.vec([.int(0), .int(1)]), ""))
-    }
+        let (str1, res1) = s(expr(i("123q")))
+        XCTAssertEqual(str1, "q")
+        XCTAssertEqual(res1, .success(.int(123)))
+        let (str2, res2) = s(expr(i("(2)qq")))
+        XCTAssertEqual(str2, "qq")
+        XCTAssertEqual(res2, .success(.list([.int(2)])))
+        let (str0, msg0) = f(expr(i("")))
+        XCTAssertEqual(str0, "")
+        XCTAssertEqual(msg0, "Expected one of multiple alternatives")
+      }
 
     func testInt() throws {
-        XCTAssertEqual(int("42"), .success(.int(42), ""))
-        XCTAssertEqual(int("-42"), .success(.int(-42), ""))
-        XCTAssertEqual(int("Q2"), .failure("Expected an integer", "Q2"))
-        XCTAssertEqual(int(""), .failure("Expected an integer", ""))
-    }
+        let (str1, res1) = s(int(i("123  ,q")))
+        XCTAssertEqual(str1, "q")
+        XCTAssertEqual(res1, .success(.int(123)))
+        let (str2, res2) = f(int(i("q")))
+        XCTAssertEqual(str2, "q")
+        XCTAssertEqual(res2, "Expected a digit")
+        let (str3, res3) = f(int(i("")))
+        XCTAssertEqual(str3, "")
+        XCTAssertEqual(res3, "Expected a digit")
+        let (str4, res4) = s(int(i("-12Q")))
+        XCTAssertEqual(str4, "Q")
+        XCTAssertEqual(res4, .success(.int(-12)))
+     }
 
     func testList() throws {
-//        XCTAssertEqual((spaces *> int)("  23"), .success(.int(23), ""))
-//        XCTAssertEqual(expr(Substring("  23")), .success(.int(23), ""))
-//        XCTAssertEqual(many(spaces *> int)("  23"), .success([.int(23)], ""))
-//        XCTAssertEqual(many(spaces *> int)("  23 -45"), .success([.int(23), .int(-45)], ""))
-//        XCTAssertEqual(many(expr)("  23 45"), .success([.int(23), .int(45)], ""))
+        let (str1, res1) = s(list(i("(2 3)q")))
+        XCTAssertEqual(str1, "q")
+        XCTAssertEqual(res1, .success(.list([.int(2), .int(3)])))
+        let (str2, res2) = s(list(i("()Q")))
+        XCTAssertEqual(str2, "Q")
+        XCTAssertEqual(res2, .success(.list([])))
+        let (str3, res3) = f(list(i("(2")))
+        XCTAssertEqual(str3, "")
+        XCTAssertEqual(res3, "Expected ')'")
+        let (str4, res4) = f(list(i("")))
+        XCTAssertEqual(str4, "")
+        XCTAssertEqual(res4, "Expected '('")
+      }
 
-        XCTAssertEqual(list("(2 3)Q"), .success(.list([.int(2), .int(3)]), "Q"))
-        XCTAssertEqual(list("( 2   3 4 )Q"), .success(.list([.int(2), .int(3), .int(4)]), "Q"))
-        XCTAssertEqual(list("()Z"), .success(.list([]), "Z"))
-        XCTAssertEqual(list("(2 (3 4) 5)Z"), .success(.list([.int(2), .list([.int(3), .int(4)]), .int(5)]), "Z"))
+    func testVector() throws {
+        let (str1, res1) = s(vector(i("[2 3,4]q")))
+        XCTAssertEqual(str1, "q")
+        XCTAssertEqual(res1, .success(.vec([.int(2), .int(3), .int(4)])))
+        let (str2, res2) = s(vector(i("[]Q")))
+        XCTAssertEqual(str2, "Q")
+        XCTAssertEqual(res2, .success(.vec([])))
+        let (str3, res3) = f(vector(i("[2")))
+        XCTAssertEqual(str3, "")
+        XCTAssertEqual(res3, "Expected ']'")
+        let (str4, res4) = f(vector(i("")))
+        XCTAssertEqual(str4, "")
+        XCTAssertEqual(res4, "Expected '['")
     }
 
-    func testVec() throws {
-        XCTAssertEqual(vector("[2 3]Q"), .success(.vec([.int(2), .int(3)]), "Q"))
-        XCTAssertEqual(vector("[ 2   3,4 ]Q"), .success(.vec([.int(2), .int(3), .int(4)]), "Q"))
-        XCTAssertEqual(vector("[]Z"), .success(.vec([]), "Z"))
-        XCTAssertEqual(vector("[2 (3 4) 5]Z"), .success(.vec([.int(2), .list([.int(3), .int(4)]), .int(5)]), "Z"))
-    }
+    func testHashmap() throws {
+         let (str1, res1) = s(hashmap(i("{2 3}q")))
+         XCTAssertEqual(str1, "q")
+         XCTAssertEqual(res1, .success(.hashmap([.int(2), .int(3)])))
+         let (str2, res2) = s(hashmap(i("{}Q")))
+         XCTAssertEqual(str2, "Q")
+         XCTAssertEqual(res2, .success(.hashmap([])))
+         let (str3, res3) = f(hashmap(i("{2 3")))
+         XCTAssertEqual(str3, "")
+         XCTAssertEqual(res3, "Expected '}'")
+         let (str4, res4) = f(hashmap(i("")))
+         XCTAssertEqual(str4, "")
+         XCTAssertEqual(res4, "Expected '{'")
+     }
 
-    func testHash() throws {
-        XCTAssertEqual(hashmap("{2 3}Q"), .success(.hashmap([.int(2), .int(3)]), "Q"))
-        XCTAssertEqual(hashmap("{}Z"), .success(.hashmap([]), "Z"))
-        XCTAssertEqual(hashmap("{2 {3 4}}Z"), .success(.hashmap([.int(2), .hashmap([.int(3), .int(4)])]), "Z"))
-    }
 
-    func testSym() {
-        XCTAssertEqual(symbol("true"), .success(.bool(true), ""))
-        XCTAssertEqual(symbol("false"), .success(.bool(false), ""))
-        XCTAssertEqual(symbol("nil"), .success(.null, ""))
-        XCTAssertEqual(symbol("+"), .success(.sym("+"), ""))
-        XCTAssertEqual(symbol("-"), .success(.sym("-"), ""))
-        XCTAssertEqual(symbol("abc"), .success(.sym("abc"), ""))
-    }
+    func testSymbol() throws {
+         let (str1, res1) = s(sym(i("abc q")))
+         XCTAssertEqual(str1, "q")
+         XCTAssertEqual(res1, .success(.sym("abc")))
+         let (str2, _) = f(sym(i("()")))
+         XCTAssertEqual(str2, "()")
+         let (str3, res3) = s(sym(i("true")))
+         XCTAssertEqual(str3, "")
+        XCTAssertEqual(res3, .success(.bool(true)))
+         let (str4, res4) = s(sym(i("false")))
+         XCTAssertEqual(str4, "")
+        XCTAssertEqual(res4, .success(.bool(false)))
+         let (str5, res5) = s(sym(i("nil")))
+         XCTAssertEqual(str5, "")
+        XCTAssertEqual(res5, .success(.null))
+      }
 
-*/
+    func testString() throws {
+         let (str1, res1) = s(str(i("\"abc\" q")))
+         XCTAssertEqual(str1, "q")
+         XCTAssertEqual(res1, .success(.str("abc")))
+         let (str2, _) = f(str(i("()")))
+         XCTAssertEqual(str2, "()")
+         let (str3, _) = f(str(i("")))
+         XCTAssertEqual(str3, "")
+         let (str4, _) = f(str(i("\"")))
+         XCTAssertEqual(str4, "")
+      }
+
+
 
 }

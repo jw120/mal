@@ -35,8 +35,6 @@
 //
 // lexeme
 
-
-
 public typealias ParseResult<T> = Result<T, ParseError>
 public typealias Parser<T> = (ParseState) -> (ParseState, Result<T, ParseError>)
 

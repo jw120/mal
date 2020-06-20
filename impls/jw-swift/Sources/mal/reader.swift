@@ -41,127 +41,95 @@ public func read_str(_ s: String) -> ReadResult {
     }
 }
 
-internal func isMalWhitespace(_ c: Character) -> Bool {
-    c.isWhitespace || c == ","
+// Handle white-space
+
+fileprivate func isMalWhitespace(_ c: Character) -> Bool {
+    return c.isWhitespace || c == ","
 }
-internal let malWhitespace: Parser<Void> = "Expected whitespace" <! () <^ satisfy(isMalWhitespace)
-internal let comment: Parser<Void> = char(";") *> (() <^ manyTill(anyChar, eol <|> eof))
-internal let malSpaceConsumer: Parser<Void> = () <^ many(malWhitespace <|> comment)
-internal func lex<T>(_ p: @escaping Parser<T>) -> Parser<T> {
+
+fileprivate let malWhitespace: Parser<Void> =
+    "Expected whitespace" <! () <^ satisfy(isMalWhitespace(_:))
+
+fileprivate let comment: Parser<Void> =
+    "Expected a comment" <! char(";") *> (() <^ manyTill(anyChar, eol <|> eof))
+
+fileprivate let malSpaceConsumer: Parser<Void> = () <^ many(malWhitespace <|> comment)
+
+// Wraps a parser so it skips trailing white space (including comments)
+fileprivate func lex<T>(_ p: @escaping Parser<T>) -> Parser<T> {
     lexeme(p, spaceConsumer: malSpaceConsumer)
 }
 
-public let expr: Parser<Mal> = lex(int) // <|> list <|> vector <|> hashmap <|> string <|> symbol)
+// Top-level parser
 
-public let int: Parser<Mal> = lex(intCombine <^> negativeSign <*> many1(digit))
-internal let negativeSign: Parser<Character?> = optional(char("-"))
-internal let digit: Parser<Character> = "Expected a digit" <! satisfy { c in c.isASCII && c.isNumber }
-internal func intCombine(_ negative: Character?) -> ([Character]) -> Mal {
-    {
-        switch (negative, Int(String($0))) {
+// Defining as a function rather than with let as mutually recursive lets seem to kill swift
+public func expr(_ state: ParseState) -> (ParseState, ParseResult<Mal>) {
+    let p = int <|> list  <|> vector <|> hashmap <|> str <|> sym
+    return p(state)
+}
+
+// Integer parser
+
+public let int: Parser<Mal> =
+    lex(intCombine <^> negativeSign <*> many1(digit))
+
+fileprivate let negativeSign: Parser<Character?> =
+    optional(char("-"))
+
+fileprivate let digit: Parser<Character> =
+    "Expected a digit" <! satisfy { c in c.isASCII && c.isNumber }
+
+fileprivate func intCombine(_ negative: Character?) -> ([Character]) -> Mal { {
+    (cs: [Character]) -> Mal in
+        switch (negative, Int(String(cs))) {
         case (.none, .some(let val)):
             return .int(val)
         case (.some, .some(let val)):
             return .int(-val)
         case (_, .none):
-            fatalError("Internal error - digits should be an int")
+            fatalError("fileprivate error - digits should be an int")
         }
     }
 }
 
-/*
+// Collection parsers
 
-public func list(_ input: Substring) -> (Substring, Result<Mal, ParseError>) {
+public let list: Parser<Mal> =
+    lex({xs in .list(xs)} <^> (lex(char("(")) *> many(expr) <* lex(char(")"))))
 
-    func combine(_ xs: [Mal]) -> Mal {
-        .list(xs)
-    }
-    let opener = lex(char("("))
-    let closer = lex(char(")"))
-    let p: Parser<Mal> = combine <^> (opener *> many(expr) <* closer)
+public let vector: Parser<Mal> =
+    lex({xs in .vec(xs)} <^> (lex(char("[")) *> many(expr) <* lex(char("]"))))
 
-    return p(input)
+public let hashmap: Parser<Mal> =
+    lex({xs in .hashmap(xs)} <^> (lex(char("{")) *> many(expr) <* lex(char("}"))))
+
+
+// Symbol parser
+
+public let sym: Parser<Mal> =
+    lex(symCombine <^> many1(satisfy(isNormalChar)))
+
+fileprivate func isNormalChar(_ c: Character) -> Bool {
+    !isMalWhitespace(c) && !"[]{}()'`~^@".contains(c)
 }
 
-public func vector(_ s: Substring) -> ParseResult<Mal> {
-    let p1 = char("[") *> many(expr)
-    switch p1(s) {
-    case .failure(let msg, let remaining):
-        return .failure(msg, remaining)
-    case .success(let xs, let remaining):
-        let p2 = spaces *> char("]")
-        switch p2(remaining) {
-        case .success(_, let final):
-            return .success(Mal.vec(xs), final)
-        case .failure(_, let final):
-            return .failure("Square brackets unbalanced", final)
-        }
-    }
-}
-
-public func hashmap(_ s: Substring) -> ParserResult<Mal> {
-    let p1 = char("{") *> many(expr)
-    switch p1(s) {
-    case .failure(let msg, let remaining):
-        return .failure(msg, remaining)
-    case .success(let xs, let remaining):
-        let p2 = spaces *> char("}")
-        switch p2(remaining) {
-        case .success(_, let final):
-            return .success(Mal.hashmap(xs), final)
-        case .failure(_, let final):
-            return .failure("Square brackets unbalanced", final)
-        }
+fileprivate func symCombine(_ cs: [Character]) -> Mal {
+    let symStr = String(cs)
+    switch symStr {
+    case "true":
+        return .bool(true)
+    case "false":
+        return .bool(false)
+    case "nil":
+        return .null
+    default:
+        return .sym(symStr)
     }
 }
 
-public func symbol(_ s: Substring) -> ParserResult<Mal> {
+// String parser
 
-    let specials =  "[]{}()'`~^@"
+public let str: Parser<Mal> =
+    lex({cs in .str(String(cs))} <^> (char("\"") *> manyTill(anyChar, char("\""))))
 
-    func isNormal(_ c: Character) -> Bool {
-        !isMalSpace(c) && !specials.contains(c)
-    }
 
-    let p: Parser<[Character]> = many1(satisfy(isNormal))
-    switch p(s) {
-    case .success(let symChars, let rest):
-        let symStr = String(symChars)
-        switch symStr {
-        case "true":
-            return .success(.bool(true), rest)
-        case "false":
-            return .success(.bool(false), rest)
-        case "nil":
-            return .success(.null, rest)
-        default:
-            return .success(.sym(symStr), rest)
-        }
-    case .failure(let msg, let rest):
-        return .failure(msg, rest)
-    }
-
-}
-
-public func string(_ s: Substring) -> ParserResult<Mal> {
-
-    func notDoubleQuote(_ c: Character) -> Bool {
-        c != "\""
-    }
-
-    let p = char("\"") *> many(satisfy(notDoubleQuote))
-    switch p(s) {
-    case .failure(let msg, let rest):
-        return .failure(msg, rest)
-    case .success(let contents, let rest):
-        switch char("\"")(rest) {
-        case .success(_, let final):
-            return .success(.str(String(contents)), final)
-        case .failure(_, let final):
-            return .failure("Double quotes unbalanced", final)
-        }
-    }
-
-}
-
- */
