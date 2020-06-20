@@ -44,7 +44,7 @@ public func read_str(_ s: String) -> ReadResult {
 internal func isMalWhitespace(_ c: Character) -> Bool {
     c.isWhitespace || c == ","
 }
-internal let malWhitespace: Parser<Void> = "Expected whitespace" <!> () <^ satisfy(isMalWhitespace)
+internal let malWhitespace: Parser<Void> = "Expected whitespace" <! () <^ satisfy(isMalWhitespace)
 internal let comment: Parser<Void> = char(";") *> (() <^ manyTill(anyChar, eol <|> eof))
 internal let malSpaceConsumer: Parser<Void> = () <^ many(malWhitespace <|> comment)
 internal func lex<T>(_ p: @escaping Parser<T>) -> Parser<T> {
@@ -55,7 +55,7 @@ public let expr: Parser<Mal> = lex(int) // <|> list <|> vector <|> hashmap <|> s
 
 public let int: Parser<Mal> = lex(intCombine <^> negativeSign <*> many1(digit))
 internal let negativeSign: Parser<Character?> = optional(char("-"))
-internal let digit: Parser<Character> = "Expected a digit" <!> satisfy { c in c.isASCII && c.isNumber }
+internal let digit: Parser<Character> = "Expected a digit" <! satisfy { c in c.isASCII && c.isNumber }
 internal func intCombine(_ negative: Character?) -> ([Character]) -> Mal {
     {
         switch (negative, Int(String($0))) {

@@ -7,84 +7,94 @@
 import XCTest
 import mal
 
+struct HelperError: Error { }
+
 // Helper function to create a new ParseState
-func i(_ s: String) -> ParseState { ParseState(s) }
+func i(_ s: String) -> ParseState { ParseState(Substring(s)) }
 
-// Helper function to convert succeeding ParseState in result to a string
-func s<T>(_ (s, r): (ParseState, ParseResult<T>)) -> T {
-    switch r {
-    case .success(let val):
-        if s.input == "" {
-            return (s.input, val)
-        } else {
-            throw "Leftovers"
-        }
-    case .failure()
-        throw "Expected success"
-    }
+// Helper function to convert succeeding output in to a tuple
+func s<T>(_ output: (ParseState, ParseResult<T>)) -> (String, ParseResult<T>) {
+    let (state, result) = output
+    return (String(state.input), result)
 }
 
-// Helper function to convert succeeding ParseState in result to a string with leftovers
-func sl<T>(_ (s, r): (ParseState, ParseResult<T>)) -> (String, T) {
-    switch r {
+// Helper function to convert failing ParseState to a string tuple
+func f<T>(_ output: (ParseState, ParseResult<T>)) -> (String, String) {
+    let (state, result) = output
+    switch result {
     case .success(let val):
-        return (s.input, val)
-    case .failure()
-        throw "Expected success"
-    }
-}
-
-
-// Helper function to convert failing ParseState in result to a simple string pair
-func f<T>(_ (s, r): (ParseState, ParseResult<T>)) -> (String, String) {
-    switch r {
-    case .success:
-        throw "Expected failure"
-    case .failure(let e)
-        guard s == e.state else {
-            throw "Mismatched states"
-        }
-        return (s.input, e.label)
+        return (String(state.input), "Unexpected success '\(val)'")
+    case .failure(let e):
+        return (String(state.input), e.label)
     }
 }
 
 class ParserTests: XCTestCase {
 
     func testAdvance() throws {
-        XCTAssertEqual(string("abc")(i("abcde")), .(ParseState("de", row: 0, col: 3), .success("abc")))
-        XCTAssertEqual(string("a\nc")(i("a\ncde")), .(ParseState("de", row: 1, col: 1), .success("a\nc")))
+        let (state1, result1) = string("abc")(i("abcde"))
+        XCTAssertEqual(state1, ParseState("de", row: 0, col: 3))
+        XCTAssertEqual(result1, .success("abc"))
+        let (state2, result2) = string("a\nc")(i("a\ncde"))
+        XCTAssertEqual(state2, ParseState("de", row: 1, col: 1))
+        XCTAssertEqual(result2, .success("a\nc"))
+
     }
 
     func testApply() throws {
-        func addPling(_ s: String) { s + "!"}
+        func addPling(_ s: String) -> String { s + "!"}
         let p = addPling <^> string("abc")
-        XCTAssertEqual(s(p("abc")), "abc!")
-        XCTAssertEqual(f(p("xyz")), "Expected \'abc\'")
+        let (str1, res1) = s(p(i("abcQQ")))
+        XCTAssertEqual(str1, "QQ")
+        XCTAssertEqual(res1, .success("abc!"))
+        let (str2, err2) = f(p(i("xyzQQ")))
+        XCTAssertEqual(str2, "xyzQQ")
+        XCTAssertEqual(err2, "Expected \'abc\'")
     }
 
     func testChoice() throws {
-        let choice3: Parser<String> = string("abc") <|> string("def") <|> string("axe")
-        XCTAssertEqual(s(choice3("abc")), "abc")
-        XCTAssertEqual(s(choice3("def")), "def")
-        XCTAssertEqual(sl(choice3("axe!!")), ("!!", "axe"))
-        XCTAssertEqual(f(choice3("pqr")), ("pqr", "Expected one of multiple choices"))
+        let p: Parser<String> = string("abc") <|> string("def") <|> string("axe")
+        let (str1, res1) = s(p(i("abcZZ")))
+        XCTAssertEqual(str1, "ZZ")
+        XCTAssertEqual(res1, .success("abc"))
+        let (str2, res2) = s(p(i("defZZZ")))
+        XCTAssertEqual(str2, "ZZZ")
+        XCTAssertEqual(res2, .success("def"))
+        let (str3, res3) = s(p(i("axe!!")))
+        XCTAssertEqual(str3, "!!")
+        XCTAssertEqual(res3, .success("axe"))
+        let (str4, err4) = f(p(i("ABC")))
+        XCTAssertEqual(str4, "ABC")
+        XCTAssertEqual(err4, "Expected one of multiple alternatives")
     }
 
    func testStar() throws {
         let p = string("abc") *> string("def")
-        XCTAssertEqual(sl(p("abcdefgh")), ("gh", "def"))
-        XCTAssertEqual(f("abdefgh"), "Expected 'abc'")
-        XCTAssertEqual(f("abceh"), "Expected 'def'")
+        let (str1, res1) = s(p(i("abcdefg")))
+        XCTAssertEqual(str1, "g")
+        XCTAssertEqual(res1, .success("def"))
+        let (str2, err2) = f(p(i("abXdef")))
+        XCTAssertEqual(str2, "abXdef")
+        XCTAssertEqual(err2, "Expected 'abc'")
+        let (str3, err3) = f(p(i("abcdeX")))
+        XCTAssertEqual(str3, "deX")
+        XCTAssertEqual(err3, "Expected 'def'")
     }
 
     func testRevStar() throws {
          let p = string("abc") <* string("def")
-         XCTAssertEqual(sl(p("abcdefgh")), ("gh", "abc"))
-         XCTAssertEqual(f(p("abdefgh")), "Expected 'abc'", "abdefgh")
-         XCTAssertEqual(f(p("abceh")), "Expected 'def'")
+         let (str1, res1) = s(p(i("abcdefg")))
+         XCTAssertEqual(str1, "g")
+         XCTAssertEqual(res1, .success("abc"))
+         let (str2, err2) = f(p(i("abXdef")))
+         XCTAssertEqual(str2, "abXdef")
+         XCTAssertEqual(err2, "Expected 'abc'")
+         let (str3, err3) = f(p(i("abcdeX")))
+         XCTAssertEqual(str3, "deX")
+         XCTAssertEqual(err3, "Expected 'def'")
      }
 
-/ <^>      <$>     Apply function to returned value
+// <^>      <$>     Apply function to returned value
 // <*>              Combine arguments to use with a (curried) function
 // <|>              Alternatives (no back-tracking). Return error from parser that consumed more
 // *>               Combine parsers, discarding success value from first
@@ -96,6 +106,8 @@ class ParserTests: XCTestCase {
 // manyTill
 // optional
 // eof
+
+/*
 
     func testMany() throws {
         XCTAssertEqual(many(char("a"))("aaabc"), .success(["a", "a", "a"], "bc"))
@@ -178,5 +190,7 @@ class ParserTests: XCTestCase {
         XCTAssertEqual(p("abc"), .success("a", "bc"))
         XCTAssertEqual(p("1abc"), .failure("Expectation not satisfied", "1abc"))
     }
+
+ */
 
 }

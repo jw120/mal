@@ -9,6 +9,8 @@ import mal
 
 class ReaderTests: XCTestCase {
 
+/*
+
     func testReadStr() throws {
         XCTAssertEqual(read_str("22"), ReadResult.value(.int(22)))
         XCTAssert(read_str("(").isErr())
@@ -65,5 +67,7 @@ class ReaderTests: XCTestCase {
         XCTAssertEqual(symbol("-"), .success(.sym("-"), ""))
         XCTAssertEqual(symbol("abc"), .success(.sym("abc"), ""))
     }
+
+*/
 
 }
