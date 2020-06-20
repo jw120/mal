@@ -22,6 +22,20 @@
 // manyTill
 // optional
 // eof
+//
+// Basic string and character parsers
+//
+// char
+// anyChar
+// string
+// satisfy
+// eol
+//
+// Lex helper
+//
+// lexeme
+
+
 
 public typealias ParseResult<T> = Result<T, ParseError>
 public typealias Parser<T> = (ParseState) -> (ParseState, Result<T, ParseError>)
@@ -268,16 +282,6 @@ public func eof(_ state: ParseState) -> (ParseState, ParseResult<Void>) {
 }
 
 //
-// Lex helpers
-//
-
-// Make the given parser ignore any trailing space (as defined by the spaceConsumer parser, which
-// should not fail on empty input)
-public func lexeme<T, U>(_ p: @escaping Parser<T>, spaceConsumer: @escaping Parser<U>) -> Parser<T> {
-    p <* spaceConsumer
-}
-
-//
 // Character and string parsers
 //
 
@@ -318,4 +322,15 @@ public func satisfy(_ f: @escaping (Character) -> Bool) -> Parser<Character> { {
     }
 }
 
-public let eol: Parser<Void> = () <^ satisfy {c in c.isNewline }
+public let eol: Parser<Void> = "Expected end of line" <! () <^ satisfy {c in c.isNewline }
+
+//
+// Lex helpers
+//
+
+// Make the given parser ignore any trailing space (as defined by the spaceConsumer parser, which
+// should not fail on empty input)
+public func lexeme<T, U>(_ p: @escaping Parser<T>, spaceConsumer: @escaping Parser<U>) -> Parser<T> {
+    p <* spaceConsumer
+}
+

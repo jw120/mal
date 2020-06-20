@@ -207,58 +207,80 @@ class ParserTests: XCTestCase {
         XCTAssertEqual(msg2, "Expected EOF")
     }
 
-/*
-
-
-
-
-
-
-    // Char and string combinators
-
     func testChar() throws {
-        XCTAssertEqual(char("z")("zoo"), .success("z", "oo"))
-        XCTAssertEqual(char("z")("zoo"), .success("z", "oo"))
-        XCTAssertEqual(char("z")("abc"), .failure("Expected 'z'", "abc"))
-        XCTAssertEqual(char("z")(""), .failure("Expected 'z'", ""))
-        XCTAssertEqual(char("a")("azoo"), .success("a", "zoo"))
-        XCTAssertEqual(char("a")("zabc"), .failure("Expected 'a'", "zabc"))
-        XCTAssertEqual(char("a")(""), .failure("Expected 'a'", ""))
+        let p = char("z")
+        let (str1, res1) = s(p(i("zq")))
+        XCTAssertEqual(str1, "q")
+        XCTAssertEqual(res1, .success("z"))
+        let (str2, res2) = f(p(i("q")))
+        XCTAssertEqual(str2, "q")
+        XCTAssertEqual(res2, "Expected 'z'")
+        let (str3, res3) = f(p(i("")))
+        XCTAssertEqual(str3, "")
+        XCTAssertEqual(res3, "Expected 'z'")
+    }
+
+    func testAnyChar() throws {
+        let (str1, res1) = s(anyChar(i("zq")))
+        XCTAssertEqual(str1, "q")
+        XCTAssertEqual(res1, .success("z"))
+        let (str2, res2) = f(anyChar(i("")))
+        XCTAssertEqual(str2, "")
+        XCTAssertEqual(res2, "Expected any character")
     }
 
     func testString() throws {
-        XCTAssertEqual(string("abc")("abcde"), .success("abc", "de"))
-        XCTAssertEqual(string("abc")("ab"), .failure("Expected 'abc'", "ab"))
-        XCTAssertEqual(string("abc")(""), .failure("Expected 'abc'", ""))
-    }
-
-    func testSpace() throws {
-        XCTAssertEqual(space(" a"), .success(" ", "a"))
-        XCTAssertEqual(space("\ta"), .success("\t", "a"))
-        XCTAssertEqual(space("\ra"), .success("\r", "a"))
-        XCTAssertEqual(space("\na"), .success("\n", "a"))
-        XCTAssertEqual(space("a"), .failure("Expected whitespace", "a"))
-        XCTAssertEqual(space(""), .failure("Expected whitespace", ""))
-    }
-
-    func testSpaces() throws {
-        XCTAssertEqual(spaces("   a"), .success("   ", "a"))
-        XCTAssertEqual(spaces("a"), .success("", "a"))
-        XCTAssertEqual(spaces(""), .success("", ""))
-    }
-
-    func testSpaces1() throws {
-        XCTAssertEqual(spaces1("   a"), .success("   ", "a"))
-        XCTAssertEqual(spaces1("a"), .failure("Expected whitespace", "a"))
-        XCTAssertEqual(spaces1(""), .failure("Expected whitespace", ""))
-    }
+         let p = string("abc")
+         let (str1, res1) = s(p(i("abccq")))
+         XCTAssertEqual(str1, "cq")
+         XCTAssertEqual(res1, .success("abc"))
+         let (str2, res2) = f(p(i("abq")))
+         XCTAssertEqual(str2, "abq")
+         XCTAssertEqual(res2, "Expected 'abc'")
+         let (str3, res3) = f(p(i("")))
+         XCTAssertEqual(str3, "")
+         XCTAssertEqual(res3, "Expected 'abc'")
+     }
 
     func testSatisfy() throws {
-        let p: Parser<Character> = satisfy { (c: Character) -> Bool in c.isLetter }
-        XCTAssertEqual(p("abc"), .success("a", "bc"))
-        XCTAssertEqual(p("1abc"), .failure("Expectation not satisfied", "1abc"))
+        let p = satisfy { c in c == "a"}
+        let (str1, res1) = s(p(i("aq")))
+        XCTAssertEqual(str1, "q")
+        XCTAssertEqual(res1, .success("a"))
+        let (str2, res2) = f(p(i("q")))
+        XCTAssertEqual(str2, "q")
+        XCTAssertEqual(res2, "Expectation not satisfied")
+        let (str3, res3) = f(p(i("")))
+        XCTAssertEqual(str3, "")
+        XCTAssertEqual(res3, "Expectation not satisfied")
+      }
+
+    func testEol() throws {
+        let (str1, res1) = s(eol(i("\nQ")))
+        XCTAssertEqual(str1, "Q")
+        switch res1 { // workaround as void is not Equatable so cant use XCTAssertEqual
+        case .success:
+            break
+        case .failure:
+            XCTFail("Expected success")
+        }
+        let (str2, msg2) = f(eol(i("Q")))
+        XCTAssertEqual(str2, "Q")
+        XCTAssertEqual(msg2, "Expected end of line")
+        let (str3, msg3) = f(eol(i("")))
+        XCTAssertEqual(str3, "")
+        XCTAssertEqual(msg3, "Expected end of line")
+
     }
 
- */
+    func testLexeme() throws {
+        let p = lexeme(string("abc"), spaceConsumer: many(char(" ") <|> char(",")))
+        let (str1, res1) = s(p(i("abc  ,,Q")))
+        XCTAssertEqual(str1, "Q")
+        XCTAssertEqual(res1, .success("abc"))
+        let (str2, res2) = f(p(i("q")))
+        XCTAssertEqual(str2, "q")
+        XCTAssertEqual(res2, "Expected 'abc'")
+    }
 
 }
