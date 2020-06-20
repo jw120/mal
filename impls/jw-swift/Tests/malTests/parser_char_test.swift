@@ -8,7 +8,7 @@ import mal
 import XCTest
 
 public class ParserCharTests: XCTestCase {
-    public public func testChar() throws {
+    public func testChar() throws {
         let p = char("z")
         let (str1, res1) = s(p(i("zq")))
         XCTAssertEqual(str1, "q")

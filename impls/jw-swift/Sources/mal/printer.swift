@@ -20,12 +20,27 @@ public func pr_str(_ ast: Mal, readable: Bool = false) -> String {
     case .null:
         return "nil"
     case .str(let val):
-        return "\"" + val + "\""
+        return "\"" + (readable ? escape(val) : val) + "\""
     case .sym(let val):
         return val
     }
 }
 
-private func join_between(_ xs: [String], open: String, close: String) -> String {
+fileprivate func escape(_ s: String) -> String {
+    var newS: String = ""
+    for c in s {
+        if c == "\n" {
+            newS.append("\\n")
+        } else {
+            if c == "\\"  || c == "\"" {
+                newS.append("\\")
+            }
+            newS.append(c)
+        }
+    }
+    return newS
+}
+
+fileprivate func join_between(_ xs: [String], open: String, close: String) -> String {
     open + xs.joined(separator: " ") + close
 }

@@ -38,7 +38,7 @@ public class ParserTests: XCTestCase {
     }
 
     public func testApply() throws {
-        public func addPling(_ s: String) -> String { s + "!" }
+        func addPling(_ s: String) -> String { s + "!" }
         let p = addPling <^> string("abc")
         let (str1, res1) = s(p(i("abcQQ")))
         XCTAssertEqual(str1, "QQ")
@@ -169,12 +169,10 @@ public class ParserTests: XCTestCase {
         let (str2, res2) = s(p(i("]Q")))
         XCTAssertEqual(str2, "Q")
         XCTAssertEqual(res2, .success([]))
-        let (str3, res3) = s(p(i("abc")))
+        let (str3, _) = f(p(i("abc")))
         XCTAssertEqual(str3, "")
-        XCTAssertEqual(res3, .success(["a", "b", "c"]))
-        let (str4, res4) = s(p(i("")))
+        let (str4, _) = f(p(i("")))
         XCTAssertEqual(str4, "")
-        XCTAssertEqual(res4, .success([]))
     }
 
     public func testOptional() throws {
@@ -199,5 +197,11 @@ public class ParserTests: XCTestCase {
         let (str2, msg2) = f(eof(i("Q")))
         XCTAssertEqual(str2, "Q")
         XCTAssertEqual(msg2, "Expected EOF")
+    }
+
+    public func testAttempt() throws {
+        let p = attempt(char("a") *> char("b"))
+        let (str1, _) = f(p(i("aQ")))
+        XCTAssertEqual(str1, "aQ")
     }
 }

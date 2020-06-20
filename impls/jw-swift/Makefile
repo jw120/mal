@@ -15,7 +15,7 @@ lint:
 run:
 	-@$(TARGET_DIR)/step1_read_print
 
-step-test: $(TARGET_DIR)/mal
+step-test:
 	-@echo step 0; cd ../..; make "test^jw-swift^step0" | grep "failing tests"
 	-@echo step 1; cd ../..; make "test^jw-swift^step1" | grep "failing tests"
 #	-@echo step 2; cd ../..; make "test^jw-swift^step2" | grep "failing tests"

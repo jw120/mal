@@ -22,6 +22,7 @@
 // manyTill
 // optional
 // eof
+// attempt  try
 
 /// Return value for our Parsers
 public typealias ParseResult<T> = Result<T, ParseError>
@@ -36,8 +37,8 @@ public struct ParseError: Error, Equatable {
 }
 
 public struct ParseState: Equatable {
-    private var row: Int
-    private var col: Int
+    public var row: Int
+    public var col: Int
     public var input: Substring
 
     public init(_ s: Substring, row: Int = 0, col: Int = 0) {
@@ -227,8 +228,8 @@ public func many1<T>(_ p: @escaping Parser<T>) -> Parser<[T]> { {
     }
 }
 
-/// Produces a Parser that matches zero or more repititions of the given Parser, but stops
-/// if the second argument Parser matches (the second arguemtn success result is discarded)
+/// Produces a Parser that matches zero or more repititions of the first given Parser followed by
+/// one match of the second Parser (the result of the second argument success  is discarded)
 public func manyTill<T, U>(_ p: @escaping Parser<T>, _ ending: @escaping Parser<U>) -> Parser<[T]> { {
     (state: ParseState) -> (ParseState, ParseResult<[T]>) in
         var state = state
@@ -248,8 +249,8 @@ public func manyTill<T, U>(_ p: @escaping Parser<T>, _ ending: @escaping Parser<
             switch r2 {
             case .success(let val):
                 results.append(val)
-            case .failure:
-                break manyLoop
+            case .failure(let e):
+                return (state, .failure(e))
             }
         }
         return (state, .success(results))
@@ -275,4 +276,17 @@ public func eof(_ state: ParseState) -> (ParseState, ParseResult<Void>) {
         return (state, .success(()))
     }
     return (state, .failure(ParseError(state: state, label: "Expected EOF")))
+}
+
+/// Return a version of the parser that backtracks
+public func attempt<T>(_ p: @escaping Parser<T>) -> Parser<T> { {
+    (state: ParseState) -> (ParseState, ParseResult<T>) in
+        let (updatedState, result) = p(state)
+        switch result {
+        case .success:
+            return (updatedState, result)
+        case .failure:
+            return (state, result)
+        }
+    }
 }

@@ -33,8 +33,9 @@ public func read_str(_ s: String) -> ReadResult {
 
     let (updatedState, result) = expr(state)
     switch result {
-    case failure(let e):
-        return .err("\(e.label) at \(e.state.row),\(e.state.col)")
+    case .failure(let e):
+        let position = updatedState.input.isEmpty ? "EOF" : "(\(e.state.row),\(e.state.col))"
+        return .err("\(e.label) at \(position)")
     case .success(let val):
         if updatedState.input.isEmpty {
             return .value(val)
@@ -68,7 +69,8 @@ fileprivate func lex<T>(_ p: @escaping Parser<T>) -> Parser<T> {
 /// Parser that matches a Mal expression
 public func expr(_ state: ParseState) -> (ParseState, ParseResult<Mal>) {
     // Defining as a function rather than with let as mutually recursive lets seem to kill swift
-    let p = int <|> list  <|> vector <|> hashmap <|> str <|> sym
+    // Need back-tracking for int so we don't consume a minus sign that is not followed by digits
+    let p = attempt(int) <|> list  <|> vector <|> hashmap <|> str <|> readerMacro <|> sym
     return p(state)
 }
 
@@ -139,4 +141,41 @@ fileprivate func symCombine(_ cs: [Character]) -> Mal {
 
 /// Parser that matches a Mal string
 public let str: Parser<Mal> =
-    lex({ cs in .str(String(cs)) } <^> (char("\"") *> manyTill(anyChar, char("\""))))
+    lex({ cs in .str(String(cs)) } <^> (char("\"") *> manyTill(stringChar, char("\""))))
+
+/// Match any character within a string, de-escapes \\, \n and \"
+fileprivate let stringChar: Parser<Character> =
+    ("\\" <^ string("\\\\"))
+    <|>
+    ("\"" <^ string("\\\""))
+    <|>
+    ("\n" <^ string("\\n"))
+    <|>
+    anyChar
+
+/// Parser that matches special Reader short hands (like 'x for (quote x)
+public let readerMacro: Parser<Mal> =
+    intoMalFn("splice-unquote") <^> (string("~@") *> expr)
+    <|>
+    intoMalFn("quote") <^> (char("'") *> expr)
+    <|>
+    intoMalFn("quasiquote") <^> (char("`") *> expr)
+    <|>
+    intoMalFn("unquote") <^> (char("~") *> expr)
+    <|>
+    intoMalFn("deref") <^> (char("@") *> expr)
+    <|>
+    withMetaCombine <^> (char("^") *> expr) <*> expr
+
+/// Return a function which wraps the Mal expression into a list starting with the given symbol
+fileprivate func intoMalFn(_ s: String) -> (Mal) -> Mal { {
+    (x: Mal) -> Mal in
+        .list([.sym(s), x])
+    }
+}
+
+fileprivate func withMetaCombine(_ val1: Mal) -> (Mal) -> Mal { {
+    (val2: Mal) -> Mal in
+        .list([.sym("with-meta"), val2, val1])
+    }
+}
