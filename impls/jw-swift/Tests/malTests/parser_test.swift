@@ -52,6 +52,22 @@ class ParserTests: XCTestCase {
         XCTAssertEqual(err2, "Expected \'abc\'")
     }
 
+    func testCombine() throws {
+        func g(_ s : String) -> (String) -> String { {
+                (t: String) -> String in s + t + s
+        } }
+        let p = g <^> string("abc") <*> string("def")
+        let (str1, res1) = s(p(i("abcdefg")))
+        XCTAssertEqual(str1, "g")
+        XCTAssertEqual(res1, .success("abcdefabc"))
+        let (str2, err2) = f(p(i("abXdef")))
+        XCTAssertEqual(str2, "abXdef")
+        XCTAssertEqual(err2, "Expected 'abc'")
+        let (str3, err3) = f(p(i("abcdeX")))
+        XCTAssertEqual(str3, "deX")
+        XCTAssertEqual(err3, "Expected 'def'")
+    }
+
     func testChoice() throws {
         let p: Parser<String> = string("abc") <|> string("def") <|> string("axe")
         let (str1, res1) = s(p(i("abcZZ")))
@@ -66,6 +82,21 @@ class ParserTests: XCTestCase {
         let (str4, err4) = f(p(i("ABC")))
         XCTAssertEqual(str4, "ABC")
         XCTAssertEqual(err4, "Expected one of multiple alternatives")
+    }
+
+    func testChoiceNoBackTracking() throws {
+        // Failure of first alternative consumes input and makes second fail
+        // and gives error message from second parser which consumed more input
+        let p1 = (char("a") *> char("b")) <|> char("a")
+        let (str1, res1) = f(p1(i("ac")))
+        XCTAssertEqual(str1, "c")
+        XCTAssertEqual(res1, "Expected 'b'") //
+
+        // Failure of both alternatives gives second parser's error message if it consumed more
+        let p2 = (char("a") *> char("b")) <|> (char("x") *> char("y") *> char("z"))
+        let (str2, res2) = f(p2(i("axyQ")))
+        XCTAssertEqual(str2, "Q")
+        XCTAssertEqual(res2, "Expected 'z'")
     }
 
    func testStar() throws {
@@ -94,55 +125,92 @@ class ParserTests: XCTestCase {
          XCTAssertEqual(err3, "Expected 'def'")
      }
 
-// <^>      <$>     Apply function to returned value
-// <*>              Combine arguments to use with a (curried) function
-// <|>              Alternatives (no back-tracking). Return error from parser that consumed more
-// *>               Combine parsers, discarding success value from first
-// <*               Combine parsers, discarding success value from second
-// <^               Replace value of success
-// <!       label   Replace value of failure
-// many
-// many1
-// manyTill
-// optional
-// eof
+    func testSuccess() throws {
+        let p = 23 <^ string("zoo")
+        let (str1, res1) = s(p(i("zoom")))
+        XCTAssertEqual(str1, "m")
+        XCTAssertEqual(res1, .success(23))
+        let (str2, err2) = f(p(i("park")))
+        XCTAssertEqual(str2, "park")
+        XCTAssertEqual(err2, "Expected 'zoo'")
+    }
 
-/*
+    func testFailure() throws {
+        let p = "special" <! string("zoo")
+        let (str1, res1) = s(p(i("zoom")))
+        XCTAssertEqual(str1, "m")
+        XCTAssertEqual(res1, .success("zoo"))
+        let (str2, err2) = f(p(i("park")))
+        XCTAssertEqual(str2, "park")
+        XCTAssertEqual(err2, "special")
+    }
 
-    func testMany() throws {
-        XCTAssertEqual(many(char("a"))("aaabc"), .success(["a", "a", "a"], "bc"))
-        XCTAssertEqual(many(char("a"))("xbc"), .success([], "xbc"))
-        XCTAssertEqual(many(char("a"))(""), .success([], ""))
+  func testMany() throws {
+        let p = many(char("a"))
+        let (str1, res1) = s(p(i("aaab")))
+        XCTAssertEqual(str1, "b")
+        XCTAssertEqual(res1, .success(["a", "a", "a"]))
+        let (str2, res2) = s(p(i("b")))
+        XCTAssertEqual(str2, "b")
+        XCTAssertEqual(res2, .success([]))
     }
 
     func testMany1() throws {
-        XCTAssertEqual(many1(char("a"))("aaabc"), .success(["a", "a", "a"], "bc"))
-        XCTAssertEqual(many1(char("a"))("xbc"), .failure("Expected 'a'", "xbc"))
-        XCTAssertEqual(many1(char("a"))(""), .failure("Expected 'a'", ""))
+         let p = many1(char("a"))
+         let (str1, res1) = s(p(i("aaab")))
+         XCTAssertEqual(str1, "b")
+         XCTAssertEqual(res1, .success(["a", "a", "a"]))
+         let (str2, res2) = f(p(i("b")))
+         XCTAssertEqual(str2, "b")
+         XCTAssertEqual(res2, "Expected 'a'")
+     }
+
+    func testManyTill() throws {
+        let p = manyTill(anyChar, char("]"))
+        let (str1, res1) = s(p(i("abc]Q")))
+        XCTAssertEqual(str1, "Q")
+        XCTAssertEqual(res1, .success(["a", "b", "c"]))
+        let (str2, res2) = s(p(i("]Q")))
+        XCTAssertEqual(str2, "Q")
+        XCTAssertEqual(res2, .success([]))
+        let (str3, res3) = s(p(i("abc")))
+        XCTAssertEqual(str3, "")
+        XCTAssertEqual(res3, .success(["a", "b", "c"]))
+        let (str4, res4) = s(p(i("")))
+        XCTAssertEqual(str4, "")
+        XCTAssertEqual(res4, .success([]))
+
     }
 
-    func testBetween() throws {
-        let p = many(choice([char("a"), char("b")]))
-        XCTAssertEqual(
-            between(p, open: string("<<"), close: string(">>"))("<<abba>>Q"),
-            .success(["a", "b", "b", "a"], "Q"))
-        XCTAssertEqual(
-            between(p, open: string("<<"), close: string(">>"))("<<abba>Q"),
-            .failure("Expected '>>'", ">Q"))
-        XCTAssertEqual(
-            between(p, open: string("<<"), close: string(">>"))("<<abbda>>Q"),
-            .failure("Expected '>>'", "da>>Q"))
-        XCTAssertEqual(
-            between(p, open: string("<<"), close: string(">>"))("<abba>>Q"),
-            .failure("Expected '<<'", "<abba>>Q"))
+    func testOptional() throws {
+        let p = optional(char("a"))
+        let (str1, res1) = s(p(i("aQ")))
+        XCTAssertEqual(str1, "Q")
+        XCTAssertEqual(res1, .success(.some("a")))
+        let (str2, res2) = s(p(i("Q")))
+        XCTAssertEqual(str2, "Q")
+        XCTAssertEqual(res2, .success(nil))
+
     }
 
-    func testMap() throws {
-        func addX(_ s: String) -> String { s + "X" }
-        let p = addX <^> string("abc")
-        XCTAssertEqual(p("abcd"), .success("abcX", "d"))
-        XCTAssertEqual(p("ab"), .failure("Expected 'abc'", "ab"))
+    func testEof() throws {
+        let (str1, res1) = s(eof(i("")))
+        XCTAssertEqual(str1, "")
+        switch res1 { // workaround as void is not Equatable so cant use XCTAssertEqual
+        case .success:
+            break
+        case .failure:
+            XCTFail("Expected success")
+        }
+        let (str2, msg2) = f(eof(i("Q")))
+        XCTAssertEqual(str2, "Q")
+        XCTAssertEqual(msg2, "Expected EOF")
     }
+
+/*
+
+
+
 
 
 

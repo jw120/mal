@@ -79,12 +79,12 @@ public func <^> <T1, T2> (_ f: @escaping (T1) -> T2, _ p: @escaping Parser<T1>) 
 infix operator <*>: MultiplicationPrecedence
 public func <*> <T1, T2> (_ p1: @escaping Parser<(T2) -> T1>, _ p2: @escaping Parser<T2>) -> Parser<T1> { {
     (state: ParseState) -> (ParseState, ParseResult<T1>) in
-        let (updatedState, r2) = p2(state)
-        switch r2 {
-        case .success(let val):
-            let (finalState, r1) = p1(updatedState)
-            switch r1 {
-            case .success(let f):
+        let (updatedState, r1) = p1(state)
+        switch r1 {
+        case .success(let f):
+            let (finalState, r2) = p2(updatedState)
+            switch r2 {
+            case .success(let val):
                 return (finalState, .success(f(val)))
             case .failure(let e):
                 return (finalState, .failure(e))
@@ -111,7 +111,7 @@ public func <|> <T> (_ p1: @escaping Parser<T>, _ p2: @escaping Parser<T>) -> Pa
                 case .failure(let err2):
                     // Return failure from the parser that consumed the most input
                     let consumed1 = state.input.count - updatedState.input.count
-                    let consumed2 = finalState.input.count - updatedState.input.count
+                    let consumed2 = updatedState.input.count - finalState.input.count
                     if consumed1 == consumed2 {
                         return (finalState,
                                 .failure(ParseError(state: finalState, label: "Expected one of multiple alternatives")))
@@ -286,16 +286,16 @@ public func char(_ c: Character) -> Parser<Character> { {
         if state.input.first == .some(c) {
             return (state.advance(), .success(state.input.first!))
         } else {
-            return (state, .failure(ParseError(state: state, label: "Expected '\(c)''")))
+            return (state, .failure(ParseError(state: state, label: "Expected '\(c)'")))
         }
     }
 }
 
 public func anyChar(_ state: ParseState) -> (ParseState, ParseResult<Character>) {
-    guard state.input.isEmpty else {
-        return (state, .failure(ParseError(state: state, label: "Expected any character")))
+    if let c = state.input.first {
+        return (state.advance(), .success(c))
     }
-    return (state.advance(), .success(state.input.first!))
+    return (state, .failure(ParseError(state: state, label: "Expected any character")))
 }
 
 public func string(_ s: String) -> Parser<String> { {
