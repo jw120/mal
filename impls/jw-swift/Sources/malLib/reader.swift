@@ -111,7 +111,7 @@ public let vector: Parser<Mal> =
 
 /// Parser that matches a Mal hashmap
 public let hashmap: Parser<Mal> =
-    lex({ xs in .hashmap(xs) } <^> (lex(char("{")) *> many(expr) <* lex(char("}"))))
+    lex({ xs in Mal(hashmapFromAlternatingList: xs) } <^> (lex(char("{")) *> many(expr) <* lex(char("}"))))
 
 // Symbol parser
 

@@ -8,12 +8,31 @@ public indirect enum Mal: Equatable {
     case int(Int)
     case list([Mal])
     case vec([Mal])
-    case hashmap([Mal])
+    case hashmap([String: Mal])
     case bool(Bool)
     case null // Can't use nil as it is used in Swift
     case str(String)
     case sym(String)
     case closure(MalFunc)
+
+    public init(hashmapFromAlternatingList xs: [Mal]) {
+        if !xs.count.isMultiple(of: 2) {
+            self = .list([.sym("throw"), .str("Need an even number of elements for hash-map")])
+        } else {
+            var m = [String: Mal]()
+            var ok = true
+            for i in stride(from: 0, to: xs.count - 1, by: 2) {
+                let v = xs[i + 1]
+                switch xs[i] {
+                case .str(let k):
+                    m[k] = v
+                default:
+                    ok = false
+                }
+            }
+            self = ok ? .hashmap(m) : .list([.sym("throw"), .str("Bad key type in hash-map")])
+        }
+    }
 
     /// Is this an empty list?
     public var isEmptyList: Bool {

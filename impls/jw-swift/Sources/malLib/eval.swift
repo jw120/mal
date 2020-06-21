@@ -30,6 +30,9 @@ fileprivate func eval_ast(_ ast: Mal, _ env: Env) throws -> Mal {
         return .list(try xs.map({ x in try eval(x, env) }))
     case .vec(let xs):
         return .vec(try xs.map({ x in try eval(x, env) }))
+    case .hashmap(let xs):
+        return .hashmap(try xs.mapValues({ v in try eval(v, env) }))
+
     default:
         return ast
     }

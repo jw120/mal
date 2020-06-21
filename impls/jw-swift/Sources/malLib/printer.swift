@@ -14,7 +14,8 @@ public func pr_str(_ ast: Mal, readable: Bool = false) -> String {
     case .vec(let elements):
         return join_between(elements.map { pr_str($0, readable: readable) }, open: "[", close: "]")
     case .hashmap(let elements):
-        return join_between(elements.map { pr_str($0, readable: readable) }, open: "{", close: "}")
+        let strElements = elements.map { k, v in "\"\(k)\" \(pr_str(v, readable: readable))" }
+        return join_between(strElements, open: "{", close: "}")
     case .bool(let val):
         return val ? "true" : "false"
     case .null:

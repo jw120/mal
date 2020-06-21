@@ -69,12 +69,12 @@ public class ReaderTests: XCTestCase {
     }
 
     public func testHashmap() throws {
-        let (str1, res1) = s(hashmap(i("{2 3}q")))
+        let (str1, res1) = s(hashmap(i("{\"a\" 3}q")))
         XCTAssertEqual(str1, "q")
-        XCTAssertEqual(res1, .success(.hashmap([.int(2), .int(3)])))
+        XCTAssertEqual(res1, .success(.hashmap(["a": .int(3)])))
         let (str2, res2) = s(hashmap(i("{}Q")))
         XCTAssertEqual(str2, "Q")
-        XCTAssertEqual(res2, .success(.hashmap([])))
+        XCTAssertEqual(res2, .success(.hashmap([String: Mal]())))
         let (str3, res3) = f(hashmap(i("{2 3")))
         XCTAssertEqual(str3, "")
         XCTAssertEqual(res3, "Expected '}'")
