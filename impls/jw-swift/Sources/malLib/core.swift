@@ -8,18 +8,24 @@
 public let prelude = Env(
     outer: nil,
     data: [
-        "+": Mal.closure(malPlus)
+        "+": wrapIntBinary("+", +),
+        "-": wrapIntBinary("-", -),
+        "*": wrapIntBinary("*", *),
+        "/": wrapIntBinary("/", /)
     ]
 )
 
-fileprivate func malPlus(_ args: ArraySlice<Mal>) throws -> Mal {
-    if args.count != 2 {
-        throw MalError(.str("Need two argument"))
-    }
-    switch (args[args.startIndex], args[args.startIndex + 1]) {
-    case (.int(let x), .int(let y)):
-        return .int(x + y)
-    default:
-        throw MalError(.str("Arguments must be integers"))
+fileprivate func wrapIntBinary(_ name: String, _ f: @escaping (Int, Int) -> Int) -> Mal {
+    .closure {
+        (args: ArraySlice<Mal>) throws -> Mal in
+            if args.count != 2 {
+                throw MalError.msg("Need two arguments for \(name)")
+            }
+            switch (args[args.startIndex], args[args.startIndex + 1]) {
+            case (.int(let x), .int(let y)):
+                return .int(f(x, y))
+            default:
+                throw MalError.msg("Arguments for \(name) must be integers")
+            }
     }
 }

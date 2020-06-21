@@ -78,10 +78,8 @@ public indirect enum Mal: Equatable {
 /// Swift type of a mal function call
 public typealias MalFunc = (ArraySlice<Mal>) throws -> Mal
 
-public struct MalError: Error {
-    public let val: Mal
-
-    public init(_ v: Mal) {
-        self.val = v
-    }
+/// Mal errors can either be a thrown value or a simple string message (for use when thrown from swift code)
+public enum MalError: Error {
+    case val(Mal)
+    case msg(String)
 }

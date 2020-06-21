@@ -18,7 +18,7 @@ run:
 step-test:
 	-@echo step 0; cd ../..; make "test^jw-swift^step0" | grep "failing tests"
 	-@echo step 1; cd ../..; make "test^jw-swift^step1" | grep "failing tests"
-#	-@echo step 2; cd ../..; make "test^jw-swift^step2" | grep "failing tests"
+	-@echo step 2; cd ../..; make "test^jw-swift^step2" | grep "failing tests"
 #	-@echo step 3; cd ../..; make "test^jw-swift^step3" | grep "failing tests"
 #	-@echo step 4; cd ../..; make "test^jw-swift^step4" | grep "failing tests"
 #	-@echo step 5; cd ../..; make "test^jw-swift^step5" | grep "failing tests"

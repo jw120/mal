@@ -23,7 +23,7 @@ public class EnvTests: XCTestCase {
         XCTAssertEqual(try b.get("z"), .int(6))
         XCTAssertEqual(a.find("x"), a)
         XCTAssertEqual(a.find("y"), a)
-        XCTAssertNill(a.find("z"))
+        XCTAssertNil(a.find("z"))
         XCTAssertEqual(b.find("x"), a)
         XCTAssertEqual(b.find("y"), b)
         XCTAssertEqual(b.find("z"), b)

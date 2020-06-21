@@ -15,7 +15,7 @@ public func eval(_ ast: Mal, _ env: Env) throws -> Mal {
         case .closure(let c):
             return try c(tail)
         default:
-            throw MalError(.str("Attempt to apply a non-function"))
+            throw MalError.msg("Attempt to apply a non-function")
         }
     } else {
         return evaluatedAst
@@ -28,6 +28,8 @@ fileprivate func eval_ast(_ ast: Mal, _ env: Env) throws -> Mal {
         return try env.get(s)
     case .list(let xs):
         return .list(try xs.map({ x in try eval(x, env) }))
+    case .vec(let xs):
+        return .vec(try xs.map({ x in try eval(x, env) }))
     default:
         return ast
     }

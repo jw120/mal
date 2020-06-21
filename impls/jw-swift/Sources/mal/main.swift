@@ -11,8 +11,14 @@ while true {
     if let s = readLine() {
         switch read_str(s) {
         case .value(let readValue):
-            let evaluatedValue: Mal = try eval(readValue, prelude)
-            print(pr_str(evaluatedValue, readable: true))
+            do {
+                let evaluatedValue: Mal = try eval(readValue, prelude)
+                print(pr_str(evaluatedValue, readable: true))
+            } catch MalError.val(let v) {
+                print("Error: ", pr_str(v, readable: true))
+            } catch MalError.msg(let s) {
+                print("Error: \(s)")
+            }
         case .err(let msg):
             print(msg)
         case .nothing:

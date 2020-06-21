@@ -28,7 +28,7 @@ public class Env: Equatable {
         if let val = self.find(s)?.data[s] {
             return val
         }
-        throw MalError(.str("\(s) not found"))
+        throw MalError.msg("\(s) not found")
     }
 
     // We implement reference equality to conform to Equatable and allow testing
