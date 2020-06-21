@@ -1,2 +1,12 @@
 #!/bin/bash
-exec $(dirname $0)/.build/debug/${STEP:-stepA_mal} "${@}"
+
+case ${STEP} in
+  step0_repl)
+    exec $(dirname $0)/.build/debug/${STEP} "${@}"
+    ;;
+  step1_read_print)
+    exec $(dirname $0)/.build/debug/${STEP} "${@}"
+    ;;
+  *)
+    exec $(dirname $0)/.build/debug/mal "${@}"
+esac

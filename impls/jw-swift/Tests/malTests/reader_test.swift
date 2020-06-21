@@ -4,7 +4,7 @@
 //
 // reader_tests - tests for the reader module
 
-import mal
+import malLib
 import XCTest
 
 public class ReaderTests: XCTestCase {

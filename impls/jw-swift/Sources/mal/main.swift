@@ -2,7 +2,7 @@
 //
 // (C) Joe Watson 2020-06-11
 //
-// step 1 - read and print
+// mal - executable for all steps >= 2
 
 import malLib
 

@@ -4,7 +4,7 @@
 //
 // printer_tests - tests for the printer module
 
-import mal
+import malLib
 import XCTest
 
 public class PrinterTests: XCTestCase {

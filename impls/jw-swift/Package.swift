@@ -9,13 +9,15 @@ public let package = Package(
     products: [
         .executable(name: "step0_repl", targets: ["step0_repl"]),
         .executable(name: "step1_read_print", targets: ["step1_read_print"]),
-        .library(name: "mal", targets: ["mal"])
+        .executable(name: "mal", targets: ["mal"]),
+        .library(name: "malLib", targets: ["malLib"])
     ],
     dependencies: [],
     targets: [
         .target(name: "step0_repl", dependencies: []),
-        .target(name: "step1_read_print", dependencies: ["mal"]),
-        .target(name: "mal", dependencies: []),
-        .testTarget(name: "malTests", dependencies: ["mal"])
+        .target(name: "step1_read_print", dependencies: ["malLib"]),
+        .target(name: "mal", dependencies: ["malLib"]),
+        .target(name: "malLib", dependencies: []),
+        .testTarget(name: "malTests", dependencies: ["malLib"])
     ]
 )

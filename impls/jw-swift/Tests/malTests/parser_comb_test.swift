@@ -4,7 +4,7 @@
 //
 // parser_tests - tests for the parser module
 
-import mal
+import malLib
 import XCTest
 
 // Helper function to create a new ParseState
