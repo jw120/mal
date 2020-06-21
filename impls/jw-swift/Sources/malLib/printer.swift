@@ -23,6 +23,8 @@ public func pr_str(_ ast: Mal, readable: Bool = false) -> String {
         return "\"" + (readable ? escape(val) : val) + "\""
     case .sym(let val):
         return val
+    case .closure:
+        return "<function>"
     }
 }
 

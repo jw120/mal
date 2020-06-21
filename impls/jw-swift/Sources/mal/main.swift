@@ -6,24 +6,13 @@
 
 import malLib
 
-internal func READ(_ input: String) -> ReadResult {
-    read_str(input)
-}
-
-internal func EVAL(_ ast: Mal) -> Mal {
-    ast
-}
-
-internal func PRINT(_ ast: Mal) -> String {
-    pr_str(ast, readable: true)
-}
-
 while true {
     print("user> ", terminator: "")
     if let s = readLine() {
-        switch READ(s) {
-        case .value(let e):
-            print(PRINT(EVAL(e)))
+        switch read_str(s) {
+        case .value(let readValue):
+            let evaluatedValue: Mal = try eval(readValue, prelude)
+            print(pr_str(evaluatedValue, readable: true))
         case .err(let msg):
             print(msg)
         case .nothing:

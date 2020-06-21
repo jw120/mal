@@ -4,7 +4,7 @@ all: build lint step-test #self-host-test
 
 # # Directories - executables go in target, *.o and *.d in build
 TARGET_DIR := ./.build/debug
-RUN_EXEC = step1_read_print
+RUN_EXEC = mal
 
 build:
 	swift build
@@ -13,7 +13,7 @@ lint:
 	swiftlint
 
 run:
-	-@$(TARGET_DIR)/step1_read_print
+	-@$(TARGET_DIR)/$(RUN_EXEC)
 
 step-test:
 	-@echo step 0; cd ../..; make "test^jw-swift^step0" | grep "failing tests"
