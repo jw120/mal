@@ -14,7 +14,7 @@ public func pr_str(_ ast: Mal, readable: Bool = false) -> String {
     case .vec(let elements):
         return join_between(elements.map { pr_str($0, readable: readable) }, open: "[", close: "]")
     case .hashmap(let elements):
-        let strElements = elements.flatMap { key, val in
+        let strElements: [String] = elements.flatMap { key, val in
             [showString(key, readable: readable), pr_str(val, readable: readable)]
         }
         return join_between(strElements, open: "{", close: "}")
@@ -37,14 +37,15 @@ fileprivate func join_between(_ xs: [String], open: String, close: String) -> St
 }
 
 /// Return the printable form of a string (including keywords)
-fileprivate func showString(_ s: String, readable: Bool) {
-    let readableS = readable ? escape(s) : s
-    if let c = s.first {
+fileprivate func showString(_ s: String, readable: Bool) -> String {
+    var printable = readable ? escape(s) : s
+    if let c = printable.first {
         if c == Mal.keywordPrefix {
-            return ":" + readableS
+            printable.remove(at: printable.startIndex)
+            return ":" + printable
         }
     }
-    return "\"" + readable "\""
+    return "\"" + printable + "\""
 }
 
 /// Add escape sequences to newlines, double quotes and backslashes

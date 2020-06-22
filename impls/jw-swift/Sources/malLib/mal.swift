@@ -56,10 +56,10 @@ extension Mal {
     /// If this is a list or vector, return the sequence
     public var sequence: ArraySlice<Mal>? {
         switch self {
-        case .list(let xs)
-            return xs
-        case .vec(let xs)
-            return xs
+        case .list(let xs):
+            return ArraySlice(xs)
+        case .vec(let xs):
+            return ArraySlice(xs)
         default:
             return .none
         }
@@ -121,8 +121,8 @@ public enum MalError: Error {
     case msg(String)
 }
 
-extension ArraySlice<T> {
-    public var asPair: (T, T)? {
+extension ArraySlice {
+    public var asPair: (Element, Element)? {
         if self.count == 2 {
             return (self[self.startIndex], self[self.startIndex + 1])
         }

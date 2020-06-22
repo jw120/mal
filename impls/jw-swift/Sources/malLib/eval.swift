@@ -47,34 +47,34 @@ fileprivate func evalAst(_ ast: Mal, _ env: Env) throws -> Mal {
 /// Handle the def! special form
 fileprivate func defSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> Mal {
     switch args.asPair {
-    case .some((.sym(s), val)):
-        evaluatedVal = eval(val, env)
+    case .some((.sym(let s), let val)):
+        let evaluatedVal = try eval(val, env)
         env.set(s, evaluatedVal)
         return evaluatedVal
     default:
-        break
+        throw MalError.msg("def! needs a symbol and a value")
     }
 }
 
 fileprivate func letSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> Mal {
     if let (firstArg, secondArg) = args.asPair {
-        if let bindinsgs = firstArg.sequence {
+        if let bindings = firstArg.sequence {
             let letEnv = Env(outer: env)
-            try add(env: env, alternating: bindings)
+            try add(env: letEnv, alternating: bindings)
             return try eval(secondArg, letEnv)
         }
     }
     throw MalError.msg("let* needs a sequence of bindings and a value")
 }
 
-fileprivate func add(env: Env, alternating: ArraySlice<T>) throws -> None {
-    if !alternating.isMultiple(of: 2) {
+fileprivate func add(env: Env, alternating: ArraySlice<Mal>) throws {
+    if !alternating.count.isMultiple(of: 2) {
         throw MalError.msg("Bindings must have an even number of elements")
     }
     for i in stride(from: alternating.startIndex, to: alternating.endIndex, by: 2) {
         switch alternating[i] {
-        case .sym(s):
-            env.add(s, try eval(alternating[i + 1], env))
+        case .sym(let s):
+            env.set(s, try eval(alternating[i + 1], env))
         default:
             throw MalError.msg("Bindings must be symbols")
         }

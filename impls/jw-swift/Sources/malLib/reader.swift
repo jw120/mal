@@ -153,7 +153,15 @@ fileprivate let stringChar: Parser<Character> =
 
 /// Parser that matches a Mal keyword
 public let keyword: Parser<Mal> =
-    lex({ s in s.insert(Mal.keywordPrefix, at: 0) } <^> (char(":") *> many1(satisfy(isNormalChar)))))
+    lex(kwCombine <^> (char(":") *> many1(satisfy(isNormalChar))))
+
+
+fileprivate func kwCombine(_ cs: [Character]) -> Mal {
+    var s = String(cs)
+    s.insert(Mal.keywordPrefix, at: s.startIndex)
+    return .str(s)
+}
+
 
 /// Parser that matches special Reader short hands (like 'x for (quote x)
 public let readerMacro: Parser<Mal> =
