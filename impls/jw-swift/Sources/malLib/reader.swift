@@ -70,7 +70,7 @@ fileprivate func lex<T>(_ p: @escaping Parser<T>) -> Parser<T> {
 public func expr(_ state: ParseState) -> (ParseState, ParseResult<Mal>) {
     // Defining as a function rather than with let as mutually recursive lets seem to kill swift
     // Need back-tracking for int so we don't consume a minus sign that is not followed by digits
-    let p = attempt(int) <|> list  <|> vector <|> hashmap <|> str <|> readerMacro <|> sym
+    let p = attempt(int) <|> list  <|> vector <|> hashmap <|> str <|> keyword <|> readerMacro <|> sym
     return p(state)
 }
 
@@ -137,8 +137,6 @@ fileprivate func symCombine(_ cs: [Character]) -> Mal {
     }
 }
 
-// String parser
-
 /// Parser that matches a Mal string
 public let str: Parser<Mal> =
     lex({ cs in .str(String(cs)) } <^> (char("\"") *> manyTill(stringChar, char("\""))))
@@ -152,6 +150,10 @@ fileprivate let stringChar: Parser<Character> =
     ("\n" <^ string("\\n"))
     <|>
     anyChar
+
+/// Parser that matches a Mal keyword
+public let keyword: Parser<Mal> =
+    lex({ s in s.insert(Mal.keywordPrefix, at: 0) } <^> (char(":") *> many1(satisfy(isNormalChar)))))
 
 /// Parser that matches special Reader short hands (like 'x for (quote x)
 public let readerMacro: Parser<Mal> =

@@ -13,6 +13,8 @@ public class Env: Equatable {
         self.data = data
     }
 
+    public init(outer: Env? = nil, alternating)
+
     public func set(_ s: String, _ v: Mal) {
         self.data[s] = v
     }

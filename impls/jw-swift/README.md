@@ -1,10 +1,11 @@
 TODO - Parser a la Haskell
 
-Swiftlint
 Source formatting?
-Get step 1 done
-Back to main branch
 
+Should we use array slices for lists. Can the arrays be immutable
+
+
+Show pr_str etc be an Extension?
 
 - Makefile - to run step-tests
 - Makefile - to Build from command line

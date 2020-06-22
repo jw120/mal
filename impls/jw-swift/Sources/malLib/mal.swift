@@ -2,7 +2,7 @@
 //
 // (C) Joe Watson 2020-06-11
 //
-// types - program-wide types
+// mal - main mal type and supporting
 
 public indirect enum Mal: Equatable {
     case int(Int)
@@ -11,9 +11,9 @@ public indirect enum Mal: Equatable {
     case hashmap([String: Mal])
     case bool(Bool)
     case null // Can't use nil as it is used in Swift
-    case str(String)
+    case str(String) // includes keywords with prefix
     case sym(String)
-    case closure(MalFunc)
+    case closure((ArraySlice<Mal>) throws -> Mal)
 
     public init(hashmapFromAlternatingList xs: [Mal]) {
         if !xs.count.isMultiple(of: 2) {
@@ -21,7 +21,7 @@ public indirect enum Mal: Equatable {
         } else {
             var m = [String: Mal]()
             var ok = true
-            for i in stride(from: 0, to: xs.count - 1, by: 2) {
+            for i in stride(from: xs.startIndex, to: xs.endIndex, by: 2) {
                 let v = xs[i + 1]
                 switch xs[i] {
                 case .str(let k):
@@ -34,16 +34,12 @@ public indirect enum Mal: Equatable {
         }
     }
 
-    /// Is this an empty list?
-    public var isEmptyList: Bool {
-        switch self {
-        case .list(let xs):
-            return xs.isEmpty
-        default:
-            return false
-        }
-    }
 
+    internal static let keywordPrefix: Character = "\u{29E}"
+}
+
+// Add convenience methods to extract values from a mal type
+extension Mal {
     /// If this is a non-empty list return the head and tail
     public var headTail: (Mal, ArraySlice<Mal>)? {
         switch self {
@@ -57,7 +53,32 @@ public indirect enum Mal: Equatable {
         return .none
     }
 
-    public static func == (lhs: Mal, rhs: Mal) -> Bool {
+    /// If this is a list or vector, return the sequence
+    public var sequence: ArraySlice<Mal>? {
+        switch self {
+        case .list(let xs)
+            return xs
+        case .vec(let xs)
+            return xs
+        default:
+            return .none
+        }
+    }
+
+    /// Is this an empty list?
+    public var isEmptyList: Bool {
+        switch self {
+        case .list(let xs):
+            return xs.isEmpty
+        default:
+            return false
+        }
+    }
+}
+
+// Add specialized equality to out Mal type
+extension Mal {
+      public static func == (lhs: Mal, rhs: Mal) -> Bool {
         switch (lhs, rhs) {
         // For most types we just compare the contents
         case (.int(let x), .int(let y)):
@@ -94,11 +115,17 @@ public indirect enum Mal: Equatable {
     }
 }
 
-/// Swift type of a mal function call
-public typealias MalFunc = (ArraySlice<Mal>) throws -> Mal
-
 /// Mal errors can either be a thrown value or a simple string message (for use when thrown from swift code)
 public enum MalError: Error {
     case val(Mal)
     case msg(String)
+}
+
+extension ArraySlice<T> {
+    public var asPair: (T, T)? {
+        if self.count == 2 {
+            return (self[self.startIndex], self[self.startIndex + 1])
+        }
+        return .none
+    }
 }
