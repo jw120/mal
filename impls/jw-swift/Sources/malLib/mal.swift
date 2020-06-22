@@ -6,8 +6,8 @@
 
 public indirect enum Mal: Equatable {
     case int(Int)
-    case list([Mal])
-    case vec([Mal])
+    case list(ArraySlice<Mal>)
+    case vec(ArraySlice<Mal>)
     case hashmap([String: Mal])
     case bool(Bool)
     case null // Can't use nil as it is used in Swift
@@ -125,6 +125,12 @@ extension ArraySlice {
     public var asPair: (Element, Element)? {
         if self.count == 2 {
             return (self[self.startIndex], self[self.startIndex + 1])
+        }
+        return .none
+    }
+    public var asTriple: (Element, Element, Element)? {
+        if self.count == 3 {
+            return (self[self.startIndex], self[self.startIndex + 1], self[self.startIndex + 2])
         }
         return .none
     }

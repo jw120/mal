@@ -103,11 +103,11 @@ fileprivate func intCombine(_ negative: Character?) -> ([Character]) -> Mal { {
 
 /// Parser that matches a Mal list
 public let list: Parser<Mal> =
-    lex({ xs in .list(xs) } <^> (lex(char("(")) *> many(expr) <* lex(char(")"))))
+    lex({ xs in .list(ArraySlice(xs)) } <^> (lex(char("(")) *> many(expr) <* lex(char(")"))))
 
 /// Parser that matches a Mal vector
 public let vector: Parser<Mal> =
-    lex({ xs in .vec(xs) } <^> (lex(char("[")) *> many(expr) <* lex(char("]"))))
+    lex({ xs in .vec(ArraySlice(xs)) } <^> (lex(char("[")) *> many(expr) <* lex(char("]"))))
 
 /// Parser that matches a Mal hashmap
 public let hashmap: Parser<Mal> =
