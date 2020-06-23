@@ -9,9 +9,9 @@ import XCTest
 
 public class PrinterTests: XCTestCase {
     public func testPrStr() throws {
-        XCTAssertEqual(Mal.int(23).print(), "23")
-        XCTAssertEqual(Mal.list([]).print(), "()")
-        XCTAssertEqual(Mal.list([.int(2)]).print(), "(2)")
-        XCTAssertEqual(Mal.list([.int(2), .int(3)]).print(), "(2 3)")
+        XCTAssertEqual(Mal.int(23).pr_str(), "23")
+        XCTAssertEqual(Mal.list([]).pr_str(), "()")
+        XCTAssertEqual(Mal.list([.int(2)]).pr_str(), "(2)")
+        XCTAssertEqual(Mal.list([.int(2), .int(3)]).pr_str(), "(2 3)")
     }
 }

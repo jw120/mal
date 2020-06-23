@@ -15,7 +15,7 @@ internal func EVAL(_ ast: Mal) -> Mal {
 }
 
 internal func PRINT(_ ast: Mal) -> String {
-    ast.print(readable: true)
+    ast.pr_str(readable: true)
 }
 
 while true {

@@ -7,8 +7,9 @@
 extension Mal {
     /// Evaluate this mal value witin the given environment
     public func eval(_ env: Env) throws -> Mal {
+        // if we are a non-empty list
         if let (head, tail) = self.headTail {
-            switch head {
+            switch head { // check for special forms
             case .sym("def!"):
                 return try defSpecialForm(tail, env)
             case .sym("do"):
@@ -22,17 +23,18 @@ extension Mal {
             default:
                 break
             }
-        }
-        let evaluated = try self.evalAst(env)
-        if let (head, tail) = evaluated.headTail {
-            switch head {
-            case .closure(let c):
-                return try c(tail)
-            default:
-                throw MalError.msg("Attempt to apply a non-function")
+            // not a special form, so evaluate list and apply
+            let evaluatedList = try self.evalAst(env)
+            if let (evalHead, evalTail) = evaluatedList.headTail {
+                switch evalHead {
+                case .closure(let c):
+                    return try c(evalTail)
+                default:
+                    throw MalError.msg("Attempt to apply a non-function")
+                }
             }
         }
-        return evaluated
+        return try self.evalAst(env)
     }
 
     /// Evaluate this mal value without an apply phase
@@ -91,9 +93,6 @@ fileprivate func fnSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> Ma
             }
             return .closure {
                 (fnArgs: ArraySlice<Mal>) -> Mal in
-                    guard bindStrings.count == fnArgs.count else {
-                        throw MalError.msg("Wrong number of argumnets for function call")
-                    }
                     let fnEnv = Env(outer: env, binds: bindStrings, exprs: fnArgs)
                     return try body.eval(fnEnv)
             }

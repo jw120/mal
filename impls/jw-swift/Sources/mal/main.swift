@@ -30,9 +30,9 @@ while true {
         case .value(let readValue):
             do {
                 let evaluatedValue: Mal = try readValue.eval(prelude)
-                print(evaluatedValue.print(readable: true))
+                print(evaluatedValue.pr_str(readable: true))
             } catch MalError.val(let v) {
-                print("Error: ", v.print(readable: true))
+                print("Error: ", v.pr_str(readable: true))
             } catch MalError.msg(let s) {
                 print("Error: \(s)")
             }

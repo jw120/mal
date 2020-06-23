@@ -6,17 +6,17 @@
 
 extension Mal {
     /// Return a string representation of the given Mal value
-    public func print(readable: Bool = false) -> String {
+    public func pr_str(readable: Bool = false) -> String {
         switch self {
         case .int(let i):
             return String(i)
         case .list(let elements):
-            return join_between(elements.map { $0.print(readable: readable) }, open: "(", close: ")")
+            return join_between(elements.map { $0.pr_str(readable: readable) }, open: "(", close: ")")
         case .vec(let elements):
-            return join_between(elements.map { $0.print(readable: readable) }, open: "[", close: "]")
+            return join_between(elements.map { $0.pr_str(readable: readable) }, open: "[", close: "]")
         case .hashmap(let elements):
             let strElements: [String] = elements.flatMap { key, val in
-                [showString(key, readable: readable), val.print(readable: readable)]
+                [showString(key, readable: readable), val.pr_str(readable: readable)]
             }
             return join_between(strElements, open: "{", close: "}")
         case .bool(let val):

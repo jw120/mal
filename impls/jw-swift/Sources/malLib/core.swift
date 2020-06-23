@@ -49,20 +49,20 @@ public let core: [String: Mal] = [
 
     // I/O functions
     "pr-str": .closure { args in
-        let stringArgs = args.map { a in a.print(readable: true) }
+        let stringArgs = args.map { a in a.pr_str(readable: true) }
         return .str(stringArgs.joined(separator: " "))
     },
     "str": .closure { args in
-        let stringArgs = args.map { a in a.print(readable: false) }
+        let stringArgs = args.map { a in a.pr_str(readable: false) }
         return .str(stringArgs.joined())
     },
     "prn": .closure { args in
-        let stringArgs = args.map { a in a.print(readable: true) }
+        let stringArgs = args.map { a in a.pr_str(readable: true) }
         print(stringArgs.joined(separator: " "))
         return .null
     },
     "println": .closure { args in
-        let stringArgs = args.map { a in a.print(readable: false) }
+        let stringArgs = args.map { a in a.pr_str(readable: false) }
         print(stringArgs.joined(separator: " "))
         return .null
     }

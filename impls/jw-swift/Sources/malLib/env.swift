@@ -16,8 +16,16 @@ public class Env: Equatable {
         ) {
         self.outer = outer
         self.data = data
-        for (symName, expr) in zip(binds, exprs) {
-            set(symName, expr)
+        for bindsIndex in binds.startIndex..<binds.endIndex {
+            let exprsIndex = exprs.startIndex + bindsIndex - binds.startIndex
+            let symName = binds[bindsIndex]
+            if symName == "&" {
+                if bindsIndex + 1 < binds.endIndex {
+                    set(binds[bindsIndex + 1], .list(exprs.suffix(from: exprsIndex)))
+                }
+                break
+            }
+            set(symName, exprs[exprsIndex])
         }
     }
 
