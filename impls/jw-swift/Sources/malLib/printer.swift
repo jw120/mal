@@ -2,33 +2,35 @@
 //
 // (C) Joe Watson 2020-06-11
 //
-// printer - convert an AST to a string
+// printer - allow Mal type to be converted to a string
 
-/// Return a string representation of the given Mal value
-public func pr_str(_ ast: Mal, readable: Bool = false) -> String {
-    switch ast {
-    case .int(let i):
-        return String(i)
-    case .list(let elements):
-        return join_between(elements.map { pr_str($0, readable: readable) }, open: "(", close: ")")
-    case .vec(let elements):
-        return join_between(elements.map { pr_str($0, readable: readable) }, open: "[", close: "]")
-    case .hashmap(let elements):
-        let strElements: [String] = elements.flatMap { key, val in
-            [showString(key, readable: readable), pr_str(val, readable: readable)]
+extension Mal {
+
+    /// Return a string representation of the given Mal value
+    public func print(readable: Bool = false) -> String {
+        switch self {
+        case .int(let i):
+            return String(i)
+        case .list(let elements):
+            return join_between(elements.map { $0.print(readable: readable) }, open: "(", close: ")")
+        case .vec(let elements):
+            return join_between(elements.map { $0.print(readable: readable) }, open: "[", close: "]")
+        case .hashmap(let elements):
+            let strElements: [String] = elements.flatMap { key, val in
+                [showString(key, readable: readable), val.print(readable: readable)]
+            }
+            return join_between(strElements, open: "{", close: "}")
+        case .bool(let val):
+            return val ? "true" : "false"
+        case .null:
+            return "nil"
+        case .str(let val):
+            return showString(val, readable: readable)
+        case .sym(let val):
+            return val
+        case .closure:
+            return "<function>"
         }
-        return join_between(strElements, open: "{", close: "}")
-    case .bool(let val):
-        return val ? "true" : "false"
-    case .null:
-        return "nil"
-    case .str(let val):
-        return showString(val, readable: readable)
-    case .sym(let val):
-        return val
-    case .closure:
-        return "<function>"
-    }
 }
 
 /// Join an array of strings with a space separator and given opening and closing strings

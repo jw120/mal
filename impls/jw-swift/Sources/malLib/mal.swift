@@ -34,12 +34,12 @@ public indirect enum Mal: Equatable {
         }
     }
 
-
     internal static let keywordPrefix: Character = "\u{29E}"
-}
 
-// Add convenience methods to extract values from a mal type
-extension Mal {
+    //
+    // Add convenience methods to extract values from a mal type
+    //
+
     /// If this is a non-empty list return the head and tail
     public var headTail: (Mal, ArraySlice<Mal>)? {
         switch self {
@@ -73,12 +73,9 @@ extension Mal {
         default:
             return false
         }
-    }
-}
 
-// Add specialized equality to out Mal type
-extension Mal {
-      public static func == (lhs: Mal, rhs: Mal) -> Bool {
+    /// Add specialized equality to out Mal type
+    public static func == (lhs: Mal, rhs: Mal) -> Bool {
         switch (lhs, rhs) {
         // For most types we just compare the contents
         case (.int(let x), .int(let y)):
@@ -121,13 +118,18 @@ public enum MalError: Error {
     case msg(String)
 }
 
+///
 extension ArraySlice {
+
+    /// if the slice has exactly two elements, return them as a 2-tuple
     public var asPair: (Element, Element)? {
         if self.count == 2 {
             return (self[self.startIndex], self[self.startIndex + 1])
         }
         return .none
     }
+
+    /// if the slice has exactly three elements, return them as a 3-tuple
     public var asTriple: (Element, Element, Element)? {
         if self.count == 3 {
             return (self[self.startIndex], self[self.startIndex + 1], self[self.startIndex + 2])

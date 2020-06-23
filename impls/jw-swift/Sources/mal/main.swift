@@ -6,16 +6,19 @@
 
 import malLib
 
+/// Starting environment for the repl
+public let prelude = Env(outer: nil, data: core)
+
 while true {
     print("user> ", terminator: "")
     if let s = readLine() {
         switch read_str(s) {
         case .value(let readValue):
             do {
-                let evaluatedValue: Mal = try eval(readValue, prelude)
-                print(pr_str(evaluatedValue, readable: true))
+                let evaluatedValue: Mal = try readValue.eval(prelude)
+                print(evaluatedValue.print(readable: true))
             } catch MalError.val(let v) {
-                print("Error: ", pr_str(v, readable: true))
+                print("Error: ", v.print(readable: true))
             } catch MalError.msg(let s) {
                 print("Error: \(s)")
             }
