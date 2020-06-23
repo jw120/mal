@@ -12,7 +12,8 @@ public class Env: Equatable {
         outer: Env? = nil,
         data: [String: Mal] = Dictionary(),
         binds: [String] = [],
-        exprs: [Mal] = []) {
+        exprs: ArraySlice<Mal> = []
+        ) {
         self.outer = outer
         self.data = data
         for (symName, expr) in zip(binds, exprs) {

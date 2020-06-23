@@ -4,8 +4,8 @@
 //
 // core - provcide the core set of definitions
 
+/// Definitions to be included in repl environment
 public let core: [String: Mal] = [
-
     // Arithmetic and logical functions on integers
     "+": wrapInt2Int("+", +),
     "-": wrapInt2Int("-", -),
@@ -25,7 +25,7 @@ public let core: [String: Mal] = [
     }),
 
     // Sequence functions
-    "list": .closure({ xs in .list(xs)}),
+    "list": .closure({ xs in .list(xs) }),
     "list?": .closure({ xs in
         switch xs.first {
         case .list:
@@ -34,42 +34,36 @@ public let core: [String: Mal] = [
             return .bool(false)
         }
     }),
-    "empty?": .closure({ xs in
-        switch xs.first {
-        case .list(let ys):
-            return .bool(ys.isEmpty)
-        default:
-            throw MalError.msg("Expected a list as the argument for empty?")
+    "empty?": .closure { args in
+        if let seq = args.first?.sequence {
+            return .bool(seq.isEmpty)
         }
-    }),
-    "count": .closure({ xs in
-        switch xs.first {
-        case .list(let ys):
-            return .int(ys.count)
-        case .null:
-            return .int(0)
-        default:
-            throw MalError.msg("Expected a list as the argument for count")
+        throw MalError.msg("Expected a list as the argument for empty?")
+    },
+    "count": .closure { args in
+        if let seq = args.first?.sequence {
+            return .int(seq.count)
         }
-    }),
+        throw MalError.msg("Expected a list as the argument for count")
+    },
 
     // I/O functions
-    "pr-str": c.closure { args in
-        stringArgs = args.map { a in a.print(readable: true) }
+    "pr-str": .closure { args in
+        let stringArgs = args.map { a in a.print(readable: true) }
         return .str(stringArgs.joined(separator: " "))
     },
-    "str": c.closure { args in
-        stringArgs = args.map { a in a.print(readable: false) }
-        return .str(stringArgs.joined(separator: ""))
+    "str": .closure { args in
+        let stringArgs = args.map { a in a.print(readable: false) }
+        return .str(stringArgs.joined())
     },
-    "pr-str": c.closure { args in
-        stringArgs = args.map { a in a.print(readable: true) }
+    "prn": .closure { args in
+        let stringArgs = args.map { a in a.print(readable: true) }
         print(stringArgs.joined(separator: " "))
         return .null
     },
-    "println": c.closure { args in
-        stringArgs = args.map { a in a.print(readable: false) }
-        print(stringArgs.joined(separator: ""))
+    "println": .closure { args in
+        let stringArgs = args.map { a in a.print(readable: false) }
+        print(stringArgs.joined(separator: " "))
         return .null
     }
 ]

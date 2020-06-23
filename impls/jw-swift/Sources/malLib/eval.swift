@@ -5,50 +5,50 @@
 // eval - provide Mal type to provide evaluation
 
 extension Mal {
-
     /// Evaluate this mal value witin the given environment
     public func eval(_ env: Env) throws -> Mal {
-    if let (head, tail) = self.headTail {
-        switch head {
-        case .sym("def!"):
-            return try defSpecialForm(tail, env)
-        case .sym("do"):
-            return try doSpecialForm(tail, env)
-        case .sym("fn*"):
-            return try fnSpecialForm(tail, env)
-        case .sym("if"):
-            return try ifSpecialForm(tail, env)
-        case .sym("let*"):
-            return try letSpecialForm(tail, env)
-        default:
-            break
+        if let (head, tail) = self.headTail {
+            switch head {
+            case .sym("def!"):
+                return try defSpecialForm(tail, env)
+            case .sym("do"):
+                return try doSpecialForm(tail, env)
+            case .sym("fn*"):
+                return try fnSpecialForm(tail, env)
+            case .sym("if"):
+                return try ifSpecialForm(tail, env)
+            case .sym("let*"):
+                return try letSpecialForm(tail, env)
+            default:
+                break
+            }
         }
-    }
-    let evaluated = try self.evalAst(env)
-    if let (head, tail) = evaluated.headTail {
-        switch head {
-        case .closure(let c):
-            return try c(tail)
-        default:
-            throw MalError.msg("Attempt to apply a non-function")
+        let evaluated = try self.evalAst(env)
+        if let (head, tail) = evaluated.headTail {
+            switch head {
+            case .closure(let c):
+                return try c(tail)
+            default:
+                throw MalError.msg("Attempt to apply a non-function")
+            }
         }
+        return evaluated
     }
-    return evaluated
-}
 
     /// Evaluate this mal value without an apply phase
     fileprivate func evalAst(_ env: Env) throws -> Mal {
-    switch self {
-    case .sym(let s):
-        return try env.get(s)
-    case .list(let xs):
-        return .list(try ArraySlice(xs.map({ x in try x.eval(env) })))
-    case .vec(let xs):
-        return .vec(try ArraySlice(xs.map({ x in try x.eval(env) })))
-    case .hashmap(let xs):
-        return .hashmap(try xs.mapValues({ v in try v.eval(env) }))
-    default:
-        return ast
+        switch self {
+        case .sym(let s):
+            return try env.get(s)
+        case .list(let xs):
+            return .list(try ArraySlice(xs.map({ x in try x.eval(env) })))
+        case .vec(let xs):
+            return .vec(try ArraySlice(xs.map({ x in try x.eval(env) })))
+        case .hashmap(let xs):
+            return .hashmap(try xs.mapValues({ v in try v.eval(env) }))
+        default:
+            return self
+        }
     }
 }
 
@@ -66,7 +66,7 @@ fileprivate func defSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> M
 
 /// Handle the def! special form
 fileprivate func doSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> Mal {
-    var lastValue: Mal? = nil
+    var lastValue: Mal?
     for a in args {
         lastValue = try a.eval(env)
     }
@@ -80,9 +80,8 @@ fileprivate func doSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> Ma
 /// Handle the fn* special form
 fileprivate func fnSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> Mal {
     if let (bindMal, body) = args.asPair {
-        switch bindMal {
-        case .list(let bindList):
-            let bindStrings = bindList.map { m in
+        if let bindSeq = bindMal.sequence {
+            let bindStrings: [String] = try bindSeq.map { (m: Mal) throws -> String in
                 switch m {
                 case .sym(let name):
                     return name
@@ -92,23 +91,19 @@ fileprivate func fnSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> Ma
             }
             return .closure {
                 (fnArgs: ArraySlice<Mal>) -> Mal in
-                    guard bindStrings.count == fnArgs.count {
+                    guard bindStrings.count == fnArgs.count else {
                         throw MalError.msg("Wrong number of argumnets for function call")
                     }
-                    let fnEnv = Env(env, binds: bindStrings, exprs: fnArgs)
+                    let fnEnv = Env(outer: env, binds: bindStrings, exprs: fnArgs)
                     return try body.eval(fnEnv)
             }
-        default:
-            break
         }
     }
     throw MalError.msg("fn* needs at list and a body as arguments")
 }
 
-
 /// Handle the if special form
 fileprivate func ifSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> Mal {
-
     func evalIf(_ c: Mal, _ t: Mal, _ f: Mal) throws -> Mal {
         switch try c.eval(env) {
         case .null, .bool(false):

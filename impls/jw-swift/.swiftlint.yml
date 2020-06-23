@@ -3,6 +3,7 @@
 disabled_rules:
 - cyclomatic_complexity
 - identifier_name
+- large_tuple
 - private_over_fileprivate
 opt_in_rules:
 - anyobject_protocol
@@ -33,7 +34,7 @@ opt_in_rules:
 - explicit_top_level_acl
 # - explicit_type_interface # Required types for var/let etc
 - expiring_todo
-- extension_access_modifier
+#- extension_access_modifier
 - fallthrough
 - fatal_error_message
 - file_header
@@ -64,7 +65,7 @@ opt_in_rules:
 - multiline_literal_brackets
 - multiline_parameters_brackets
 - nimble_operator
-- no_extension_access_modifier
+#- no_extension_access_modifier
 - no_grouping_extension
 - nslocalizedstring_key
 - nslocalizedstring_require_bundle

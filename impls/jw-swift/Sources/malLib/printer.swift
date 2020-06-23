@@ -5,7 +5,6 @@
 // printer - allow Mal type to be converted to a string
 
 extension Mal {
-
     /// Return a string representation of the given Mal value
     public func print(readable: Bool = false) -> String {
         switch self {
@@ -31,6 +30,7 @@ extension Mal {
         case .closure:
             return "<function>"
         }
+    }
 }
 
 /// Join an array of strings with a space separator and given opening and closing strings
@@ -40,14 +40,15 @@ fileprivate func join_between(_ xs: [String], open: String, close: String) -> St
 
 /// Return the printable form of a string (including keywords)
 fileprivate func showString(_ s: String, readable: Bool) -> String {
-    var printable = readable ? escape(s) : s
-    if let c = printable.first {
-        if c == Mal.keywordPrefix {
-            printable.remove(at: printable.startIndex)
-            return ":" + printable
-        }
+    // keyword
+    if s.first == .some(Mal.keywordPrefix) {
+        var kw = s
+        kw.remove(at: kw.startIndex)
+        return ":" + kw
     }
-    return "\"" + printable + "\""
+
+    // string
+    return readable ? "\"" + escape(s) + "\"" : s
 }
 
 /// Add escape sequences to newlines, double quotes and backslashes

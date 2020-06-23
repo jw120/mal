@@ -10,12 +10,14 @@ import malLib
 public let prelude = Env(outer: nil, data: core)
 
 // Run our mal start-up code
-[
+fileprivate let startupCode: [String] = [
     "(def! not (fn* (a) (if a false true)))"
-].forEach {  in
+]
+
+try startupCode.forEach { s in
     switch read_str(s) {
     case .value(let v):
-        v.eval(env)
+        _ = try v.eval(prelude)
     default:
         throw MalError.msg("Failure in startup code: \(s)")
     }

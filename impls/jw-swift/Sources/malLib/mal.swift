@@ -53,13 +53,15 @@ public indirect enum Mal: Equatable {
         return .none
     }
 
-    /// If this is a list or vector, return the sequence
+    /// If this is a list, vector or nil, return the sequence
     public var sequence: ArraySlice<Mal>? {
         switch self {
         case .list(let xs):
             return ArraySlice(xs)
         case .vec(let xs):
             return ArraySlice(xs)
+        case .null:
+            return ArraySlice([])
         default:
             return .none
         }
@@ -73,6 +75,7 @@ public indirect enum Mal: Equatable {
         default:
             return false
         }
+    }
 
     /// Add specialized equality to out Mal type
     public static func == (lhs: Mal, rhs: Mal) -> Bool {
@@ -118,9 +121,7 @@ public enum MalError: Error {
     case msg(String)
 }
 
-///
 extension ArraySlice {
-
     /// if the slice has exactly two elements, return them as a 2-tuple
     public var asPair: (Element, Element)? {
         if self.count == 2 {
