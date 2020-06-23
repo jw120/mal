@@ -14,6 +14,8 @@ extension Mal {
             return try defSpecialForm(tail, env)
         case .sym("do"):
             return try doSpecialForm(tail, env)
+        case .sym("fn*"):
+            return try fnSpecialForm(tail, env)
         case .sym("if"):
             return try ifSpecialForm(tail, env)
         case .sym("let*"):
@@ -74,6 +76,35 @@ fileprivate func doSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> Ma
         throw MalError.msg("do needs at least one argument")
     }
 }
+
+/// Handle the fn* special form
+fileprivate func fnSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> Mal {
+    if let (bindMal, body) = args.asPair {
+        switch bindMal {
+        case .list(let bindList):
+            let bindStrings = bindList.map { m in
+                switch m {
+                case .sym(let name):
+                    return name
+                default:
+                    throw MalError.msg("fn* binding list must be made up of symbols")
+                }
+            }
+            return .closure {
+                (fnArgs: ArraySlice<Mal>) -> Mal in
+                    guard bindStrings.count == fnArgs.count {
+                        throw MalError.msg("Wrong number of argumnets for function call")
+                    }
+                    let fnEnv = Env(env, binds: bindStrings, exprs: fnArgs)
+                    return try body.eval(fnEnv)
+            }
+        default:
+            break
+        }
+    }
+    throw MalError.msg("fn* needs at list and a body as arguments")
+}
+
 
 /// Handle the if special form
 fileprivate func ifSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> Mal {

@@ -54,13 +54,24 @@ public let core: [String: Mal] = [
     }),
 
     // I/O functions
-    "prn": .closure({ xs in
-        if let v = xs.first {
-            print(v.print(readable: true))
-        }
+    "pr-str": c.closure { args in
+        stringArgs = args.map { a in a.print(readable: true) }
+        return .str(stringArgs.joined(separator: " "))
+    },
+    "str": c.closure { args in
+        stringArgs = args.map { a in a.print(readable: false) }
+        return .str(stringArgs.joined(separator: ""))
+    },
+    "pr-str": c.closure { args in
+        stringArgs = args.map { a in a.print(readable: true) }
+        print(stringArgs.joined(separator: " "))
         return .null
-    })
-
+    },
+    "println": c.closure { args in
+        stringArgs = args.map { a in a.print(readable: false) }
+        print(stringArgs.joined(separator: ""))
+        return .null
+    }
 ]
 
 /// Wrap an (Int, Int) -> Int function in a Mal closure

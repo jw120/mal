@@ -9,6 +9,18 @@ import malLib
 /// Starting environment for the repl
 public let prelude = Env(outer: nil, data: core)
 
+// Run our mal start-up code
+[
+    "(def! not (fn* (a) (if a false true)))"
+].forEach {  in
+    switch read_str(s) {
+    case .value(let v):
+        v.eval(env)
+    default:
+        throw MalError.msg("Failure in startup code: \(s)")
+    }
+}
+
 while true {
     print("user> ", terminator: "")
     if let s = readLine() {

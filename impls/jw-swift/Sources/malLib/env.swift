@@ -8,9 +8,16 @@ public class Env: Equatable {
     public let outer: Env?
     public var data: [String: Mal]
 
-    public init(outer: Env? = nil, data: [String: Mal] = Dictionary()) {
+    public init(
+        outer: Env? = nil,
+        data: [String: Mal] = Dictionary(),
+        binds: [String] = [],
+        exprs: [Mal] = []) {
         self.outer = outer
         self.data = data
+        for (symName, expr) in zip(binds, exprs) {
+            set(symName, expr)
+        }
     }
 
     public func set(_ s: String, _ v: Mal) {
