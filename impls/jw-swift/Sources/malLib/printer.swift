@@ -29,6 +29,8 @@ extension Mal {
             return val
         case .closure:
             return "<function>"
+        case .atom(let a):
+            return "(atom " + a.contents.pr_str(readable: readable) + ")"
         }
     }
 }

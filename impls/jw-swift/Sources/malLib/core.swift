@@ -64,11 +64,72 @@ public let core: [String: Mal] = [
         let stringArgs = args.map { a in a.pr_str(readable: false) }
         print(stringArgs.joined(separator: " "))
         return .null
+    },
+    "read-string": swiftClosure { args in
+        guard case let .some(.str(s)) = args.asSingleton else {
+            throw MalError.msg("Need one string argument for read-string")
+        }
+        switch read_str(s) {
+        case .value(let v):
+            return v
+        case .err(let msg):
+            throw MalError.msg(msg)
+        case .nothing:
+            return .null
+        }
+    },
+    "slurp": swiftClosure { args in
+        guard case let .some(.str(s)) = args.asSingleton else {
+            throw MalError.msg("Need one string argument for slurp")
+        }
+        return .str(try String(contentsOfFile: s))
+    },
+
+    // atoms
+    "atom": swiftClosure { args in
+        guard case let .some(v) = args.asSingleton else {
+            throw MalError.msg("Need one argument for atom")
+        }
+        return .atom(MalAtom(v))
+    },
+    "atom?": swiftClosure { args in
+        guard args.count == 1 else {
+            throw MalError.msg("Need one argument for atom?")
+        }
+        if case .some(.atom) = args.first {
+            return .bool(true)
+        }
+        return .bool(false)
+    },
+    "deref": swiftClosure { args in
+        guard case let .some(.atom(a)) = args.asSingleton else {
+            throw MalError.msg("Need one atom argumente for deref")
+        }
+        return a.contents
+    },
+    "reset!": swiftClosure { args in
+        guard case let .some((.atom(a), v)) = args.asPair else {
+            throw MalError.msg("Need an atom and a value for reset!")
+        }
+        a.contents = v
+        return v
+    },
+    "swap!": swiftClosure { args in
+        guard
+            args.count >= 2,
+            case let .some(.atom(a)) = args.first,
+            case let .closure(c) = args[args.startIndex + 1] else {
+                throw MalError.msg("Need an atom, a function and zero or more other arguments for swap!")
+        }
+        var fnArgs = args.dropFirst(2)
+        fnArgs.insert(a.contents, at: fnArgs.startIndex)
+        a.contents = try c.swift(fnArgs)
+        return a.contents
     }
 ]
 
 /// convert a swift closure into a Mal closure
-fileprivate func swiftClosure(_ f: @escaping (ArraySlice<Mal>) throws -> Mal) -> Mal {
+public func swiftClosure(_ f: @escaping (ArraySlice<Mal>) throws -> Mal) -> Mal {
     .closure(MalClosure(mal: nil, swift: f, isMacro: false))
 }
 

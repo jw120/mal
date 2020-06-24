@@ -11,7 +11,8 @@ public let prelude = Env(outer: nil, data: core)
 
 // Run our mal start-up code
 fileprivate let startupCode: [String] = [
-    "(def! not (fn* (a) (if a false true)))"
+    "(def! not (fn* (a) (if a false true)))",
+    "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\nnil)\")))))"
 ]
 
 try startupCode.forEach { s in
@@ -22,6 +23,14 @@ try startupCode.forEach { s in
         throw MalError.msg("Failure in startup code: \(s)")
     }
 }
+
+prelude.set("eval", swiftClosure { args in
+    guard args.count == 1, let ast = args.first else {
+        throw MalError.msg("Need one string argument for slurp")
+    }
+    return try ast.eval(prelude)
+}
+)
 
 while true {
     print("user> ", terminator: "")

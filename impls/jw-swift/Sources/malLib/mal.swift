@@ -14,6 +14,7 @@ public indirect enum Mal: Equatable {
     case str(String) // includes keywords with prefix
     case sym(String)
     case closure(MalClosure)
+    case atom(MalAtom)
 
     public init(hashmapFromAlternatingList xs: [Mal]) {
         if !xs.count.isMultiple(of: 2) {
@@ -127,7 +128,26 @@ public enum MalError: Error {
     case msg(String)
 }
 
+/// Mal atoms are a mutable reference to (immutable) data
+public class MalAtom {
+    /// The contents of the atom
+    public var contents: Mal
+
+    /// Initialize the atom with the given value as its contents
+    public init(_ val: Mal) {
+        contents = val
+    }
+}
+
 extension ArraySlice {
+    /// if the slice has exactly one element, return it
+    public var asSingleton: Element? {
+        guard self.count == 1 else {
+            return .none
+        }
+        return self[self.startIndex]
+    }
+
     /// if the slice has exactly two elements, return them as a 2-tuple
     public var asPair: (Element, Element)? {
         guard self.count == 2 else {
