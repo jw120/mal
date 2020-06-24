@@ -17,10 +17,10 @@
 /// Return a Parser that matches the given character
 public func char(_ c: Character) -> Parser<Character> { {
     (state: ParseState) -> (ParseState, ParseResult<Character>) in
-        guard let c = state.input.first else {
-            return (state, .failure(ParseError(state: state, label: "Expected '\(c)'")))
+        if state.input.first == c {
+            return (state.advance(), .success(c))
         }
-        return (state.advance(), .success(c))
+        return (state, .failure(ParseError(state: state, label: "Expected '\(c)'")))
     }
 }
 
@@ -33,9 +33,9 @@ public func anyChar(_ state: ParseState) -> (ParseState, ParseResult<Character>)
 }
 
 /// Return a Parser that matches the given string (and that backtracks when failing)
-public func string(_ s: String) -> Parser<String> {
-    { (state: ParseState) -> (ParseState, ParseResult<String>) in
-        guard state.input.hasPrefix(s) {
+public func string(_ s: String) -> Parser<String> { {
+    (state: ParseState) -> (ParseState, ParseResult<String>) in
+        guard state.input.hasPrefix(s) else {
             return (state, .failure(ParseError(state: state, label: "Expected '\(s)'")))
         }
         return (state.advance(s.count), .success(s))
@@ -43,9 +43,9 @@ public func string(_ s: String) -> Parser<String> {
 }
 
 /// Return a Parser that matches any character for which the given function is true
-public func satisfy(_ f: @escaping (Character) -> Bool) -> Parser<Character> {
-    { (state: ParseState) -> (ParseState, ParseResult<Character>) in
-        guard let firstChar = state.input.first, f(firstChar) {
+public func satisfy(_ f: @escaping (Character) -> Bool) -> Parser<Character> { {
+    (state: ParseState) -> (ParseState, ParseResult<Character>) in
+        guard let firstChar = state.input.first, f(firstChar) else {
             return (state, .failure(ParseError(state: state, label: "Expectation not satisfied")))
         }
         return (state.advance(), .success(firstChar))

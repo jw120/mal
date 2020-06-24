@@ -2,13 +2,6 @@ TODO - Parser a la Haskell
 
 Source formatting?
 
-More guards (let variables declared in guard have scope below unlike with if)
-    * Use instead of if
-    * Use instead of switch to bind for one case
-    * Done core.swift
-If with comma for multiple let bindings
-Multiople guards in one guard?
-
 Should we use array slices for lists. Can the arrays be immutable
 
 

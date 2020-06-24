@@ -6,19 +6,18 @@
 
 extension Mal {
     /// Evaluate this mal value witin the given environment
-    public func eval(_ env: Env) throws -> Mal {
+    public func eval(_ evalEnv: Env) throws -> Mal {
         // We loop to avoid calling eval recursively when possible
         var ast: Mal = self
-        var env: Env = env
+        var env: Env = evalEnv
         tcoLoop: while true {
-
             // if we are a non-empty list
-            if let (head, tail) = self.headTail {
+            if let (head, tail) = ast.headTail {
                 switch head { // check for special forms
                 case .sym("def!"):
                     return try defSpecialForm(tail, env)
                 case .sym("do"): // last value of do returned for evaluation
-                    ast =  try doSpecialForm(tail, env)
+                    ast = try doSpecialForm(tail, env)
                     continue tcoLoop
                 case .sym("fn*"):
                     return try fnSpecialForm(tail, env)
@@ -32,20 +31,23 @@ extension Mal {
                     break
                 }
                 // not a special form, so evaluate list and apply
-                let evaluatedList = try self.evalAst(env)
+                let evaluatedList = try ast.evalAst(env)
                 if let (evalHead, evalTail) = evaluatedList.headTail {
-                    guard case let .closure(let c) = evalHead else {
+                    guard case let .closure(c) = evalHead else {
                         throw MalError.msg("Attempt to apply a non-function")
                     }
                     // if not a mal closure, then call the swift function
-                    guard let (ast, params, env) = c.mal else {
+                    guard let (closureAst, params, closureEnv) = c.mal else {
                         return try c.swift(evalTail)
                     }
                     // if a mal closure, then evaluate
-                    env = Env(outer: env, binds: params, exprs: evalTail)
+                    ast = closureAst
+                    env = Env(outer: closureEnv, binds: params, exprs: evalTail)
+                    continue tcoLoop
                 }
             }
             ast = try ast.evalAst(env)
+            break tcoLoop
         }
         return ast
     }
@@ -69,7 +71,7 @@ extension Mal {
 
 /// Handle the def! special form
 fileprivate func defSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> Mal {
-    guard case let (.sym(let s), let val) = args.asPair else {
+    guard case let .some((.sym(s), val)) = args.asPair else {
         throw MalError.msg("def! needs a symbol and a value")
     }
     let evaluatedVal = try val.eval(env)
@@ -97,7 +99,7 @@ fileprivate func fnSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> Ma
         throw MalError.msg("fn* needs a sequence and a body as arguments")
     }
     let bindStrings: [String] = try bindSeq.map { (m: Mal) throws -> String in
-        guard case let .sym(name) = m {
+        guard case let .sym(name) = m else {
             throw MalError.msg("fn* binding list must be made up of symbols")
         }
         return name
@@ -107,7 +109,8 @@ fileprivate func fnSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> Ma
         swift: { (fnArgs: ArraySlice<Mal>) -> Mal in
             let fnEnv = Env(outer: env, binds: bindStrings, exprs: fnArgs)
             return try body.eval(fnEnv)
-        }
+        },
+        isMacro: false
     ))
 }
 
@@ -133,7 +136,7 @@ fileprivate func ifSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> Ma
 /// Handle the let* special form. Returns an expression and an environment to be evaluated
 fileprivate func letSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> (Mal, Env) {
     guard let (firstArg, secondArg) = args.asPair else {
-            throw MalError.msg("let* needs two arguments")
+        throw MalError.msg("let* needs two arguments")
     }
     guard let bindings = firstArg.sequence else {
         throw MalError.msg("let* needs a sequence of bindings and a value")

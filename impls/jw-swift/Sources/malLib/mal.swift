@@ -111,9 +111,14 @@ public indirect enum Mal: Equatable {
 /// For a closure we hold both the mal code needed for evaluation (ast, params, env) and
 /// a swift closure that can be evaluated. For a swift-defined function there is no mal part
 public struct MalClosure {
-    let mal: (Mal, [String], Env)?
-    let swift: (ArraySlice<Mal>) throws -> Mal
-    let isMacro: Bool
+    /// mal version of the closure (ast, parameter names and environemtn)
+    public let mal: (Mal, [String], Env)?
+
+    /// swift version of the closure
+    public let swift: (ArraySlice<Mal>) throws -> Mal
+
+    /// Is the closure a macro?
+    public let isMacro: Bool
 }
 
 /// Mal errors can either be a thrown value or a simple string message (for use when thrown from swift code)
