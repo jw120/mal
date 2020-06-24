@@ -34,17 +34,14 @@ public class Env: Equatable {
     }
 
     public func find(_ s: String) -> Env? {
-        if self.data[s] != nil {
-            return self
-        }
-        return self.outer?.find(s)
+        self.data[s] != nil ? self : self.outer?.find(s)
     }
 
     public func get(_ s: String) throws -> Mal {
-        if let val = self.find(s)?.data[s] {
-            return val
+        guard let val = self.find(s)?.data[s] else {
+            throw MalError.msg("\(s) not found")
         }
-        throw MalError.msg("\(s) not found")
+        return val
     }
 
     // We implement reference equality to conform to Equatable and allow testing

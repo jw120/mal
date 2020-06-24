@@ -18,7 +18,7 @@ public let core: [String: Mal] = [
 
     // Equality
     "=": .closure({ xs in
-        if xs.count != 2 {
+        guard xs.count == 2 else {
             throw MalError.msg("Need two arguments for =")
         }
         return .bool(xs[xs.startIndex] == xs[xs.startIndex + 1])
@@ -27,24 +27,23 @@ public let core: [String: Mal] = [
     // Sequence functions
     "list": .closure({ xs in .list(xs) }),
     "list?": .closure({ xs in
-        switch xs.first {
-        case .list:
+        if case .list = xs.first {
             return .bool(true)
-        default:
+        } else {
             return .bool(false)
         }
     }),
     "empty?": .closure { args in
-        if let seq = args.first?.sequence {
-            return .bool(seq.isEmpty)
+        guard let seq = args.first?.sequence else {
+            throw MalError.msg("Expected a list as the argument for empty?")
         }
-        throw MalError.msg("Expected a list as the argument for empty?")
+        return .bool(seq.isEmpty)
     },
     "count": .closure { args in
-        if let seq = args.first?.sequence {
-            return .int(seq.count)
+        guard let seq = args.first?.sequence  else {
+            throw MalError.msg("Expected a list as the argument for count")
         }
-        throw MalError.msg("Expected a list as the argument for count")
+        return .int(seq.count)
     },
 
     // I/O functions
@@ -72,15 +71,13 @@ public let core: [String: Mal] = [
 fileprivate func wrapInt2Int(_ name: String, _ f: @escaping (Int, Int) -> Int) -> Mal {
     .closure {
         (args: ArraySlice<Mal>) throws -> Mal in
-            if args.count != 2 {
+            guard args.count == 2 else {
                 throw MalError.msg("Need two arguments for \(name)")
             }
-            switch (args[args.startIndex], args[args.startIndex + 1]) {
-            case (.int(let x), .int(let y)):
-                return .int(f(x, y))
-            default:
+            guard case let (.int(let x), .int(let y)) = (args[args.startIndex], args[args.startIndex + 1]) else {
                 throw MalError.msg("Arguments for \(name) must be integers")
             }
+            return .int(f(x, y))
     }
 }
 
@@ -88,14 +85,12 @@ fileprivate func wrapInt2Int(_ name: String, _ f: @escaping (Int, Int) -> Int) -
 fileprivate func wrapInt2Bool(_ name: String, _ f: @escaping (Int, Int) -> Bool) -> Mal {
     .closure {
         (args: ArraySlice<Mal>) throws -> Mal in
-            if args.count != 2 {
+            guard args.count == 2 else {
                 throw MalError.msg("Need two arguments for \(name)")
             }
-            switch (args[args.startIndex], args[args.startIndex + 1]) {
-            case (.int(let x), .int(let y)):
-                return .bool(f(x, y))
-            default:
+            guard case let (.int(let x), .int(let y)) = (args[args.startIndex], args[args.startIndex + 1]) else {
                 throw MalError.msg("Arguments for \(name) must be integers")
             }
+            return .bool(f(x, y))
     }
 }

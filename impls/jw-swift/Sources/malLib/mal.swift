@@ -13,7 +13,7 @@ public indirect enum Mal: Equatable {
     case null // Can't use nil as it is used in Swift
     case str(String) // includes keywords with prefix
     case sym(String)
-    case closure((ArraySlice<Mal>) throws -> Mal)
+    case closure(MalClosure)
 
     public init(hashmapFromAlternatingList xs: [Mal]) {
         if !xs.count.isMultiple(of: 2) {
@@ -42,15 +42,10 @@ public indirect enum Mal: Equatable {
 
     /// If this is a non-empty list return the head and tail
     public var headTail: (Mal, ArraySlice<Mal>)? {
-        switch self {
-        case .list(let xs):
-            if let firstVal = xs.first {
-                return (firstVal, xs.dropFirst())
-            }
-        default:
-            break
+        guard case let .list(xs) = self, let firstVal = xs.first else {
+            return .none
         }
-        return .none
+        return (firstVal, xs.dropFirst())
     }
 
     /// If this is a list, vector or nil, return the sequence
@@ -69,12 +64,10 @@ public indirect enum Mal: Equatable {
 
     /// Is this an empty list?
     public var isEmptyList: Bool {
-        switch self {
-        case .list(let xs):
-            return xs.isEmpty
-        default:
+        guard case let .list(xs) = self else {
             return false
         }
+        return xs.isEmpty
     }
 
     /// Add specialized equality to out Mal type
@@ -115,6 +108,14 @@ public indirect enum Mal: Equatable {
     }
 }
 
+/// For a closure we hold both the mal code needed for evaluation (ast, params, env) and
+/// a swift closure that can be evaluated. For a swift-defined function there is no mal part
+public struct MalClosure {
+    let mal: (Mal, [String], Env)?
+    let swift: (ArraySlice<Mal>) throws -> Mal
+    let isMacro: Bool
+}
+
 /// Mal errors can either be a thrown value or a simple string message (for use when thrown from swift code)
 public enum MalError: Error {
     case val(Mal)
@@ -124,17 +125,17 @@ public enum MalError: Error {
 extension ArraySlice {
     /// if the slice has exactly two elements, return them as a 2-tuple
     public var asPair: (Element, Element)? {
-        if self.count == 2 {
-            return (self[self.startIndex], self[self.startIndex + 1])
+        guard self.count == 2 else {
+            return .none
         }
-        return .none
+        return (self[self.startIndex], self[self.startIndex + 1])
     }
 
     /// if the slice has exactly three elements, return them as a 3-tuple
     public var asTriple: (Element, Element, Element)? {
-        if self.count == 3 {
-            return (self[self.startIndex], self[self.startIndex + 1], self[self.startIndex + 2])
+        guard self.count == 3 else {
+            return .none
         }
-        return .none
+        return (self[self.startIndex], self[self.startIndex + 1], self[self.startIndex + 2])
     }
 }

@@ -41,7 +41,7 @@ fileprivate func join_between(_ xs: [String], open: String, close: String) -> St
 /// Return the printable form of a string (including keywords)
 fileprivate func showString(_ s: String, readable: Bool) -> String {
     // keyword
-    if s.first == .some(Mal.keywordPrefix) {
+    if s.first == Mal.keywordPrefix {
         var kw = s
         kw.remove(at: kw.startIndex)
         return ":" + kw

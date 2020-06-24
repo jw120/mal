@@ -27,7 +27,7 @@ public enum ReadResult: Equatable {
 public func read_str(_ s: String) -> ReadResult {
     // Remove leading spaces/comments (and give up if nothing to parse)
     let (state, _) = malSpaceConsumer(ParseState(Substring(s)))
-    if state.input.isEmpty {
+    guard !state.input.isEmpty else {
         return .nothing
     }
 
