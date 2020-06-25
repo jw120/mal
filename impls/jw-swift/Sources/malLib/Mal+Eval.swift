@@ -8,8 +8,8 @@ extension Mal {
     /// Evaluate this mal value witin the given environment
     public func eval(_ evalEnv: Env) throws -> Mal {
         // We loop to avoid calling eval recursively when possible
-        var ast: Mal = self
         var env: Env = evalEnv
+        var ast: Mal = try self.macroExpand(env)
         tcoLoop: while true {
             // If not a non-empty list, just evaluate without apply phase and done
             guard let (head, tail) = ast.listHeadTail else {
@@ -60,6 +60,22 @@ extension Mal {
         }
     }
 
+    private func macroExpand(_ env: Env) throws -> Mal {
+        var ast = self
+        while try ast.isMacroCall(env: env) {
+            guard
+                let (head, tail) = ast.listHeadTail,
+                case let .sym(s) = head,
+                env.find(s) != nil, // avoid exception from get
+                case let .closure(c) = try env.get(s),
+                c.isMacro else {
+                throw MalError.msg("Internal error non-macro in macro \(ast)")
+            }
+            ast = try c.swift(tail)
+        }
+        return ast
+    }
+
     /// Possible results from trying to match against a special form
     private enum SpecialFormResult {
         case Complete(Mal) // matched a special form and evaluation complete
@@ -75,6 +91,8 @@ extension Mal {
         switch symbolName {
         case "def!":
             return try defSpecialForm(arguments, env)
+        case "defmacro!":
+            return try defMacroSpecialForm(arguments, env)
         case "do":
             return try doSpecialForm(arguments, env)
         case "fn*":
@@ -83,6 +101,8 @@ extension Mal {
             return try ifSpecialForm(arguments, env)
         case "let*":
             return try letSpecialForm(arguments, env)
+        case "macroexpand":
+            return try macroExpandSpecialForm(arguments, env)
         case "quasiquote":
             return try quasiquoteSpecialForm(arguments, env)
         case "quote":
@@ -99,6 +119,16 @@ extension Mal {
         let evaluatedVal = try val.eval(env)
         env.set(s, evaluatedVal)
         return .Complete(evaluatedVal)
+    }
+
+    private static func defMacroSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> SpecialFormResult {
+        guard case let .some((.sym(s), val)) = args.asPair,
+            case let .closure(c) = try val.eval(env)else {
+            throw MalError.msg("defmacro! needs a symbol and a function")
+        }
+        let macro: Mal = .closure(MalClosure(mal: c.mal, swift: c.swift, isMacro: true))
+        env.set(s, macro)
+        return .Complete(macro)
     }
 
     private static func doSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> SpecialFormResult {
@@ -174,6 +204,13 @@ extension Mal {
         let letEnv = Env(outer: env)
         try add(env: letEnv, alternating: bindings)
         return .ToEvaluate(secondArg, letEnv)
+    }
+
+    private static func macroExpandSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> SpecialFormResult {
+        guard let val = args.asSingleton else {
+            throw MalError.msg("macroexpand takes one argument")
+        }
+        return .Complete(try val.macroExpand(env))
     }
 
     private static func quasiquoteSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> SpecialFormResult {

@@ -57,6 +57,33 @@ public let core: [String: Mal] = [
         }
         return .list(ArraySlice(newArray))
     },
+    "nth": swiftClosure { args in
+        guard case let .some((x, y)) = args.asPair, let xs = x.sequence, case let .int(i) = y else {
+            throw MalError.msg("Expected a sequence and an integer as arguments for nth")
+        }
+        guard i >= 0 && i < xs.count else {
+            throw MalError.msg("Out of range in nth")
+        }
+        return xs[xs.startIndex + i]
+    },
+    "first": swiftClosure { args in
+        guard let xs = args.asSingleton?.sequence else {
+            throw MalError.msg("Expected a sequence as argument for first")
+        }
+        guard let x = xs.first else {
+            return .null
+        }
+        return x
+    },
+    "rest": swiftClosure { args in
+        guard let xs = args.asSingleton?.sequence else {
+            throw MalError.msg("Expected a sequence as argument for first")
+        }
+        guard !xs.isEmpty else {
+            return .list([])
+        }
+        return .list(xs.dropFirst())
+    },
 
     // MARK: - I/O functions
 

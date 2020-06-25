@@ -79,6 +79,18 @@ public indirect enum Mal: Equatable {
         return xs.isEmpty
     }
 
+    /// Does this represent a macro in the given environment
+    public func isMacroCall(env: Env) throws -> Bool {
+    if
+        case let .list(xs) = self,
+        case let .some(.sym(s)) = xs.first,
+        env.find(s) != nil, // needed to avoid exception from get if no such symbol
+        case let .closure(c) = try env.get(s) {
+        return c.isMacro
+    }
+        return false
+    }
+
     /// Add specialized equality to out Mal type
     public static func == (lhs: Mal, rhs: Mal) -> Bool {
         switch (lhs, rhs) {
