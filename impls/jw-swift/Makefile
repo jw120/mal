@@ -23,7 +23,7 @@ step-test:
 	-@echo step 4; cd ../..; make "test^jw-swift^step4" | grep "failing tests"
 	-@echo step 5; cd ../..; make "test^jw-swift^step5" | grep "failing tests"
 	-@echo step 6; cd ../..; make "test^jw-swift^step6" | grep "failing tests"
-#	-@echo step 7; cd ../..; make "test^jw-swift^step7" | grep "failing tests"
+	-@echo step 7; cd ../..; make "test^jw-swift^step7" | grep "failing tests"
 #	-@echo step 8; cd ../..; make "test^jw-swift^step8" | grep "failing tests"
 #	-@echo step 9; cd ../..; make "test^jw-swift^step9" | grep "failing tests"
 #	-@echo step A; cd ../..; make "test^jw-swift^stepA" | grep "failing tests"

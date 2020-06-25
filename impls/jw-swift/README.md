@@ -4,6 +4,8 @@ Source formatting?
 
 Should we use array slices for lists. Can the arrays be immutable
 
+try
+  // MARK: - View controller lifecycle methods
 
 Show pr_str etc be an Extension?
 
