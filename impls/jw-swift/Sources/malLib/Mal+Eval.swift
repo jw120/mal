@@ -9,8 +9,9 @@ extension Mal {
     public func eval(_ evalEnv: Env) throws -> Mal {
         // We loop to avoid calling eval recursively when possible
         var env: Env = evalEnv
-        var ast: Mal = try self.macroExpand(env)
+        var ast: Mal = self
         tcoLoop: while true {
+            ast = try ast.macroExpand(env)
             // If not a non-empty list, just evaluate without apply phase and done
             guard let (head, tail) = ast.listHeadTail else {
                 return try ast.evalAst(env)
@@ -60,6 +61,7 @@ extension Mal {
         }
     }
 
+    /// Return a macro-expanded version 
     private func macroExpand(_ env: Env) throws -> Mal {
         var ast = self
         while try ast.isMacroCall(env: env) {
