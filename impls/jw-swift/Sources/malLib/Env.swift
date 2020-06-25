@@ -39,7 +39,7 @@ public class Env: Equatable {
 
     public func get(_ s: String) throws -> Mal {
         guard let val = self.find(s)?.data[s] else {
-            throw MalError.msg("\(s) not found")
+            throw MalError.msg("'\(s)' not found")
         }
         return val
     }

@@ -20,13 +20,6 @@ public let core: [String: Mal] = [
     // MARK: - sequence functions
 
     "list": swiftClosure { xs in .list(xs) },
-    "list?": swiftClosure { xs in
-        if case .list = xs.first {
-            return .bool(true)
-        } else {
-            return .bool(false)
-        }
-    },
     "empty?": swiftClosure { args in
         guard let seq = args.first?.sequence else {
             throw MalError.msg("Expected a list as the argument for empty?")
@@ -133,15 +126,6 @@ public let core: [String: Mal] = [
         }
         return .atom(MalAtom(v))
     },
-    "atom?": swiftClosure { args in
-        guard args.count == 1 else {
-            throw MalError.msg("Need one argument for atom?")
-        }
-        if case .some(.atom) = args.first {
-            return .bool(true)
-        }
-        return .bool(false)
-    },
     "deref": swiftClosure { args in
         guard case let .some(.atom(a)) = args.asSingleton else {
             throw MalError.msg("Need one atom argumente for deref")
@@ -168,6 +152,14 @@ public let core: [String: Mal] = [
         return a.contents
     },
 
+    // MARK: - identity-testing functions
+    "atom?": wrapMalBool("atom?", { if case .atom = $0 { return true } else { return false } }),
+    "false?": wrapMalBool("false?", { if case .bool(false) = $0 { return true } else { return false } }),
+    "list?": wrapMalBool("list?", { if case .list = $0 { return true } else { return false } }),
+    "nil?": wrapMalBool("nil?", { if case .null = $0 { return true } else { return false } }),
+    "symbol?": wrapMalBool("symbol?", { if case .sym = $0 { return true } else { return false } }),
+    "true?": wrapMalBool("true?", { if case .bool(true) = $0 { return true } else { return false } }),
+
     // MARK: - Misc functions
 
     "=": swiftClosure { xs in
@@ -175,7 +167,32 @@ public let core: [String: Mal] = [
             throw MalError.msg("Need two arguments for =")
         }
         return .bool(xs[xs.startIndex] == xs[xs.startIndex + 1])
-    }
+    },
+    "throw": swiftClosure { xs in
+        guard let val = xs.asSingleton else {
+            throw MalError.msg("Need one arguments for throw")
+        }
+        throw MalError.val(val)
+    },
+    "apply": swiftClosure { xs in
+        guard
+            xs.count >= 2,
+            case let .some(.closure(applyClosure)) = xs.first,
+            let finalSeq = xs.last?.sequence
+        else {
+            throw MalError.msg("apply takes a function and at least one more argument, the last of which is a sequence")
+        }
+        let applyArgs = xs[xs.startIndex + 1..<xs.endIndex - 1] + finalSeq
+        return try applyClosure.swift(applyArgs)
+    },
+    "map": swiftClosure { xs in
+        guard case let .some((.closure(mapClosure), seqArg)) = xs.asPair, let seq = seqArg.sequence else {
+            throw MalError.msg("map takes a function and sequence")
+        }
+        let mappedSeq = try seq.map { try mapClosure.swift(ArraySlice([$0])) }
+        return .list(ArraySlice(mappedSeq))
+    },
+
 ]
 
 /// convert a swift closure into a Mal closure
@@ -206,5 +223,15 @@ fileprivate func wrapInt2Bool(_ name: String, _ f: @escaping (Int, Int) -> Bool)
             throw MalError.msg("Arguments for \(name) must be integers")
         }
         return .bool(f(x, y))
+    }
+}
+
+// Wrap an Mal -> Bool function in a Mal closure
+fileprivate func wrapMalBool(_ name: String, _ f: @escaping (Mal) -> Bool) -> Mal {
+    swiftClosure { (args: ArraySlice<Mal>) throws -> Mal in
+        guard let x = args.asSingleton else {
+            throw MalError.msg("Need one argument for \(name)")
+        }
+        return .bool(f(x))
     }
 }

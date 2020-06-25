@@ -109,6 +109,8 @@ extension Mal {
             return try quasiquoteSpecialForm(arguments, env)
         case "quote":
             return try quoteSpecialForm(arguments, env)
+        case "try*":
+            return try trySpecialForm(arguments, env)
         default:
             return .NotSpecial
         }
@@ -245,5 +247,33 @@ extension Mal {
             throw MalError.msg("Need one argument for quote")
         }
         return .Complete(val)
+    }
+
+    private static func trySpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> SpecialFormResult {
+        if let value = args.asSingleton { // try* without catch*
+            return .ToEvaluate(value, env)
+        }
+        guard
+            let (value, catchList) = args.asPair,
+            let (catchHead, catchTail) = catchList.listHeadTail,
+            catchHead == .sym("catch*"),
+            let (catchSym, catchForm) = catchTail.asPair,
+            case let .sym(catchSymName) = catchSym
+            else {
+            throw MalError.msg("try* takes a value and a catch* clause")
+        }
+        var caughtValue: Mal = .null
+        do {
+            return try .Complete(value.eval(env))
+        } catch MalError.val(let v) {
+            caughtValue = v
+        } catch MalError.msg(let s) {
+            caughtValue = .str(s)
+        } catch {
+            caughtValue = .str("non-mal error")
+        }
+        let catchEnv = Env(outer: env)
+        catchEnv.set(catchSymName, caughtValue)
+        return .ToEvaluate(catchForm, catchEnv)
     }
 }
