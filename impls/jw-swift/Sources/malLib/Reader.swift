@@ -103,11 +103,11 @@ fileprivate func intCombine(_ negative: Character?) -> ([Character]) -> Mal { {
 
 /// Parser that matches a Mal list
 public let list: Parser<Mal> =
-    lex({ xs in .list(ArraySlice(xs)) } <^> (lex(char("(")) *> many(expr) <* lex(char(")"))))
+    lex({ xs in .seq(true, ArraySlice(xs)) } <^> (lex(char("(")) *> many(expr) <* lex(char(")"))))
 
 /// Parser that matches a Mal vector
 public let vector: Parser<Mal> =
-    lex({ xs in .vec(ArraySlice(xs)) } <^> (lex(char("[")) *> many(expr) <* lex(char("]"))))
+    lex({ xs in .seq(false, ArraySlice(xs)) } <^> (lex(char("[")) *> many(expr) <* lex(char("]"))))
 
 /// Parser that matches a Mal hashmap
 public let hashmap: Parser<Mal> =
@@ -178,12 +178,12 @@ public let readerMacro: Parser<Mal> =
 /// Return a function which wraps the Mal expression into a list starting with the given symbol
 fileprivate func intoMalFn(_ s: String) -> (Mal) -> Mal { {
     (x: Mal) -> Mal in
-        .list([.sym(s), x])
+        .seq(true, [.sym(s), x])
     }
 }
 
 fileprivate func withMetaCombine(_ val1: Mal) -> (Mal) -> Mal { {
     (val2: Mal) -> Mal in
-        .list([.sym("with-meta"), val2, val1])
+        .seq(true, [.sym("with-meta"), val2, val1])
     }
 }

@@ -19,7 +19,8 @@ public let core: [String: Mal] = [
 
     // MARK: - sequence functions
 
-    "list": swiftClosure { xs in .list(xs) },
+    "list": swiftClosure { xs in .seq(true, xs) },
+    "vector": swiftClosure { xs in .seq(false, xs) },
     "empty?": swiftClosure { args in
         guard let seq = args.first?.sequence else {
             throw MalError.msg("Expected a list as the argument for empty?")
@@ -38,7 +39,7 @@ public let core: [String: Mal] = [
         }
         var newArray = ArraySlice(ys)
         newArray.insert(x, at: newArray.startIndex)
-        return .list(newArray)
+        return .seq(true, newArray)
     },
     "concat": swiftClosure { args in
         var newArray: [Mal] = []
@@ -48,7 +49,7 @@ public let core: [String: Mal] = [
             }
             newArray.append(contentsOf: xs)
         }
-        return .list(ArraySlice(newArray))
+        return .seq(true, ArraySlice(newArray))
     },
     "nth": swiftClosure { args in
         guard case let .some((x, y)) = args.asPair, let xs = x.sequence, case let .int(i) = y else {
@@ -73,9 +74,73 @@ public let core: [String: Mal] = [
             throw MalError.msg("Expected a sequence as argument for first")
         }
         guard !xs.isEmpty else {
-            return .list([])
+            return .seq(true, [])
         }
-        return .list(xs.dropFirst())
+        return .seq(true, xs.dropFirst())
+    },
+
+    // MARK: - hashmap functions
+    "hash-map": swiftClosure { Mal(hashmapFromAlternatingList: Array($0)) },
+    "assoc": swiftClosure { args in
+        guard case let .hashmap(m) = args.first else {
+            throw MalError.msg("First argument of assoc must be a hashmap")
+        }
+        let keyValueList = args.dropFirst()
+        guard keyValueList.count.isMultiple(of: 2) else {
+            throw MalError.msg("Need an even number of key-value elements for assoc")
+        }
+        var newM = m
+        for i in stride(from: keyValueList.startIndex, to: keyValueList.endIndex, by: 2) {
+            let v = keyValueList[i + 1]
+            guard case let .str(k) = keyValueList[i] else {
+                throw MalError.msg("Bad key type in hash-map")
+            }
+            newM[k] = v
+        }
+        return .hashmap(newM)
+    },
+    "dissoc": swiftClosure { args in
+        guard case let .hashmap(m) = args.first else {
+            throw MalError.msg("First argument of dissoc must be a hashmap")
+        }
+        var newM = m
+        for key in args.dropFirst() {
+            if case let .str(s) = key {
+                newM.removeValue(forKey: s)
+            }
+        }
+        return .hashmap(newM)
+    },
+    "get": swiftClosure { args in
+        if args.first == .null {
+            return .null
+        }
+        guard case let .some((.hashmap(m), .str(s))) = args.asPair else {
+            throw MalError.msg("get takes a hash-map and a string or keyword")
+        }
+        if let val = m[s] {
+            return val
+        }
+        return .null
+    },
+    "contains?": swiftClosure { args in
+        guard case let .some((.hashmap(m), .str(s))) = args.asPair else {
+            throw MalError.msg("contains? takes a hash-map and a string or keyword")
+        }
+        return .bool(m[s] != nil)
+    },
+    "keys": swiftClosure { args in
+        guard case let .some(.hashmap(m)) = args.asSingleton else {
+            throw MalError.msg("keys takes a hash-map")
+        }
+        let keys: [Mal] = m.keys.map { .str($0) }
+        return .seq(true, ArraySlice(keys))
+    },
+    "vals": swiftClosure { args in
+        guard case let .some(.hashmap(m)) = args.asSingleton else {
+            throw MalError.msg("vals takes a hash-map")
+        }
+        return .seq(true, ArraySlice(m.values))
     },
 
     // MARK: - I/O functions
@@ -153,12 +218,19 @@ public let core: [String: Mal] = [
     },
 
     // MARK: - identity-testing functions
+
     "atom?": wrapMalBool("atom?") { if case .atom = $0 { return true } else { return false } },
     "false?": wrapMalBool("false?") { if case .bool(false) = $0 { return true } else { return false } },
-    "list?": wrapMalBool("list?") { if case .list = $0 { return true } else { return false } },
+    "keyword?": wrapMalBool("keyword?") {
+        if case let .str(s) = $0 { return s.first == Mal.keywordPrefix } else { return false }
+    },
+    "list?": wrapMalBool("list?") { if case .seq(true, _) = $0 { return true } else { return false } },
+    "map?": wrapMalBool("map?") { if case .hashmap = $0 { return true } else { return false } },
     "nil?": wrapMalBool("nil?") { if case .null = $0 { return true } else { return false } },
+    "sequential?": wrapMalBool("sequential?") { if case .seq(_, _) = $0 { return true } else { return false } },
     "symbol?": wrapMalBool("symbol?") { if case .sym = $0 { return true } else { return false } },
     "true?": wrapMalBool("true?") { if case .bool(true) = $0 { return true } else { return false } },
+    "vector?": wrapMalBool("vector?") { if case .seq(false, _) = $0 { return true } else { return false } },
 
     // MARK: - Misc functions
 
@@ -190,7 +262,23 @@ public let core: [String: Mal] = [
             throw MalError.msg("map takes a function and sequence")
         }
         let mappedSeq = try seq.map { try mapClosure.swift(ArraySlice([$0])) }
-        return .list(ArraySlice(mappedSeq))
+        return .seq(true, ArraySlice(mappedSeq))
+    },
+    "symbol": swiftClosure { xs in
+        guard case let .some(.str(s)) = xs.asSingleton else {
+            throw MalError.msg("symbol takes a string argument")
+        }
+        return .sym(s)
+    },
+    "keyword": swiftClosure { xs in
+        guard case let .some(.str(s)) = xs.asSingleton else {
+            throw MalError.msg("symbol takes a string argument")
+        }
+        if s.first == Mal.keywordPrefix {
+            return .str(s) // don't add prefix twice
+        } else {
+            return .str(String(Mal.keywordPrefix) + s)
+        }
     }
 ]
 

@@ -50,10 +50,8 @@ extension Mal {
         switch self {
         case .sym(let s):
             return try env.get(s)
-        case .list(let xs):
-            return .list(try ArraySlice(xs.map({ x in try x.eval(env) })))
-        case .vec(let xs):
-            return .vec(try ArraySlice(xs.map({ x in try x.eval(env) })))
+        case .seq(let seqFlag, let xs):
+            return .seq(seqFlag, try ArraySlice(xs.map({ x in try x.eval(env) })))
         case .hashmap(let xs):
             return .hashmap(try xs.mapValues({ v in try v.eval(env) }))
         default:
@@ -220,7 +218,7 @@ extension Mal {
     private static func quasiquoteSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> SpecialFormResult {
         func quasiquote(_ ast: Mal) throws -> Mal {
             guard let (astHead, astTail) = ast.seqHeadTail else {
-                return .list([.sym("quote"), ast])
+                return .seq(true, [.sym("quote"), ast])
             }
             if astHead == .sym("unquote") {
                 guard let val = astTail.asSingleton else {
@@ -231,9 +229,9 @@ extension Mal {
             if let (headHead, headTail) = astHead.seqHeadTail,
                 headHead == .sym("splice-unquote"),
                 let headTailVal = headTail.asSingleton {
-                return .list([.sym("concat"), headTailVal, try quasiquote(.list(astTail))])
+                return .seq(true, [.sym("concat"), headTailVal, try quasiquote(.seq(true, astTail))])
             }
-            return .list([.sym("cons"), try quasiquote(astHead), try quasiquote(.list(astTail))])
+            return .seq(true, [.sym("cons"), try quasiquote(astHead), try quasiquote(.seq(true, astTail))])
         }
 
         guard let val = args.asSingleton else {

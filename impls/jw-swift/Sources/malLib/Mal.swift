@@ -6,8 +6,7 @@
 
 public indirect enum Mal: Equatable {
     case int(Int)
-    case list(ArraySlice<Mal>)
-    case vec(ArraySlice<Mal>)
+    case seq(Bool, ArraySlice<Mal>) // bool is true for list, false for vector
     case hashmap([String: Mal])
     case bool(Bool)
     case null // Can't use the same name as mal ("nil") as it is used in Swift
@@ -18,7 +17,7 @@ public indirect enum Mal: Equatable {
 
     public init(hashmapFromAlternatingList xs: [Mal]) {
         if !xs.count.isMultiple(of: 2) {
-            self = .list([.sym("throw"), .str("Need an even number of elements for hash-map")])
+            self = .seq(true, [.sym("throw"), .str("Need an even number of elements for hash-map")])
         } else {
             var m = [String: Mal]()
             var ok = true
@@ -31,7 +30,7 @@ public indirect enum Mal: Equatable {
                     ok = false
                 }
             }
-            self = ok ? .hashmap(m) : .list([.sym("throw"), .str("Bad key type in hash-map")])
+            self = ok ? .hashmap(m) : .seq(true, [.sym("throw"), .str("Bad key type in hash-map")])
         }
     }
 
@@ -51,7 +50,7 @@ public indirect enum Mal: Equatable {
 
     /// If this is a non-empty list return the head and tail
     public var listHeadTail: (Mal, ArraySlice<Mal>)? {
-        guard case let .list(xs) = self, let firstVal = xs.first else {
+        guard case let .seq(true, xs) = self, let firstVal = xs.first else {
             return .none
         }
         return (firstVal, xs.dropFirst())
@@ -60,9 +59,7 @@ public indirect enum Mal: Equatable {
     /// If this is a list, vector or nil, return the sequence
     public var sequence: ArraySlice<Mal>? {
         switch self {
-        case .list(let xs):
-            return ArraySlice(xs)
-        case .vec(let xs):
+        case .seq(_, let xs):
             return ArraySlice(xs)
         case .null:
             return ArraySlice([])
@@ -73,7 +70,7 @@ public indirect enum Mal: Equatable {
 
     /// Is this an empty list?
     public var isEmptyList: Bool {
-        guard case let .list(xs) = self else {
+        guard case let .seq(true, xs) = self else {
             return false
         }
         return xs.isEmpty
@@ -82,7 +79,7 @@ public indirect enum Mal: Equatable {
     /// Does this represent a macro in the given environment
     public func isMacroCall(env: Env) throws -> Bool {
     if
-        case let .list(xs) = self,
+        case let .seq(true, xs) = self,
         case let .some(.sym(s)) = xs.first,
         env.find(s) != nil, // needed to avoid exception from get if no such symbol
         case let .closure(c) = try env.get(s) {
@@ -109,13 +106,7 @@ public indirect enum Mal: Equatable {
             return xs == ys
 
         // Lists and vectors are interchangeable for equality
-        case (.list(let xs), .list(let ys)):
-            return xs == ys
-        case (.vec(let xs), .list(let ys)):
-            return xs == ys
-        case (.list(let xs), .vec(let ys)):
-            return xs == ys
-        case (.vec(let xs), .vec(let ys)):
+        case (.seq(_, let xs), .seq(_, let ys)):
             return xs == ys
 
         // Comparing two values of different types or two closures is false
