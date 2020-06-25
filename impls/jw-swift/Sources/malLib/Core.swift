@@ -153,12 +153,12 @@ public let core: [String: Mal] = [
     },
 
     // MARK: - identity-testing functions
-    "atom?": wrapMalBool("atom?", { if case .atom = $0 { return true } else { return false } }),
-    "false?": wrapMalBool("false?", { if case .bool(false) = $0 { return true } else { return false } }),
-    "list?": wrapMalBool("list?", { if case .list = $0 { return true } else { return false } }),
-    "nil?": wrapMalBool("nil?", { if case .null = $0 { return true } else { return false } }),
-    "symbol?": wrapMalBool("symbol?", { if case .sym = $0 { return true } else { return false } }),
-    "true?": wrapMalBool("true?", { if case .bool(true) = $0 { return true } else { return false } }),
+    "atom?": wrapMalBool("atom?") { if case .atom = $0 { return true } else { return false } },
+    "false?": wrapMalBool("false?") { if case .bool(false) = $0 { return true } else { return false } },
+    "list?": wrapMalBool("list?") { if case .list = $0 { return true } else { return false } },
+    "nil?": wrapMalBool("nil?") { if case .null = $0 { return true } else { return false } },
+    "symbol?": wrapMalBool("symbol?") { if case .sym = $0 { return true } else { return false } },
+    "true?": wrapMalBool("true?") { if case .bool(true) = $0 { return true } else { return false } },
 
     // MARK: - Misc functions
 
@@ -191,8 +191,7 @@ public let core: [String: Mal] = [
         }
         let mappedSeq = try seq.map { try mapClosure.swift(ArraySlice([$0])) }
         return .list(ArraySlice(mappedSeq))
-    },
-
+    }
 ]
 
 /// convert a swift closure into a Mal closure
