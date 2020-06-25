@@ -41,8 +41,16 @@ public indirect enum Mal: Equatable {
     // Add convenience methods to extract values from a mal type
     //
 
+    /// If this is a non-empty sequence return the head and tail
+    public var seqHeadTail: (Mal, ArraySlice<Mal>)? {
+        guard let xs = self.sequence, let firstVal = xs.first else {
+            return .none
+        }
+        return (firstVal, xs.dropFirst())
+    }
+
     /// If this is a non-empty list return the head and tail
-    public var headTail: (Mal, ArraySlice<Mal>)? {
+    public var listHeadTail: (Mal, ArraySlice<Mal>)? {
         guard case let .list(xs) = self, let firstVal = xs.first else {
             return .none
         }

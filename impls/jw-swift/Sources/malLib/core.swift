@@ -45,6 +45,24 @@ public let core: [String: Mal] = [
         }
         return .int(seq.count)
     },
+    "cons": swiftClosure { args in
+        guard case let .some((x, y)) = args.asPair, let ys = y.sequence else {
+            throw MalError.msg("Expected a value and a list as arguments for cons")
+        }
+        var newArray = ArraySlice(ys)
+        newArray.insert(x, at: newArray.startIndex)
+        return .list(newArray)
+    },
+    "concat": swiftClosure { args in
+        var newArray: [Mal] = []
+        for a in args {
+            guard let xs = a.sequence else {
+                throw MalError.msg("Arguments to concat must be lists")
+            }
+            newArray.append(contentsOf: xs)
+        }
+        return .list(ArraySlice(newArray))
+    },
 
     // I/O functions
     "pr-str": swiftClosure { args in
