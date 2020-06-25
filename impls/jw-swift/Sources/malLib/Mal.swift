@@ -2,7 +2,7 @@
 //
 // (C) Joe Watson 2020-06-11
 //
-// mal - main mal type and supporting
+// Mal - main mal type and supporting
 
 public indirect enum Mal: Equatable {
     case int(Int)
@@ -10,7 +10,7 @@ public indirect enum Mal: Equatable {
     case vec(ArraySlice<Mal>)
     case hashmap([String: Mal])
     case bool(Bool)
-    case null // Can't use nil as it is used in Swift
+    case null // Can't use the same name as mal ("nil") as it is used in Swift
     case str(String) // includes keywords with prefix
     case sym(String)
     case closure(MalClosure)
@@ -144,31 +144,5 @@ public class MalAtom {
     /// Initialize the atom with the given value as its contents
     public init(_ val: Mal) {
         contents = val
-    }
-}
-
-extension ArraySlice {
-    /// if the slice has exactly one element, return it
-    public var asSingleton: Element? {
-        guard self.count == 1 else {
-            return .none
-        }
-        return self[self.startIndex]
-    }
-
-    /// if the slice has exactly two elements, return them as a 2-tuple
-    public var asPair: (Element, Element)? {
-        guard self.count == 2 else {
-            return .none
-        }
-        return (self[self.startIndex], self[self.startIndex + 1])
-    }
-
-    /// if the slice has exactly three elements, return them as a 3-tuple
-    public var asTriple: (Element, Element, Element)? {
-        guard self.count == 3 else {
-            return .none
-        }
-        return (self[self.startIndex], self[self.startIndex + 1], self[self.startIndex + 2])
     }
 }

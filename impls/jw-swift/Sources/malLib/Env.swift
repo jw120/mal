@@ -2,11 +2,11 @@
 //
 // (C) Joe Watson 2020-06-11
 //
-// env - read an AST from a string
+// Env - provide environment class
 
 public class Env: Equatable {
-    public let outer: Env?
-    public var data: [String: Mal]
+    private let outer: Env?
+    private var data: [String: Mal]
 
     public init(
         outer: Env? = nil,

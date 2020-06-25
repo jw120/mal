@@ -2,11 +2,12 @@
 //
 // (C) Joe Watson 2020-06-11
 //
-// core - provcide the core set of definitions
+// Core - provcide the core set of definitions
 
 /// Definitions to be included in repl environment
 public let core: [String: Mal] = [
-    // Arithmetic and logical functions on integers
+    // MARK: - arithmetic and logical functions on integers
+
     "+": wrapInt2Int("+", +),
     "-": wrapInt2Int("-", -),
     "*": wrapInt2Int("*", *),
@@ -16,15 +17,8 @@ public let core: [String: Mal] = [
     "<=": wrapInt2Bool("/", <=),
     ">=": wrapInt2Bool("/", >=),
 
-    // Equality
-    "=": swiftClosure { xs in
-        guard xs.count == 2 else {
-            throw MalError.msg("Need two arguments for =")
-        }
-        return .bool(xs[xs.startIndex] == xs[xs.startIndex + 1])
-    },
+    // MARK: - sequence functions
 
-    // Sequence functions
     "list": swiftClosure { xs in .list(xs) },
     "list?": swiftClosure { xs in
         if case .list = xs.first {
@@ -64,7 +58,8 @@ public let core: [String: Mal] = [
         return .list(ArraySlice(newArray))
     },
 
-    // I/O functions
+    // MARK: - I/O functions
+
     "pr-str": swiftClosure { args in
         let stringArgs = args.map { a in a.pr_str(readable: true) }
         return .str(stringArgs.joined(separator: " "))
@@ -103,7 +98,8 @@ public let core: [String: Mal] = [
         return .str(try String(contentsOfFile: s))
     },
 
-    // atoms
+    // MARK: - atom functions
+
     "atom": swiftClosure { args in
         guard case let .some(v) = args.asSingleton else {
             throw MalError.msg("Need one argument for atom")
@@ -143,6 +139,15 @@ public let core: [String: Mal] = [
         fnArgs.insert(a.contents, at: fnArgs.startIndex)
         a.contents = try c.swift(fnArgs)
         return a.contents
+    },
+
+    // MARK: - Misc functions
+
+    "=": swiftClosure { xs in
+        guard xs.count == 2 else {
+            throw MalError.msg("Need two arguments for =")
+        }
+        return .bool(xs[xs.startIndex] == xs[xs.startIndex + 1])
     }
 ]
 

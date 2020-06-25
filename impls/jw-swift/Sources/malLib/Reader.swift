@@ -2,7 +2,7 @@
 //
 // (C) Joe Watson 2020-06-11
 //
-// reader - read an AST from a string
+// Reader - read an AST from a string
 
 import Foundation
 

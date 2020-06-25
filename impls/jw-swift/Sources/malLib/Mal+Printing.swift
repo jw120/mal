@@ -2,7 +2,7 @@
 //
 // (C) Joe Watson 2020-06-11
 //
-// printer - allow Mal type to be converted to a string
+// Mal+Printing - extend Mal type to allow conversion to a string
 
 extension Mal {
     /// Return a string representation of the given Mal value

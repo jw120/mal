@@ -2,7 +2,7 @@
 //
 // (C) Joe Watson 2020-06-11
 //
-// parser_char - Character-related parsers for DIY parser combinator library.
+// Parser+Char - Character-related parsers for DIY parser combinator library.
 //
 // char
 // anyChar

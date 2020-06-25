@@ -6,49 +6,51 @@
 
 import malLib
 
-/// Read, evaluate and print a mal expression
-private func rep(_ s: String) throws {
+/// Read a mal expression, evaluate it and convert to a String. If there is no mal expression in the string
+/// (including one with just spaces and comments), return nil
+internal func rep(_ s: String) throws -> String? {
     switch read_str(s) {
     case .value(let readValue):
         do {
             let evaluatedValue: Mal = try readValue.eval(prelude)
-            print(evaluatedValue.pr_str(readable: true))
+            return evaluatedValue.pr_str(readable: true)
         } catch MalError.val(let v) {
-            print("Error: ", v.pr_str(readable: true))
+            return "Error: \(v.pr_str(readable: true))"
         } catch MalError.msg(let s) {
-            print("Error: \(s)")
+            return "Error: \(s)"
         }
     case .err(let msg):
-        print(msg)
+        return msg
     case .nothing:
-        break
+        return .none
     }
 }
 
-///Read-evaluate=print loops
-private func repl() throws {
+///Read-evaluate-print loop
+internal func repl() throws {
     prelude.set("*ARGV*", .list([]))
     while true {
         print("user> ", terminator: "")
-        if let s = readLine() {
-            try rep(s)
-        } else {
+        guard let input = readLine() else {
             break
+        }
+        if let output = try rep(input) {
+            print(output)
         }
     }
 }
 
 /// Run the mal code in a file
-private func run(contentsOfFile: String, arguments: ArraySlice<String>) throws {
+internal func run(contentsOfFile: String, arguments: ArraySlice<String>) throws {
     prelude.set("*ARGV*", .list(ArraySlice(arguments.map { .str($0) })))
-    try rep("(load-file \"" + contentsOfFile + "\")")
+    _ = try rep("(load-file \"" + contentsOfFile + "\")")
 }
 
 /// Starting environment for the repl
-public let prelude = Env(outer: nil, data: core)
+internal let prelude = Env(outer: nil, data: core)
 
 // Run our mal start-up code
-fileprivate let startupCode: [String] = [
+internal let startupCode: [String] = [
     "(def! not (fn* (a) (if a false true)))",
     "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\nnil)\")))))"
 ]

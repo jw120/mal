@@ -2,8 +2,8 @@
 //
 // (C) Joe Watson 2020-06-11
 //
-// parser - DIY parser combinator library.
-//
+// Parser - DIY parser combinator library.
+
 // Modelled roughly on Megaparsec (Haskell). No backtracking
 
 // Combinators implemented
