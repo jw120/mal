@@ -6,13 +6,13 @@
 
 public indirect enum Mal: Equatable {
     case int(Int)
-    case seq(Bool, ArraySlice<Mal>) // bool is true for list, false for vector
-    case hashmap([String: Mal])
+    case seq(Bool, ArraySlice<Mal>, Mal?) // bool is true for list, false for vector; final Mal is meta value
+    case hashmap([String: Mal], Mal?) // Mal is meta value
     case bool(Bool)
     case null // Can't use the same name as mal ("nil") as it is used in Swift
     case str(String) // includes keywords with prefix
     case sym(String)
-    case closure(MalClosure)
+    case closure(MalClosure, Mal?) // Mal is meta value
     case atom(MalAtom)
 
     public init?(hashmapFromAlternatingList xs: [Mal]) {
@@ -30,7 +30,7 @@ public indirect enum Mal: Equatable {
                 }
             }
 
-            self = .hashmap(m)
+            self = .hashmap(m, nil)
         }
     }
 
@@ -50,7 +50,7 @@ public indirect enum Mal: Equatable {
 
     /// If this is a non-empty list return the head and tail
     public var listHeadTail: (Mal, ArraySlice<Mal>)? {
-        guard case let .seq(true, xs) = self, let firstVal = xs.first else {
+        guard case let .seq(true, xs, _) = self, let firstVal = xs.first else {
             return .none
         }
         return (firstVal, xs.dropFirst())
@@ -59,7 +59,7 @@ public indirect enum Mal: Equatable {
     /// If this is a list, vector or nil, return the sequence
     public var sequence: ArraySlice<Mal>? {
         switch self {
-        case .seq(_, let xs):
+        case .seq(_, let xs, _):
             return ArraySlice(xs)
         case .null:
             return ArraySlice([])
@@ -70,7 +70,7 @@ public indirect enum Mal: Equatable {
 
     /// Is this an empty list?
     public var isEmptyList: Bool {
-        guard case let .seq(true, xs) = self else {
+        guard case let .seq(true, xs, _) = self else {
             return false
         }
         return xs.isEmpty
@@ -79,10 +79,10 @@ public indirect enum Mal: Equatable {
     /// Does this represent a macro in the given environment
     public func isMacroCall(env: Env) throws -> Bool {
     if
-        case let .seq(true, xs) = self,
+        case let .seq(true, xs, _) = self,
         case let .some(.sym(s)) = xs.first,
         env.find(s) != nil, // needed to avoid exception from get if no such symbol
-        case let .closure(c) = try env.get(s) {
+        case let .closure(c, _) = try env.get(s) {
         return c.isMacro
     }
         return false
@@ -102,11 +102,11 @@ public indirect enum Mal: Equatable {
             return x == y
         case (.sym(let x), .sym(let y)):
             return x == y
-        case (.hashmap(let xs), .hashmap(let ys)):
+        case (.hashmap(let xs, _), .hashmap(let ys, _)):
             return xs == ys
 
         // Lists and vectors are interchangeable for equality
-        case (.seq(_, let xs), .seq(_, let ys)):
+        case (.seq(_, let xs, _), .seq(_, let ys, _)):
             return xs == ys
 
         // Comparing two values of different types or two closures is false

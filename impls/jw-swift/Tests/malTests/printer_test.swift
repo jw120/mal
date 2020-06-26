@@ -10,8 +10,8 @@ import XCTest
 public class PrinterTests: XCTestCase {
     public func testPrStr() throws {
         XCTAssertEqual(Mal.int(23).pr_str(), "23")
-        XCTAssertEqual(Mal.seq(true, []).pr_str(), "()")
-        XCTAssertEqual(Mal.seq(true, [.int(2)]).pr_str(), "(2)")
-        XCTAssertEqual(Mal.seq(true, [.int(2), .int(3)]).pr_str(), "(2 3)")
+        XCTAssertEqual(Mal.seq(true, [], nil).pr_str(), "()")
+        XCTAssertEqual(Mal.seq(true, [.int(2)], nil).pr_str(), "(2)")
+        XCTAssertEqual(Mal.seq(true, [.int(2), .int(3)], nil).pr_str(), "(2 3)")
     }
 }

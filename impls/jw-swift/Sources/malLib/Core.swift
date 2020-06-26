@@ -21,8 +21,8 @@ public let core: [String: Mal] = [
 
     // MARK: - sequence functions
 
-    "list": swiftClosure { xs in .seq(true, xs) },
-    "vector": swiftClosure { xs in .seq(false, xs) },
+    "list": swiftClosure { xs in .seq(true, xs, nil) },
+    "vector": swiftClosure { xs in .seq(false, xs, nil) },
     "empty?": swiftClosure { args in
         guard let seq = args.first?.sequence else {
             throw MalError.msg("Expected a list as the argument for empty?")
@@ -41,7 +41,7 @@ public let core: [String: Mal] = [
         }
         var newArray = ArraySlice(ys)
         newArray.insert(x, at: newArray.startIndex)
-        return .seq(true, newArray)
+        return .seq(true, newArray, nil)
     },
     "concat": swiftClosure { args in
         var newArray: [Mal] = []
@@ -51,7 +51,7 @@ public let core: [String: Mal] = [
             }
             newArray.append(contentsOf: xs)
         }
-        return .seq(true, ArraySlice(newArray))
+        return .seq(true, ArraySlice(newArray), nil)
     },
     "nth": swiftClosure { args in
         guard case let .some((x, y)) = args.asPair, let xs = x.sequence, case let .int(i) = y else {
@@ -76,37 +76,37 @@ public let core: [String: Mal] = [
             throw MalError.msg("Expected a sequence as argument for first")
         }
         guard !xs.isEmpty else {
-            return .seq(true, [])
+            return .seq(true, [], nil)
         }
-        return .seq(true, xs.dropFirst())
+        return .seq(true, xs.dropFirst(), nil)
     },
     "seq": swiftClosure { args in
         guard let x = args.asSingleton else {
             throw MalError.msg("seq takes one argument")
         }
         switch x {
-        case .null, .str(""), .seq(_, []):
+        case .null, .str(""), .seq(_, [], _):
             return .null
-        case .seq(_, let ys):
-            return .seq(true, ys)
+        case .seq(_, let ys, _):
+            return .seq(true, ys, nil)
         case .str(let s):
             let splitStrings: [Mal] = s.map { .str(String($0)) }
-            return .seq(true, ArraySlice(splitStrings))
+            return .seq(true, ArraySlice(splitStrings), nil)
         default:
             throw MalError.msg("seq takes a string, sequence or nil")
         }
     },
     "conj": swiftClosure { args in
-        guard case let .seq(isList, xs) = args.first else {
+        guard case let .seq(isList, xs, _) = args.first else {
             throw MalError.msg("conj takes a sequence and additional arguments")
         }
         let otherArgs: ArraySlice<Mal> = args.dropFirst()
         if isList {
             let newSeq = otherArgs.reversed() + xs
-            return .seq(true, newSeq)
+            return .seq(true, newSeq, nil)
         } else {
             let newSeq: ArraySlice<Mal> = xs + otherArgs
-            return .seq(false, newSeq)
+            return .seq(false, newSeq, nil)
         }
     },
 
@@ -118,7 +118,7 @@ public let core: [String: Mal] = [
         return m
     },
     "assoc": swiftClosure { args in
-        guard case let .hashmap(m) = args.first else {
+        guard case let .hashmap(m, _) = args.first else {
             throw MalError.msg("First argument of assoc must be a hashmap")
         }
         let keyValueList = args.dropFirst()
@@ -133,10 +133,10 @@ public let core: [String: Mal] = [
             }
             newM[k] = v
         }
-        return .hashmap(newM)
+        return .hashmap(newM, nil)
     },
     "dissoc": swiftClosure { args in
-        guard case let .hashmap(m) = args.first else {
+        guard case let .hashmap(m, _) = args.first else {
             throw MalError.msg("First argument of dissoc must be a hashmap")
         }
         var newM = m
@@ -145,13 +145,13 @@ public let core: [String: Mal] = [
                 newM.removeValue(forKey: s)
             }
         }
-        return .hashmap(newM)
+        return .hashmap(newM, nil)
     },
     "get": swiftClosure { args in
         if args.first == .null {
             return .null
         }
-        guard case let .some((.hashmap(m), .str(s))) = args.asPair else {
+        guard case let .some((.hashmap(m, _), .str(s))) = args.asPair else {
             throw MalError.msg("get takes a hash-map and a string or keyword")
         }
         if let val = m[s] {
@@ -160,23 +160,23 @@ public let core: [String: Mal] = [
         return .null
     },
     "contains?": swiftClosure { args in
-        guard case let .some((.hashmap(m), .str(s))) = args.asPair else {
+        guard case let .some((.hashmap(m, _), .str(s))) = args.asPair else {
             throw MalError.msg("contains? takes a hash-map and a string or keyword")
         }
         return .bool(m[s] != nil)
     },
     "keys": swiftClosure { args in
-        guard case let .some(.hashmap(m)) = args.asSingleton else {
+        guard case let .some(.hashmap(m, _)) = args.asSingleton else {
             throw MalError.msg("keys takes a hash-map")
         }
         let keys: [Mal] = m.keys.map { .str($0) }
-        return .seq(true, ArraySlice(keys))
+        return .seq(true, ArraySlice(keys), nil)
     },
     "vals": swiftClosure { args in
-        guard case let .some(.hashmap(m)) = args.asSingleton else {
+        guard case let .some(.hashmap(m, _)) = args.asSingleton else {
             throw MalError.msg("vals takes a hash-map")
         }
-        return .seq(true, ArraySlice(m.values))
+        return .seq(true, ArraySlice(m.values), nil)
     },
 
     // MARK: - I/O functions
@@ -254,7 +254,7 @@ public let core: [String: Mal] = [
         guard
             args.count >= 2,
             case let .some(.atom(a)) = args.first,
-            case let .closure(c) = args[args.startIndex + 1] else {
+            case let .closure(c, _) = args[args.startIndex + 1] else {
                 throw MalError.msg("Need an atom, a function and zero or more other arguments for swap!")
         }
         var fnArgs = args.dropFirst(2)
@@ -268,25 +268,25 @@ public let core: [String: Mal] = [
     "atom?": wrapMalBool("atom?") { if case .atom = $0 { return true } else { return false } },
     "false?": wrapMalBool("false?") { if case .bool(false) = $0 { return true } else { return false } },
     "fn?": wrapMalBool("fn?") {
-        if case let .closure(c) = $0 { return !c.isMacro } else { return false }
+        if case let .closure(c, _) = $0 { return !c.isMacro } else { return false }
     },
     "keyword?": wrapMalBool("keyword?") {
         if case let .str(s) = $0 { return s.first == Mal.keywordPrefix } else { return false }
     },
-    "list?": wrapMalBool("list?") { if case .seq(true, _) = $0 { return true } else { return false } },
+    "list?": wrapMalBool("list?") { if case .seq(true, _, _) = $0 { return true } else { return false } },
     "macro?": wrapMalBool("macro?") {
-        if case let .closure(c) = $0 { return c.isMacro } else { return false }
+        if case let .closure(c, _) = $0 { return c.isMacro } else { return false }
     },
     "map?": wrapMalBool("map?") { if case .hashmap = $0 { return true } else { return false } },
     "nil?": wrapMalBool("nil?") { if case .null = $0 { return true } else { return false } },
     "number?": wrapMalBool("number?") { if case .int = $0 { return true } else { return false } },
-    "sequential?": wrapMalBool("sequential?") { if case .seq(_, _) = $0 { return true } else { return false } },
+    "sequential?": wrapMalBool("sequential?") { if case .seq = $0 { return true } else { return false } },
     "string?": wrapMalBool("string?") {
         if case let .str(s) = $0 { return s.first != Mal.keywordPrefix } else { return false }
     },
     "symbol?": wrapMalBool("symbol?") { if case .sym = $0 { return true } else { return false } },
     "true?": wrapMalBool("true?") { if case .bool(true) = $0 { return true } else { return false } },
-    "vector?": wrapMalBool("vector?") { if case .seq(false, _) = $0 { return true } else { return false } },
+    "vector?": wrapMalBool("vector?") { if case .seq(false, _, _) = $0 { return true } else { return false } },
 
     // MARK: - Misc functions etc
 
@@ -306,7 +306,7 @@ public let core: [String: Mal] = [
     "apply": swiftClosure { xs in
         guard
             xs.count >= 2,
-            case let .some(.closure(applyClosure)) = xs.first,
+            case let .some(.closure(applyClosure, _)) = xs.first,
             let finalSeq = xs.last?.sequence
         else {
             throw MalError.msg("apply takes a function and at least one more argument, the last of which is a sequence")
@@ -315,11 +315,11 @@ public let core: [String: Mal] = [
         return try applyClosure.swift(applyArgs)
     },
     "map": swiftClosure { xs in
-        guard case let .some((.closure(mapClosure), seqArg)) = xs.asPair, let seq = seqArg.sequence else {
+        guard case let .some((.closure(mapClosure, _), seqArg)) = xs.asPair, let seq = seqArg.sequence else {
             throw MalError.msg("map takes a function and sequence")
         }
         let mappedSeq = try seq.map { try mapClosure.swift(ArraySlice([$0])) }
-        return .seq(true, ArraySlice(mappedSeq))
+        return .seq(true, ArraySlice(mappedSeq), nil)
     },
     "symbol": swiftClosure { xs in
         guard case let .some(.str(s)) = xs.asSingleton else {
@@ -343,13 +343,41 @@ public let core: [String: Mal] = [
         }
         return .int(Int(Date().timeIntervalSince1970 * 1_000))
     },
-    "meta": swiftClosure { _ in throw MalError.msg("meta NYI") },
-    "with-meta": swiftClosure { _ in throw MalError.msg("with-meta NYI") }
+    "meta": swiftClosure { xs in
+        guard let val = xs.first else {
+            throw MalError.msg("meta takes one argument")
+        }
+        switch val {
+        case .seq(_, _, let meta):
+            return meta ?? .null
+        case .hashmap(_, let meta):
+            return meta ?? .null
+        case .closure(_, let meta):
+            return meta ?? .null
+        default:
+            return .null
+        }
+    },
+    "with-meta": swiftClosure { xs in
+        guard let (target, meta) = xs.asPair else {
+            throw MalError.msg("with-meta takes two arguments")
+        }
+        switch target {
+        case .seq(let isList, let vals, _):
+            return .seq(isList, vals, meta)
+        case .hashmap(let m, _):
+            return .hashmap(m, meta)
+        case .closure(let c, _):
+            return .closure(c, meta)
+        default:
+            throw MalError.msg("first argument of with-meta must be an array, function, hashmap or vector")
+        }
+    }
 ]
 
 /// convert a swift closure into a Mal closure
 public func swiftClosure(_ f: @escaping (ArraySlice<Mal>) throws -> Mal) -> Mal {
-    .closure(MalClosure(mal: nil, swift: f, isMacro: false))
+    .closure(MalClosure(mal: nil, swift: f, isMacro: false), nil)
 }
 
 /// Wrap an (Int, Int) -> Int function in a Mal closure

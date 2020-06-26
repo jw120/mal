@@ -21,7 +21,7 @@ public class Env: Equatable {
             let symName = binds[bindsIndex]
             if symName == "&" {
                 if bindsIndex + 1 < binds.endIndex {
-                    set(binds[bindsIndex + 1], .seq(true, exprs.suffix(from: exprsIndex)))
+                    set(binds[bindsIndex + 1], .seq(true, exprs.suffix(from: exprsIndex), nil))
                 }
                 break
             }

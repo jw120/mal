@@ -28,7 +28,7 @@ internal func rep(_ s: String) throws -> String? {
 
 ///Read-evaluate-print loop
 internal func repl() throws {
-    prelude.set("*ARGV*", .seq(true, []))
+    prelude.set("*ARGV*", .seq(true, [], nil))
     _ = try rep("(println (str \"Mal [\" *host-language* \"]\")a)")
     while true {
         print("user> ", terminator: "")
@@ -43,7 +43,7 @@ internal func repl() throws {
 
 /// Run the mal code in a file
 internal func run(contentsOfFile: String, arguments: ArraySlice<String>) throws {
-    prelude.set("*ARGV*", .seq(true, ArraySlice(arguments.map { .str($0) })))
+    prelude.set("*ARGV*", .seq(true, ArraySlice(arguments.map { .str($0) }), nil))
     _ = try rep("(load-file \"" + contentsOfFile + "\")")
 }
 

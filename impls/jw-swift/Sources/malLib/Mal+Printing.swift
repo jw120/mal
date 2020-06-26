@@ -10,11 +10,11 @@ extension Mal {
         switch self {
         case .int(let i):
             return String(i)
-        case .seq(true, let elements):
+        case .seq(true, let elements, _):
             return join_between(elements.map { $0.pr_str(readable: readable) }, open: "(", close: ")")
-        case .seq(false, let elements):
+        case .seq(false, let elements, _):
             return join_between(elements.map { $0.pr_str(readable: readable) }, open: "[", close: "]")
-        case .hashmap(let elements):
+        case .hashmap(let elements, _):
             let strElements: [String] = elements.flatMap { key, val in
                 [showString(key, readable: readable), val.pr_str(readable: readable)]
             }

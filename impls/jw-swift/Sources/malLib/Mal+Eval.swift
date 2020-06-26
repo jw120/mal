@@ -31,7 +31,7 @@ extension Mal {
             guard let (evalHead, evalTail) = try ast.evalAst(env).listHeadTail else {
                 throw MalError.msg("List became a non-list")
             }
-            guard case let .closure(c) = evalHead else {
+            guard case let .closure(c, _) = evalHead else {
                 throw MalError.msg("Attempt to apply a non-function")
             }
             // If no mal form available, use the swift form
@@ -50,10 +50,10 @@ extension Mal {
         switch self {
         case .sym(let s):
             return try env.get(s)
-        case .seq(let seqFlag, let xs):
-            return .seq(seqFlag, try ArraySlice(xs.map({ x in try x.eval(env) })))
-        case .hashmap(let xs):
-            return .hashmap(try xs.mapValues({ v in try v.eval(env) }))
+        case .seq(let seqFlag, let xs, _):
+            return .seq(seqFlag, try ArraySlice(xs.map({ x in try x.eval(env) })), nil)
+        case .hashmap(let xs, _):
+            return .hashmap(try xs.mapValues({ v in try v.eval(env) }), nil)
         default:
             return self
         }
@@ -67,7 +67,7 @@ extension Mal {
                 let (head, tail) = ast.listHeadTail,
                 case let .sym(s) = head,
                 env.find(s) != nil, // avoid exception from get
-                case let .closure(c) = try env.get(s),
+                case let .closure(c, _) = try env.get(s),
                 c.isMacro else {
                 throw MalError.msg("Internal error non-macro in macro \(ast)")
             }
@@ -125,10 +125,10 @@ extension Mal {
 
     private static func defMacroSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> SpecialFormResult {
         guard case let .some((.sym(s), val)) = args.asPair,
-            case let .closure(c) = try val.eval(env)else {
+            case let .closure(c, _) = try val.eval(env)else {
             throw MalError.msg("defmacro! needs a symbol and a function")
         }
-        let macro: Mal = .closure(MalClosure(mal: c.mal, swift: c.swift, isMacro: true))
+        let macro: Mal = .closure(MalClosure(mal: c.mal, swift: c.swift, isMacro: true), nil)
         env.set(s, macro)
         return .Complete(macro)
     }
@@ -163,7 +163,7 @@ extension Mal {
                 return try body.eval(fnEnv)
             },
             isMacro: false
-        )))
+        ), nil))
     }
 
     private static func ifSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> SpecialFormResult {
@@ -218,7 +218,7 @@ extension Mal {
     private static func quasiquoteSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> SpecialFormResult {
         func quasiquote(_ ast: Mal) throws -> Mal {
             guard let (astHead, astTail) = ast.seqHeadTail else {
-                return .seq(true, [.sym("quote"), ast])
+                return .seq(true, [.sym("quote"), ast], nil)
             }
             if astHead == .sym("unquote") {
                 guard let val = astTail.asSingleton else {
@@ -229,9 +229,9 @@ extension Mal {
             if let (headHead, headTail) = astHead.seqHeadTail,
                 headHead == .sym("splice-unquote"),
                 let headTailVal = headTail.asSingleton {
-                return .seq(true, [.sym("concat"), headTailVal, try quasiquote(.seq(true, astTail))])
+                return .seq(true, [.sym("concat"), headTailVal, try quasiquote(.seq(true, astTail, nil))], nil)
             }
-            return .seq(true, [.sym("cons"), try quasiquote(astHead), try quasiquote(.seq(true, astTail))])
+            return .seq(true, [.sym("cons"), try quasiquote(astHead), try quasiquote(.seq(true, astTail, nil))], nil)
         }
 
         guard let val = args.asSingleton else {

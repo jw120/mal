@@ -2,6 +2,7 @@
 # non-OOP CLI ap
 disabled_rules:
 - cyclomatic_complexity
+- file_length
 - identifier_name
 - large_tuple
 - private_over_fileprivate

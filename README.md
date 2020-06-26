@@ -11,7 +11,7 @@ In order of completion these were
 * Elixir
 * C
 * Racket-br (failed attempt to make a mal-to-racket compliler a la Beautiful Racket)
-* Swift (excludes meta-data support)
+* Swift
 
 Each should be able to be run by cd'ing into the directory and running `make` to build and run tests (implementations
 include only limited native tests and rely mostly on the mal project step tests)
