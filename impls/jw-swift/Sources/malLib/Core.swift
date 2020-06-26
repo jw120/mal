@@ -4,6 +4,8 @@
 //
 // Core - provcide the core set of definitions
 
+import Foundation // needed for Date()
+
 /// Definitions to be included in repl environment
 public let core: [String: Mal] = [
     // MARK: - arithmetic and logical functions on integers
@@ -78,9 +80,43 @@ public let core: [String: Mal] = [
         }
         return .seq(true, xs.dropFirst())
     },
+    "seq": swiftClosure { args in
+        guard let x = args.asSingleton else {
+            throw MalError.msg("seq takes one argument")
+        }
+        switch x {
+        case .null, .str(""), .seq(_, []):
+            return .null
+        case .seq(_, let ys):
+            return .seq(true, ys)
+        case .str(let s):
+            let splitStrings: [Mal] = s.map { .str(String($0)) }
+            return .seq(true, ArraySlice(splitStrings))
+        default:
+            throw MalError.msg("seq takes a string, sequence or nil")
+        }
+    },
+    "conj": swiftClosure { args in
+        guard case let .seq(isList, xs) = args.first else {
+            throw MalError.msg("conj takes a sequence and additional arguments")
+        }
+        let otherArgs: ArraySlice<Mal> = args.dropFirst()
+        if isList {
+            let newSeq = otherArgs.reversed() + xs
+            return .seq(true, newSeq)
+        } else {
+            let newSeq: ArraySlice<Mal> = xs + otherArgs
+            return .seq(false, newSeq)
+        }
+    },
 
     // MARK: - hashmap functions
-    "hash-map": swiftClosure { Mal(hashmapFromAlternatingList: Array($0)) },
+    "hash-map": swiftClosure { args in
+        guard let m = Mal(hashmapFromAlternatingList: Array(args)) else {
+            throw MalError.msg("Bad arguments to hash-map")
+        }
+        return m
+    },
     "assoc": swiftClosure { args in
         guard case let .hashmap(m) = args.first else {
             throw MalError.msg("First argument of assoc must be a hashmap")
@@ -182,6 +218,16 @@ public let core: [String: Mal] = [
         }
         return .str(try String(contentsOfFile: s))
     },
+    "readline": swiftClosure { args in
+        guard case let .some(.str(s)) = args.asSingleton else {
+            throw MalError.msg("Need one string argument for readline")
+        }
+        print(s, terminator: "")
+        guard let input = readLine() else {
+            return .null
+        }
+        return .str(input)
+    },
 
     // MARK: - atom functions
 
@@ -221,19 +267,30 @@ public let core: [String: Mal] = [
 
     "atom?": wrapMalBool("atom?") { if case .atom = $0 { return true } else { return false } },
     "false?": wrapMalBool("false?") { if case .bool(false) = $0 { return true } else { return false } },
+    "fn?": wrapMalBool("fn?") {
+        if case let .closure(c) = $0 { return !c.isMacro } else { return false }
+    },
     "keyword?": wrapMalBool("keyword?") {
         if case let .str(s) = $0 { return s.first == Mal.keywordPrefix } else { return false }
     },
     "list?": wrapMalBool("list?") { if case .seq(true, _) = $0 { return true } else { return false } },
+    "macro?": wrapMalBool("macro?") {
+        if case let .closure(c) = $0 { return c.isMacro } else { return false }
+    },
     "map?": wrapMalBool("map?") { if case .hashmap = $0 { return true } else { return false } },
     "nil?": wrapMalBool("nil?") { if case .null = $0 { return true } else { return false } },
+    "number?": wrapMalBool("number?") { if case .int = $0 { return true } else { return false } },
     "sequential?": wrapMalBool("sequential?") { if case .seq(_, _) = $0 { return true } else { return false } },
+    "string?": wrapMalBool("string?") {
+        if case let .str(s) = $0 { return s.first != Mal.keywordPrefix } else { return false }
+    },
     "symbol?": wrapMalBool("symbol?") { if case .sym = $0 { return true } else { return false } },
     "true?": wrapMalBool("true?") { if case .bool(true) = $0 { return true } else { return false } },
     "vector?": wrapMalBool("vector?") { if case .seq(false, _) = $0 { return true } else { return false } },
 
-    // MARK: - Misc functions
+    // MARK: - Misc functions etc
 
+    "*host-language*": .str("jw-swift"),
     "=": swiftClosure { xs in
         guard xs.count == 2 else {
             throw MalError.msg("Need two arguments for =")
@@ -279,7 +336,15 @@ public let core: [String: Mal] = [
         } else {
             return .str(String(Mal.keywordPrefix) + s)
         }
-    }
+    },
+    "time-ms": swiftClosure { xs in
+        guard xs.isEmpty else {
+            throw MalError.msg("time-ms takes no argument")
+        }
+        return .int(Int(Date().timeIntervalSince1970 * 1000))
+    },
+    "meta": swiftClosure { _ in throw MalError.msg("meta NYI") },
+    "with-meta": swiftClosure { _ in throw MalError.msg("with-meta NYI") }
 ]
 
 /// convert a swift closure into a Mal closure

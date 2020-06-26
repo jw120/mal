@@ -29,6 +29,7 @@ internal func rep(_ s: String) throws -> String? {
 ///Read-evaluate-print loop
 internal func repl() throws {
     prelude.set("*ARGV*", .seq(true, []))
+    _ = try rep("(println (str \"Mal [\" *host-language* \"]\")a)")
     while true {
         print("user> ", terminator: "")
         guard let input = readLine() else {

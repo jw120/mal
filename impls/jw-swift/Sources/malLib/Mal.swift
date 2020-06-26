@@ -15,22 +15,22 @@ public indirect enum Mal: Equatable {
     case closure(MalClosure)
     case atom(MalAtom)
 
-    public init(hashmapFromAlternatingList xs: [Mal]) {
+    public init?(hashmapFromAlternatingList xs: [Mal]) {
         if !xs.count.isMultiple(of: 2) {
-            self = .seq(true, [.sym("throw"), .str("Need an even number of elements for hash-map")])
+            return nil
         } else {
             var m = [String: Mal]()
-            var ok = true
             for i in stride(from: xs.startIndex, to: xs.endIndex, by: 2) {
                 let v = xs[i + 1]
                 switch xs[i] {
                 case .str(let k):
                     m[k] = v
                 default:
-                    ok = false
+                    return nil
                 }
             }
-            self = ok ? .hashmap(m) : .seq(true, [.sym("throw"), .str("Bad key type in hash-map")])
+
+            self = .hashmap(m)
         }
     }
 
