@@ -11,14 +11,14 @@ In order of completion these were
 * Elixir
 * C
 * Racket-br (failed attempt to make a mal-to-racket compliler a la Beautiful Racket)
-* Swift (in progress)
+* Swift (excludes meta-data support)
 
-ach should be able to be run by cd'ing into the directory and running `make` to build and run tests (implementations
+Each should be able to be run by cd'ing into the directory and running `make` to build and run tests (implementations
 include only limited native tests and rely mostly on the mal project step tests)
 
 Relative peformance of my implemntations is: (use `jw-perf.sh` to run)
 
-C > Racket (9869) > elixir (6433) > haskell (3953) > python (1051)
+haskell (54k) > C (25k) > Racket (10k) > elixir (6k) >  swift (3k) python (1k)
 
 TODO
 - Use macros in elixir (to replace wrapping functions and to simplify `list()`)
@@ -103,6 +103,13 @@ Implementation choices:
   exceptions propogate during evaluation
 - No garbage collection is done, we call `malloc()` many times but almost never `free()`
 
+
+## Swift
+
+Implementation choices:
+- Uses DIY parser combinator library (instead of regexes) for parsing
+- Swift package (can build from command line)
+- Mal arrays and lists implemented as swift arrayslices
 
 
 ----------- ORIGINAL README FOLLOWS --------------

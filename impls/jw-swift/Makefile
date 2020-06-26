@@ -1,19 +1,23 @@
 .PHONY: all build clean distclean format run test step-test self-host-test run-debug
 
-all: build lint step-test #self-host-test
+all: build lint test step-test self-host-test
 
-# # Directories - executables go in target, *.o and *.d in build
 TARGET_DIR := ./.build/debug
 RUN_EXEC = mal
 
 build:
 	swift build
+	# For slightly faster runtime, but slower compile time use
+	# swift build --configuration release
 
 lint:
 	swiftlint
 
 run:
 	-@$(TARGET_DIR)/$(RUN_EXEC)
+
+test:
+	swift test 2>&1 | grep -v "passed\|started"
 
 step-test:
 	-@echo step 0; cd ../..; make "test^jw-swift^step0" | grep "failing tests"
@@ -28,9 +32,5 @@ step-test:
 	-@echo step 9; cd ../..; make "test^jw-swift^step9" | grep "failing tests"
 	-@echo step A; cd ../..; make "test^jw-swift^stepA" | grep "failing tests"
 
-#self-host-test:
-#	@cd ../..; make MAL_IMPL=jw-swift "test^mal" | grep "TEST RESULTS\|failing tests"
-
-#format:
-#	clang-format -i src/*.c src/*.h
-
+self-host-test:
+	@cd ../..; make MAL_IMPL=jw-swift "test^mal" | grep "TEST RESULTS\|failing tests"

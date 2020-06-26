@@ -341,7 +341,7 @@ public let core: [String: Mal] = [
         guard xs.isEmpty else {
             throw MalError.msg("time-ms takes no argument")
         }
-        return .int(Int(Date().timeIntervalSince1970 * 1000))
+        return .int(Int(Date().timeIntervalSince1970 * 1_000))
     },
     "meta": swiftClosure { _ in throw MalError.msg("meta NYI") },
     "with-meta": swiftClosure { _ in throw MalError.msg("with-meta NYI") }
