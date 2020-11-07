@@ -18,7 +18,7 @@ include only limited native tests and rely mostly on the mal project step tests)
 
 Relative peformance of my implemntations is: (use `jw-perf.sh` to run)
 
-haskell (54k) > C (25k) > Racket (10k) > elixir (6k) >  swift (3k) python (1k)
+haskell (59k) > C (27k) > Racket (10k) > elixir (6k) >  swift (3k) > python (1k)
 
 TODO
 - Use macros in elixir (to replace wrapping functions and to simplify `list()`)
@@ -110,6 +110,16 @@ Implementation choices:
 - Uses DIY parser combinator library (instead of regexes) for parsing
 - Swift package (can build from command line)
 - Mal arrays and lists implemented as swift arrayslices
+
+
+Git notes. After adding `https://github.com/kanaka/mal` as an upstream remote
+```
+git fetch upstream
+git checkout master # if needed
+git merge upstream/master
+# Resolve conflicts if any
+git push origin master
+```
 
 
 ----------- ORIGINAL README FOLLOWS --------------
