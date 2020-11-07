@@ -271,6 +271,7 @@ nameSpace envRef = M.fromList
     -- Sequence functions
   , ("list", fn $ \xs -> return (ASTLV noMeta LVList xs))
   , ("vector", fn $ \xs -> return (ASTLV noMeta LVVector xs))
+  , ("vec"   , fn vec)
   , ("count" , fn count)
   , ("cons"  , fn cons)
   , ("concat", fn malConcat)
@@ -423,6 +424,10 @@ slurp _ = throwString "Bad argument type for slurp"
 --
 -- Sequence functions
 --
+
+vec :: [AST] -> Mal AST
+vec [ASTLV meta _ xs] = return $ ASTLV meta LVVector xs
+vec _                 = throwString "Bad arguments for vec"
 
 count :: [AST] -> Mal AST
 count [ASTLV _ _ xs] = return (ASTInt (length xs))

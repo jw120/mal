@@ -17,6 +17,7 @@ module ReaderSpec
   )
 where
 
+import           Data.Bifunctor                 ( second )
 import           Data.List                      ( sort )
 import qualified Data.Map                      as M
 import           Data.Text                      ( Text
@@ -70,9 +71,8 @@ testMap :: Text -> [(Text, AST)] -> Expectation
 testMap t u = deorder (malRead t) `shouldBe` deorder (Right (Just (m u)))
  where
   deorder :: Either Text (Maybe AST) -> [(Text, String)]
-  deorder (Right (Just (ASTMap _ mp))) =
-    sort . map (\(k, v) -> (k, show v)) $ M.toList mp
-  deorder _ = error "Failed deorder"
+  deorder (Right (Just (ASTMap _ mp))) = sort . map (second show) $ M.toList mp
+  deorder _                            = error "Failed deorder"
 
 spec :: Spec
 spec = do

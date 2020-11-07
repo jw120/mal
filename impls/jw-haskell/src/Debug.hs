@@ -46,11 +46,9 @@ printInfo msg envRef ast = do
     env <- liftIO $ readIORef envRef
     case envToMap env of
       []      -> throwString "Unexpected empty environment"
-      [_]     -> liftIO $ putStr "\n"
-      envList -> mapM_ malPrint . init $ envList
+      envList -> mapM_ malPrint envList
+
 
 -- Helper function to covert an Environment to a list of ASTMaps
 envToMap :: Env -> [AST]
-envToMap Env { envTable = table, envOuter = Nothing } = [ASTMap noMeta table]
-envToMap Env { envTable = table, envOuter = Just o } =
-  ASTMap noMeta table : envToMap o
+envToMap Env { envTable = table, envOuterRef = _ } = [ASTMap noMeta table]

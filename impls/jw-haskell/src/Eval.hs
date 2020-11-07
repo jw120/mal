@@ -148,20 +148,13 @@ apply envRef astList = do
 
     -- Special form: quasi-quote
     [ASTSym "quasiquote", ast] -> eval envRef $ quasiQuote ast
-     where
-      quasiQuote :: AST -> AST
-      quasiQuote (ASTLV _ LVList [ASTSym "unquote", x]) = x
-      quasiQuote (ASTLV _ LVList (ASTLV _ _ [ASTSym "splice-unquote", x] : ys))
-        = ASTLV noMeta
-                LVList
-                [ASTSym "concat", x, quasiQuote (ASTLV noMeta LVList ys)]
-      quasiQuote (ASTLV _ _ (x : ys)) = ASTLV
-        noMeta
-        LVList
-        [ASTSym "cons", quasiQuote x, quasiQuote (ASTLV noMeta LVList ys)]
-      quasiQuote x = ASTLV noMeta LVList [ASTSym "quote", x]
     (ASTSym "quasiquote" : _) ->
       throwString "Bad syntax in quasiquote special form"
+
+    -- Special form: quasi-quote-expand
+    [ASTSym "quasiquoteexpand", ast] -> return $ quasiQuote ast
+    (ASTSym "quasiquoteexpand" : _) ->
+      throwString "Bad syntax in quasiquotexpand special form"
 
     -- Special form: try*/catch*
     [ASTSym "try*", ast, ASTLV _ LVList [ASTSym "catch*", ASTSym exceptionVar, catchVal]]
@@ -201,3 +194,21 @@ macroExpand envRef ast@(ASTLV _ LVList (ASTSym s : otherArgs)) = do
       return expanded
     _ -> return ast
 macroExpand _ ast = return ast
+
+-- Helper function to quasi-quote
+quasiQuote :: AST -> AST
+quasiQuote (ASTLV _ LVVector xs) =
+  ASTLV noMeta LVList [ASTSym "vec", qqList xs]
+quasiQuote x@(ASTMap _ _) = ASTLV noMeta LVList [ASTSym "quote", x]
+quasiQuote x@(ASTSym _) = ASTLV noMeta LVList [ASTSym "quote", x]
+quasiQuote (ASTLV _ LVList [ASTSym "unquote", x]) = x
+quasiQuote (ASTLV _ LVList xs) = qqList xs
+quasiQuote x = x
+
+-- Helper's helper function
+qqList :: [AST] -> AST
+qqList (ASTLV _ LVList [ASTSym "splice-unquote", x] : ys) =
+  ASTLV noMeta LVList [ASTSym "concat", x, qqList ys]
+qqList (x : ys) = ASTLV noMeta LVList [ASTSym "cons", quasiQuote x, qqList ys]
+qqList []       = ASTLV noMeta LVList []
+

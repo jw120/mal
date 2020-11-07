@@ -117,9 +117,9 @@ listsEqual _        _        = False
 type EnvRef = IORef Env
 
 data Env = Env
-  { envTable :: Map Text AST -- ^ Symbol table
-  , envOuter :: Maybe Env    -- ^ Outer environment for lookup when not in our table
-  } deriving (Show, Eq)
+  { envTable :: Map Text AST    -- ^ Symbol table
+  , envOuterRef :: Maybe EnvRef -- ^ Outer environment (ref so can follow mutations)
+  } deriving (Eq)
 
 -- | Errors/exceptions caught in an ExceptT (=Either) monad
 newtype MalError = MalError AST

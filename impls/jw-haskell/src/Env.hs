@@ -38,7 +38,7 @@ import           Types                          ( AST(..)
 
 -- | Create a brand new, initial environment reference with given symbol table
 empty :: Mal EnvRef
-empty = liftIO . newIORef $ Env { envTable = M.empty, envOuter = Nothing }
+empty = liftIO . newIORef $ Env { envTable = M.empty, envOuterRef = Nothing }
 
 -- | Replace the table in the given environment
 replaceTable :: EnvRef -> Map Text AST -> Mal ()
@@ -49,13 +49,12 @@ replaceTable envRef table = liftIO $ modifyIORef envRef replace'
 
 -- | Create a new environment with previous environment as its outer chain
 new :: EnvRef -> Mal EnvRef
-new envRef = do
-  oldEnv <- liftIO $ readIORef envRef
-  liftIO . newIORef $ Env { envTable = M.empty, envOuter = Just oldEnv }
+new envRef =
+  liftIO . newIORef $ Env { envTable = M.empty, envOuterRef = Just envRef }
 
 -- | Set a value in the environment state
 set :: EnvRef -> Text -> AST -> Mal ()
-set envRef sym val = liftIO $ modifyIORef envRef set'
+set envRef sym val = liftIO $ modifyIORef' envRef set'
  where
   set' :: Env -> Env
   set' e = e { envTable = M.insert sym val (envTable e) }
@@ -72,10 +71,12 @@ get envRef sym = do
 safeGet :: EnvRef -> Text -> Mal (Maybe AST)
 safeGet envRef sym = do
   env <- liftIO $ readIORef envRef
-  return $ get' env
+  get' env
  where
-  get' :: Env -> Maybe AST
-  get' e = case (M.lookup sym (envTable e), envOuter e) of
-    (Just a , _         ) -> Just a
-    (Nothing, Just outer) -> get' outer
-    (Nothing, Nothing   ) -> Nothing
+  get' :: Env -> Mal (Maybe AST)
+  get' e = case (M.lookup sym (envTable e), envOuterRef e) of
+    (Just a , _            ) -> return $ Just a
+    (Nothing, Just outerRef) -> do
+      outer <- liftIO $ readIORef outerRef
+      get' outer
+    (Nothing, Nothing) -> return Nothing
