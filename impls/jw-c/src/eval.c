@@ -196,13 +196,22 @@ bool is_pair(mal m) {
   return (is_list(m) && !list_empty(m.n)) || (is_vec(m) && !vec_empty(m.v));
 }
 
+static mal qqList(list_node *); // Forward definition
+
 // Handle the quasiquote special form (calls itself recursively)
 static mal quasiquote(mal ast) {
   DEBUG_INTERNAL_MAL("", ast);
 
-  // a non-sequence (or empty sequence) is just quoted
-  if (!is_pair(ast))
-    return mal_cons(mal_sym("quote"), mal_cons(ast, mal_list(NULL)));
+  if (is_vec(ast))
+    return mal_cons(mal_sym("vec"),
+                    mal_cons(qqList(seq_to_list(ast)), mal_list(NULL)));
+
+  // a non-sequence (or empty sequence) is passed through or quoted (if map/sym)
+  if (!is_pair(ast)) {
+    if (is_map(ast) || is_sym(ast))
+      return mal_cons(mal_sym("quote"), mal_cons(ast, mal_list(NULL)));
+    return ast;
+  }
 
   // if a list then we work with the head (ast_head)
   mal ast_head = mal_first(ast);
@@ -215,25 +224,32 @@ static mal quasiquote(mal ast) {
     return is_list(ast) ? ast.n->next->val : ast.v->buf[1];
   }
 
-  mal ast_rest = mal_rest(ast);
-  DEBUG_INTERNAL_MAL("ast_rest is", ast_rest);
+  return qqList(seq_to_list(ast));
+}
+
+// Helper for lists for quasiquote
+static mal qqList(list_node *n) {
+  DEBUG_INTERNAL_MAL("qqList", mal_list(n));
+
+  if (n == NULL)
+    return mal_list(NULL);
 
   // splice-unquote the element with concat
-  if (is_pair(ast_head)) {
-    mal ast_head_head = ast_head.n->val;
+  if (is_list(n->val) && !list_empty(n->val.n)) {
+    mal ast_head_head = n->val.n->val;
     if (mal_equals(ast_head_head, mal_sym("splice-unquote"))) {
-      if (ast_head.n->next == NULL)
+      if (n->val.n->next == NULL)
         return mal_exception_str("Missing argument for splice-unquote");
       return mal_cons(mal_sym("concat"),
-                      mal_cons(ast_head.n->next->val,
-                               mal_cons(quasiquote(ast_rest), mal_list(NULL))));
+                      mal_cons(n->val.n->next->val,
+                               mal_cons(qqList(n->next), mal_list(NULL))));
     }
   }
 
   // or else just cons the element
-  return mal_cons(mal_sym("cons"),
-                  mal_cons(quasiquote(ast_head),
-                           mal_cons(quasiquote(ast_rest), mal_list(NULL))));
+  return mal_cons(
+      mal_sym("cons"),
+      mal_cons(quasiquote(n->val), mal_cons(qqList(n->next), mal_list(NULL))));
 }
 
 mal eval_ast(mal ast, env *e) {
@@ -330,6 +346,11 @@ mal eval(mal ast, env *e) {
         return mal_exception_str("Bad arguments to quasiquote");
       ast = quasiquote(rest.n->val);
       continue;
+    }
+    if (mal_equals(head, mal_sym("quasiquoteexpand"))) {
+      if (list_count(rest.n) != 1)
+        return mal_exception_str("Bad arguments to quasiquoteexpand");
+      return quasiquote(rest.n->val);
     }
     if (mal_equals(head, mal_sym("quote"))) {
       if (list_count(rest.n) != 1)
