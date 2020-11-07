@@ -132,6 +132,18 @@ static mal core_nth(list_node *n, UNUSED(env *e)) {
   return mal_exception_str("Non-sequence passed to nth");
 }
 
+// C implementation of mal vec
+static mal core_vec(list_node *n, UNUSED(env *e)) {
+  DEBUG_HIGH_MAL("called with", mal_list(n));
+  if (list_count(n) != 1)
+    return mal_exception_str("Need one argument to vec");
+  if (is_vec(n->val))
+    return n->val;
+  if (is_list(n->val))
+    return mal_vec(list_to_vec(list_count(n->val.n), n->val.n));
+  return mal_exception_str("Need a list or vector for vec");
+}
+
 // C implementation of mal vector
 static mal core_vector(list_node *n, UNUSED(env *e)) {
   DEBUG_HIGH_MAL("called with", mal_list(n));
@@ -285,6 +297,7 @@ void add_seq(env *e) {
   env_set(e, "rest", mal_fn(core_rest));
   env_set(e, "nth", mal_fn(core_nth));
   env_set(e, "vector", mal_fn(core_vector));
+  env_set(e, "vec", mal_fn(core_vec));
   env_set(e, "hash-map", mal_fn(core_hash_map));
   env_set(e, "get", mal_fn(core_get));
   env_set(e, "contains?", mal_fn(core_contains));
