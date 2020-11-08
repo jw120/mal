@@ -33,6 +33,7 @@
              ['let* (let-special-form args env)]
              ['macroexpand (macroexpand-special-form args env)]
              ['quasiquote (EVAL (mal-quasi-quote (car args)) env)]
+             ['quasiquoteexpand (mal-quasi-quote (car args))]
              ['quote (quote-special-form args env)]
              ['try* (try-special-form args env)]
              [else
@@ -202,5 +203,5 @@
    (repl rep)]
   [else
    (send repl_env set '*ARGV* (vector->list (vector-drop (current-command-line-arguments) 1)))
-    (rep (format "(load-file ~s)" (vector-ref (current-command-line-arguments) 0)))
-    (void)]) ; void to avoid returning the value from rep
+   (rep (format "(load-file ~s)" (vector-ref (current-command-line-arguments) 0)))
+   (void)]) ; void to avoid returning the value from rep
