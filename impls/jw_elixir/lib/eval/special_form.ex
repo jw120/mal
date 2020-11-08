@@ -19,6 +19,7 @@ defmodule Eval.SpecialForm do
   def invoke(sym("macroexpand"), args, env), do: {:special, macroexpand_form(args, env)}
   def invoke(sym("quote"), args, env), do: {:special, quote_form(args, env)}
   def invoke(sym("quasiquote"), args, env), do: {:special, quasiquote_form(args, env)}
+  def invoke(sym("quasiquoteexpand"), args, _env), do: {:special, quasiquoteexpand_form(args)}
   def invoke(sym("try*"), args, env), do: {:special, try_form(args, env)}
   def invoke(_, _, _), do: :not_special
 
@@ -134,6 +135,14 @@ defmodule Eval.SpecialForm do
   end
 
   @doc """
+  Handle the quasiquoteexpand special form
+  """
+  @spec quasiquoteexpand_form(Mal.arguments()) :: Mal.t()
+  def quasiquoteexpand_form([val]) do
+    quasiquote(val)
+  end
+
+  @doc """
   Handle the quasiquote try* form
   """
   @spec try_form(Mal.arguments(), Env.t()) :: Mal.t()
@@ -153,36 +162,59 @@ defmodule Eval.SpecialForm do
   # Helper function to implement quasiquote
   @spec quasiquote(Mal.t()) :: Mal.t()
   defp quasiquote(%Mal.Vector{vector_map: v}) do
-    quasiquote(%Mal.List{contents: Seq.vector_map_to_list(v)})
+    %Mal.List{
+      contents: [
+        sym("vec"),
+        qq_list(%Mal.List{contents: Seq.vector_map_to_list(v)})
+      ]
+    }
+  end
+
+  defp quasiquote(%Mal.HashMap{hashmap_map: h}) do
+    %Mal.List{contents: [sym("quote"), %Mal.HashMap{hashmap_map: h}]}
+  end
+
+  defp quasiquote({:symbol, s}) do
+    %Mal.List{contents: [sym("quote"), {:symbol, s}]}
+  end
+
+  defp quasiquote(%Mal.List{contents: []}) do
+    %Mal.List{contents: []}
   end
 
   defp quasiquote(%Mal.List{contents: [sym("unquote"), val]}) do
     val
   end
 
-  defp quasiquote(%Mal.List{contents: [%Mal.List{contents: [sym("splice-unquote"), val]} | rest]}) do
-    %Mal.List{contents: qq_rest_contents} = quasiquote(%Mal.List{contents: rest})
+  defp quasiquote(%Mal.List{contents: xs}) do
+    qq_list(%Mal.List{contents: xs})
+  end
 
+  defp quasiquote(ast) do
+    ast
+  end
+
+  defp qq_list(%Mal.List{contents: []}) do
+    %Mal.List{contents: []}
+  end
+
+  defp qq_list(%Mal.List{contents: [%Mal.List{contents: [sym("splice-unquote"), val]} | rest]}) do
     %Mal.List{
       contents: [
         sym("concat"),
         val,
-        %Mal.List{contents: qq_rest_contents}
+        qq_list(%Mal.List{contents: rest})
       ]
     }
   end
 
-  defp quasiquote(%Mal.List{contents: [head | rest]}) do
-    %Mal.List{contents: qq_rest_contents} = quasiquote(%Mal.List{contents: rest})
-
+  defp qq_list(%Mal.List{contents: [head | rest]}) do
     %Mal.List{
       contents: [
         sym("cons"),
         quasiquote(head),
-        %Mal.List{contents: qq_rest_contents}
+        qq_list(%Mal.List{contents: rest})
       ]
     }
   end
-
-  defp quasiquote(ast), do: %Mal.List{contents: [sym("quote"), ast]}
 end

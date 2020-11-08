@@ -57,6 +57,11 @@ defmodule Core.Sequence do
 
     wrap2(env, "nth", &mal_nth/2)
 
+    wrap1(env, "vec", fn
+      %Mal.List{contents: xs} -> %Mal.Vector{vector_map: Seq.list_to_vector_map(xs)}
+      %Mal.Vector{vector_map: v} -> %Mal.Vector{vector_map: v}
+    end)
+
     wrap_list(env, "vector", fn
       xs when is_list(xs) -> %Mal.Vector{vector_map: Seq.list_to_vector_map(xs)}
     end)
