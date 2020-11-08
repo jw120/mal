@@ -15,7 +15,7 @@
                        (string-append "\"" (add-escapes val) "\"")
                        val)]
     [(number? val) (number->string val)]
-    [(symbol? val) (symbol->string val)]
+    [(mal-symbol? val) (symbol->string val)]
     [(keyword? val) (string-append ":" (keyword->string val))]
     [(equal? val #t) "true"]
     [(equal? val #f) "false"]

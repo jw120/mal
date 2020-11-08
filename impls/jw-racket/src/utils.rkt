@@ -4,6 +4,7 @@
          (contract-out
           [struct func ((is-macro? boolean?) (closure procedure?) (meta any/c))]
           [nil? (-> any/c boolean?)]
+          [mal-symbol? (-> any/c boolean?)]
           [add-escapes (-> string? string?)]
           [remove-escapes (-> string? string?)]
           [list-or-vector? (-> any/c boolean?)]
@@ -15,8 +16,10 @@
 (struct func (is-macro? closure meta) #:transparent)
 
 ;; Racket has no nil (just #f and '() which is null), we create one here
+;; As nil is not a mal-symbol we create a new predicate to detect a mal symbol
 (define nil (string->uninterned-symbol "nil"))
 (define (nil? x) (eq? x nil))
+(define (mal-symbol? x) (and (symbol? x) (not (nil? x))))
 
 (define (add-escapes s)
   (list->string

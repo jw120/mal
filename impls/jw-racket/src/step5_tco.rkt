@@ -36,7 +36,7 @@
               [else (raise-mal-eval "Cannot apply non-procedure")]))]))]))
 
 (define (def-special-form args env)
-  (unless (and (equal? 2 (length args)) (symbol? (car args)))
+  (unless (and (equal? 2 (length args)) (mal-symbol? (car args)))
     (raise-mal-eval "Bad arguments to def!"))
   (let ([sym (car args)]
         [val (EVAL (cadr args) env)])
@@ -78,7 +78,7 @@
   (cond
     [(nil? ast) ast]
     ((boolean? ast) ast)
-    [(symbol? ast) (send env get ast)]
+    [(mal-symbol? ast) (send env get ast)]
     [(list? ast) (map (λ (x) (EVAL x env)) ast)]
     [(vector? ast) (vector-map (λ (x) (EVAL x env)) ast)]
     [(hash? ast) (make-immutable-hash (map (λ (k) (cons k (EVAL (hash-ref ast k) env))) (hash-keys ast)))]

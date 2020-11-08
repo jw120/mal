@@ -28,6 +28,7 @@
          ['if (if-special-form args env)]
          ['let* (let-special-form args env)]
          ['quasiquote (EVAL (mal-quasi-quote (car args)) env)]
+         ['quasiquoteexpand (mal-quasi-quote (car args))]
          ['quote (quote-special-form args env)]
          [else
           (let* ([evaluated-ast (eval_ast ast env)]
@@ -38,7 +39,7 @@
               [else (raise-mal-eval "Cannot apply non-procedure")]))]))]))
 
 (define (def-special-form args env)
-  (unless (and (equal? 2 (length args)) (symbol? (car args)))
+  (unless (and (equal? 2 (length args)) (mal-symbol? (car args)))
     (raise-mal-eval "Bad arguments to def!"))
   (let ([sym (car args)]
         [val (EVAL (cadr args) env)])
@@ -85,25 +86,36 @@
   (cond
     [(nil? ast) ast]
     ((boolean? ast) ast)
-    [(symbol? ast) (send env get ast)]
+    [(mal-symbol? ast) (send env get ast)]
     [(list? ast) (map (λ (x) (EVAL x env)) ast)]
     [(vector? ast) (vector-map (λ (x) (EVAL x env)) ast)]
     [(hash? ast) (make-immutable-hash (map (λ (k) (cons k (EVAL (hash-ref ast k) env))) (hash-keys ast)))]
     [else ast]))
 
-(define (mal-quasi-quote raw-ast)
-  (define ast (if (vector? raw-ast) (vector->list raw-ast) raw-ast))
+(define (mal-quasi-quote ast)
   (cond
-    [(not (pair? ast)) (list 'quote ast)]
-    [else (let ([head (car ast)]
-                [rest (cdr ast)])
-            (cond
-              [(equal? head 'unquote)
-               (car rest)]
-              [(and (pair? head) (equal? (car head) 'splice-unquote))
-               (list 'concat (cadr head) (mal-quasi-quote rest))]
+    [(vector? ast)
+     (list 'vec (mal-qq-list (vector->list ast)))]
+    [(or (hash? ast) (mal-symbol? ast)) ; Non-sequence types that need quoting
+     (list 'quote ast)]
+    [(not (pair? ast)) ; Non-sequence types that are self-quoting
+     ast]
+    [(null? ast) ; Empty list
+     '()]
+    [(and (equal? (car ast) 'unquote) (not (null? (cdr ast)))) ; Handle quote
+     (cadr ast)]
+    [else ; Normal list processing
+     (mal-qq-list ast)]))
+
+(define (mal-qq-list ast) ; Helper function when ast is a list
+  (if (null? ast)
+      '()
+      (let ([head (car ast)]
+            [rest (cdr ast)])
+        (cond [(and (pair? head) (equal? (car head) 'splice-unquote))
+               (list 'concat (cadr head) (mal-qq-list rest))]
               [else
-               (list 'cons (mal-quasi-quote head) (mal-quasi-quote rest))]))]))
+               (list 'cons (mal-quasi-quote head) (mal-qq-list rest))]))))
 
 (define (PRINT s) (pr_str s #t))
 
@@ -131,5 +143,5 @@
    (repl rep)]
   [else
    (send repl_env set '*ARGV* (vector->list (vector-drop (current-command-line-arguments) 1)))
-    (rep (format "(load-file ~s)" (vector-ref (current-command-line-arguments) 0)))
-    (void)]) ; void to avoid returning the value from rep
+   (rep (format "(load-file ~s)" (vector-ref (current-command-line-arguments) 0)))
+   (void)]) ; void to avoid returning the value from rep

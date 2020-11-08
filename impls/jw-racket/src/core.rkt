@@ -81,6 +81,11 @@
                     [(vector? s) (if (vector-empty? s) '() (vector->list (vector-drop s 1)))]
                     [(list? s) (if (null? s) '() (cdr s))]
                     [else (raise-mal-eval "Bad argument to rest")])))
+   (cons 'vec (lambda (s)
+                  (cond
+                    [(vector? s) s]
+                    [(list? s) (apply vector-immutable s)]
+                    [else (raise-mal-eval "Bad argument to vec")])))
    (cons 'vector vector-immutable)
    (cons 'vector? vector?)
    (cons 'sequential? list-or-vector?)
@@ -174,7 +179,7 @@
    (cons 'nil? nil?)
    (cons 'true? (lambda (x) (equal? x #t)))
    (cons 'false? (lambda (x) (equal? x #f)))
-   (cons 'symbol? (lambda (x) (and (symbol? x) (not (nil? x))))) ; Our nil is a symbol
+   (cons 'symbol? mal-symbol?)
    (cons 'symbol string->symbol)
    (cons 'keyword? keyword?)
    (cons 'keyword (lambda (x) (if (keyword? x) x (string->keyword x))))
