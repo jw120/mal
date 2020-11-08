@@ -90,6 +90,7 @@ def create_ns() -> Dict[str, MalBuiltin]:
             make_1str("symbol", MalSym),
             make_1arg("keyword", mal_keyword),
             make_1arg("keyword?", lambda x: isinstance(x, MalKeyword)),
+            make_1arg("vec", mal_vec),
             make_any("vector", MalVec),
             make_1arg("vector?", lambda x: isinstance(x, MalVec)),
             make_1arg("sequential?", lambda x: isinstance(x, MalSeq)),
@@ -271,6 +272,13 @@ def rest(x: MalAny) -> MalAny:
     if isinstance(x, MalNil):
         return MalList([])
     raise MalException("Bad arguments to rest")
+
+
+def mal_vec(x: MalAny) -> MalVec:
+    """Python definition of mal vec function."""
+    if isinstance(x, MalSeq):
+        return MalVec(x.value)
+    raise MalException("Bad argument to vec")
 
 
 def mal_seq(x: MalAny) -> MalAny:

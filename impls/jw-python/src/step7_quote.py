@@ -116,6 +116,13 @@ def quasiquote_handler(args: List[MalAny], env: Environment) -> EvalState:
     raise MalException("Bad arguments for quasiquote", args)
 
 
+def quasiquoteexpand_handler(args: List[MalAny], env: Environment) -> EvalState:
+    """Handle the special form quasiquoteexpand."""
+    if len(args) == 1:
+        return EvalState(quasiquote(args[0]), env, EvalMode.FINISHED)
+    raise MalException("Bad arguments for quasiquote", args)
+
+
 special_form_handlers: Dict[str, Callable[[List[MalAny], Environment], EvalState]] = {
     "def!": def_handler,
     "do": do_handler,
@@ -124,6 +131,7 @@ special_form_handlers: Dict[str, Callable[[List[MalAny], Environment], EvalState
     "let*": let_handler,
     "quote": quote_handler,
     "quasiquote": quasiquote_handler,
+    "quasiquoteexpand": quasiquoteexpand_handler,
 }
 
 
@@ -201,24 +209,33 @@ def eval_ast(ast: MalAny, env: Environment) -> MalAny:
 
 def quasiquote(ast: MalAny) -> MalAny:
     """Quasiquote the ast."""
-    if not isinstance(ast, MalSeq) or len(ast.value) == 0:
+    if isinstance(ast, MalVec):
+        return MalList([MalSym("vec"), qq_list(MalList(ast.value))])
+    if isinstance(ast, MalMap) or isinstance(ast, MalSym):
         return MalList([MalSym("quote"), ast])
-    elems: List[MalAny] = ast.value
-    if elems[0] == MalSym("unquote"):
-        if len(elems) == 2:
-            return elems[1]
+    if not isinstance(ast, MalList) or len(ast.value) == 0:
+        return ast
+    if ast.value[0] == MalSym("unquote"):
+        if len(ast.value) == 2:
+            return ast.value[1]
         raise MalException("Too many arguments to unquote", ast)
+    return qq_list(ast)
+
+
+def qq_list(ast: MalList) -> MalAny:
+    """Handle quasiquoting of a list as a helper function for quasiquote."""
+    elems: List[MalAny] = ast.value
+    if len(elems) == 0:
+        return ast
     if isinstance(elems[0], MalSeq) and len(elems[0].value) > 0:
         sub_elems: List[MalAny] = elems[0].value
         if sub_elems[0] == MalSym("splice-unquote"):
             if len(sub_elems) == 2:
                 return MalList(
-                    [MalSym("concat"), sub_elems[1], quasiquote(MalList(elems[1:]))]
+                    [MalSym("concat"), sub_elems[1], qq_list(MalList(elems[1:]))]
                 )
             raise MalException("Too many arguments to splice-unquote", ast)
-    return MalList(
-        [MalSym("cons"), quasiquote(elems[0]), quasiquote(MalList(elems[1:]))]
-    )
+    return MalList([MalSym("cons"), quasiquote(elems[0]), qq_list(MalList(elems[1:]))])
 
 
 def mal_swap(args: List[MalAny]) -> MalAny:
