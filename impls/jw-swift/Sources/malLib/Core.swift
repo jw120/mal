@@ -23,6 +23,12 @@ public let core: [String: Mal] = [
 
     "list": swiftClosure { xs in .seq(true, xs, nil) },
     "vector": swiftClosure { xs in .seq(false, xs, nil) },
+    "vec": swiftClosure { args in
+        guard let xs = args.asSingleton?.sequence else {
+            throw MalError.msg("Expected a sequence as argument for vec")
+        }
+        return .seq(false, xs, nil)
+    },
     "empty?": swiftClosure { args in
         guard let seq = args.first?.sequence else {
             throw MalError.msg("Expected a list as the argument for empty?")

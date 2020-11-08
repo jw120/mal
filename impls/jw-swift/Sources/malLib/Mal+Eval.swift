@@ -105,6 +105,8 @@ extension Mal {
             return try macroExpandSpecialForm(arguments, env)
         case "quasiquote":
             return try quasiquoteSpecialForm(arguments, env)
+        case "quasiquoteexpand":
+            return try quasiquoteexpandSpecialForm(arguments)
         case "quote":
             return try quoteSpecialForm(arguments, env)
         case "try*":
@@ -215,29 +217,48 @@ extension Mal {
         return .Complete(try val.macroExpand(env))
     }
 
-    private static func quasiquoteSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> SpecialFormResult {
-        func quasiquote(_ ast: Mal) throws -> Mal {
-            guard let (astHead, astTail) = ast.seqHeadTail else {
-                return .seq(true, [.sym("quote"), ast], nil)
+    private static func quasiquote(_ ast: Mal) throws -> Mal {
+        switch ast {
+        case .seq(false, let xs, _):
+            return .seq(true, [.sym("vec"), try qq_list(.seq(true, xs, nil))], nil)
+        case .seq(true, let xs, _):
+            guard case let .some((.sym("unquote"), val)) = xs.asPair else {
+                return try qq_list(ast)
             }
-            if astHead == .sym("unquote") {
-                guard let val = astTail.asSingleton else {
-                    throw MalError.msg("unquote needs one arguments")
-                }
-                return val
-            }
-            if let (headHead, headTail) = astHead.seqHeadTail,
-                headHead == .sym("splice-unquote"),
-                let headTailVal = headTail.asSingleton {
-                return .seq(true, [.sym("concat"), headTailVal, try quasiquote(.seq(true, astTail, nil))], nil)
-            }
-            return .seq(true, [.sym("cons"), try quasiquote(astHead), try quasiquote(.seq(true, astTail, nil))], nil)
+            return val
+        case .hashmap:
+            return .seq(true, [.sym("quote"), ast], nil)
+        case .sym:
+            return .seq(true, [.sym("quote"), ast], nil)
+        default:
+            return ast
         }
+    }
 
+    private static func qq_list(_ ast: Mal) throws -> Mal {
+        guard let (astHead, astTail) = ast.seqHeadTail else {
+            return ast
+        }
+        if let (headHead, headTail) = astHead.seqHeadTail,
+            headHead == .sym("splice-unquote"),
+            let headTailVal = headTail.asSingleton {
+            return .seq(true, [.sym("concat"), headTailVal, try qq_list(.seq(true, astTail, nil))], nil)
+        }
+        return .seq(true, [.sym("cons"), try quasiquote(astHead), try qq_list(.seq(true, astTail, nil))], nil)
+    }
+
+    private static func quasiquoteSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> SpecialFormResult {
         guard let val = args.asSingleton else {
             throw MalError.msg("quasiquote needs one arguments")
         }
         return .ToEvaluate(try quasiquote(val), env)
+    }
+
+    private static func quasiquoteexpandSpecialForm(_ args: ArraySlice<Mal>) throws -> SpecialFormResult {
+        guard let val = args.asSingleton else {
+            throw MalError.msg("quasiquoteexpand needs one arguments")
+        }
+        return .Complete(try quasiquote(val))
     }
 
     private static func quoteSpecialForm(_ args: ArraySlice<Mal>, _ env: Env) throws -> SpecialFormResult {

@@ -1,6 +1,7 @@
 # Full set of rules here - disabling those that don't make sense in this
 # non-OOP CLI ap
 disabled_rules:
+- closure_parameter_position
 - cyclomatic_complexity
 - file_length
 - identifier_name
