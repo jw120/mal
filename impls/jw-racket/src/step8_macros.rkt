@@ -116,19 +116,30 @@
     [(hash? ast) (make-immutable-hash (map (λ (k) (cons k (EVAL (hash-ref ast k) env))) (hash-keys ast)))]
     [else ast]))
 
-(define (mal-quasi-quote raw-ast)
-  (define ast (if (vector? raw-ast) (vector->list raw-ast) raw-ast))
+(define (mal-quasi-quote ast)
   (cond
-    [(not (pair? ast)) (list 'quote ast)]
-    [else (let ([head (car ast)]
-                [rest (cdr ast)])
-            (cond
-              [(equal? head 'unquote)
-               (car rest)]
-              [(and (pair? head) (equal? (car head) 'splice-unquote))
-               (list 'concat (cadr head) (mal-quasi-quote rest))]
+    [(vector? ast)
+     (list 'vec (mal-qq-list (vector->list ast)))]
+    [(or (hash? ast) (mal-symbol? ast)) ; Non-sequence types that need quoting
+     (list 'quote ast)]
+    [(not (pair? ast)) ; Non-sequence types that are self-quoting
+     ast]
+    [(null? ast) ; Empty list
+     '()]
+    [(and (equal? (car ast) 'unquote) (not (null? (cdr ast)))) ; Handle quote
+     (cadr ast)]
+    [else ; Normal list processing
+     (mal-qq-list ast)]))
+
+(define (mal-qq-list ast) ; Helper function when ast is a list
+  (if (null? ast)
+      '()
+      (let ([head (car ast)]
+            [rest (cdr ast)])
+        (cond [(and (pair? head) (equal? (car head) 'splice-unquote))
+               (list 'concat (cadr head) (mal-qq-list rest))]
               [else
-               (list 'cons (mal-quasi-quote head) (mal-quasi-quote rest))]))]))
+               (list 'cons (mal-quasi-quote head) (mal-qq-list rest))]))))
 
 
 (define (is-macro-call ast env)
