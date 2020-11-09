@@ -1,36 +1,31 @@
 #lang typed/racket/base
 
-
-(provide Mal)
+(provide (all-defined-out))
 
 (define-type Mal (U
                   Integer
                   String
                   Symbol
                   Boolean
-                  MalNil
-                  MalList
-                  MalVector
-                  MalHash
-                  MalFunction
-                  MalMacro
-                  MalAtom))
+                  ;(Boxof Mal)
+                  mal-nil
+                  mal-list
+                  mal-vector
+                  mal-hash
+                  mal-function))
+                  ;mal-macro))
 
-(struct MalNil ())
+(struct mal-nil ())
 
-(struct MalList ([meta : Mal]
-                 [xs : (Listof Mal)]))
+(struct mal-with-meta ([meta : Mal]))
 
-(struct MalVector ([meta : Mal]
-                   [v : (Immutable-Vectorof Mal)]))
+(struct mal-list mal-with-meta ([xs : (Listof Mal)]))
 
-(struct MalHash ([meta : Mal]
-                 [m : (Immutable-HashTable String Mal)]))
+(struct mal-vector mal-with-meta ([v : (Immutable-Vectorof Mal)]))
 
-(struct MalFunction ([meta : Mal]
-                     [f : (-> (Listof Mal) Mal)]))
+(struct mal-hash mal-with-meta ([m : (Immutable-HashTable String Mal)]))
 
-(struct MalMacro ([meta : Mal]
-                  [f : (-> (Listof Mal) Mal)]))
+(struct mal-function mal-with-meta ([f : (-> (Listof Mal) Mal)]))
 
-(struct MalAtom ())
+;(struct mal-macro ([f : (-> (Listof Mal) Mal)]))
+
