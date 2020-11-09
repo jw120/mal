@@ -1,0 +1,7 @@
+#lang typed/racket
+
+;; Tagged tuple
+
+(define-type Mal1 (U
+                   ('mal-number number)
+                   ('mal-list (Listof Mal1) Mal)))
