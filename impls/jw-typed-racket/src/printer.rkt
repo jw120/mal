@@ -14,10 +14,10 @@
     [#t "true"]
     [#f "false"]
     [(mal-nil) "nil"]
-    [(mal-list meta xs) (pr_sequence "(" ")" xs readable)]
-    [(mal-vector _ v) (pr_sequence "[" "]" (vector->list v) readable)]
-    [(mal-hash _ m) (pr_sequence "{" "}" (mal-hashmap->flat-list m) readable)]
-    [(mal-function _ f) "#<function"]
+    [(mal-list xs) (pr_sequence "(" ")" xs readable)]
+    [(mal-vector v) (pr_sequence "[" "]" (vector->list v) readable)]
+    [(mal-hash m) (pr_sequence "{" "}" (mal-hashmap->flat-list m) readable)]
+    [(mal-function f) "#<function"]
     [_ (error "Unmatched in pr_str" val)]))
 
 ;; Helper function to print lists, vectors and hashes
@@ -39,9 +39,9 @@
   (check-equal? (pr_str true true) "true")
   (check-equal? (pr_str false true) "false")
   (check-equal? (pr_str (mal-nil) true) "nil")
-  (check-equal? (pr_str (mal-list (mal-nil) '(2 3)) true) "(2 3)")
-  (check-equal? (pr_str (mal-vector (mal-nil) '#(4 5)) true) "[4 5]")
-  (check-equal? (pr_str (mal-hash (mal-nil) '#hash(("a" . 2))) false) "{a 2}"))
+  (check-equal? (pr_str (mal-list '(2 3)) true) "(2 3)")
+  (check-equal? (pr_str (mal-vector '#(4 5)) true) "[4 5]")
+  (check-equal? (pr_str (mal-hash '#hash(("a" . 2))) false) "{a 2}"))
   
 
 

@@ -9,6 +9,7 @@
 (define (read_string [s : String]) : Mal
   (define result : (U Mal EOF)
     (read-possible-form (make-token-reader s)))
+  (display "result") (displayln result)
   (if (or (eof-object? result)
           (and (string? result) (string-whitespace? result)))
       (raise-mal-empty)
@@ -39,16 +40,16 @@
   (match (r 'peek)
     ["("
      (r 'next!) ; skip the "("
-     (mal-list (mal-nil) (read-forms-until ")" r))]
+     (mal-list (read-forms-until ")" r))]
     ["["
      (r 'next!) ; skip the "["
-     (mal-vector (mal-nil)
-                 (vector->immutable-vector
-                  (list->vector
-                   (read-forms-until "]" r))))]
+     (mal-vector
+      (vector->immutable-vector
+       (list->vector
+        (read-forms-until "]" r))))]
     ["{"
      (r 'next!) ; skip the "{"
-     (mal-hash (mal-nil) (flat-list->mal-hashmap (read-forms-until "}" r)))]
+     (mal-hash (flat-list->mal-hashmap (read-forms-until "}" r)))]
     [s (cond
          [(eof-object? s) eof]
          [(string-whitespace? s) s]
@@ -69,6 +70,7 @@
   (let ([next-form (read-possible-form r)])
     (cond
       [(equal? next-form end-token) '()]
+      [(and (string? next-form) (string-whitespace? next-form)) (read-forms-until end-token r)]
       [(eof-object? next-form) (raise-mal "EOF found reading list or vector")]
       [else (cons next-form (read-forms-until end-token r))])))
 
@@ -81,15 +83,15 @@
         ["true" #t]
         ["false" #f]
         ["nil" (mal-nil)]
-        ["'" (mal-list (mal-nil) (list 'quote (read-form r)))]
-        ["`" (mal-list (mal-nil) (list 'quasiquote (read-form r)))]
-        ["~" (mal-list (mal-nil) (list 'unquote (read-form r)))]
+        ["'" (mal-list (list 'quote (read-form r)))]
+        ["`" (mal-list (list 'quasiquote (read-form r)))]
+        ["~" (mal-list (list 'unquote (read-form r)))]
         ["^"
          (let* ([x (read-form r)]
                 [y (read-form r)])
-           (mal-list (mal-nil) (list 'with-meta y x)))]
-        ["@" (mal-list (mal-nil) (list 'deref (read-form r)))]
-        ["~@" (mal-list (mal-nil) (list 'splice-unquote (read-form r)))]
+           (mal-list (list 'with-meta y x)))]
+        ["@" (mal-list (list 'deref (read-form r)))]
+        ["~@" (mal-list (list 'splice-unquote (read-form r)))]
         [(regexp #px"^[{}()\\[\\]]") token] ; tokens for delimiters (returned as strings)
         [(regexp #px"^-?[[:digit:]]+$") (string->int token)] ; number
         [(regexp #rx"^\\\".*\\\"$") (remove-escapes (substring token 1 (- (string-length token) 1)))] ; quoted string
@@ -129,22 +131,30 @@
     
   ; sequences
   
-  (check-equal? (read_string "(1 2 3)") (mal-list (mal-nil) '(1 2 3)) "List")
-  (check-equal? (read_string "()") (mal-list (mal-nil) '()) "Empty list")
-  (check-equal? (read_string "[1 2 3]") #(1 2 3) "Vector")
-  (check-equal? (read_string "[1,2,4]") #(1 2 4) "Vector with commas")
-  (check-equal? (read_string "[]") #() "Empty vector")
-  (check-equal? (read_string "(1 (2 3))") '(1 (2 3)) "List of lists")
-  (check-equal? (read_string "(()())") '(()()) "Empty list of empty lists")
-  (check-equal? (read_string "{ \"a\" 1 \"bb\" 2}") #hash(("a" . 1) ("bb" . 2)) "Hash map")
-  (check-equal? (read_string "(()())") '(()()) "Empty hash map")
+  (check-equal? (read_string "(1 2 3)")
+                (mal-list '(1 2 3)) "List")
+  (check-equal? (read_string "()")
+                (mal-list '()) "Empty list")
+  (check-equal? (read_string "[1 2 3]")
+                (mal-vector #(1 2 3)) "Vector")
+  (check-equal? (read_string "[1,2,4]")
+                (mal-vector #(1 2 4)) "Vector with commas")
+  (check-equal? (read_string "[]")
+                (mal-vector #()) "Empty vector")  
+  (check-equal? (read_string "(1 (2 3))")
+                (mal-list (list 1 (mal-list (list 2 3)))) "List of lists")
+  (check-equal? (read_string "(()())")
+                (mal-list (list (mal-list '()) (mal-list '()))) "Empty list of empty lists")
+  (check-equal? (read_string "{ \"a\" 1 \"bb\" 2}")
+                (mal-hash #hash(("a" . 1) ("bb" . 2))) "Hash map")
   (check-exn exn:mal? (λ () (read_string "(1 2")) "Unterminated list")
   (check-exn exn:mal? (λ () (read_string "(1 2]")) "Wrongly terminated list")
   (check-exn exn:mal? (λ () (read_string "[1 2")) "Unterminated vector")
   (check-exn exn:mal? (λ () (read_string "{1 2")) "Unterminated hash map")
 
   ; List with comment inside
-  (check-equal? (read_string "(1 2 ;comment\n3)") '(1 2 3) "List with comment")
+  (check-equal? (read_string "(1 2 ;comment\n3)")
+                (mal-list '(1 2 3)) "List with comment")
 
   ; strings
   (check-equal? (read_string "\"pq\"") "pq" "String")

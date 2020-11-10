@@ -15,19 +15,17 @@
                   mal-function))
                   ;mal-macro))
 
-(struct mal-nil ())
-
-(struct mal-with-meta ([meta : Mal]))
-
-(struct mal-list mal-with-meta ([xs : (Listof Mal)]))
-
-(struct mal-vector mal-with-meta ([v : (Immutable-Vectorof Mal)]))
-
-(struct mal-hash mal-with-meta ([m : (Immutable-HashTable String Mal)]))
-
-(struct mal-function mal-with-meta ([f : (-> (Listof Mal) Mal)]))
-
+(struct mal-nil () #:transparent)
+(struct mal-list ([xs : (Listof Mal)]) #:transparent)
+(struct mal-vector ([v : (Immutable-Vectorof Mal)]) #:transparent)
+(struct mal-hash ([m : (Immutable-HashTable String Mal)]) #:transparent)
+(struct mal-function ([f : (-> (Listof Mal) Mal)]) #:transparent)
 ;(struct mal-macro ([f : (-> (Listof Mal) Mal)]))
+
+(struct mal-list-with-meta mal-list ([meta : Mal]) #:transparent)
+(struct mal-vector-with-meta mal-vector ([meta : Mal]) #:transparent)
+(struct mal-hash-with-meta mal-hash ([meta : Mal]) #:transparent)
+(struct mal-function-with-meta mal-function ([meta : Mal]) #:transparent)
 
 ;; exception raised when no input is provided (when caught, repl ignores the input line)
 (struct exn:mal-empty exn ()) ; subtype of `exn:mal`
