@@ -29,3 +29,22 @@
 
 ;(struct mal-macro ([f : (-> (Listof Mal) Mal)]))
 
+;; exception raised when no input is provided (when caught, repl ignores the input line)
+(struct exn:mal-empty exn ()) ; subtype of `exn:mal`
+(define (raise-mal-empty) : Void
+  (raise (exn:mal-empty "Empty input to reader" (current-continuation-marks))))
+
+;; exception thrown from mal throw (when caught, repl prints the thrown value)
+(struct exn:mal-throw exn ([thrown-value : Mal])) ; subtype of `exn:mal`
+(define (raise-mal-throw [val : Mal]) : Void
+  (raise (exn:mal-throw "Thrown exception" (current-continuation-marks) val)))
+
+;; other exceptions during evaluation
+(struct exn:mal exn ())
+(define (raise-mal-failure [msg : String]) ; For something that should not happen
+  (raise (exn:mal (string-append "Internal failure: " msg) (current-continuation-marks))))
+(define (raise-mal [msg : String])
+  (raise (exn:mal msg (current-continuation-marks))))
+
+
+

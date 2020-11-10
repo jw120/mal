@@ -2,16 +2,7 @@
 
 (require "types.rkt")
 
-;(require racket/class
-;         racket/match
-;         racket/string
-;         ;"exceptions.rkt"
-;         "utils.rkt")
-
-;(provide read_string)
-
-(define (raise-mal-fail e) (error e))
-(define (raise-mal-read e) (error e))
+(provide read_string)
 
 ; We use the symbols eof (defined by system) and white-space (defined here)
 ; to match inside this file (end of input and spaces/comments respectively)
@@ -20,61 +11,61 @@
 
 ;; top-level reading function which we export. Sets up reader and hands over to read-form
 ;; If no input (or just space/comment raise the empty exception
-(define (read_string [s : String]) : (U String EOF)
-  (read-form (reader 0 s)))
-
-;; Reader is a struct which can be mutated when read
-(struct reader ([pos : Nonnegative-Integer] [str : String]) #:mutable)
-
-(define (get-token! [r : reader] [advance : Boolean]) : (U String EOF 'whitespace)
-  (let ([pos (reader-pos r)]
-        [str (reader-str r)])
-    (if (>= pos (string-length str))
-        eof
-        (match (regexp-match-positions mal-regexp str pos)
-          [(list (cons group-start group-end))
-           (when advance (set-reader-pos! r group-end))
-           (if (equal? group-start group-end) ; Zero-length match means nothing but white-space
-               'whitespace
-               (substring str group-start group-end))]
-          [_ (error "Unexpected in matching mal-regexp")]))))
-
-(define (next-token! [r : reader]) : (U String EOF 'whitespace)
-  (get-token! r #t))
-
-(define (peek-token [r : reader]) : (U String EOF 'whitespace)
-  (get-token! r #f))
+(define (read_string [s : String]) : Mal
+  (define result : (U Mal EOF)
+    (read-form (make-token-reader s)))
+  (if (or (eof-object? result) (string-whitespace? result))
+      (raise-mal-empty)
+      result))
+  
+;; Token reader holds mutable state with the current position in the string 
+(define-type token-reader (-> (U 'next! 'peek) (U String EOF)))
+(define (make-token-reader [s : String]) : token-reader
+  (let ([pos : Nonnegative-Integer 0] ; pos is mutated below
+        [str : String s])
+    (define (get-token [advance : Boolean]) : (U String EOF)
+      (if (>= pos (string-length str))
+          eof
+          (match (regexp-match-positions mal-regexp str pos)
+            [(list (cons group-start group-end))
+             (when advance (set! pos group-end))
+             (if (equal? group-start group-end) ; Zero-length match means nothing but white-space
+                 " "
+                 (substring str group-start group-end))]
+            [_ (raise-mal-failure "unexpected match result in token-reader")])))
+    (lambda (command)
+      (cond [(equal? command 'next!) (get-token true)]
+            [(equal? command 'peek) (get-token false)]
+            [else (raise-mal-failure "bad command to token-reader")]))))
 
 ;; top-level internal function to read from our reader
-(define (read-form r)
-  (match (peek-token r)
-    ["(" (read-list r)]
-    ["[" (read-vector r)]
-    ["{" (read-hash-map r)]
+(define (read-form [r : token-reader]) : (U Mal EOF)
+  (match (r 'peek)
+    ["(" (mal-list (mal-nil) (read-list r))]
+    ["[" (mal-vector (mal-nil) (read-vector r))]
+    ["{" (mal-hash (mal-nil) (read-hash-map r))]
+    EOF
     [_ (read-atom r)]))
 
-;; read a list
-(define (read-list r)
-  (unless (equal? (next-token! r) "(")
+(define (read-list [r : token-reader]) : (Listof Mal)
+  (unless (equal? (r 'next!) "(")
     (raise-mal-fail "no opening paren in read-list"))
   (read-forms-until ")" r))
 
-;; read a vector
-(define (read-vector r)
-  (unless (equal? (next-token! r) "[")
+(define (read-vector [r : token-reader]) : (Immutable-Vectorof Mal)
+  (unless (equal? (r 'next!) "[")
     (raise-mal-fail "no opening bracker in read-vector"))
   (vector->immutable-vector
    (list->vector
     (read-forms-until "]" r))))
 
-;; read a hash map
-(define (read-hash-map r)
-  (unless (equal? (send r next-token) "{")
+(define (read-hash-map [r : token-reader]) : (Immutable-HashTable String Mal)
+  (unless (equal? (r 'next!) "{")
     (raise-mal-fail "no opening brace in read-hash-map"))
   (apply hash (read-forms-until "}" r)))
 
 ;; read a list of forms until (but not including) the given token
-(define (read-forms-until end-token r)
+(define (read-forms-until [end-token : String] [r : token-reader]) : (Listof String)
   (let ([next-form (read-form r)])
     (cond
       [(equal? next-form end-token) '()]
@@ -83,8 +74,8 @@
       [else (cons next-form (read-forms-until end-token r))])))
 
 ;; read an atom
-(define (read-atom r)
-  (define t (send r next-token))
+(define (read-atom [r : token-reader]) : Mal
+  (define t : String (r 'next!))
   (match t
     ["true" #t]
     ["false" #f]
@@ -109,21 +100,33 @@
          [(equal? t 'whitespace) t]
          [else (string->symbol t)])]))
 
-(define (remove-escapes s)
-  (let-values
-      ([(result still-in-escape)
-        (for/fold ([acc ""]
-                   [in-escape #f])
-                  ([ch (in-string s)])
-          (match (list in-escape ch)
+(define (remove-escapes [s : String]) : String
+  (define (accumulate [acc : String] [in-escape : Boolean] [ch : Char]) : (Values String Boolean)
+     (match (list in-escape ch)
             [(list #t #\n) (values (string-append acc "\n") #f)]
             [(list #t #\") (values (string-append acc "\"") #f)]
             [(list #t #\\) (values (string-append acc "\\") #f)]
             [(list #t x) (raise-mal-read (format "Unknown escape ~a in remove-escapes" ch))]
             [(list #f #\\) (values acc #t)]
-            [(list #f x) (values (string-append acc (string ch)) #f)]))])
-    (when still-in-escape (raise-mal-read "Escape unbalanced in remove-escapes"))
-    result))
+            [(list #f x) (values (string-append acc (string ch)) #f)]))    
+  (let-values
+      ([(result still-in-escape)
+        (for/fold ([acc : String ""]
+                   [in-escape : Boolean #f])
+                  ([ch : Char (in-string s)])
+          (accumulate acc in-escape ch))])
+    (if still-in-escape
+        (raise-mal-read "Escape unbalanced in remove-escapes")
+        result)))
+
+(define (string-whitespace? [s: String]) : Boolean
+  (for/and ([ch (in-string s)])
+    (char-whitespace? ch)))
+(module+ test
+  (require rackunit)
+  (check-true (string-whitespace "   "))
+  (check-true (string-whitespace ""))
+  (check-false (string-whitespace " a")))
 
 
 ;; regexp for our tokens (at end of file to avoid confusing our editors highlighting)
