@@ -1,6 +1,6 @@
 #lang typed/racket
 
-(require "types.rkt")
+(require "types.rkt" "utils.rkt")
 
 (provide pr_str)
 
@@ -29,31 +29,8 @@
    (string-join (map pr_element elements))
    closer))
 
-(define (add-escapes [s : String]) : String
-  (define translated-chars : (Listof String)
-    (for/list ([ch (in-string s)])
-      (match ch
-        [#\newline "\\n"]
-        [#\" "\\\""]
-        [#\\ "\\\\"]
-        [c (string c)])))
-  (string-append* translated-chars))
-
-(define (mal-hashmap->flat-list [m : (HashTable String Mal)]) : (Listof Mal)
-  (define kv-list : (Listof (Pairof String Mal)) (hash->list m))
-  (define (go [xs : (Listof (Pairof Mal Mal))]) : (Listof Mal)
-    (if (null? xs)
-        '()
-        (cons (caar xs) (cons (cdar xs) (go (cdr xs))))))
-  (go kv-list))
-
-
 (module+ test
   (require typed/rackunit)
-
-  (check-equal? (add-escapes "a\"b") "a\\\"b" "Escapes double-quote")
-  (check-equal? (add-escapes "a\nb") "a\\nb" "Escapes newline")
-  (check-equal? (add-escapes "a\\b") "a\\\\b" "Escapes backslash")
   
   (check-equal? (pr_str 23 true) "23")
   (check-equal? (pr_str "abc" true) "\"abc\"")

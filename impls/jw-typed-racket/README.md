@@ -1,3 +1,11 @@
+TODO
+- Transparent types for structs
+- Should we have a sub-type for list with meta? (then how do we tell if we have a meta value)
+- Get reader tests to pass
+
+
+
+
 Typed racket version
 
 Uses a sum type for mal (as opposed to my racket implementation that uses the underlying
