@@ -9,33 +9,35 @@
 (define (read_string [s : String]) : Mal
   (define result : (U Mal EOF)
     (read-possible-form (make-token-reader s)))
-  (display "result") (displayln result)
-  (if (or (eof-object? result)
-          (and (string? result) (string-whitespace? result)))
+  (if (eof-object? result)
       (raise-mal-empty)
       result))
   
 ;; Token reader holds mutable state with the current position in the string 
 (define-type token-reader (-> (U 'next! 'peek) (U String EOF)))
 (define (make-token-reader [s : String]) : token-reader
-  (let ([pos : Nonnegative-Integer 0] ; pos is mutated below
+  (let ([reader-pos : Index 0] ; reader-pos is mutated below
         [str : String s])
-    (define (get-token [advance : Boolean]) : (U String EOF)
-      (if (>= pos (string-length str))
-          eof
-          (match (regexp-match-positions mal-regexp str pos)
+    (define (get-token [get-pos : Index]) : (Values (U String EOF) Index)
+      (if (>= get-pos (string-length str))
+          (values eof get-pos)
+          (match (regexp-match-positions mal-regexp str get-pos)
             [(list (cons whole-start whole-end) (cons group-start group-end))
-             (when advance (set! pos group-end))
-             (if (equal? group-start group-end) ; Zero-length match means nothing but white-space/comments
-                 " "
-                 (substring str group-start group-end))]
+             (if (or
+                  (equal? group-start group-end) ; Zero-length match means nothing but white-space
+                  (regexp-match mal-comment-regexp str group-start group-end))
+                 (get-token group-end) ; Look again if a space/comment
+                 (values (substring str group-start group-end) group-end))]
             [_ (raise-mal-failure "unexpected match result in token-reader")])))
     (lambda (command)
-      (cond [(equal? command 'next!) (get-token true)]
-            [(equal? command 'peek) (get-token false)]
-            [else (raise-mal-failure "bad command to token-reader")]))))
+      (if (or (equal? command 'next!) (equal? command 'peek))
+          (let-values ([(result new-pos) (get-token reader-pos)])
+            (when (equal? command 'next!)
+              (set! reader-pos new-pos))
+            result)
+          (raise-mal-failure "bad command to token reader")))))
 
-;; top-level internal function to read from our reader
+;; top-level reading function (this returns EOF if no more tokens, other read- functions fail on EOF)
 (define (read-possible-form [r : token-reader]) : (U Mal EOF)
   (match (r 'peek)
     ["("
@@ -50,31 +52,24 @@
     ["{"
      (r 'next!) ; skip the "{"
      (mal-hash (flat-list->mal-hashmap (read-forms-until "}" r)))]
-    [s (cond
-         [(eof-object? s) eof]
-         [(string-whitespace? s) s]
-         [else (read-atom r)])]))
+    [s (if (eof-object? s)
+           eof
+           (read-atom r))]))
 
 (define (read-form [r : token-reader]) : Mal
   (let ([possible-form (read-possible-form r)])
-    (cond
-      [(eof-object? possible-form)
-       (raise-mal "Unexpected EOF reading a form")]
-      [(and (string? possible-form) (string-whitespace? possible-form))
-       (raise-mal "Found only whitespace or comment when reading a form")]
-      [else
-       possible-form])))
+    (if (eof-object? possible-form)
+        (raise-mal "Unexpected EOF reading a form")
+        possible-form)))
 
 ;; read a list of forms until (but not including) the given token
 (define (read-forms-until [end-token : String] [r : token-reader]) : (Listof Mal)
   (let ([next-form (read-possible-form r)])
     (cond
       [(equal? next-form end-token) '()]
-      [(and (string? next-form) (string-whitespace? next-form)) (read-forms-until end-token r)]
       [(eof-object? next-form) (raise-mal "EOF found reading list or vector")]
       [else (cons next-form (read-forms-until end-token r))])))
 
-;; read an atom
 (define (read-atom [r : token-reader]) : Mal
   (define token : (U String EOF) (r 'next!))
   (if (eof-object? token)
@@ -95,17 +90,11 @@
         [(regexp #px"^[{}()\\[\\]]") token] ; tokens for delimiters (returned as strings)
         [(regexp #px"^-?[[:digit:]]+$") (string->int token)] ; number
         [(regexp #rx"^\\\".*\\\"$") (remove-escapes (substring token 1 (- (string-length token) 1)))] ; quoted string
-        [(regexp #rx"^\\\".*$") (raise-mal "EOF reading string")]
+        [(regexp #rx"^\\\".*$") (raise-mal "EOF reading string")] ; Mismatched double-quote
         ;[(regexp #rx"^:.+$")  (string->keyword (substring token 1))] ; keyword
-        [(regexp #rx"^;") " "] ; comment
-        [_ (cond
-             [(string-whitespace? token) token]
-             [else (string->symbol token)])])))
+        [sym (string->symbol token)])))
 
-
-
-
-;; regexp for our tokens (at end of file to avoid confusing our editors highlighting)
+;; regexp for our tokens
 (define mal-regexp : Regexp
   (pregexp
    (string-append
@@ -120,6 +109,11 @@
      "|")
     ")")))
 
+;; regexp for coment tokens (that our token reader skips over)
+(define mal-comment-regexp : Regexp
+  (pregexp ";[^\n]*"))
+
+
 (module+ test
   (require typed/rackunit)
 
@@ -128,9 +122,12 @@
   (check-exn exn:mal-empty? (λ () (read_string "  ")) "White space")
   (check-exn exn:mal-empty? (λ () (read_string ";qqq")) "Comment only")
 
-    
-  ; sequences
-  
+  ; token reader skips spaces and comments
+  (check-equal? ((make-token-reader "  ") 'next!) eof)
+  (check-equal? ((make-token-reader "  ; ") 'next!) eof)
+  (check-equal? ((make-token-reader "  ;abc \n2") 'next!) "2")
+
+  ; sequences  
   (check-equal? (read_string "(1 2 3)")
                 (mal-list '(1 2 3)) "List")
   (check-equal? (read_string "()")
@@ -166,24 +163,18 @@
   (check-equal? (read_string "-45") -45 "Negative number")
 
   ; special symbols
-  (check-equal? (read_string "'pqr") ''pqr "Quote")
-  (check-equal? (read_string "`pqr") '`pqr "Quasiquote")
-  (check-equal? (read_string "~pqr") ',pqr "Unquote")
-  (check-equal? (read_string "^pqr abc") '(with-meta abc pqr) "With-meta")
-  (check-equal? (read_string "@pqr") '(deref pqr) "Deref")
-  (check-equal? (read_string "~@pqr") '(splice-unquote pqr) "Splice-unquote")
+  (check-equal? (read_string "'pqr") (mal-list '(quote pqr)) "Quote")
+  (check-equal? (read_string "`pqr") (mal-list '(quasiquote pqr)) "Quasiquote")
+  (check-equal? (read_string "~pqr") (mal-list '(unquote pqr)) "Unquote")
+  (check-equal? (read_string "^pqr abc") (mal-list '(with-meta abc pqr)) "With-meta")
+  (check-equal? (read_string "@pqr") (mal-list '(deref pqr)) "Deref")
+  (check-equal? (read_string "~@pqr") (mal-list '(splice-unquote pqr)) "Splice-unquote")
 
   ; keyword
-  (check-equal? (read_string ":pqr") '#:pqr "Keyword")
+  ;(check-equal? (read_string ":pqr") '#:pqr "Keyword")
 
   ; symbol
   (check-equal? (read_string "pqr") 'pqr "Symbol")
   (check-equal? (read_string "true") #t "True")
   (check-equal? (read_string "false") #f "False")
-  (check-equal? (read_string "nil") (mal-nil) "Nil")
-
-  ; Correctly handle comment then atom
-  (define test-r (make-token-reader ";comment\n21"))
-  (check-equal? (read-form test-r) " " "Comment then number - comment")
-  (check-equal? (read-form test-r) 21 "Comment then number - number")
-  )
+  (check-equal? (read_string "nil") (mal-nil) "Nil"))
