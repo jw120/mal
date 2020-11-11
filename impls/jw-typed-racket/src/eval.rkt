@@ -6,8 +6,7 @@
 
 (define (EVAL [ast : Mal] [env : mal-env]) : Mal
   (match ast
-    [(mal-list '()) ast]
-    [(mal-list xs)
+    [(mal-list (cons _ _)) ; a non-empty list
      (match (eval_ast ast env)
        [(mal-list (cons (mal-function f) other-args))
         (f other-args)]
@@ -24,4 +23,8 @@
      (mal-list (map eval-with-env xs))]
     [(mal-vector v)
      (mal-vector (vector->immutable-vector (vector-map eval-with-env v)))]
+    [(mal-hash m)
+     (mal-hash
+      (for/hash : (Immutable-HashTable MalHashKey Mal) ([k : MalHashKey (hash-keys m)])
+        (values k (eval-with-env (hash-ref m k)))))]
     [_ ast]))
