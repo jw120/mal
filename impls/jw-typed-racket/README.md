@@ -6,6 +6,7 @@ Done- Should we have a sub-type for list with meta? (then how do we tell if we h
 
 Can we have structs with only one variable is mutable
 
+Should we add a mal-void type to return from def! and do with no args? Also avoids raising empty. Would not be printed for repl.
 
 
 Typed racket version

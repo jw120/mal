@@ -13,6 +13,11 @@
        (env-set! env sym evaluated-val)
        evaluated-val)]
 
+    ;; do special form
+    [(mal-list (list 'do args ...))
+     (for/last : Mal ([a : Mal args])
+       (EVAL a env))]
+    
     ;; let* special form
     [(mal-list (list 'let* (mal-list bindings) let-ast))
      (let*-special-form bindings let-ast env)]
