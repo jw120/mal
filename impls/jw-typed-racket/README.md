@@ -4,6 +4,7 @@ Done- Should we have a sub-type for list with meta? (then how do we tell if we h
 - Re-think how to track spaces and comments in reader. Just using whitespace string confused by "" or " " etc
 - Get reader tests to pass
 
+Can we have structs with only one variable is mutable
 
 
 

@@ -16,6 +16,8 @@
                   mal-function))
                   ;mal-macro))
 
+(struct mal-env ([data : (HashTable Symbol Mal)] [outer : (U mal-env #f)]) #:transparent #:mutable)
+
 (struct mal-nil () #:transparent)
 (struct mal-keyword ([s : String]) #:transparent)
 (struct mal-list ([xs : (Listof Mal)]) #:transparent)
