@@ -1,15 +1,12 @@
 #lang typed/racket
 
-(require "core.rkt" "env.rkt" "printer.rkt" "reader.rkt" "types.rkt")
+(require "core.rkt" "env.rkt" "eval.rkt" "printer.rkt" "reader.rkt" "types.rkt")
 (require/typed readline/readline
                [readline (-> String (U String EOF))]
                [add-history (-> String Void)])
 
 (define (READ [s : String]) : Mal
       (read_string s))
-
-(define (EVAL [x : Mal] [env : mal-env]) : Mal
-  x)
 
 (define (PRINT [x : Mal]) : String
   (pr_str x true))
