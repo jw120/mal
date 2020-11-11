@@ -59,8 +59,8 @@
   (check-false (string-whitespace? " a")))
 
 
-(define (mal-hashmap->flat-list [m : (HashTable String Mal)]) : (Listof Mal)
-  (define kv-list : (Listof (Pairof String Mal)) (hash->list m))
+(define (mal-hashmap->flat-list [m : (Immutable-HashTable MalHashKey Mal)]) : (Listof Mal)
+  (define kv-list : (Listof (Pairof MalHashKey Mal)) (hash->list m))
   (define (go [xs : (Listof (Pairof Mal Mal))]) : (Listof Mal)
     (if (null? xs)
         '()
@@ -73,13 +73,13 @@
    (list "a" 2)))
 
 
-(define (flat-list->mal-hashmap [val-list : (Listof Mal)]) : (Immutable-HashTable String Mal)
-  (define (go [m : (Immutable-HashTable String Mal)] [xs : (Listof Mal)]) : (Immutable-HashTable String Mal)
+(define (flat-list->mal-hashmap [val-list : (Listof Mal)]) : (Immutable-HashTable MalHashKey Mal)
+  (define (go [m : (Immutable-HashTable MalHashKey Mal)] [xs : (Listof Mal)]) : (Immutable-HashTable MalHashKey Mal)
     (cond [(null? xs)
            m]
           [(null? (cdr xs))
            (raise-mal "Odd number of list elements making hash")]
-          [(string? (car xs))
+          [(or (string? (car xs)) (mal-keyword? (car xs)))
            (go (hash-set m (car xs) (cadr xs)) (cddr xs))]
           [else
            (raise-mal "Keys must be strings making hash")]))

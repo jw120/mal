@@ -2,7 +2,7 @@
 
 all: step-test #self-host-test
 
-CURRENT_STEP = step1_mal.rkt
+CURRENT_STEP = step1_read_print.rkt
 
 RKT=racket
 RACO_TEST=raco test
@@ -17,7 +17,7 @@ test:
 step-test:
 	@echo step 0; cd ../..; make "test^jw-racket^step0" | grep "failing tests"
 	@echo step 1; cd ../..; make "test^jw-racket^step1" | grep "failing tests"
-#	@echo step 2; cd ../..; make "test^jw-racket^step2" | grep "failing tests"
+	@echo step 2; cd ../..; make "test^jw-racket^step2" | grep "failing tests"
 #	@echo step 3; cd ../..; make "test^jw-racket^step3" | grep "failing tests"
 #	@echo step 4; cd ../..; make "test^jw-racket^step4" | grep "failing tests"
 #	@echo step 5; cd ../..; make "test^jw-racket^step5" | grep "failing tests"

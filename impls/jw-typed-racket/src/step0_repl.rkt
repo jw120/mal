@@ -1,4 +1,5 @@
 #lang typed/racket
+
 (require/typed readline/readline
                [readline (-> String String)]
                [add-history (-> String Void)])

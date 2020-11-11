@@ -91,7 +91,7 @@
         [(regexp #px"^-?[[:digit:]]+$") (string->int token)] ; number
         [(regexp #rx"^\\\".*\\\"$") (remove-escapes (substring token 1 (- (string-length token) 1)))] ; quoted string
         [(regexp #rx"^\\\".*$") (raise-mal "EOF reading string")] ; Mismatched double-quote
-        ;[(regexp #rx"^:.+$")  (string->keyword (substring token 1))] ; keyword
+        [(regexp #rx"^:.+$")  (mal-keyword (substring token 1))] ; keyword
         [sym (string->symbol token)])))
 
 ;; regexp for our tokens
@@ -111,7 +111,7 @@
 
 ;; regexp for coment tokens (that our token reader skips over)
 (define mal-comment-regexp : Regexp
-  (pregexp ";[^\n]*"))
+  (pregexp "^;[^\n]*$"))
 
 
 (module+ test
@@ -171,7 +171,7 @@
   (check-equal? (read_string "~@pqr") (mal-list '(splice-unquote pqr)) "Splice-unquote")
 
   ; keyword
-  ;(check-equal? (read_string ":pqr") '#:pqr "Keyword")
+  (check-equal? (read_string ":pqr") (mal-keyword "pqr") "Keyword")
 
   ; symbol
   (check-equal? (read_string "pqr") 'pqr "Symbol")

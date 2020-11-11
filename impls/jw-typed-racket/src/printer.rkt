@@ -14,6 +14,7 @@
     [#t "true"]
     [#f "false"]
     [(mal-nil) "nil"]
+    [(mal-keyword s) (string-append ":" s)]
     [(mal-list xs) (pr_sequence "(" ")" xs readable)]
     [(mal-vector v) (pr_sequence "[" "]" (vector->list v) readable)]
     [(mal-hash m) (pr_sequence "{" "}" (mal-hashmap->flat-list m) readable)]
