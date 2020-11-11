@@ -2,7 +2,7 @@
 
 (provide (all-defined-out))
 
-(require "types.rkt")
+(require "types.rkt" "utils.rkt")
 
 (define (env-new [init-pairs : (Listof (Pair Symbol Mal))] [outer : (U mal-env #f)]) : mal-env
   (mal-env (make-hash init-pairs) outer))
@@ -22,30 +22,7 @@
   (let ([found-env (env-find env key)])
     (if found-env
         (hash-ref (mal-env-data found-env) key)
-        (raise-mal (string-append "Cannot find " (symbol->string key))))))
-
-
-  #|
-
-
-    (define/private (set-binds binds exprs)
-     (match (list binds exprs)
-        [(list (list '& x) y)
-         (hash-set! data x y)]
-        [(list (cons x xs) (cons y ys))
-         (hash-set! data x y)
-         (set-binds xs ys)]
-        [(list '() '()) void]
-        [_ raise-mal-eval "Bad bind lists for environment"]))
-
-    (define/public (bind-alternating-list lst eval-fn)
-      (unless (empty? lst)
-        (when (empty? (cdr lst))
-          (raise-mal-eval (format "Bad alternating-binding-list: ~a" (car lst))))
-        (set (car lst) (eval-fn (cadr lst) this))
-        (bind-alternating-list (cddr lst) eval-fn)))))
-
-|#
+        (raise-mal (string-append "'" (symbol->string key) "' not found")))))
 
 (module+ test
   (require typed/rackunit)

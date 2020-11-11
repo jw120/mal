@@ -4,7 +4,6 @@
 
 (provide (all-defined-out))
 
-
 (define (add-escapes [s : String]) : String
   (define translated-chars : (Listof String)
     (for/list ([ch (in-string s)])
@@ -19,7 +18,6 @@
   (check-equal? (add-escapes "a\"b") "a\\\"b" "Escapes double-quote")
   (check-equal? (add-escapes "a\nb") "a\\nb" "Escapes newline")
   (check-equal? (add-escapes "a\\b") "a\\\\b" "Escapes backslash"))
-
 
 (define (remove-escapes [s : String]) : String
   (define (accumulate [acc : String] [in-escape : Boolean] [ch : Char]) : (Values String Boolean)
@@ -47,18 +45,6 @@
   (check-exn exn:mal? (λ () (remove-escapes "a\\")) "Incomplete escape")
   (check-exn exn:mal? (λ () (remove-escapes "a\\Q")) "Unknown escape"))
   
-
-
-(define (string-whitespace? [s : String]) : Boolean
-  (for/and ([ch (in-string s)])
-    (char-whitespace? ch)))
-(module+ test
-  (require typed/rackunit)
-  (check-true (string-whitespace? "   "))
-  (check-true (string-whitespace? ""))
-  (check-false (string-whitespace? " a")))
-
-
 (define (mal-hashmap->flat-list [m : (Immutable-HashTable MalHashKey Mal)]) : (Listof Mal)
   (define kv-list : (Listof (Pairof MalHashKey Mal)) (hash->list m))
   (define (go [xs : (Listof (Pairof Mal Mal))]) : (Listof Mal)
@@ -71,7 +57,6 @@
   (check-equal?
    (mal-hashmap->flat-list #hash(("a" . 2)))
    (list "a" 2)))
-
 
 (define (flat-list->mal-hashmap [val-list : (Listof Mal)]) : (Immutable-HashTable MalHashKey Mal)
   (define (go [m : (Immutable-HashTable MalHashKey Mal)] [xs : (Listof Mal)]) : (Immutable-HashTable MalHashKey Mal)

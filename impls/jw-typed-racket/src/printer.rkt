@@ -6,11 +6,11 @@
 
 (define (pr_str [val : Mal] [readable : Boolean]) : String
   (match val
-    [i #:when (exact-integer? i) (number->string i)]
-    [s #:when (string? s) (if readable
+    [(? exact-integer? i) (number->string i)]
+    [(? string? s) (if readable
                               (string-append "\"" (add-escapes s) "\"")
                               s)]
-    [s #:when (symbol? s) (symbol->string s)]
+    [(? symbol? s) (symbol->string s)]
     [#t "true"]
     [#f "false"]
     [(mal-nil) "nil"]
