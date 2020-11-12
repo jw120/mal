@@ -1,4 +1,4 @@
-#lang typed/racket/base
+#lang typed/racket
 
 (provide (all-defined-out))
 
@@ -44,4 +44,11 @@
   (raise (exn:mal "Thrown value" (current-continuation-marks) val)))
 (define (raise-mal-failure [msg : String]) : Nothing ; Internal inconsistency (not an error in mal code)
   (raise (exn:mal "Internal failure" (current-continuation-marks) msg)))
+
+(define (mal-truthy? x) : Boolean
+  (match x
+    [#f #f]
+    [(mal-nil) #f]
+    [_ #t]))
+
 

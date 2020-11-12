@@ -19,12 +19,22 @@
     [(mal-list (list 'do args ...))
      (for/last : Mal ([a : Mal args])
        (EVAL a env))]
+
+    ;; if special form
+    [(mal-list (list 'if condition then-ast else-ast))
+     (if (mal-truthy? (EVAL condition env))
+         (EVAL then-ast env)
+         (EVAL else-ast env))]
+    [(mal-list (list 'if condition then-ast))
+     (EVAL (mal-list (list 'if condition then-ast (mal-nil))) env)]
     
     ;; let* special form
     [(mal-list (list 'let* (mal-list bindings) let-ast))
-     (let*-special-form bindings let-ast env)]
+     (let ([let-env (env-new '() env)])
+       (add-bindings! let-env bindings)
+       (EVAL ast let-env))]
     [(mal-list (list 'let* (mal-vector bindings-vector) let-ast))
-     (let*-special-form (vector->list bindings-vector) let-ast env)]
+     (EVAL (mal-list (list 'let* (mal-list (vector->list bindings-vector)) let-ast)) env)]
 
     ;; non-empty list with apply
     [(mal-list (cons _ _))
@@ -51,11 +61,6 @@
       (for/hash : (Immutable-HashTable MalHashKey Mal) ([k : MalHashKey (hash-keys m)])
         (values k (eval-with-env (hash-ref m k)))))]
     [_ ast]))
-
-(define (let*-special-form [bindings : (Listof Mal)] [ast : Mal] [env : mal-env]) : Mal
-  (let ([let-env (env-new '() env)])
-    (add-bindings! let-env bindings)
-    (EVAL ast let-env)))
 
 ;; Helper function to add bindings (x 2 y (+ 3 4)... to an environment
 (define (add-bindings! [env : mal-env] [binding-list : (Listof Mal)]) : Void
