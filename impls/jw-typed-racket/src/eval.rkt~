@@ -14,8 +14,6 @@
        evaluated-val)]
 
     ;; do special form
-    [(mal-list (list 'do))
-     (void)]
     [(mal-list (list 'do args ...))
      (for/last : Mal ([a : Mal args])
        (EVAL a env))]

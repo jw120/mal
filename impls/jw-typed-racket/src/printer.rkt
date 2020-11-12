@@ -19,6 +19,7 @@
     [(mal-vector v) (pr_sequence "[" "]" (vector->list v) readable)]
     [(mal-hash m) (pr_sequence "{" "}" (mal-hashmap->flat-list m) readable)]
     [(mal-function f) "#<function"]
+    [(? void? _) "#<void>"]
     [_ (error "Unmatched in pr_str" val)]))
 
 ;; Helper function to print lists, vectors and hashes

@@ -8,6 +8,7 @@
                   Symbol
                   Boolean
                   ;(Boxof Mal)
+                  Void ; used to signal no value (not shown in repl)
                   mal-nil
                   mal-keyword
                   mal-list
@@ -43,6 +44,4 @@
   (raise (exn:mal "Thrown value" (current-continuation-marks) val)))
 (define (raise-mal-failure [msg : String]) : Nothing ; Internal inconsistency (not an error in mal code)
   (raise (exn:mal "Internal failure" (current-continuation-marks) msg)))
-
-
 

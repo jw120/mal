@@ -6,16 +6,13 @@
                [add-history (-> String Void)])
 
 (define (READ [s : String]) : Mal
-  (read_string s))
+      (read_string s))
 
 (define (PRINT [x : Mal]) : String
   (pr_str x true))
 
-(define (rep [s : String] [env : mal-env]) : (U String Void)
-  (let ([result (EVAL (READ s) env)])
-    (if (void? result)
-        (void)
-        (PRINT result))))
+(define (rep [s : String] [env : mal-env]) : String
+  (PRINT (EVAL (READ s) env)))
 
 (define repl_env : mal-env
   (env-new core_ns #f))
@@ -24,15 +21,16 @@
   (define user-input : (U String EOF) (readline "user> "))
   (cond [(eq? user-input eof)
          (displayln "")] ; On Ctrl-D, clean up by printing a newline
-        [(and (not (void? user-input)) (non-empty-string? user-input))
+        [(non-empty-string? user-input)
          (add-history user-input)
          (with-handlers
-             ([exn:mal?
+             ([exn:mal-empty?
+               (λ ([exn : exn:mal-empty])
+                 void)] ; do nothing if signalled no input
+              [exn:mal?
                (λ ([exn : exn:mal])
                  (printf "Exception: ~a\n" (pr_str (exn:mal-thrown-value exn) #f)))])
-           (let ([output : (U String Void) (rep user-input repl_env)])
-             (unless (void? output)
-               (displayln output))))
+           (displayln (rep user-input repl_env)))
          (repl)]
         [else
          (repl)]))

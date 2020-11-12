@@ -10,7 +10,7 @@
   (define result : (U Mal EOF)
     (read-possible-form (make-token-reader s)))
   (if (eof-object? result)
-      (raise-mal-empty)
+      (void)
       result))
   
 ;; Token reader holds mutable state with the current position in the string 
@@ -117,10 +117,10 @@
 (module+ test
   (require typed/rackunit)
 
-  ; empty input gives exceptions
-  (check-exn exn:mal-empty? (λ () (read_string "")) "Empty string")
-  (check-exn exn:mal-empty? (λ () (read_string "  ")) "White space")
-  (check-exn exn:mal-empty? (λ () (read_string ";qqq")) "Comment only")
+  ; empty input gives void
+  (check-true (void? (read_string "")) "Empty string")
+  (check-true (void? (read_string "  ")) "White space")
+  (check-true (void? (read_string ";qqq")) "Comment only")
 
   ; token reader skips spaces and comments
   (check-equal? ((make-token-reader "  ") 'next!) eof)
