@@ -7,6 +7,15 @@
 (define (env-new [init-pairs : (Listof (Pair Symbol Mal))] [outer : (U mal-env #f)]) : mal-env
   (mal-env (make-hash init-pairs) outer))
 
+(define (env-new-from-lists [syms : (Listof Mal)] [vals : (Listof Mal)] [outer : (U mal-env #f)]) : mal-env
+  (define m : (HashTable Symbol Mal)
+    (make-hash))
+  (for ([s : Mal syms] [v : Mal vals])
+    (if (symbol? s)
+        (hash-set! m s v)
+        (raise-mal "not a symbol in binding list")))
+  (mal-env m outer))
+
 (define (env-set! [env : mal-env] [key : Symbol] [val : Mal]) : Void
   (hash-set! (mal-env-data env) key val))
 

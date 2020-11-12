@@ -20,6 +20,12 @@
      (for/last : Mal ([a : Mal args])
        (EVAL a env))]
 
+    ;; fn* special form
+    [(mal-list (list 'fn* (mal-list binds) ast))
+     (mal-function
+      (lambda (calling-params)
+        (EVAL ast (env-new-from-lists binds calling-params env))))]
+    
     ;; if special form
     [(mal-list (list 'if condition then-ast else-ast))
      (if (mal-truthy? (EVAL condition env))
