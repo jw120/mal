@@ -2,7 +2,7 @@
 
 (provide EVAL)
 
-(require "env.rkt" "types.rkt")
+(require "env.rkt" "printer.rkt" "types.rkt")
 
 (define (EVAL [ast : Mal] [env : mal-env]) : Mal
   (match ast
@@ -24,7 +24,10 @@
     [(mal-list (list 'fn* (mal-list binds) ast))
      (mal-function
       (lambda (calling-params)
-        (EVAL ast (env-new-from-lists binds calling-params env))))]
+        (let ([fn-env (env-new-from-lists binds calling-params env)])
+          (EVAL ast fn-env))))]
+    [(mal-list (list 'fn* (mal-vector binds) ast))
+     (EVAL (mal-list (list 'fn* (mal-list (vector->list binds)) ast)) env)]
     
     ;; if special form
     [(mal-list (list 'if condition then-ast else-ast))
@@ -38,7 +41,7 @@
     [(mal-list (list 'let* (mal-list bindings) let-ast))
      (let ([let-env (env-new '() env)])
        (add-bindings! let-env bindings)
-       (EVAL ast let-env))]
+       (EVAL let-ast let-env))]
     [(mal-list (list 'let* (mal-vector bindings-vector) let-ast))
      (EVAL (mal-list (list 'let* (mal-list (vector->list bindings-vector)) let-ast)) env)]
 
@@ -79,3 +82,4 @@
          (add-bindings! env (cddr binding-list))]
         [else
          (raise-mal "binding list keys must be symbols")]))
+

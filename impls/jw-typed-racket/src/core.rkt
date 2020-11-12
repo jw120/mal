@@ -29,7 +29,8 @@
          [else (equal? x y)])]))
 |#
 
-(define (wrap-binary-int [f-sym : Symbol] [f : (-> Integer Integer Integer)]) : (Pair Symbol Mal)
+;; Wrap a (-> Integer Integer Mal) function for inclusion in core_ns
+(define (wrap-binary-int [f-sym : Symbol] [f : (-> Integer Integer Mal)]) : (Pair Symbol Mal)
   (cons
    f-sym
    (mal-function
@@ -38,6 +39,17 @@
         [(list (? exact-integer? x) (? exact-integer? y)) (f x y)]
         [_ (raise-mal (string-append "Expecting two numbers as argument to " (symbol->string f-sym)))])))))
 
+;; Wrap a (-> Mal Mal Mal) function for inclusion in core_ns
+(define (wrap-binary [f-sym : Symbol] [f : (-> Mal Mal Mal)]) : (Pair Symbol Mal)
+  (cons
+   f-sym
+   (mal-function
+    (lambda ([xs : (Listof Mal)])
+      (match xs
+        [(list x y) (f x y)]
+        [_ (raise-mal (string-append "Expecting two arguments to " (symbol->string f-sym)))])))))
+
+;; Wrap a (-> Mal Boolean) function for inclusion in core_ns
 (define (wrap-is [f-sym : Symbol] [f : (-> Mal Boolean)]) : (Pair Symbol Mal)
   (cons
    f-sym
@@ -45,27 +57,87 @@
     (lambda ([xs : (Listof Mal)])
       (match xs
         [(list x) (f x)]
-        [_ (raise-mal (string-append "Expected one argumebt to " (symbol->string f-sym)))])))))
+        [_ (raise-mal (string-append "Expected one argument to " (symbol->string f-sym)))])))))
+
+
+;; Equality for mal values that equates vectors and lists
+(define (mal-equal? [x : Mal] [y : Mal]) : Boolean
+  (define (mal-lists-equal? [xs : (Listof Mal)] [ys : (Listof Mal)]) : Boolean
+    (and
+     (equal? (length xs) (length ys))
+     (for/and ([x1 xs] [y1 ys])
+       (mal-equal? x1 y1))))
+  (define (mal-vectors-equal? [xs : (Vectorof Mal)] [ys : (Vectorof Mal)]) : Boolean
+    (and
+     (equal? (vector-length xs) (vector-length ys))
+     (for/and ([x1 xs] [y1 ys])
+       (mal-equal? x1 y1))))  
+  (match (cons x y)
+    [(cons (mal-list xs) (mal-list ys))
+     (mal-lists-equal? xs ys)]
+    [(cons (mal-vector xs) (mal-vector ys))
+     (mal-vectors-equal? xs ys)]
+    [(cons (mal-list xs) (mal-vector ys))
+     (mal-vectors-equal? (list->vector xs) ys)]
+    [(cons (mal-vector xs) (mal-list ys))
+     (mal-vectors-equal? xs (list->vector ys))]    
+    [_ (equal? x y)]))
 
 
 (define core_ns : (Listof (Pair Symbol Mal))
   (list
 
-   ; Arithmetic
+   ;; Arithmetic
    (wrap-binary-int '+ +)
    (wrap-binary-int '- -)
    (wrap-binary-int '* *)
    (wrap-binary-int '/ quotient)
+   (wrap-binary-int '< <)
+   (wrap-binary-int '> >)
+   (wrap-binary-int '<= <=)
+   (wrap-binary-int '>= >=)
 
+   ;; Equality
+   (wrap-binary '= mal-equal?)
+   
    ;; Sequence
    (cons 'list (mal-function (lambda ([params : (Listof Mal)])
                                (mal-list params))))
-   (wrap-is 'list? mal-list?)))
+   (cons 'count (mal-function (lambda ([params : (Listof Mal)])
+                                (match params
+                                  [(list (mal-list (list xs ...)) _ ...) (length xs)]
+                                  [(list (mal-vector v) _ ...) (vector-length v)]
+                                  [(list mal-nil _ ...) 0]
+                                  [_ (raise-mal "Expected a list for count")]))))
+   (wrap-is 'list? mal-list?)
+   (wrap-is 'empty? (lambda (x)
+                      (or
+                       (and (mal-list? x) (empty? (mal-list-xs x)))
+                       ; vector-empty? does not seem to work in racket/typed
+                       (and (mal-vector? x) (equal? 0 (vector-length (mal-vector-v x)))))))
+
+   ;; IO
+   (cons 'prn
+         (mal-function
+          (lambda ([params : (Listof Mal)])
+            (let ([s : String (string-join (map (lambda ([x : Mal]) (pr_str x #t)) params) " ")])
+              (displayln s)
+              (mal-nil)))))
+   ;   (cons 'println (lambda args
+   ;                    (displayln (string-join (map (lambda (x) (pr_str x #f)) args) " "))
+   ;                    mal-nil))
+   ;   (cons 'str (lambda args
+   ;                (string-join (map (lambda (x) (pr_str x #f)) args) "")))
+   ;   (cons 'pr-str (lambda args
+   ;                   (string-join (map (lambda (x) (pr_str x #t)) args) " ")))
+   
+
+   ))
 
 
 
 
-   #|
+#|
    (cons '< <)
    (cons '> >)
    (cons '<= <=)
