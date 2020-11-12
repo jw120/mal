@@ -34,9 +34,19 @@
    f-sym
    (mal-function
     (lambda ([xs : (Listof Mal)])
-     (match xs
-       [(list (? exact-integer? x) (? exact-integer? y)) (f x y)]
-       [_ (raise-mal (string-append "Expecting two numbers as argument to " (symbol->string f-sym)))])))))
+      (match xs
+        [(list (? exact-integer? x) (? exact-integer? y)) (f x y)]
+        [_ (raise-mal (string-append "Expecting two numbers as argument to " (symbol->string f-sym)))])))))
+
+(define (wrap-is [f-sym : Symbol] [f : (-> Mal Boolean)]) : (Pair Symbol Mal)
+  (cons
+   f-sym
+   (mal-function
+    (lambda ([xs : (Listof Mal)])
+      (match xs
+        [(list x) (f x)]
+        [_ (raise-mal (string-append "Expected one argumebt to " (symbol->string f-sym)))])))))
+
 
 (define core_ns : (Listof (Pair Symbol Mal))
   (list
@@ -47,16 +57,22 @@
    (wrap-binary-int '* *)
    (wrap-binary-int '/ quotient)
 
-   ;   (cons '- -)
-   ;   (cons '* *)
-   ;   (cons '/ /)
-   ))
-#|
+   ;; Sequence
+   (cons 'list (mal-function (lambda ([params : (Listof Mal)])
+                               (mal-list params))))
+   (wrap-is 'list? mal-list?)))
+
+
+
+
+   #|
    (cons '< <)
    (cons '> >)
    (cons '<= <=)
    (cons '>= >=)
    (cons '= mal-equal?)
+
+
 
    ; Sequence
    (cons 'list list)
