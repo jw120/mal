@@ -8,27 +8,6 @@
 ;               [readline (-> String (U String EOF))])
 
 
-; function for mal = (version of equal? that treats lists and vectors as equivalent)
-#|
-(define (mal-equal? x y)
-  (match (list x y)
-    [(list '() '()) #t]
-    [(list '() (cons _ _)) #f]
-    [(list (cons _ _) '())  #f]
-    [(list (cons xh xt) (cons yh yt)) (and (mal-equal? xh yh) (mal-equal? xt yt))]
-    [_ (cond
-         [(and (list-or-vector? x) (list-or-vector? y))
-          (mal-equal? (list-or-vector->list x) (list-or-vector->list y))]
-         [(and (hash? x) (hash? y))
-          (and
-           (equal? (hash-count x) (hash-count y))
-           (for/and ([k (hash-keys x)])
-             (and
-              (hash-has-key? y k)
-              (mal-equal? (hash-ref x k) (hash-ref y k)))))]
-         [else (equal? x y)])]))
-|#
-
 ;; Wrap a (-> Integer Integer Mal) function for inclusion in core_ns
 (define (wrap-binary-int [f-sym : Symbol] [f : (-> Integer Integer Mal)]) : (Pair Symbol Mal)
   (cons
@@ -144,6 +123,41 @@
    (wrap-list 'str (lambda ([args : (Listof Mal)])
                      (string-join (map (lambda ([x : Mal]) (pr_str x #f)) args) "")))
 
+   ;; Atoms
+   (wrap-is 'atom? box?)
+   (wrap-list 'atom (λ ([args : (Listof Mal)])
+                      (match args
+                        [(list v) (box v)]
+                        [_ (raise-mal "need one value for atom")])))
+   (wrap-list 'deref (λ ([args : (Listof Mal)])
+                       (match args
+                         [(list (box b)) b]
+                         [_ (raise-mal "need an atom to deref")])))
+   (wrap-list 'reset!  (λ ([args : (Listof Mal)])
+                         (match args
+                           [(list (? box? b) val)
+                            (set-box! b val)
+                            val]
+                           [_ (raise-mal "need an atom and a value for reset!")])))
+   (wrap-list 'swap! (λ ([args : (Listof Mal)])
+                       (match args
+                         [(list (? box? b) (mal-function f) other-args ...)
+                          (let* ([args : (Listof Mal) (cons (unbox b) other-args)]
+                                 [new-val : Mal (f args)])
+                            (set-box! b new-val)
+                            new-val)]
+                         [_ (raise-mal "need an atom, a function for swap!")])))
+   ; (cons 'swap! (λ (atom f . other-args)
+   ;                (let* ([closure (cond
+   ;                                  [(procedure? f) f]
+   ;                                  [(func? f) (func-closure f)]
+   ;                                  [else (raise-mal-eval "Expected a function for swap!")])]
+   ;                       [new-val (apply closure (cons (unbox atom) other-args))])
+   ;                  (set-box! atom new-val)
+   ;                  new-val)))
+
+   ;; Misc
+   (cons '*host-language* "jw-typed-racket")
 
    ))
 
@@ -151,13 +165,7 @@
 
 
 #|
-   (cons '< <)
-   (cons '> >)
-   (cons '<= <=)
-   (cons '>= >=)
-   (cons '= mal-equal?)
-
-
+  
 
    ; Sequence
    (cons 'list list)

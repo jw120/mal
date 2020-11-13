@@ -27,6 +27,7 @@
              (match args
                [(list ast) (EVAL ast repl_env)]
                [_ (raise-mal "Bad arguments to eval")]))))
+(env-set! repl_env '*ARGV* (mal-list '()))
 
 (define repl-startup-code : (Listof String)
   (list
@@ -52,4 +53,12 @@
         [else
          (repl)]))
 
-(repl)
+; Either start the repl or load the given file
+(cond
+  [(equal? 0 (vector-length (current-command-line-arguments)))
+   (rep "(println (str \"Mal [\" *host-language* \"]\"))" repl_env)
+   (repl)]
+  [else
+   (env-set! repl_env '*ARGV* (mal-list (vector->list (vector-drop (current-command-line-arguments) 1))))
+   (rep (format "(load-file ~s)" (vector-ref (current-command-line-arguments) 0)) repl_env)
+   (void)]) ; void to avoid returning the value from rep

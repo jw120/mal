@@ -14,6 +14,7 @@
     [(? symbol? s) (symbol->string s)]
     [#t "true"]
     [#f "false"]
+    [(box b) (string-join (list "(atom " (pr_str b readable) ")") "")]
     [(mal-keyword s) (string-append ":" s)]
     [(mal-list xs) (pr_sequence "(" ")" xs readable)]
     [(mal-vector v) (pr_sequence "[" "]" (vector->list v) readable)]
@@ -43,7 +44,8 @@
   (check-equal? (pr_str (mal-nil) true) "nil")
   (check-equal? (pr_str (mal-list '(2 3)) true) "(2 3)")
   (check-equal? (pr_str (mal-vector '#(4 5)) true) "[4 5]")
-  (check-equal? (pr_str (mal-hash '#hash(("a" . 2))) false) "{a 2}"))
+  (check-equal? (pr_str (mal-hash '#hash(("a" . 2))) false) "{a 2}")
+  (check-equal? (pr_str (box 3) true) "(atom 3)"))
   
 
 

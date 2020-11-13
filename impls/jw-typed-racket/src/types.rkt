@@ -7,7 +7,7 @@
                   String
                   Symbol ; Includes mal-nil
                   Boolean
-                  ;(Boxof Mal)
+                  (Boxof Mal)
                   Void ; used to signal no value (not shown in repl)
                   mal-nil
                   mal-keyword
