@@ -1,2 +1,12 @@
 #!/bin/bash
-racket $(dirname $0)/src/${STEP:-stepA_mal}.rkt "${@}"
+
+case ${STEP} in
+  step0_repl)
+    racket $(dirname $0)/src/${STEP}.rkt "${@}"
+    ;;
+  step1_read_print)
+    racket $(dirname $0)/src/${STEP}.rkt "${@}"
+    ;;
+  *)
+    racket $(dirname $0)/src/mal.rkt "${@}"
+esac
