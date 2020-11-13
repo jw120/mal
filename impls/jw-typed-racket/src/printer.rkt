@@ -10,7 +10,7 @@
     [(? string? s) (if readable
                        (string-append "\"" (add-escapes s) "\"")
                        s)]
-    [(? mal-nil? _) "nil"]
+    [(mal-nil) "nil"]
     [(? symbol? s) (symbol->string s)]
     [#t "true"]
     [#f "false"]
@@ -40,7 +40,7 @@
   (check-equal? (pr_str 'xyz true) "xyz")
   (check-equal? (pr_str true true) "true")
   (check-equal? (pr_str false true) "false")
-  (check-equal? (pr_str mal-nil true) "nil")
+  (check-equal? (pr_str (mal-nil) true) "nil")
   (check-equal? (pr_str (mal-list '(2 3)) true) "(2 3)")
   (check-equal? (pr_str (mal-vector '#(4 5)) true) "[4 5]")
   (check-equal? (pr_str (mal-hash '#hash(("a" . 2))) false) "{a 2}"))

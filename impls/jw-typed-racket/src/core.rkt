@@ -109,7 +109,7 @@
                        (match params
                          [(list (mal-list (list xs ...)) _ ...) (length xs)]
                          [(list (mal-vector v) _ ...) (vector-length v)]
-                         [(list (? mal-nil? _) _ ...) 0]
+                         [(list (mal-nil) _ ...) 0]
                          [_ (raise-mal "Expected a list for count")])))
    (wrap-is 'list? mal-list?)
    (wrap-is 'empty? (lambda (x)
@@ -122,11 +122,11 @@
    (wrap-list 'prn (lambda ([args : (Listof Mal)])
                      (let ([s : String (string-join (map (lambda ([x : Mal]) (pr_str x #t)) args) " ")])
                        (displayln s)
-                       mal-nil)))
+                       (mal-nil))))
    (wrap-list 'println (lambda ([args : (Listof Mal)])
                          (let ([s : String (string-join (map (lambda ([x : Mal]) (pr_str x #f)) args) " ")])
                            (displayln s)
-                           mal-nil)))
+                           (mal-nil))))
    (wrap-list 'pr-str (lambda ([args : (Listof Mal)])
                      (string-join (map (lambda ([x : Mal]) (pr_str x #t)) args) " ")))
    (wrap-list 'str (lambda ([args : (Listof Mal)])

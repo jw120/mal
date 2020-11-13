@@ -35,7 +35,7 @@
          (EVAL then-ast env)
          (EVAL else-ast env))]
     [(mal-list (list 'if condition then-ast))
-     (EVAL (mal-list (list 'if condition then-ast mal-nil)) env)]
+     (EVAL (mal-list (list 'if condition then-ast (mal-nil))) env)]
     
     ;; let* special form
     [(mal-list (list 'let* (mal-list bindings) let-ast))

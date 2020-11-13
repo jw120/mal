@@ -1,11 +1,4 @@
 TODO
-Done- Transparent types for structs
-Done- Should we have a sub-type for list with meta? (then how do we tell if we have a meta value)
-- Re-think how to track spaces and comments in reader. Just using whitespace string confused by "" or " " etc
-- Get reader tests to pass
-
-Done - Can we use a unique symbol instead of a struct constcutoer for mal-nil (match with `,)
-Better to revert. Need to reconsider symbol? tests
 
 Can we have structs with only one variable is mutable
 
