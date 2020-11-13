@@ -59,6 +59,16 @@
         [(list x) (f x)]
         [_ (raise-mal (string-append "Expected one argument to " (symbol->string f-sym)))])))))
 
+;; Wrap a (-> String Mal) function for inclusion in core_ns
+(define (wrap-str [f-sym : Symbol] [f : (-> String Mal)]) : (Pair Symbol Mal)
+  (cons
+   f-sym
+   (mal-function
+    (lambda ([xs : (Listof Mal)])
+      (match xs
+        [(list (? string? s)) (f s)]
+        [_ (raise-mal (string-append "Expected one string argument to " (symbol->string f-sym)))])))))
+
 ;; Wrap a (-> (Listof Mal) Mal) function for inclusion in core_ns
 (define (wrap-list [f-sym : Symbol] [f : (-> (Listof Mal) Mal)]) : (Pair Symbol Mal)
   (cons f-sym (mal-function f)))
@@ -119,6 +129,8 @@
                        (and (mal-vector? x) (equal? 0 (vector-length (mal-vector-v x)))))))
 
    ;; IO
+   (wrap-str 'read-string read_str)
+   (wrap-str 'slurp file->string)
    (wrap-list 'prn (lambda ([args : (Listof Mal)])
                      (let ([s : String (string-join (map (lambda ([x : Mal]) (pr_str x #t)) args) " ")])
                        (displayln s)
@@ -128,19 +140,10 @@
                            (displayln s)
                            (mal-nil))))
    (wrap-list 'pr-str (lambda ([args : (Listof Mal)])
-                     (string-join (map (lambda ([x : Mal]) (pr_str x #t)) args) " ")))
+                        (string-join (map (lambda ([x : Mal]) (pr_str x #t)) args) " ")))
    (wrap-list 'str (lambda ([args : (Listof Mal)])
                      (string-join (map (lambda ([x : Mal]) (pr_str x #f)) args) "")))
 
-   
-   ;   (cons 'println (lambda args
-   ;                    (displayln (string-join (map (lambda (x) (pr_str x #f)) args) " "))
-   ;                    mal-nil))
-   ;   (cons 'str (lambda args
-   ;                (string-join (map (lambda (x) (pr_str x #f)) args) "")))
-   ;   (cons 'pr-str (lambda args
-   ;                   (string-join (map (lambda (x) (pr_str x #t)) args) " ")))
-   
 
    ))
 

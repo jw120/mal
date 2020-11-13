@@ -2,11 +2,11 @@
 
 (require "types.rkt" "utils.rkt")
 
-(provide read_string)
+(provide read_str)
 
 ;; top-level reading function which we export. Sets up reader and hands over to read-form
 ;; If no input (or just spaces/comments) raise the empty exception
-(define (read_string [s : String]) : Mal
+(define (read_str [s : String]) : Mal
   (define result : (U Mal EOF)
     (read-possible-form (make-token-reader s)))
   (if (eof-object? result)
@@ -118,9 +118,9 @@
   (require typed/rackunit)
 
   ; empty input gives void
-  (check-true (void? (read_string "")) "Empty string")
-  (check-true (void? (read_string "  ")) "White space")
-  (check-true (void? (read_string ";qqq")) "Comment only")
+  (check-true (void? (read_str "")) "Empty string")
+  (check-true (void? (read_str "  ")) "White space")
+  (check-true (void? (read_str ";qqq")) "Comment only")
 
   ; token reader skips spaces and comments
   (check-equal? ((make-token-reader "  ") 'next!) eof)
@@ -128,53 +128,53 @@
   (check-equal? ((make-token-reader "  ;abc \n2") 'next!) "2")
 
   ; sequences  
-  (check-equal? (read_string "(1 2 3)")
+  (check-equal? (read_str "(1 2 3)")
                 (mal-list '(1 2 3)) "List")
-  (check-equal? (read_string "()")
+  (check-equal? (read_str "()")
                 (mal-list '()) "Empty list")
-  (check-equal? (read_string "[1 2 3]")
+  (check-equal? (read_str "[1 2 3]")
                 (mal-vector #(1 2 3)) "Vector")
-  (check-equal? (read_string "[1,2,4]")
+  (check-equal? (read_str "[1,2,4]")
                 (mal-vector #(1 2 4)) "Vector with commas")
-  (check-equal? (read_string "[]")
+  (check-equal? (read_str "[]")
                 (mal-vector #()) "Empty vector")  
-  (check-equal? (read_string "(1 (2 3))")
+  (check-equal? (read_str "(1 (2 3))")
                 (mal-list (list 1 (mal-list (list 2 3)))) "List of lists")
-  (check-equal? (read_string "(()())")
+  (check-equal? (read_str "(()())")
                 (mal-list (list (mal-list '()) (mal-list '()))) "Empty list of empty lists")
-  (check-equal? (read_string "{ \"a\" 1 \"bb\" 2}")
+  (check-equal? (read_str "{ \"a\" 1 \"bb\" 2}")
                 (mal-hash #hash(("a" . 1) ("bb" . 2))) "Hash map")
-  (check-exn exn:mal? (λ () (read_string "(1 2")) "Unterminated list")
-  (check-exn exn:mal? (λ () (read_string "(1 2]")) "Wrongly terminated list")
-  (check-exn exn:mal? (λ () (read_string "[1 2")) "Unterminated vector")
-  (check-exn exn:mal? (λ () (read_string "{1 2")) "Unterminated hash map")
+  (check-exn exn:mal? (λ () (read_str "(1 2")) "Unterminated list")
+  (check-exn exn:mal? (λ () (read_str "(1 2]")) "Wrongly terminated list")
+  (check-exn exn:mal? (λ () (read_str "[1 2")) "Unterminated vector")
+  (check-exn exn:mal? (λ () (read_str "{1 2")) "Unterminated hash map")
 
   ; List with comment inside
-  (check-equal? (read_string "(1 2 ;comment\n3)")
+  (check-equal? (read_str "(1 2 ;comment\n3)")
                 (mal-list '(1 2 3)) "List with comment")
 
   ; strings
-  (check-equal? (read_string "\"pq\"") "pq" "String")
-  (check-equal? (read_string "\"\"") "" "Empty string")
-  (check-exn exn:mal? (λ () (read_string "\"abc")) "Unterminated string")
+  (check-equal? (read_str "\"pq\"") "pq" "String")
+  (check-equal? (read_str "\"\"") "" "Empty string")
+  (check-exn exn:mal? (λ () (read_str "\"abc")) "Unterminated string")
 
   ; numbers
-  (check-equal? (read_string "123") 123 "Number")
-  (check-equal? (read_string "-45") -45 "Negative number")
+  (check-equal? (read_str "123") 123 "Number")
+  (check-equal? (read_str "-45") -45 "Negative number")
 
   ; special symbols
-  (check-equal? (read_string "'pqr") (mal-list '(quote pqr)) "Quote")
-  (check-equal? (read_string "`pqr") (mal-list '(quasiquote pqr)) "Quasiquote")
-  (check-equal? (read_string "~pqr") (mal-list '(unquote pqr)) "Unquote")
-  (check-equal? (read_string "^pqr abc") (mal-list '(with-meta abc pqr)) "With-meta")
-  (check-equal? (read_string "@pqr") (mal-list '(deref pqr)) "Deref")
-  (check-equal? (read_string "~@pqr") (mal-list '(splice-unquote pqr)) "Splice-unquote")
+  (check-equal? (read_str "'pqr") (mal-list '(quote pqr)) "Quote")
+  (check-equal? (read_str "`pqr") (mal-list '(quasiquote pqr)) "Quasiquote")
+  (check-equal? (read_str "~pqr") (mal-list '(unquote pqr)) "Unquote")
+  (check-equal? (read_str "^pqr abc") (mal-list '(with-meta abc pqr)) "With-meta")
+  (check-equal? (read_str "@pqr") (mal-list '(deref pqr)) "Deref")
+  (check-equal? (read_str "~@pqr") (mal-list '(splice-unquote pqr)) "Splice-unquote")
 
   ; keyword
-  (check-equal? (read_string ":pqr") (mal-keyword "pqr") "Keyword")
+  (check-equal? (read_str ":pqr") (mal-keyword "pqr") "Keyword")
 
   ; symbol
-  (check-equal? (read_string "pqr") 'pqr "Symbol")
-  (check-equal? (read_string "true") #t "True")
-  (check-equal? (read_string "false") #f "False")
-  (check-equal? (read_string "nil") (mal-nil) "Nil"))
+  (check-equal? (read_str "pqr") 'pqr "Symbol")
+  (check-equal? (read_str "true") #t "True")
+  (check-equal? (read_str "false") #f "False")
+  (check-equal? (read_str "nil") (mal-nil) "Nil"))

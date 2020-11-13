@@ -6,7 +6,7 @@
                [add-history (-> String Void)])
 
 (define (READ [s : String]) : Mal
-  (read_string s))
+  (read_str s))
 
 (define (PRINT [x : Mal]) : String
   (pr_str x true))
@@ -20,8 +20,18 @@
 (define repl_env : mal-env
   (env-new core_ns #f))
 
+(env-set! repl_env
+          'eval
+          (mal-function
+           (λ ([args : (Listof Mal)])
+             (match args
+               [(list ast) (EVAL ast repl_env)]
+               [_ (raise-mal "Bad arguments to eval")]))))
+
 (define repl-startup-code : (Listof String)
-  '("(def! not (fn* (a) (if a false true)))"))
+  (list
+   "(def! not (fn* (a) (if a false true)))"
+   "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\nnil)\")))))"))
 (for ([s repl-startup-code])
   (EVAL (READ s) repl_env))
 

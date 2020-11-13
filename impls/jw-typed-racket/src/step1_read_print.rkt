@@ -6,7 +6,7 @@
                [add-history (-> String Void)])
 
 (define (READ [s : String]) : Mal
-      (read_string s))
+      (read_str s))
 
 (define (EVAL [x : Mal]) : Mal
   x)
