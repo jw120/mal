@@ -75,6 +75,14 @@
      (mal-vectors-equal? xs (list->vector ys))]    
     [_ (equal? x y)]))
 
+(define (mal-concat [xs : (Listof Mal)]) : Mal
+  (define (to-list [x : Mal]) : (Listof Mal)
+    (match x
+      [(mal-list xs) xs]
+      [(mal-vector v) (vector->list v)]
+      [_ (raise-mal "arguments to concat must be sequences")]))
+  (let ([xs-as-lists : (Listof (Listof Mal)) (map to-list xs)])
+    (mal-list (apply append xs-as-lists))))
 
 (define core_ns : (Listof (Pair Symbol Mal))
   (list
@@ -101,12 +109,22 @@
                          [(list (mal-nil) _ ...) 0]
                          [_ (raise-mal "Expected a list for count")])))
    (wrap-is 'list? mal-list?)
-   (wrap-is 'empty? (lambda (x)
+   (wrap-is 'empty? (lambda ([x : Mal])
                       (or
                        (and (mal-list? x) (empty? (mal-list-xs x)))
                        ; vector-empty? does not seem to work in racket/typed
                        (and (mal-vector? x) (equal? 0 (vector-length (mal-vector-v x)))))))
-
+   (wrap-list 'cons (lambda ([params : (Listof Mal)])
+                      (match params
+                        [(list x (mal-list ys)) (mal-list (cons x ys))]
+                        [(list x (mal-vector v)) (mal-list (cons x (vector->list v)))])))
+   (wrap-list 'concat mal-concat)
+   (wrap-list 'vec (lambda ([params : (Listof Mal)])
+                     (match params
+                       [(list (mal-list xs)) (mal-vector (vector->immutable-vector (list->vector xs)))]
+                       [(list (mal-vector v)) (mal-vector v)]
+                       [_ (raise-mal "expected list or vector as argument to vec")])))
+                                  
    ;; IO
    (wrap-str 'read-string read_str)
    (wrap-str 'slurp file->string)

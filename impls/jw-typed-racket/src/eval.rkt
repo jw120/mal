@@ -45,6 +45,18 @@
     [(mal-list (list 'let* (mal-vector bindings-vector) let-ast))
      (EVAL (mal-list (list 'let* (mal-list (vector->list bindings-vector)) let-ast)) env)]
 
+    ;; quasiquote special form
+    [(mal-list (list 'quasiquote x))
+     (EVAL (mal-quasiquote x) env)]
+
+    ;; quasiquoteexpand special form
+    [(mal-list (list 'quasiquoteexpand x))
+     (mal-quasiquote x)]
+    
+    ;; quote special form
+    [(mal-list (list 'quote x))
+     x]
+    
     ;; non-empty list with apply
     [(mal-list (cons _ _))
      (match (eval_ast ast env)
@@ -73,6 +85,36 @@
         (values k (eval-with-env (hash-ref m k)))))]
     [_ ast]))
 
+
+(define (mal-quasiquote [ast : Mal]) : Mal
+  (match ast
+    [(mal-vector v)
+     (mal-list (list 'vec (mal-qq-list (vector->list v))))]
+    [(mal-hash h)
+     (mal-list (list 'quote ast))]
+    [(? symbol? s)
+     (mal-list (list 'quote s))]
+    [(mal-list (list 'unquote x))
+     x]
+    [(mal-list '())
+     ast]
+    [(mal-list xs)
+     (mal-qq-list xs)]
+    [_ 
+     ast]))
+
+(define (mal-qq-list [list-vals : (Listof Mal)]) : Mal
+  (match list-vals
+    [(list (mal-list (list 'splice-unquote val)) rest ...)
+     (mal-list (list 'concat val (mal-qq-list rest)))]
+    [(list val rest ...)
+     (mal-list (list 'cons (mal-quasiquote val) (mal-qq-list rest)))]
+    ['()
+     (mal-list '())]
+    [_
+     (raise-mal-failure "unexpected value in mal-qq-list")]))
+  
+ 
 ;; Helper function to add bindings (x 2 y (+ 3 4)... to an environment
 (define (add-bindings! [env : mal-env] [binding-list : (Listof Mal)]) : Void
   (cond [(null? binding-list)
