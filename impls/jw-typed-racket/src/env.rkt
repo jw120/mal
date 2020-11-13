@@ -1,4 +1,4 @@
-#lang typed/racket/base
+#lang typed/racket
 
 (provide (all-defined-out))
 
@@ -10,10 +10,18 @@
 (define (env-new-from-lists [syms : (Listof Mal)] [vals : (Listof Mal)] [outer : (U mal-env #f)]) : mal-env
   (define m : (HashTable Symbol Mal)
     (make-hash))
-  (for ([s : Mal syms] [v : Mal vals])
-    (if (symbol? s)
-        (hash-set! m s v)
-        (raise-mal "not a symbol in binding list")))
+  (define (add-binds [ss : (Listof Mal)] [vs : (Listof Mal)]) : Void    
+   (match (list ss vs)
+        [(list (list '& (? symbol? x)) ys)
+         (hash-set! m x (mal-list ys))]
+        [(list (cons (? symbol? x) xs) (cons y ys))
+         (hash-set! m x y)
+         (add-binds xs ys)]
+        [(list '() '())
+         (void)]
+        [_
+         (raise-mal "Bad bind lists for environment")]))
+  (add-binds syms vals)
   (mal-env m outer))
 
 (define (env-set! [env : mal-env] [key : Symbol] [val : Mal]) : Void

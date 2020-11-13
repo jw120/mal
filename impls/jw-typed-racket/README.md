@@ -5,6 +5,7 @@ Done- Should we have a sub-type for list with meta? (then how do we tell if we h
 - Get reader tests to pass
 
 Done - Can we use a unique symbol instead of a struct constcutoer for mal-nil (match with `,)
+Better to revert. Need to reconsider symbol? tests
 
 Can we have structs with only one variable is mutable
 
