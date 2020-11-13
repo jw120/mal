@@ -59,6 +59,9 @@
         [(list x) (f x)]
         [_ (raise-mal (string-append "Expected one argument to " (symbol->string f-sym)))])))))
 
+;; Wrap a (-> (Listof Mal) Mal) function for inclusion in core_ns
+(define (wrap-list [f-sym : Symbol] [f : (-> (Listof Mal) Mal)]) : (Pair Symbol Mal)
+  (cons f-sym (mal-function f)))
 
 ;; Equality for mal values that equates vectors and lists
 (define (mal-equal? [x : Mal] [y : Mal]) : Boolean
@@ -87,7 +90,7 @@
 (define core_ns : (Listof (Pair Symbol Mal))
   (list
 
-   ;; Arithmetic
+   ;; Arithmetic and logical
    (wrap-binary-int '+ +)
    (wrap-binary-int '- -)
    (wrap-binary-int '* *)
@@ -101,14 +104,13 @@
    (wrap-binary '= mal-equal?)
    
    ;; Sequence
-   (cons 'list (mal-function (lambda ([params : (Listof Mal)])
-                               (mal-list params))))
-   (cons 'count (mal-function (lambda ([params : (Listof Mal)])
-                                (match params
-                                  [(list (mal-list (list xs ...)) _ ...) (length xs)]
-                                  [(list (mal-vector v) _ ...) (vector-length v)]
-                                  [(list mal-nil _ ...) 0]
-                                  [_ (raise-mal "Expected a list for count")]))))
+   (wrap-list 'list mal-list)
+   (wrap-list 'count (lambda ([params : (Listof Mal)])
+                       (match params
+                         [(list (mal-list (list xs ...)) _ ...) (length xs)]
+                         [(list (mal-vector v) _ ...) (vector-length v)]
+                         [(list (? mal-nil? _) _ ...) 0]
+                         [_ (raise-mal "Expected a list for count")])))
    (wrap-is 'list? mal-list?)
    (wrap-is 'empty? (lambda (x)
                       (or
@@ -117,12 +119,20 @@
                        (and (mal-vector? x) (equal? 0 (vector-length (mal-vector-v x)))))))
 
    ;; IO
-   (cons 'prn
-         (mal-function
-          (lambda ([params : (Listof Mal)])
-            (let ([s : String (string-join (map (lambda ([x : Mal]) (pr_str x #t)) params) " ")])
-              (displayln s)
-              (mal-nil)))))
+   (wrap-list 'prn (lambda ([args : (Listof Mal)])
+                     (let ([s : String (string-join (map (lambda ([x : Mal]) (pr_str x #t)) args) " ")])
+                       (displayln s)
+                       mal-nil)))
+   (wrap-list 'println (lambda ([args : (Listof Mal)])
+                         (let ([s : String (string-join (map (lambda ([x : Mal]) (pr_str x #f)) args) " ")])
+                           (displayln s)
+                           mal-nil)))
+   (wrap-list 'pr-str (lambda ([args : (Listof Mal)])
+                     (string-join (map (lambda ([x : Mal]) (pr_str x #t)) args) " ")))
+   (wrap-list 'str (lambda ([args : (Listof Mal)])
+                     (string-join (map (lambda ([x : Mal]) (pr_str x #f)) args) "")))
+
+   
    ;   (cons 'println (lambda args
    ;                    (displayln (string-join (map (lambda (x) (pr_str x #f)) args) " "))
    ;                    mal-nil))

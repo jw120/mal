@@ -35,7 +35,7 @@
          (EVAL then-ast env)
          (EVAL else-ast env))]
     [(mal-list (list 'if condition then-ast))
-     (EVAL (mal-list (list 'if condition then-ast (mal-nil))) env)]
+     (EVAL (mal-list (list 'if condition then-ast mal-nil)) env)]
     
     ;; let* special form
     [(mal-list (list 'let* (mal-list bindings) let-ast))
@@ -59,6 +59,8 @@
   (define (eval-with-env [x : Mal]) : Mal
     (EVAL x env))
   (match ast
+    [(? mal-nil? _)
+     ast]
     [(? symbol? sym)
      (env-get env sym)]
     [(mal-list xs)

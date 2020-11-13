@@ -77,7 +77,7 @@
       (match token
         ["true" #t]
         ["false" #f]
-        ["nil" (mal-nil)]
+        ["nil" mal-nil]
         ["'" (mal-list (list 'quote (read-form r)))]
         ["`" (mal-list (list 'quasiquote (read-form r)))]
         ["~" (mal-list (list 'unquote (read-form r)))]
@@ -177,4 +177,4 @@
   (check-equal? (read_string "pqr") 'pqr "Symbol")
   (check-equal? (read_string "true") #t "True")
   (check-equal? (read_string "false") #f "False")
-  (check-equal? (read_string "nil") (mal-nil) "Nil"))
+  (check-equal? (read_string "nil") mal-nil "Nil"))

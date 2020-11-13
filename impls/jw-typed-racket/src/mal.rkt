@@ -20,6 +20,11 @@
 (define repl_env : mal-env
   (env-new core_ns #f))
 
+(define repl-startup-code : (Listof String)
+  '("(def! not (fn* (a) (if a false true)))"))
+(for ([s repl-startup-code])
+  (EVAL (READ s) repl_env))
+
 (define (repl) : Void
   (define user-input : (U String EOF) (readline "user> "))
   (cond [(eq? user-input eof)

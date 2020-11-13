@@ -5,21 +5,31 @@
 (define-type Mal (U
                   Integer
                   String
-                  Symbol
+                  Symbol ; Includes mal-nil
                   Boolean
                   ;(Boxof Mal)
                   Void ; used to signal no value (not shown in repl)
-                  mal-nil
                   mal-keyword
                   mal-list
                   mal-vector
                   mal-hash
                   mal-function))
-                  ;mal-macro))
+;mal-macro))
 
 (struct mal-env ([data : (HashTable Symbol Mal)] [outer : (U mal-env #f)]) #:transparent #:mutable)
 
-(struct mal-nil () #:transparent)
+;; We represent the nil type (which racket lacks) as a symbol that can't be created
+(define mal-nil (string->unreadable-symbol "Mal-Nil"))
+(define (mal-nil? [x : Mal]) : Boolean
+  (equal? x mal-nil))
+(module+ test
+  (require typed/rackunit)
+  
+  (check-false (mal-nil? "nil"))
+  (check-false (mal-nil? 'Mal-Nil))
+  (check-true (mal-nil? mal-nil)))
+
+;(struct mal-nil () #:transparent)
 (struct mal-keyword ([s : String]) #:transparent)
 (struct mal-list ([xs : (Listof Mal)]) #:transparent)
 (struct mal-vector ([v : (Immutable-Vectorof Mal)]) #:transparent)
@@ -45,10 +55,17 @@
 (define (raise-mal-failure [msg : String]) : Nothing ; Internal inconsistency (not an error in mal code)
   (raise (exn:mal "Internal failure" (current-continuation-marks) msg)))
 
-(define (mal-truthy? x) : Boolean
+(define (mal-truthy? [x : Mal]) : Boolean
   (match x
     [#f #f]
-    [(mal-nil) #f]
+    [(? mal-nil? _) #f]
     [_ #t]))
 
-
+(module+ test
+  (require typed/rackunit)
+  
+  (check-false (mal-truthy? #f))
+  (check-false (mal-truthy? mal-nil))
+  (check-true (mal-truthy? #t))
+  (check-true (mal-truthy? 'x))
+  (check-true (mal-truthy? 0)))

@@ -8,17 +8,17 @@
   (match val
     [(? exact-integer? i) (number->string i)]
     [(? string? s) (if readable
-                              (string-append "\"" (add-escapes s) "\"")
-                              s)]
+                       (string-append "\"" (add-escapes s) "\"")
+                       s)]
+    [(? mal-nil? _) "nil"]
     [(? symbol? s) (symbol->string s)]
     [#t "true"]
     [#f "false"]
-    [(mal-nil) "nil"]
     [(mal-keyword s) (string-append ":" s)]
     [(mal-list xs) (pr_sequence "(" ")" xs readable)]
     [(mal-vector v) (pr_sequence "[" "]" (vector->list v) readable)]
     [(mal-hash m) (pr_sequence "{" "}" (mal-hashmap->flat-list m) readable)]
-    [(mal-function f) "#<function"]
+    [(mal-function f) "#<function>"]
     [(? void? _) "#<void>"]
     [_ (error "Unmatched in pr_str" val)]))
 
@@ -40,7 +40,7 @@
   (check-equal? (pr_str 'xyz true) "xyz")
   (check-equal? (pr_str true true) "true")
   (check-equal? (pr_str false true) "false")
-  (check-equal? (pr_str (mal-nil) true) "nil")
+  (check-equal? (pr_str mal-nil true) "nil")
   (check-equal? (pr_str (mal-list '(2 3)) true) "(2 3)")
   (check-equal? (pr_str (mal-vector '#(4 5)) true) "[4 5]")
   (check-equal? (pr_str (mal-hash '#hash(("a" . 2))) false) "{a 2}"))

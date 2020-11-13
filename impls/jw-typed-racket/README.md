@@ -4,9 +4,11 @@ Done- Should we have a sub-type for list with meta? (then how do we tell if we h
 - Re-think how to track spaces and comments in reader. Just using whitespace string confused by "" or " " etc
 - Get reader tests to pass
 
+Done - Can we use a unique symbol instead of a struct constcutoer for mal-nil (match with `,)
+
 Can we have structs with only one variable is mutable
 
-Should we add a mal-void type to return from do with no args? Also avoids raising empty. Would not be printed for repl.
+Done - Should we add a mal-void type to return from do with no args? Also avoids raising empty. Would not be printed for repl.
 
 
 Typed racket version
