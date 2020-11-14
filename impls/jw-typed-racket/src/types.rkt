@@ -23,8 +23,12 @@
 (struct mal-keyword ([s : String]) #:transparent)
 (struct mal-list ([xs : (Listof Mal)]) #:transparent)
 (struct mal-vector ([v : (Immutable-Vectorof Mal)]) #:transparent)
+
 (define-type MalHashKey (U String mal-keyword))
+(: mal-hashkey? (-> Any Boolean : MalHashKey))
+(define (mal-hashkey? x) (or (string? x) (mal-keyword? x)))
 (struct mal-hash ([m : (Immutable-HashTable MalHashKey Mal)]) #:transparent)
+
 (struct mal-function ([f : (-> (Listof Mal) Mal)]) #:transparent)
 (struct mal-macro ([m : (-> (Listof Mal) Mal)]) #:transparent)
 

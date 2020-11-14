@@ -2,66 +2,14 @@
 
 (provide core_ns)
 
-(require "printer.rkt" "reader.rkt" "types.rkt")
+(require "printer.rkt" "reader.rkt" "types.rkt" "utils.rkt" "wrap.rkt")
 
-;(require/typed readline/readline
-;               [readline (-> String (U String EOF))])
-
-
-;; Wrap a (-> Integer Integer Mal) function for inclusion in core_ns
-(define (wrap-binary-int [f-sym : Symbol] [f : (-> Integer Integer Mal)]) : (Pair Symbol Mal)
-  (cons
-   f-sym
-   (mal-function
-    (lambda ([xs : (Listof Mal)])
-      (match xs
-        [(list (? exact-integer? x) (? exact-integer? y)) (f x y)]
-        [_ (raise-mal (string-append "Expecting two numbers as argument to " (symbol->string f-sym)))])))))
-
-;; Wrap a (-> Mal Mal Mal) function for inclusion in core_ns
-(define (wrap-binary [f-sym : Symbol] [f : (-> Mal Mal Mal)]) : (Pair Symbol Mal)
-  (cons
-   f-sym
-   (mal-function
-    (lambda ([xs : (Listof Mal)])
-      (match xs
-        [(list x y) (f x y)]
-        [_ (raise-mal (string-append "Expecting two arguments to " (symbol->string f-sym)))])))))
-
-;; Wrap a (-> Mal Mal) function for inclusion in core_ns
-(define (wrap-unary [f-sym : Symbol] [f : (-> Mal Mal)]) : (Pair Symbol Mal)
-  (cons
-   f-sym
-   (mal-function
-    (lambda ([xs : (Listof Mal)])
-      (match xs
-        [(list x) (f x)]
-        [_ (raise-mal (string-append "Expecting one arguments to " (symbol->string f-sym)))])))))
-
-;; Wrap a (-> String Mal) function for inclusion in core_ns
-(define (wrap-str [f-sym : Symbol] [f : (-> String Mal)]) : (Pair Symbol Mal)
-  (cons
-   f-sym
-   (mal-function
-    (lambda ([xs : (Listof Mal)])
-      (match xs
-        [(list (? string? s)) (f s)]
-        [_ (raise-mal (string-append "Expecting a string as argument to " (symbol->string f-sym)))])))))
-
-
-;; Wrap a (-> Mal Boolean) function for inclusion in core_ns
-(define (wrap-is [f-sym : Symbol] [f : (-> Mal Boolean)]) : (Pair Symbol Mal)
-  (cons
-   f-sym
-   (mal-function
-    (lambda ([xs : (Listof Mal)])
-      (match xs
-        [(list x) (f x)]
-        [_ (raise-mal (string-append "Expected one argument to " (symbol->string f-sym)))])))))
-
-;; Wrap a general function that takes the underlying list of arguments for inclusion in core_ns
-(define (wrap-general [f-sym : Symbol] [f : (-> (Listof Mal) Mal)]) : (Pair Symbol Mal)
-  (cons f-sym (mal-function f)))
+;(require/typed racket/hash
+;               [hash-union (All (k v) (-> (Immutable-HashTable k v)
+;                                          (Immutable-HashTable k v)
+;                                          (Immutable-HashTable k v)))])
+(require/typed readline/readline
+               [readline (-> String (U String EOF))])
 
 ;; Equality for mal values that equates vectors and lists
 (define (mal-equal? [x : Mal] [y : Mal]) : Boolean
@@ -98,7 +46,7 @@
 (define core_ns : (Listof (Pair Symbol Mal))
   (list
 
-   ;; Arithmetic and logical
+   ;; Arithmetic and logical functions
    (wrap-binary-int '+ +)
    (wrap-binary-int '- -)
    (wrap-binary-int '* *)
@@ -108,7 +56,7 @@
    (wrap-binary-int '<= <=)
    (wrap-binary-int '>= >=)
 
-   ;; Equality and is?
+   ;; Equality and is-a functions
    (wrap-binary '= mal-equal?)
    (wrap-is 'nil? mal-nil?)
    (wrap-is 'true? (λ([x : Mal]) (equal? x #t)))
@@ -121,71 +69,115 @@
    (wrap-is 'sequential? (λ ([x : Mal]) (or (mal-list? x) (mal-vector? x))))
    (wrap-is 'map? mal-hash?)
    
-   ;; Sequence
+   ;; Sequence functions
    (wrap-general 'list mal-list)
-   (wrap-general 'count (lambda ([params : (Listof Mal)])
-                          (match params
-                            [(list (mal-list (list xs ...)) _ ...) (length xs)]
-                            [(list (mal-vector v) _ ...) (vector-length v)]
-                            [(list (mal-nil) _ ...) 0]
-                            [_ (raise-mal "Expected a list for count")])))
-
-   (wrap-is 'empty? (lambda ([x : Mal])
-                      (or
-                       (and (mal-list? x) (empty? (mal-list-xs x)))
-                       ; vector-empty? does not seem to work in racket/typed
-                       (and (mal-vector? x) (equal? 0 (vector-length (mal-vector-v x)))))))
-   (wrap-general 'cons (lambda ([params : (Listof Mal)])
-                         (match params
-                           [(list x (mal-list ys)) (mal-list (cons x ys))]
-                           [(list x (mal-vector v)) (mal-list (cons x (vector->list v)))])))
+   (wrap-unary 'count (match-lambda
+                        [(mal-list (list xs ...)) (length xs)]
+                        [(mal-vector v) (vector-length v)]
+                        [(mal-nil) 0]
+                        [_ (raise-mal "Expected a sequence for count")]))
+   (wrap-is 'empty? (match-lambda
+                      [(mal-list '()) #t]
+                      [(mal-vector v) (equal? 0 (vector-length v))]
+                      [_ #f]))
+   (wrap-binary 'cons (match-lambda**
+                       [(x (mal-list ys)) (mal-list (cons x ys))]
+                       [(x (mal-vector v)) (mal-list (cons x (vector->list v)))]
+                       [(_ _) (raise-mal "bad arguments to cons")]))
    (wrap-general 'concat mal-concat)
-   (wrap-general 'vec (lambda ([params : (Listof Mal)])
-                        (match params
-                          [(list (mal-list xs)) (mal-vector (vector->immutable-vector (list->vector xs)))]
-                          [(list (mal-vector v)) (mal-vector v)]
-                          [_ (raise-mal "expected list or vector as argument to vec")])))
+   (wrap-unary 'vec (match-lambda
+                      [(mal-list xs) (mal-vector (vector->immutable-vector (list->vector xs)))]
+                      [(mal-vector v) (mal-vector v)]
+                      [_ (raise-mal "expected list or vector as argument to vec")]))
    (wrap-general 'vector (lambda ([params : (Listof Mal)])
                            (mal-vector (vector->immutable-vector (list->vector params)))))
-   (wrap-general 'nth (lambda ([params : (Listof Mal)])
-                        (match params
-                          [(list (mal-list xs) (? exact-integer? n))
-                           (when (or (< n 0) (>= n (length xs)))
-                             (raise-mal "nth index out of bounds"))
-                           (list-ref xs n)]
-                          [(list (mal-vector v) (? exact-integer? n))
-                           (when (or (< n 0) (>= n (vector-length v)))
-                             (raise-mal "nth index out of bounds"))
-                           (vector-ref v n)]
-                          [_ (raise-mal "bad arguments to nth")])))
-   (wrap-general 'first (lambda ([params : (Listof Mal)])
-                          (match params
-                            [(list (mal-list xs))
-                             (if (null? xs) (mal-nil) (first xs))]
-                            [(list (mal-vector v))
-                             (if (equal? 0 (vector-length v)) (mal-nil) (vector-ref v 0))]
-                            [(list (mal-nil))
-                             (mal-nil)]
-                            [_
-                             (raise-mal "bad arguments to first")])))
-   (wrap-general 'rest (lambda ([params : (Listof Mal)])
-                         (match params
-                           [(list (mal-list xs))
-                            (if (null? xs)
-                                (mal-list '())
-                                (mal-list (cdr xs)))]
-                           [(list (mal-vector v))
-                            (if (equal? 0 (vector-length v))
-                                (mal-list '())
-                                (mal-list (vector->list (vector-drop v 1))))]
-                           [(list (mal-nil))
-                            (mal-list '())]
-                           [_
-                            (raise-mal "bad arguments to rest")])))
-                                  
-   ;; IO
-   (wrap-str 'read-string read_str)
-   (wrap-str 'slurp file->string)
+   (wrap-binary 'nth (match-lambda**
+                      [((mal-list xs) (? exact-integer? n))
+                       (when (or (< n 0) (>= n (length xs)))
+                         (raise-mal "nth index out of bounds"))
+                       (list-ref xs n)]
+                      [((mal-vector v) (? exact-integer? n))
+                       (when (or (< n 0) (>= n (vector-length v)))
+                         (raise-mal "nth index out of bounds"))
+                       (vector-ref v n)]
+                      [(_ _) (raise-mal "bad arguments to nth")]))
+   (wrap-unary 'first (match-lambda
+                        [(mal-list xs)
+                         (if (null? xs) (mal-nil) (first xs))]
+                        [(mal-vector v)
+                         (if (equal? 0 (vector-length v)) (mal-nil) (vector-ref v 0))]
+                        [(mal-nil)
+                         (mal-nil)]
+                        [_
+                         (raise-mal "bad arguments to first")]))
+   (wrap-unary 'rest (match-lambda
+                       [(mal-list '()) (mal-list '())]
+                       [(mal-list (cons _ xs)) (mal-list xs)]
+                       [(mal-vector (vector)) (mal-list '())]
+                       [(mal-vector v) (mal-list (vector->list (vector-drop v 1)))]
+                       [(mal-nil) (mal-list '())]
+                       [_ (raise-mal "bad arguments to rest")]))
+
+   ;; Hashmap-related function
+   (wrap-general 'hash-map (λ ([vals : (Listof Mal)]) (mal-hash (flat-list->mal-hashmap vals))))
+   (wrap-unary 'keys (match-lambda
+                       [(mal-hash m) (mal-list (hash-keys m))]
+                       [_ (raise-mal "argument for keys must be a hashmap")]))
+   (wrap-unary 'vals (match-lambda
+                       [(mal-hash m) (mal-list (hash-values m))]
+                       [_ (raise-mal "argument for keys must be a hashmap")]))
+   (wrap-binary 'contains? (match-lambda**
+                            [((mal-hash m) k) (hash-has-key? m k)]
+                            [(_ _) (raise-mal "contains takes a hashmap and a key value")]))
+   (wrap-binary 'get (match-lambda**
+                      [((mal-hash m) (? mal-hashkey? k)) (hash-ref m k (λ () (mal-nil)))]
+                      [((mal-nil) _) (mal-nil)]
+                      [(_ _) (raise-mal "get takes a hashmap and a key value")]))
+
+   (wrap-general 'assoc (match-lambda
+                          [(list (mal-hash m) args ...)
+                           (displayln "associng")
+                           (display "m: ") (displayln m)
+                           (display "fl-m: ") (displayln (flat-list->mal-hashmap args))
+                           (displayln "going to take union")
+                           (define result : (Immutable-HashTable MalHashKey Mal)
+                             (hash-union m (flat-list->mal-hashmap args)))
+                           (displayln result)
+                           (display "into mal-hash: ")
+                           (displayln (mal-hash result))
+                           (mal-hash result)
+                           ]
+;                           (mal-hash (hash-union m (flat-list->mal-hashmap args)))]
+                          [_ (raise-mal "first argument of assoc must be a hashmap")]))
+#|
+   (wrap-general 'dissoc (match-lambda
+                           [(list (mal-hash m) args ...)
+                            (mal-hash
+                             (for/fold ([hm m]) ([k args]) (hash-remove m k)))]
+                           [_ (raise-mal "bad argments for dissoc")]))
+|#
+   
+   ;; Atom-related functions
+   (wrap-unary 'atom box)
+   (wrap-unary 'deref (match-lambda 
+                        [(box b) b]
+                        [_ (raise-mal "need an atom to deref")]))
+   (wrap-binary 'reset!  (match-lambda**
+                          [((? box? b) val)
+                           (set-box! b val)
+                           val]
+                          [(_ _) (raise-mal "need an atom and a value for reset!")]))
+   (wrap-general 'swap! (match-lambda 
+                          [(list (? box? b) (mal-function f) other-args ...)
+                           (let* ([args : (Listof Mal) (cons (unbox b) other-args)]
+                                  [new-val : Mal (f args)])
+                             (set-box! b new-val)
+                             new-val)]
+                          [_ (raise-mal "need an atom, a function for swap!")]))
+
+   ;; IO functions
+   (wrap-unary-str 'read-string read_str)
+   (wrap-unary-str 'slurp file->string)
    (wrap-general 'prn (lambda ([args : (Listof Mal)])
                         (let ([s : String (string-join (map (lambda ([x : Mal]) (pr_str x #t)) args) " ")])
                           (displayln s)
@@ -199,56 +191,42 @@
    (wrap-general 'str (lambda ([args : (Listof Mal)])
                         (string-join (map (lambda ([x : Mal]) (pr_str x #f)) args) "")))
 
-   ;; Atoms
- 
-   (wrap-general 'atom (λ ([args : (Listof Mal)])
-                         (match args
-                           [(list v) (box v)]
-                           [_ (raise-mal "need one value for atom")])))
-   (wrap-general 'deref (λ ([args : (Listof Mal)])
-                          (match args
-                            [(list (box b)) b]
-                            [_ (raise-mal "need an atom to deref")])))
-   (wrap-general 'reset!  (λ ([args : (Listof Mal)])
-                            (match args
-                              [(list (? box? b) val)
-                               (set-box! b val)
-                               val]
-                              [_ (raise-mal "need an atom and a value for reset!")])))
-   (wrap-general 'swap! (λ ([args : (Listof Mal)])
-                          (match args
-                            [(list (? box? b) (mal-function f) other-args ...)
-                             (let* ([args : (Listof Mal) (cons (unbox b) other-args)]
-                                    [new-val : Mal (f args)])
-                               (set-box! b new-val)
-                               new-val)]
-                            [_ (raise-mal "need an atom, a function for swap!")])))
-
+   
    ;; Misc
    (cons '*host-language* "jw-typed-racket")
-   (wrap-str 'symbol string->symbol)
-   (wrap-str 'keyword mal-keyword)
-   (wrap-general 'throw (lambda ([params : (Listof Mal)])
-                          (match params
-                            [(list val) (raise-mal val)]
-                            [_ (raise-mal "bad arguments to throw")])))
-
-   (wrap-general 'map (lambda ([params : (Listof Mal)])
-                        (match params
-                          [(list (mal-function f) (mal-list xs))
-                           (define (f1 [x : Mal]) ; convert to Mal->Mal function
-                             (f (list x)))
-                           (mal-list (map f1 xs))]
-                          [(list (mal-function f) (mal-vector v))
-                           (define (f1 [x : Mal])
-                             (f (list x)))
-                           (mal-list (map f1 (vector->list v)))]
-                          [_
-                           (raise-mal "bad arguments to map")])))
-         
+   (wrap-unary-str 'symbol string->symbol)
+   (wrap-unary 'keyword (match-lambda
+                          [(? string? s) (mal-keyword s)]
+                          [(mal-keyword k) (mal-keyword k)]
+                          [_ (raise-mal "bad argument to keyword")]))
+   (wrap-unary 'throw raise-mal)
+   (wrap-binary 'map (match-lambda**
+                      [((mal-function f) (mal-list xs))
+                       (define (f1 [x : Mal]) ; convert to Mal->Mal function
+                         (f (list x)))
+                       (mal-list (map f1 xs))]
+                      [((mal-function f) (mal-vector v))
+                       (define (f1 [x : Mal])
+                         (f (list x)))
+                       (mal-list (map f1 (vector->list v)))]
+                      [(_ _)
+                       (raise-mal "bad arguments to map")]))
+   (wrap-general 'apply (lambda ([args : (Listof Mal)])
+                          (when (< (length args) 2)
+                            (raise-mal "need two args for apply"))
+                          (define apply-fn : (-> (Listof Mal) Mal)
+                            (match (car args)
+                              [(mal-function f) f]
+                              [_ (raise-mal "bad first arg for apply")]))                                       
+                          (define apply-args : (Listof Mal)
+                            (append (drop-right (cdr args) 1) ; args without first and last
+                                    (match (last args)
+                                      [(mal-list xs) xs]
+                                      [(mal-vector v) (vector->list v)]
+                                      [_ (raise-mal "bad last arg for apply")])))
+                          (apply-fn apply-args)))
 
    ))
-
 
 
 
@@ -295,21 +273,7 @@
                        (if (eof-object? s) nil s))))
  
    ; Misc
-   (cons 'apply (lambda args
-                  (when (< (length args) 2)
-                    (raise-mal-eval "Bad args for apply"))
-                  (define apply-proc
-                    (cond
-                      [(procedure? (car args)) (car args)]
-                      [(func? (car args)) (func-closure (car args))]
-                      [else (raise-mal-eval "Bad args for apply")]))
-                  (define middle-args (drop-right (cdr args) 1))
-                  (define last-arg (last args))
-                  (define apply-args (append middle-args
-                                             (if (list-or-vector? last-arg)
-                                                 (list-or-vector->list last-arg)
-                                                 (list last-arg))))
-                  (apply apply-proc apply-args)))
+
 
    (cons 'throw raise-mal-throw)
    (cons 'nil? nil?)

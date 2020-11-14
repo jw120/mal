@@ -12,6 +12,11 @@ dynamically typed racket value)
 
 Will allow meta to be implemented
 
+Use zero? instead of (equal? 0)
+
+
+Note - vector-empty? does not seem to work in typed racket, working aroung with (equal? 0 (vector-length v))
+- hash-ref type does not seem to be accept a constant as the default
 
 #lang typed/racket
 
