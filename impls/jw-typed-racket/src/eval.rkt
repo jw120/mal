@@ -4,8 +4,8 @@
 
 (require "env.rkt" "printer.rkt" "types.rkt")
 
-(define (EVAL [ast : Mal] [env : mal-env]) : Mal
-  (match ast
+(define (EVAL [eval-ast : Mal] [env : mal-env]) : Mal
+  (match (macro-expand eval-ast env)
 
     ;; def! special form
     [(mal-list (list 'def! (? symbol? sym) val))
@@ -13,6 +13,15 @@
        (env-set! env sym evaluated-val)
        evaluated-val)]
 
+    ;; defmacro! special form
+    [(mal-list (list 'defmacro! (? symbol? sym) val))
+     (match (EVAL val env)
+       [(mal-function f)
+        (env-set! env sym (mal-macro f))
+        (mal-macro f)]
+       [_
+        (raise-mal "defmacro! needs a symbol and a function")])]
+    
     ;; do special form
     [(mal-list (list 'do))
      (void)]
@@ -45,6 +54,10 @@
     [(mal-list (list 'let* (mal-vector bindings-vector) let-ast))
      (EVAL (mal-list (list 'let* (mal-list (vector->list bindings-vector)) let-ast)) env)]
 
+    ;; macroexpand special form
+    [(mal-list (list 'macroexpand x))
+     (macro-expand x env)]
+    
     ;; quasiquote special form
     [(mal-list (list 'quasiquote x))
      (EVAL (mal-quasiquote x) env)]
@@ -57,15 +70,15 @@
     [(mal-list (list 'quote x))
      x]
     
-    ;; non-empty list with apply
-    [(mal-list (cons _ _))
-     (match (eval_ast ast env)
-       [(mal-list (cons (mal-function f) other-args))
-        (f other-args)]
-       [_ (raise-mal "cannot apply non-function")])]
-
-    ;; anything else handed off to eval_ast
-    [_ (eval_ast ast env)]))
+    ;; If not a special form, apply a non-empty list, hand anything else to eval_ast
+    [x
+     (cond
+       [(and (mal-list? x) (not (null? (mal-list-xs x))))
+        (match (eval_ast x env)
+          [(mal-list (cons (mal-function f) other-args))
+           (f other-args)]
+          [_ (raise-mal "cannot apply non-function")])]
+       [else (eval_ast x env)])]))
 
 (define (eval_ast [ast : Mal] [env : mal-env]) : Mal
   (define (eval-with-env [x : Mal]) : Mal
@@ -85,6 +98,14 @@
         (values k (eval-with-env (hash-ref m k)))))]
     [_ ast]))
 
+(define (macro-expand [ast : Mal] [env : mal-env]) : Mal
+;  (display "macro-expand: ") (displayln ast)
+  (match (get-macro ast env)
+    [(cons m args)
+;     (display "Found macro: ") (display m) (display " on ") (displayln args)
+     (macro-expand (m args) env)]
+    [_
+     ast]))
 
 (define (mal-quasiquote [ast : Mal]) : Mal
   (match ast
@@ -126,4 +147,29 @@
          (add-bindings! env (cddr binding-list))]
         [else
          (raise-mal "binding list keys must be symbols")]))
+
+
+;; Helper function that returns the macro closure and other arguments
+;; if the ast is a mal list whose first element is a symbol has a macro value in the environment
+(define (get-macro [ast : Mal] [env : mal-env]) : (U #f (Pair (-> (Listof Mal) Mal) (Listof Mal)))
+  (match ast
+    [(mal-list (list (? symbol? s) args ...))
+     (let ([found-env (env-find env s)])
+       (if found-env
+           (match (env-get found-env s)
+             [(mal-macro m) (cons m args)]
+             [_ #f])
+           #f))]
+     [_ #f]))
+(module+ test
+  (require typed/rackunit)
+  (let ([e (env-new '() #f)]
+        [m (lambda ([args : (Listof Mal)]) (mal-list args))])
+    (env-set! e 's1 (mal-macro m))
+    (env-set! e 's2 2)
+    (check-equal? (get-macro (mal-list (list 's1 2 3)) e) (cons m '(2 3)))
+    (check-equal? (get-macro (mal-list (list 's1)) e) (cons m '()))
+    (check-false (get-macro (mal-list (list 's2)) e))
+    (check-false (get-macro 3 e))
+    (check-false (get-macro (mal-list '()) e))))
 

@@ -14,8 +14,8 @@
                   mal-list
                   mal-vector
                   mal-hash
-                  mal-function))
-;mal-macro))
+                  mal-function
+                  mal-macro))
 
 (struct mal-env ([data : (HashTable Symbol Mal)] [outer : (U mal-env #f)]) #:transparent #:mutable)
 
@@ -26,7 +26,7 @@
 (define-type MalHashKey (U String mal-keyword))
 (struct mal-hash ([m : (Immutable-HashTable MalHashKey Mal)]) #:transparent)
 (struct mal-function ([f : (-> (Listof Mal) Mal)]) #:transparent)
-;(struct mal-macro ([f : (-> (Listof Mal) Mal)]))
+(struct mal-macro ([m : (-> (Listof Mal) Mal)]) #:transparent)
 
 (struct mal-list-with-meta mal-list ([meta : Mal]) #:transparent)
 (struct mal-vector-with-meta mal-vector ([meta : Mal]) #:transparent)

@@ -124,6 +124,41 @@
                        [(list (mal-list xs)) (mal-vector (vector->immutable-vector (list->vector xs)))]
                        [(list (mal-vector v)) (mal-vector v)]
                        [_ (raise-mal "expected list or vector as argument to vec")])))
+   (wrap-list 'nth (lambda ([params : (Listof Mal)])
+                     (match params
+                       [(list (mal-list xs) (? exact-integer? n))
+                        (when (or (< n 0) (>= n (length xs)))
+                          (raise-mal "nth index out of bounds"))
+                        (list-ref xs n)]
+                       [(list (mal-vector v) (? exact-integer? n))
+                        (when (or (< n 0) (>= n (vector-length v)))
+                          (raise-mal "nth index out of bounds"))
+                        (vector-ref v n)]
+                       [_ (raise-mal "bad arguments to nth")])))
+   (wrap-list 'first (lambda ([params : (Listof Mal)])
+                       (match params
+                         [(list (mal-list xs))
+                          (if (null? xs) (mal-nil) (first xs))]
+                         [(list (mal-vector v))
+                          (if (equal? 0 (vector-length v)) (mal-nil) (vector-ref v 0))]
+                         [(list (mal-nil))
+                          (mal-nil)]
+                         [_
+                          (raise-mal "bad arguments to first")])))
+   (wrap-list 'rest (lambda ([params : (Listof Mal)])
+                       (match params
+                         [(list (mal-list xs))
+                          (if (null? xs)
+                              (mal-list '())
+                              (mal-list (cdr xs)))]
+                         [(list (mal-vector v))
+                          (if (equal? 0 (vector-length v))
+                              (mal-list '())
+                              (mal-list (vector->list (vector-drop v 1))))]
+                         [(list (mal-nil))
+                          (mal-list '())]
+                         [_
+                          (raise-mal "bad arguments to rest")])))
                                   
    ;; IO
    (wrap-str 'read-string read_str)
