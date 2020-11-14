@@ -97,8 +97,18 @@
    (wrap-binary-int '<= <=)
    (wrap-binary-int '>= >=)
 
-   ;; Equality
+   ;; Equality and is?
    (wrap-binary '= mal-equal?)
+   (wrap-is 'nil? mal-nil?)
+   (wrap-is 'true? (λ([x : Mal]) (equal? x #t)))
+   (wrap-is 'false? (λ ([x : Mal]) (equal? x #f)))
+   (wrap-is 'symbol? symbol?)
+   (wrap-is 'atom? box?)
+   (wrap-is 'keyword? mal-keyword?)
+   (wrap-is 'list? mal-list?)
+   (wrap-is 'vector? mal-vector?)
+   (wrap-is 'sequential? (λ ([x : Mal]) (or (mal-list? x) (mal-vector? x))))
+   (wrap-is 'map? mal-hash?)
    
    ;; Sequence
    (wrap-list 'list mal-list)
@@ -108,7 +118,7 @@
                          [(list (mal-vector v) _ ...) (vector-length v)]
                          [(list (mal-nil) _ ...) 0]
                          [_ (raise-mal "Expected a list for count")])))
-   (wrap-is 'list? mal-list?)
+
    (wrap-is 'empty? (lambda ([x : Mal])
                       (or
                        (and (mal-list? x) (empty? (mal-list-xs x)))
@@ -146,19 +156,19 @@
                          [_
                           (raise-mal "bad arguments to first")])))
    (wrap-list 'rest (lambda ([params : (Listof Mal)])
-                       (match params
-                         [(list (mal-list xs))
-                          (if (null? xs)
-                              (mal-list '())
-                              (mal-list (cdr xs)))]
-                         [(list (mal-vector v))
-                          (if (equal? 0 (vector-length v))
-                              (mal-list '())
-                              (mal-list (vector->list (vector-drop v 1))))]
-                         [(list (mal-nil))
-                          (mal-list '())]
-                         [_
-                          (raise-mal "bad arguments to rest")])))
+                      (match params
+                        [(list (mal-list xs))
+                         (if (null? xs)
+                             (mal-list '())
+                             (mal-list (cdr xs)))]
+                        [(list (mal-vector v))
+                         (if (equal? 0 (vector-length v))
+                             (mal-list '())
+                             (mal-list (vector->list (vector-drop v 1))))]
+                        [(list (mal-nil))
+                         (mal-list '())]
+                        [_
+                         (raise-mal "bad arguments to rest")])))
                                   
    ;; IO
    (wrap-str 'read-string read_str)
@@ -177,7 +187,7 @@
                      (string-join (map (lambda ([x : Mal]) (pr_str x #f)) args) "")))
 
    ;; Atoms
-   (wrap-is 'atom? box?)
+ 
    (wrap-list 'atom (λ ([args : (Listof Mal)])
                       (match args
                         [(list v) (box v)]
@@ -200,17 +210,14 @@
                             (set-box! b new-val)
                             new-val)]
                          [_ (raise-mal "need an atom, a function for swap!")])))
-   ; (cons 'swap! (λ (atom f . other-args)
-   ;                (let* ([closure (cond
-   ;                                  [(procedure? f) f]
-   ;                                  [(func? f) (func-closure f)]
-   ;                                  [else (raise-mal-eval "Expected a function for swap!")])]
-   ;                       [new-val (apply closure (cons (unbox atom) other-args))])
-   ;                  (set-box! atom new-val)
-   ;                  new-val)))
 
    ;; Misc
    (cons '*host-language* "jw-typed-racket")
+   (wrap-list 'throw (lambda ([params : (Listof Mal)])
+                       (match params
+                         [(list val) (raise-mal val)]
+                         [_ (raise-mal "bad arguments to throw")])))
+         
 
    ))
 

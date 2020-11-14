@@ -69,6 +69,18 @@
     ;; quote special form
     [(mal-list (list 'quote x))
      x]
+
+    ;; try-catch special form
+    [(mal-list (list 'try* a (mal-list (list 'catch* b c))))
+     (define (handle [x : Mal]) : Mal
+       (let ([catch-env (env-new-from-lists (list b) (list x) env)])
+         (EVAL c catch-env)))
+     (with-handlers
+         ([exn:mal? (λ ([e : exn:mal]) (handle (exn:mal-thrown-value e)))]
+          [exn:fail? (λ ([e : exn:fail]) (handle (exn-message e)))])
+       (EVAL a env))]
+    [(mal-list (list 'try single-arg))
+     (EVAL single-arg env)]
     
     ;; If not a special form, apply a non-empty list, hand anything else to eval_ast
     [x
@@ -99,10 +111,10 @@
     [_ ast]))
 
 (define (macro-expand [ast : Mal] [env : mal-env]) : Mal
-;  (display "macro-expand: ") (displayln ast)
+  ;  (display "macro-expand: ") (displayln ast)
   (match (get-macro ast env)
     [(cons m args)
-;     (display "Found macro: ") (display m) (display " on ") (displayln args)
+     ;     (display "Found macro: ") (display m) (display " on ") (displayln args)
      (macro-expand (m args) env)]
     [_
      ast]))
@@ -160,7 +172,7 @@
              [(mal-macro m) (cons m args)]
              [_ #f])
            #f))]
-     [_ #f]))
+    [_ #f]))
 (module+ test
   (require typed/rackunit)
   (let ([e (env-new '() #f)]
