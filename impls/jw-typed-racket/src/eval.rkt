@@ -79,7 +79,7 @@
          ([exn:mal? (λ ([e : exn:mal]) (handle (exn:mal-thrown-value e)))]
           [exn:fail? (λ ([e : exn:fail]) (handle (exn-message e)))])
        (EVAL a env))]
-    [(mal-list (list 'try single-arg))
+    [(mal-list (list 'try* single-arg))
      (EVAL single-arg env)]
     
     ;; If not a special form, apply a non-empty list, hand anything else to eval_ast
