@@ -31,7 +31,14 @@
     [(cons (mal-list xs) (mal-vector ys))
      (mal-vectors-equal? (list->vector xs) ys)]
     [(cons (mal-vector xs) (mal-list ys))
-     (mal-vectors-equal? xs (list->vector ys))]    
+     (mal-vectors-equal? xs (list->vector ys))]
+    [(cons (mal-hash x) (mal-hash y))
+     (and
+      (equal? (hash-count x) (hash-count y))
+      (for/and ([k (hash-keys x)])
+        (and
+         (hash-has-key? y k)
+         (mal-equal? (hash-ref x k) (hash-ref y k)))))]
     [_ (equal? x y)]))
 
 (define (mal-concat [xs : (Listof Mal)]) : Mal
@@ -136,26 +143,20 @@
 
    (wrap-general 'assoc (match-lambda
                           [(list (mal-hash m) args ...)
-                           (displayln "associng")
-                           (display "m: ") (displayln m)
-                           (display "fl-m: ") (displayln (flat-list->mal-hashmap args))
-                           (displayln "going to take union")
-                           (define result : (Immutable-HashTable MalHashKey Mal)
-                             (hash-union m (flat-list->mal-hashmap args)))
-                           (displayln result)
-                           (display "into mal-hash: ")
-                           (displayln (mal-hash result))
-                           (mal-hash result)
-                           ]
-;                           (mal-hash (hash-union m (flat-list->mal-hashmap args)))]
+                           (define new-pairs : (Immutable-HashTable MalHashKey Mal)
+                             (flat-list->mal-hashmap args))
+                           (mal-hash
+                            (for/fold ([updated-m : (Immutable-HashTable MalHashKey Mal) m])
+                                      ([(k v) new-pairs])
+                              (hash-set updated-m k v)))]
                           [_ (raise-mal "first argument of assoc must be a hashmap")]))
-#|
    (wrap-general 'dissoc (match-lambda
-                           [(list (mal-hash m) args ...)
+                           [(list (mal-hash m) keys ...)
                             (mal-hash
-                             (for/fold ([hm m]) ([k args]) (hash-remove m k)))]
+                             (for/fold ([updated-m : (Immutable-HashTable MalHashKey Mal) m])
+                                       ([k keys])
+                               (hash-remove updated-m k)))]
                            [_ (raise-mal "bad argments for dissoc")]))
-|#
    
    ;; Atom-related functions
    (wrap-unary 'atom box)
