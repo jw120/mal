@@ -4,10 +4,6 @@
 
 (require "printer.rkt" "reader.rkt" "types.rkt" "utils.rkt" "wrap.rkt")
 
-;(require/typed racket/hash
-;               [hash-union (All (k v) (-> (Immutable-HashTable k v)
-;                                          (Immutable-HashTable k v)
-;                                          (Immutable-HashTable k v)))])
 (require/typed readline/readline
                [readline (-> String (U String EOF))])
 
@@ -75,6 +71,10 @@
    (wrap-is 'vector? mal-vector?)
    (wrap-is 'sequential? (λ ([x : Mal]) (or (mal-list? x) (mal-vector? x))))
    (wrap-is 'map? mal-hash?)
+   (wrap-is 'fn? mal-function?)
+   (wrap-is 'macro? mal-macro?)
+   (wrap-is 'string? string?)
+   (wrap-is 'number? exact-integer?)
    
    ;; Sequence functions
    (wrap-general 'list mal-list)
@@ -140,7 +140,6 @@
                       [((mal-hash m) (? mal-hashkey? k)) (hash-ref m k (λ () (mal-nil)))]
                       [((mal-nil) _) (mal-nil)]
                       [(_ _) (raise-mal "get takes a hashmap and a key value")]))
-
    (wrap-general 'assoc (match-lambda
                           [(list (mal-hash m) args ...)
                            (define new-pairs : (Immutable-HashTable MalHashKey Mal)
@@ -191,10 +190,17 @@
                            (string-join (map (lambda ([x : Mal]) (pr_str x #t)) args) " ")))
    (wrap-general 'str (lambda ([args : (Listof Mal)])
                         (string-join (map (lambda ([x : Mal]) (pr_str x #f)) args) "")))
+   (wrap-unary-str 'readline (lambda (prompt)
+                               (let ([s (readline prompt)])
+                                 (if (eof-object? s) (mal-nil) s))))
 
    
-   ;; Misc
+   ;; Misc functions
    (cons '*host-language* "jw-typed-racket")
+   (wrap-general 'time-ms (match-lambda
+                            ['()
+                             (exact-round (current-inexact-milliseconds))]
+                            [_ (raise-mal "expect no arguments for time-ms")]))
    (wrap-unary-str 'symbol string->symbol)
    (wrap-unary 'keyword (match-lambda
                           [(? string? s) (mal-keyword s)]
@@ -226,7 +232,11 @@
                                       [(mal-vector v) (vector->list v)]
                                       [_ (raise-mal "bad last arg for apply")])))
                           (apply-fn apply-args)))
-
+   (wrap-general 'meta (lambda (args) "NYI"))
+   (wrap-general 'with-meta (lambda (args) "NYI"))
+   (wrap-general 'seq (lambda (args) "NYI"))
+   (wrap-general 'conj (lambda (args) "NYI"))
+   
    ))
 
 
@@ -234,8 +244,6 @@
 #|
   
 
-
-   (cons 'vector vector-immutable)
 
    (cons 'seq (lambda (x)
                 (cond
@@ -255,41 +263,8 @@
                    [(vector? collection) (vector-append collection (list->vector adds))]
                    [else (raise-mal-eval "Bad collection type for conj")])))
 
-   ; Hash maps
-   (cons 'hash-map hash)
-   (cons 'map? hash?)
-   (cons 'keys hash-keys)
-   (cons 'vals hash-values)
-   (cons 'contains? hash-has-key?)
-   (cons 'get (lambda (hm k) (if (nil? hm) nil (hash-ref hm k nil))))
-   (cons 'assoc (lambda args
-                  (hash-union (car args) (apply hash (cdr args)) #:combine/key (lambda (k v1 v2) v2))))
-   (cons 'dissoc (lambda args
-         (for/fold ([hm (car args)]) ([k (cdr args)]) (hash-remove hm k))))
-
-   ; I/O
-
-   (cons 'readline (lambda (prompt)
-                     (let ([s (readline prompt)])
-                       (if (eof-object? s) nil s))))
  
-   ; Misc
 
-
-   (cons 'throw raise-mal-throw)
-   (cons 'nil? nil?)
-   (cons 'true? (lambda (x) (equal? x #t)))
-   (cons 'false? (lambda (x) (equal? x #f)))
-   (cons 'symbol? mal-symbol?)
-   (cons 'symbol string->symbol)
-   (cons 'keyword? keyword?)
-   (cons 'keyword (lambda (x) (if (keyword? x) x (string->keyword x))))
-   (cons 'string? string?)
-   (cons 'number? number?)
-   (cons 'fn? (lambda (x) (or (procedure? x) (and (func? x) (not (func-is-macro? x))))))
-   (cons 'macro? (lambda (x) (and (func? x) (func-is-macro? x))))
-   (cons '*host-language* "jw-racket")
-   (cons 'time-ms (λ args (raise-mal-throw "NYI")))
    (cons 'meta (λ (x) (cond
                         [(func? x) (func-meta x)]
                         [(procedure? x) nil]
