@@ -188,7 +188,6 @@
    (cons 'fn? (lambda (x) (or (procedure? x) (and (func? x) (not (func-is-macro? x))))))
    (cons 'macro? (lambda (x) (and (func? x) (func-is-macro? x))))
    (cons '*host-language* "jw-racket")
-   (cons 'time-ms (λ args (raise-mal-throw "NYI")))
    (cons 'meta (λ (x) (cond
                         [(func? x) (func-meta x)]
                         [(procedure? x) nil]
