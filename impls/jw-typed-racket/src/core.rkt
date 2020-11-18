@@ -133,7 +133,13 @@
                       [(mal-vector v) (mal-list (vector->list v))]
                       [(? string? s) (mal-list (cdr (drop-right (string-split s "") 1)))]
                       [_ (raise-mal "bad argument to seq")]))
-   (wrap-general 'conj (lambda (args) "NYI"))
+   (wrap-general 'conj (match-lambda
+                        [(list (mal-list xs) elements ...)
+                        (mal-list (append (reverse elements) xs))]
+                        [(list (mal-vector v) elements ...)
+                         (mal-vector
+                          (vector->immutable-vector (vector-append v (list->vector elements))))]
+                        [_ (raise-mal "bad arguments to conj")]))
 
    ;; Hashmap-related function
    (wrap-general 'hash-map (λ ([vals : (Listof Mal)]) (mal-hash (flat-list->mal-hashmap vals))))
@@ -252,15 +258,6 @@
 #|
   
 
-
-   (cons 'seq (lambda (x)
-                (cond
-                  [(list? x) (if (empty? x) nil x)]
-                  [(vector? x) (if (vector-empty? x) nil (vector->list x))]
-                  [(non-empty-string? x) (cdr (drop-right (string-split x "") 1))]
-                  [(equal? "" x) nil]
-                  [(nil? x) nil]
-                  [else raise-mal-eval "Bad argument to seq"])))
    (cons 'conj (lambda args
                  (when (< (length args) 2)
                    (raise-mal-eval "Bad arguments to conj"))
