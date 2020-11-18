@@ -16,10 +16,10 @@
     [#f "false"]
     [(box b) (string-join (list "(atom " (pr_str b readable) ")") "")]
     [(mal-keyword s) (string-append ":" s)]
-    [(mal-list xs) (pr_sequence "(" ")" xs readable)]
-    [(mal-vector v) (pr_sequence "[" "]" (vector->list v) readable)]
-    [(mal-hash m) (pr_sequence "{" "}" (mal-hashmap->flat-list m) readable)]
-    [(mal-function _) "#<function>"]
+    [(mal-list _ _ xs) (pr_sequence "(" ")" xs readable)]
+    [(mal-vector _ _ v) (pr_sequence "[" "]" (vector->list v) readable)]
+    [(mal-hash _ _ m) (pr_sequence "{" "}" (mal-hashmap->flat-list m) readable)]
+    [(mal-function _ _ _) "#<function>"]
     [(mal-macro _) "#<macro>"]
     [(? void? _) "#<void>"]
     [_ (error "Unmatched in pr_str" val)]))
@@ -43,9 +43,9 @@
   (check-equal? (pr_str true true) "true")
   (check-equal? (pr_str false true) "false")
   (check-equal? (pr_str (mal-nil) true) "nil")
-  (check-equal? (pr_str (mal-list '(2 3)) true) "(2 3)")
-  (check-equal? (pr_str (mal-vector '#(4 5)) true) "[4 5]")
-  (check-equal? (pr_str (mal-hash '#hash(("a" . 2))) false) "{a 2}")
+  (check-equal? (pr_str (mal-list #f #f '(2 3)) true) "(2 3)")
+  (check-equal? (pr_str (mal-vector #f #f '#(4 5)) true) "[4 5]")
+  (check-equal? (pr_str (mal-hash #f #f '#hash(("a" . 2))) false) "{a 2}")
   (check-equal? (pr_str (box 3) true) "(atom 3)"))
   
 

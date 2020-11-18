@@ -13,7 +13,7 @@
   (define (add-binds [ss : (Listof Mal)] [vs : (Listof Mal)]) : Void    
    (match (list ss vs)
         [(list (list '& (? symbol? x)) ys)
-         (hash-set! m x (mal-list ys))]
+         (hash-set! m x (mal-list #f #f ys))]
         [(list (cons (? symbol? x) xs) (cons y ys))
          (hash-set! m x y)
          (add-binds xs ys)]

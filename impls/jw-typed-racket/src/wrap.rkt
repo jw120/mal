@@ -10,7 +10,7 @@
 (define (wrap-binary-int [f-sym : Symbol] [f : (-> Integer Integer Mal)]) : (Pair Symbol Mal)
   (cons
    f-sym
-   (mal-function
+   (mal-function #f #f
     (lambda ([xs : (Listof Mal)])
       (match xs
         [(list (? exact-integer? x) (? exact-integer? y)) (f x y)]
@@ -20,7 +20,7 @@
 (define (wrap-binary [f-sym : Symbol] [f : (-> Mal Mal Mal)]) : (Pair Symbol Mal)
   (cons
    f-sym
-   (mal-function
+   (mal-function #f #f
     (lambda ([xs : (Listof Mal)])
       (match xs
         [(list x y) (f x y)]
@@ -30,7 +30,7 @@
 (define (wrap-unary [f-sym : Symbol] [f : (-> Mal Mal)]) : (Pair Symbol Mal)
   (cons
    f-sym
-   (mal-function
+   (mal-function #f #f
     (lambda ([xs : (Listof Mal)])
       (match xs
         [(list x) (f x)]
@@ -40,7 +40,7 @@
 (define (wrap-unary-str [f-sym : Symbol] [f : (-> String Mal)]) : (Pair Symbol Mal)
   (cons
    f-sym
-   (mal-function
+   (mal-function #f #f
     (lambda ([xs : (Listof Mal)])
       (match xs
         [(list (? string? s)) (f s)]
@@ -50,7 +50,7 @@
 (define (wrap-is [f-sym : Symbol] [f : (-> Mal Boolean)]) : (Pair Symbol Mal)
   (cons
    f-sym
-   (mal-function
+   (mal-function #f #f
     (lambda ([xs : (Listof Mal)])
       (match xs
         [(list x) (f x)]
@@ -58,4 +58,4 @@
 
 ;; Wrap a general function that takes the underlying list of arguments for inclusion in core_ns
 (define (wrap-general [f-sym : Symbol] [f : (-> (Listof Mal) Mal)]) : (Pair Symbol Mal)
-  (cons f-sym (mal-function f)))
+  (cons f-sym (mal-function #f #f f)))

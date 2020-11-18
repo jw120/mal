@@ -21,21 +21,20 @@
 
 (struct mal-nil () #:transparent)
 (struct mal-keyword ([s : String]) #:transparent)
-(struct mal-list ([xs : (Listof Mal)]) #:transparent)
-(struct mal-vector ([v : (Immutable-Vectorof Mal)]) #:transparent)
+
+; Attributes added (as a superclass) to types which need to carry meta values
+(struct meta ([has-meta : Boolean] [meta : Mal]) #:transparent)
+
+(struct mal-list meta ([xs : (Listof Mal)]) #:transparent)
+(struct mal-vector meta ([v : (Immutable-Vectorof Mal)]) #:transparent)
 
 (define-type MalHashKey (U String mal-keyword))
 (: mal-hashkey? (-> Any Boolean : MalHashKey))
 (define (mal-hashkey? x) (or (string? x) (mal-keyword? x)))
-(struct mal-hash ([m : (Immutable-HashTable MalHashKey Mal)]) #:transparent)
+(struct mal-hash meta ([m : (Immutable-HashTable MalHashKey Mal)]) #:transparent)
 
-(struct mal-function ([f : (-> (Listof Mal) Mal)]) #:transparent)
+(struct mal-function meta ([f : (-> (Listof Mal) Mal)]) #:transparent)
 (struct mal-macro ([m : (-> (Listof Mal) Mal)]) #:transparent)
-
-(struct mal-list-with-meta mal-list ([meta : Mal]) #:transparent)
-(struct mal-vector-with-meta mal-vector ([meta : Mal]) #:transparent)
-(struct mal-hash-with-meta mal-hash ([meta : Mal]) #:transparent)
-(struct mal-function-with-meta mal-function ([meta : Mal]) #:transparent)
 
 ;; exception raised when no input is provided (when caught, repl ignores the input line)
 (struct exn:mal-empty exn:fail ()) ; subtype of `exn:mal`

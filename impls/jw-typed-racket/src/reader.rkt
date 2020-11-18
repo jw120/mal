@@ -42,16 +42,16 @@
   (match (r 'peek)
     ["("
      (r 'next!) ; skip the "("
-     (mal-list (read-forms-until ")" r))]
+     (mal-list #f #f (read-forms-until ")" r))]
     ["["
      (r 'next!) ; skip the "["
-     (mal-vector
+     (mal-vector #f #f 
       (vector->immutable-vector
        (list->vector
         (read-forms-until "]" r))))]
     ["{"
      (r 'next!) ; skip the "{"
-     (mal-hash (flat-list->mal-hashmap (read-forms-until "}" r)))]
+     (mal-hash #f #f (flat-list->mal-hashmap (read-forms-until "}" r)))]
     [s (if (eof-object? s)
            eof
            (read-atom r))]))
@@ -78,15 +78,15 @@
         ["true" #t]
         ["false" #f]
         ["nil" (mal-nil)]
-        ["'" (mal-list (list 'quote (read-form r)))]
-        ["`" (mal-list (list 'quasiquote (read-form r)))]
-        ["~" (mal-list (list 'unquote (read-form r)))]
+        ["'" (mal-list #f #f (list 'quote (read-form r)))]
+        ["`" (mal-list #f #f (list 'quasiquote (read-form r)))]
+        ["~" (mal-list #f #f (list 'unquote (read-form r)))]
         ["^"
          (let* ([x (read-form r)]
                 [y (read-form r)])
-           (mal-list (list 'with-meta y x)))]
-        ["@" (mal-list (list 'deref (read-form r)))]
-        ["~@" (mal-list (list 'splice-unquote (read-form r)))]
+           (mal-list #f #f (list 'with-meta y x)))]
+        ["@" (mal-list #f #f (list 'deref (read-form r)))]
+        ["~@" (mal-list #f #f (list 'splice-unquote (read-form r)))]
         [(regexp #px"^[{}()\\[\\]]") token] ; tokens for delimiters (returned as strings)
         [(regexp #px"^-?[[:digit:]]+$") (string->int token)] ; number
         [(regexp #rx"^\\\".*\\\"$") (remove-escapes (substring token 1 (- (string-length token) 1)))] ; quoted string
@@ -129,21 +129,21 @@
 
   ; sequences  
   (check-equal? (read_str "(1 2 3)")
-                (mal-list '(1 2 3)) "List")
+                (mal-list #f #f'(1 2 3)) "List")
   (check-equal? (read_str "()")
-                (mal-list '()) "Empty list")
+                (mal-list #f #f '()) "Empty list")
   (check-equal? (read_str "[1 2 3]")
-                (mal-vector #(1 2 3)) "Vector")
+                (mal-vector #f #f #(1 2 3)) "Vector")
   (check-equal? (read_str "[1,2,4]")
-                (mal-vector #(1 2 4)) "Vector with commas")
+                (mal-vector #f #f #(1 2 4)) "Vector with commas")
   (check-equal? (read_str "[]")
-                (mal-vector #()) "Empty vector")  
+                (mal-vector #f #f #()) "Empty vector")  
   (check-equal? (read_str "(1 (2 3))")
-                (mal-list (list 1 (mal-list (list 2 3)))) "List of lists")
+                (mal-list #f #f (list 1 (mal-list #f #f (list 2 3)))) "List of lists")
   (check-equal? (read_str "(()())")
-                (mal-list (list (mal-list '()) (mal-list '()))) "Empty list of empty lists")
+                (mal-list #f #f (list (mal-list #f #f '()) (mal-list #f #f '()))) "Empty list of empty lists")
   (check-equal? (read_str "{ \"a\" 1 \"bb\" 2}")
-                (mal-hash #hash(("a" . 1) ("bb" . 2))) "Hash map")
+                (mal-hash #f #f #hash(("a" . 1) ("bb" . 2))) "Hash map")
   (check-exn exn:mal? (λ () (read_str "(1 2")) "Unterminated list")
   (check-exn exn:mal? (λ () (read_str "(1 2]")) "Wrongly terminated list")
   (check-exn exn:mal? (λ () (read_str "[1 2")) "Unterminated vector")
@@ -151,7 +151,7 @@
 
   ; List with comment inside
   (check-equal? (read_str "(1 2 ;comment\n3)")
-                (mal-list '(1 2 3)) "List with comment")
+                (mal-list #f #f '(1 2 3)) "List with comment")
 
   ; strings
   (check-equal? (read_str "\"pq\"") "pq" "String")
@@ -163,12 +163,12 @@
   (check-equal? (read_str "-45") -45 "Negative number")
 
   ; special symbols
-  (check-equal? (read_str "'pqr") (mal-list '(quote pqr)) "Quote")
-  (check-equal? (read_str "`pqr") (mal-list '(quasiquote pqr)) "Quasiquote")
-  (check-equal? (read_str "~pqr") (mal-list '(unquote pqr)) "Unquote")
-  (check-equal? (read_str "^pqr abc") (mal-list '(with-meta abc pqr)) "With-meta")
-  (check-equal? (read_str "@pqr") (mal-list '(deref pqr)) "Deref")
-  (check-equal? (read_str "~@pqr") (mal-list '(splice-unquote pqr)) "Splice-unquote")
+  (check-equal? (read_str "'pqr") (mal-list #f #f '(quote pqr)) "Quote")
+  (check-equal? (read_str "`pqr") (mal-list #f #f '(quasiquote pqr)) "Quasiquote")
+  (check-equal? (read_str "~pqr") (mal-list #f #f '(unquote pqr)) "Unquote")
+  (check-equal? (read_str "^pqr abc") (mal-list #f #f '(with-meta abc pqr)) "With-meta")
+  (check-equal? (read_str "@pqr") (mal-list #f #f '(deref pqr)) "Deref")
+  (check-equal? (read_str "~@pqr") (mal-list #f #f '(splice-unquote pqr)) "Splice-unquote")
 
   ; keyword
   (check-equal? (read_str ":pqr") (mal-keyword "pqr") "Keyword")
