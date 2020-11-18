@@ -8,10 +8,16 @@ run:
 # Don't run unit tests in main files (as it would start the mal interpreeter)
 TEST_SRCS := $(filter-out src/mal.rkt $(wildcard src/step*.rkt),$(wildcard src/*.rkt))
 
+# Source files to compile (to make startup faster)
+COMPILE_SRCs := $(TEST_SRCS) src/mal.rkt
+
+compile:
+	raco make $(COMPILE_SRCs)
+
 unit-test:
 	raco test $(TEST_SRCS)
 
-step-test:
+step-test: compile
 	@echo step 0; cd ../..; make "test^jw-typed-racket^step0" | grep "failing tests"
 	@echo step 1; cd ../..; make "test^jw-typed-racket^step1" | grep "failing tests"
 	@echo step 2; cd ../..; make "test^jw-typed-racket^step2" | grep "failing tests"

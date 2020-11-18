@@ -124,6 +124,16 @@
                        [(mal-vector v) (mal-list (vector->list (vector-drop v 1)))]
                        [(mal-nil) (mal-list '())]
                        [_ (raise-mal "bad arguments to rest")]))
+   (wrap-unary 'seq (match-lambda
+                      [(mal-list '()) (mal-nil)]
+                      [(mal-vector (vector)) (mal-nil)]
+                      ["" (mal-nil)]
+                      [(mal-nil) (mal-nil)]
+                      [(mal-list xs) (mal-list xs)]
+                      [(mal-vector v) (mal-list (vector->list v))]
+                      [(? string? s) (mal-list (cdr (drop-right (string-split s "") 1)))]
+                      [_ (raise-mal "bad argument to seq")]))
+   (wrap-general 'conj (lambda (args) "NYI"))
 
    ;; Hashmap-related function
    (wrap-general 'hash-map (λ ([vals : (Listof Mal)]) (mal-hash (flat-list->mal-hashmap vals))))
@@ -234,8 +244,6 @@
                           (apply-fn apply-args)))
    (wrap-general 'meta (lambda (args) "NYI"))
    (wrap-general 'with-meta (lambda (args) "NYI"))
-   (wrap-general 'seq (lambda (args) "NYI"))
-   (wrap-general 'conj (lambda (args) "NYI"))
    
    ))
 

@@ -5,6 +5,8 @@ Can we have structs with only one variable is mutable
 Done - Should we add a mal-void type to return from do with no args? Also avoids raising empty. Would not be printed for repl.
 
 
+On slower machine, tests will fail if don't precompile
+
 Typed racket version
 
 Uses a sum type for mal (as opposed to my racket implementation that uses the underlying
