@@ -12,13 +12,14 @@ In order of completion these were
 * C
 * Racket-br (failed attempt to make a mal-to-racket compliler a la Beautiful Racket)
 * Swift
+* Typed racket (with meta-data support)
 
 Each should be able to be run by cd'ing into the directory and running `make` to build and run tests (implementations
 include only limited native tests and rely mostly on the mal project step tests)
 
 Relative peformance of my implemntations is: (use `jw-perf.sh` to run)
 
-haskell (59k) > C (27k) > Racket (10k) > elixir (6k) >  swift (3k) > python (1k)
+haskell (59k) > typed-racket (33k) > C (27k) > Racket (10k) > elixir (6k) >  swift (3k) > python (1k)
 
 TODO
 - Use macros in elixir (to replace wrapping functions and to simplify `list()`)
@@ -120,6 +121,14 @@ git merge upstream/master
 # Resolve conflicts if any
 git push origin master
 ```
+
+## Typed racket
+
+Implementation choices
+- Use a mix of native types and structs as mal values. Structs for mal's nil, collectio and function types
+- Uses rackets void type to signal no value from reader
+- Relies on native TCO (so step 5 largely skipped)
+
 
 
 ----------- ORIGINAL README FOLLOWS --------------

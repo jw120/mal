@@ -1,6 +1,6 @@
 .PHONY: all clean distclean run test step-test self-host-test
 
-all: step-test unit-test #self-host-test
+all: step-test unit-test self-host-test
 
 run:
 	-@racket src/mal.rkt
@@ -32,5 +32,3 @@ step-test: compile
 
 self-host-test:
 	@echo self-host; cd ../..; make MAL_IMPL=jw-typed-racket "test^mal" | grep "TEST RESULTS\|failing tests"
-
-distclean: clean

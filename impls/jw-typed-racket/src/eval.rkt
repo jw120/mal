@@ -87,7 +87,7 @@
      (cond
        [(and (mal-list? x) (not (null? (mal-list-xs x))))
         (match (eval_ast x env)
-          [(mal-list _ _ (cons (mal-function #f #f f) other-args))
+          [(mal-list _ _ (cons (mal-function _ _ f) other-args))
            (f other-args)]
           [_ (raise-mal "cannot apply non-function")])]
        [else (eval_ast x env)])]))

@@ -22,12 +22,12 @@
 
 (env-set! repl_env
           'eval
-          (mal-function
+          (mal-function #f #f
            (λ ([args : (Listof Mal)])
              (match args
                [(list ast) (EVAL ast repl_env)]
                [_ (raise-mal "Bad arguments to eval")]))))
-(env-set! repl_env '*ARGV* (mal-list '()))
+(env-set! repl_env '*ARGV* (mal-list #f #f '()))
 
 (define repl-startup-code : (Listof String)
   (list
@@ -63,6 +63,6 @@
    (rep "(println (str \"Mal [\" *host-language* \"]\"))" repl_env)
    (repl)]
   [else
-   (env-set! repl_env '*ARGV* (mal-list (vector->list (vector-drop (current-command-line-arguments) 1))))
+   (env-set! repl_env '*ARGV* (mal-list #f #f (vector->list (vector-drop (current-command-line-arguments) 1))))
    (rep (format "(load-file ~s)" (vector-ref (current-command-line-arguments) 0)) repl_env)
    (void)]) ; void to avoid returning the value from rep

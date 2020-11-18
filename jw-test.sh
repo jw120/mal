@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # fastest to slowest
-impls="jw-haskell jw-c jw-racket jw_elixir jw-swift jw-python"
+impls="jw-haskell jw-c jw-racket jw_elixir jw-swift jw-python jw-typed-racket"
 
 for impl in $impls
 do
