@@ -3,10 +3,14 @@
 use crate::types::Mal;
 use regex::Regex;
 
-pub fn read_str(s: &str) -> Result<Mal, ReadError> {
+// Top-level interface to reader. Returns None if input is empty or only comments
+pub fn read_str(s: &str) -> Option<Result<Mal, ReadError>> {
     let mut reader = Reader::new(s);
     println!("tokens: {:?}", reader.tokens);
-    reader.read_form()
+    if reader.tokens.is_empty() {
+        return None;
+    }
+    Some(reader.read_form())
 }
 
 pub enum ReadError {
@@ -39,6 +43,7 @@ impl Reader<'_> {
             tokens: re
                 .captures_iter(source)
                 .map(|c| c.extract::<1>().1[0])
+                .filter(|s| !s.is_empty() && s.chars().next() != Some(';'))
                 .collect(),
             current: 0,
         }
@@ -87,7 +92,7 @@ impl Reader<'_> {
         loop {
             if self.is_empty() {
                 return Err(ReadError::Parse(
-                    "Missing closing paren in list".to_string(),
+                    "Expected close paren, found end of input".to_string(),
                 ));
             }
             if self.peek()? == ")" {
@@ -100,6 +105,12 @@ impl Reader<'_> {
 
     fn read_atom(&mut self) -> Result<Mal, ReadError> {
         let token = self.next()?;
+        match token {
+            "nil" => return Ok(Mal::Nil),
+            "true" => return Ok(Mal::True),
+            "false" => return Ok(Mal::False),
+            _ => {}
+        }
         if token.chars().all(|c| c.is_ascii_digit()) {
             return Ok(Mal::Int(token.parse::<i64>().unwrap()));
         }

@@ -11,5 +11,8 @@ pub fn pr_str(x: &Mal) -> String {
             y
         }
         Mal::Symbol(s) => s.to_string(),
+        Mal::Nil => "nil".to_string(),
+        Mal::True => "true".to_string(),
+        Mal::False => "false".to_string(),
     }
 }
