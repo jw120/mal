@@ -19,7 +19,7 @@ fn EVAL(x: Mal) -> Mal {
 }
 
 fn PRINT(x: Mal) {
-    println!("{}", pr_str(&x));
+    println!("{}", pr_str(&x, true));
 }
 
 fn rep(s: &str) {

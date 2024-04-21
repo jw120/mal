@@ -6,7 +6,7 @@ use regex::Regex;
 // Top-level interface to reader. Returns None if input is empty or only comments
 pub fn read_str(s: &str) -> Option<Result<Mal, ReadError>> {
     let mut reader = Reader::new(s);
-    println!("tokens: {:?}", reader.tokens);
+    // println!("tokens: {:?}", reader.tokens);
     if reader.tokens.is_empty() {
         return None;
     }
@@ -113,6 +113,54 @@ impl Reader<'_> {
         }
         if token.chars().all(|c| c.is_ascii_digit()) {
             return Ok(Mal::Int(token.parse::<i64>().unwrap()));
+        }
+        if token.chars().next() == Some('"') {
+            let mut s = String::new();
+            let mut cs = token.chars();
+            cs.next();
+            let mut in_quote: bool = false;
+            loop {
+                match (in_quote, cs.next()) {
+                    (false, Some('\\')) => in_quote = true,
+                    (false, Some('\"')) => {
+                        if cs.next().is_none() {
+                            return Ok(Mal::String(s));
+                        } else {
+                            return Err(ReadError::Internal(
+                                "Interior double-quote in string".to_string(),
+                            ));
+                        }
+                    }
+                    (false, Some(c)) => s.push(c),
+                    (false, None) => {
+                        return Err(ReadError::Parse(
+                            "Expected closing double-quote, found end of input".to_string(),
+                        ))
+                    }
+                    (true, Some('\\')) => {
+                        s.push('\\');
+                        in_quote = false;
+                    }
+                    (true, Some('n')) => {
+                        s.push('\n');
+                        in_quote = false;
+                    }
+                    (true, Some('\"')) => {
+                        s.push('\"');
+                        in_quote = false;
+                    }
+                    (true, _) => return Err(ReadError::Parse("Bad escape sequence".to_string())),
+                }
+            }
+            // if token.len() > 1 && token.chars().last() == Some('"') {
+            //     let mut s = token.to_string();
+            //     s.pop();
+            //     s.remove(0);
+            //     return Ok(Mal::String(s));
+            // }
+            // return Err(ReadError::Parse(
+            //     "Expected closing double-quote, found end of input".to_string(),
+            // ));
         }
         Ok(Mal::Symbol(token.to_string()))
     }
