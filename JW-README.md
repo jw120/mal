@@ -7,6 +7,17 @@
     + test my old implelmentations
     + Fix Syntax warning in python testing code
 
+* Working (`make "test^IMPL"` and `make MAL_IMPL=IMPL "test^mal"`) (showing `make "perf^IMPL"` numbers)
+    + python (3ms, 9ms, 4266/10s)
+    + jw-python (5ms, 19ms, 1862/10s)
+
+
+* Note - how to update my repo for changes in the upstream https://github.com/kanaka/mal
+
+git fetch upstream  # Fetches upstream changes into local branch remotes/upstream/master (git branch -va to see)
+git checkout master # Make sure we are on our master branch
+git merge remotes/upstream/master
+
 
 
 # My implementations of mal (https://github.com/kanaka/mal)
