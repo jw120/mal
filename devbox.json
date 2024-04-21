@@ -1,0 +1,24 @@
+{
+  "$schema":  "https://raw.githubusercontent.com/jetify-com/devbox/0.10.5/.schema/devbox.schema.json",
+  "packages": [
+    "python@3.12",
+    "rustup@latest",
+    "libiconv@latest"
+  ],
+  "shell": {
+    "init_hook": [
+      "projectDir=$(dirname $(readlink -f \"$0\"))",
+      "rustupHomeDir=\"$projectDir\"/impls/jw-rust/.rustup",
+      "mkdir -p $rustupHomeDir",
+      "export RUSTUP_HOME=$rustupHomeDir",
+      "export LIBRARY_PATH=$LIBRARY_PATH:\"$projectDir/nix/profile/default/lib\"",
+      "rustup default stable",
+      "cd impls/jw-rust && cargo fetch"    
+    ],
+    "scripts": {
+        "test": "cargo test -- --show-output",
+        "start" : "cargo run",
+        "build-docs": "cargo doc"
+    }
+  }
+}

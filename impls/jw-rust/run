@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cargo run -q --bin ${STEP:-stepA_mal} "${@}"
+#exec $(dirname $0)/${STEP:-stepA_mal} "${@}"

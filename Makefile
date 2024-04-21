@@ -70,7 +70,7 @@ wasm_MODE = wasmtime
 LOCCOUNT = loccount
 
 # Extra options to pass to runtest.py
-TEST_OPTS =
+TEST_OPTS = 
 
 # Test with previous test files not just the test files for the
 # current step. Step 0 and 1 tests are special and not included in
@@ -95,7 +95,7 @@ IMPLS = ada ada.2 awk bash basic bbc-basic c chuck clojure coffee common-lisp cp
 	matlab miniMAL nasm nim objc objpascal ocaml perl perl6 php picolisp pike plpgsql \
 	plsql powershell ps python python.2 r racket rexx rpython ruby rust scala scheme skew \
 	swift swift3 swift4 swift5 tcl ts vala vb vhdl vimscript wasm wren yorick xslt zig \
-	jw-haskell jw-python jw-c jw-racket jw-racket-br jw-typed-racket jw_elixir jw-swift
+	jw-haskell jw-python jw-c jw-racket jw-racket-br jw-typed-racket jw_elixir jw-swift jw-rust
 
 EXTENSION = .mal
 
@@ -276,6 +276,7 @@ jw-racket_STEP_TO_PROG =     impls/jw-racket/src/$($(1)).rkt
 jw-typed-racket_STEP_TO_PROG =     impls/jw-typed-racket/src/$($(1)).rkt
 jw_elixir_STEP_TO_PROG =     impls/jw_elixir/$($(1)).exs
 jw-racket_br_STEP_TO_PROG =  impls/jw-racket-br/README.md
+jw-rust_STEP_TO_PROG =       impls/jw-rust/src/bin/$($(1)).rs
 jw-python_STEP_TO_PROG =     impls/jw-python/src/$($(1)).py
 jw-c_STEP_TO_PROG =          impls/jw-c/src/$($(1)).c
 jw-swift_STEP_TO_PROG =      impls/jw-swift/Sources/$($(1))/main.swift
