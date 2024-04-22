@@ -1,7 +1,8 @@
 // Reader implemented following mal instructions
 
-use crate::types::Mal;
+use crate::types::{Mal, MalKey};
 use regex::Regex;
+use std::collections::HashMap;
 
 // Top-level interface to reader. Returns None if input is empty or only comments
 pub fn read_str(s: &str) -> Option<Result<Mal, ReadError>> {
@@ -80,24 +81,45 @@ impl Reader<'_> {
         match first.chars().next() {
             Some('(') => {
                 self.advance();
-                self.read_list()
+                self.read_seq(")").map(Mal::List)
+            }
+            Some('[') => {
+                self.advance();
+                self.read_seq("]").map(Mal::Vector)
+            }
+            Some('{') => {
+                self.advance();
+                let ys = self.read_seq("}")?;
+                let mut ys_iter = ys.iter();
+                let mut m: HashMap<MalKey, Mal> = HashMap::new();
+                loop {
+                    match (ys_iter.next(), ys_iter.next()) {
+                        (Some(Mal::String(s)), Some(v)) => {
+                            m.insert(MalKey::String(s.to_string()), v.clone())
+                        }
+                        (Some(Mal::Keyword(s)), Some(v)) => {
+                            m.insert(MalKey::Keyword(s.to_string()), v.clone())
+                        }
+                        _ => return Ok(Mal::HashMap(m)),
+                    };
+                }
             }
             Some(_) => self.read_atom(),
             None => Err(ReadError::Internal("Empty token in read_form".to_string())),
         }
     }
 
-    fn read_list(&mut self) -> Result<Mal, ReadError> {
+    fn read_seq(&mut self, closing: &str) -> Result<Vec<Mal>, ReadError> {
         let mut contents: Vec<Mal> = vec![];
         loop {
             if self.is_empty() {
                 return Err(ReadError::Parse(
-                    "Expected close paren, found end of input".to_string(),
+                    "Expected sequence close, found end of input".to_string(),
                 ));
             }
-            if self.peek()? == ")" {
+            if self.peek()? == closing {
                 self.advance();
-                return Ok(Mal::List(contents));
+                return Ok(contents);
             }
             contents.push(self.read_form()?);
         }
