@@ -100,6 +100,11 @@ impl Reader<'_> {
                         (Some(Mal::Keyword(s)), Some(v)) => {
                             m.insert(MalKey::Keyword(s.to_string()), v.clone())
                         }
+                        (Some(Mal::String(_)), None) => return Ok(Mal::HashMap(m)),
+                        (Some(Mal::Keyword(_)), None) => return Ok(Mal::HashMap(m)),
+                        (Some(_bad_key), _) => {
+                            return Err(ReadError::Parse("Bad key type in hash-map".to_string()))
+                        }
                         _ => return Ok(Mal::HashMap(m)),
                     };
                 }
@@ -174,16 +179,45 @@ impl Reader<'_> {
                     (true, _) => return Err(ReadError::Parse("Bad escape sequence".to_string())),
                 }
             }
-            // if token.len() > 1 && token.chars().last() == Some('"') {
-            //     let mut s = token.to_string();
-            //     s.pop();
-            //     s.remove(0);
-            //     return Ok(Mal::String(s));
-            // }
-            // return Err(ReadError::Parse(
-            //     "Expected closing double-quote, found end of input".to_string(),
-            // ));
         }
-        Ok(Mal::Symbol(token.to_string()))
+        if token.chars().next() == Some(':') {
+            if token.len() == 1 {
+                return Err(ReadError::Parse("Empty keyword name".to_string()));
+            }
+            let rest = token.to_string().split_off(1);
+            return Ok(Mal::Keyword(rest));
+        }
+        match token {
+            "'" => Ok(Mal::List(vec![
+                Mal::Symbol("quote".to_string()),
+                self.read_form()?,
+            ])),
+            "`" => Ok(Mal::List(vec![
+                Mal::Symbol("quasiquote".to_string()),
+                self.read_form()?,
+            ])),
+            "~" => Ok(Mal::List(vec![
+                Mal::Symbol("unquote".to_string()),
+                self.read_form()?,
+            ])),
+            "@" => Ok(Mal::List(vec![
+                Mal::Symbol("deref".to_string()),
+                self.read_form()?,
+            ])),
+            "~@" => Ok(Mal::List(vec![
+                Mal::Symbol("splice-unquote".to_string()),
+                self.read_form()?,
+            ])),
+            "^" => {
+                let meta = self.read_form()?;
+                let value = self.read_form()?;
+                Ok(Mal::List(vec![
+                    Mal::Symbol("with-meta".to_string()),
+                    value,
+                    meta,
+                ]))
+            }
+            _ => Ok(Mal::Symbol(token.to_string())),
+        }
     }
 }
