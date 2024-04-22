@@ -14,11 +14,13 @@ pub fn read_str(s: &str) -> Option<Result<Mal, ReadError>> {
     Some(reader.read_form())
 }
 
+// Errors returned by read_str
 pub enum ReadError {
     Internal(String), // Internal errors that should not happen
     Parse(String),    // Errors called by illegal mal code
 }
 
+// Implementation based on mutable reader object
 struct Reader<'a> {
     tokens: Vec<&'a str>,
     current: usize,
@@ -26,7 +28,7 @@ struct Reader<'a> {
 
 impl Reader<'_> {
     // Initialise a new reader
-    fn new<'a>(source: &'a str) -> Reader<'a> {
+    fn new(source: &str) -> Reader {
         let re = Regex::new(
             r###"(?x)
             [\s,]* # Whitespace and commas not captured
@@ -44,7 +46,7 @@ impl Reader<'_> {
             tokens: re
                 .captures_iter(source)
                 .map(|c| c.extract::<1>().1[0])
-                .filter(|s| !s.is_empty() && s.chars().next() != Some(';'))
+                .filter(|s| !s.is_empty() && !s.starts_with(';'))
                 .collect(),
             current: 0,
         }
@@ -141,7 +143,7 @@ impl Reader<'_> {
         if token.chars().all(|c| c.is_ascii_digit()) {
             return Ok(Mal::Int(token.parse::<i64>().unwrap()));
         }
-        if token.chars().next() == Some('"') {
+        if token.starts_with('"') {
             let mut s = String::new();
             let mut cs = token.chars();
             cs.next();
@@ -180,7 +182,7 @@ impl Reader<'_> {
                 }
             }
         }
-        if token.chars().next() == Some(':') {
+        if token.starts_with(':') {
             if token.len() == 1 {
                 return Err(ReadError::Parse("Empty keyword name".to_string()));
             }

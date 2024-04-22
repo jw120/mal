@@ -18,26 +18,7 @@ pub fn pr_str(x: &Mal, print_readably: bool) -> String {
         }
         Mal::String(s) => {
             if print_readably {
-                let mut t = "\"".to_string();
-                for c in s.chars() {
-                    match c {
-                        '\n' => {
-                            t.push('\\');
-                            t.push('n');
-                        }
-                        '\\' => {
-                            t.push('\\');
-                            t.push('\\');
-                        }
-                        '"' => {
-                            t.push('\\');
-                            t.push('\"');
-                        }
-                        _ => t.push(c),
-                    }
-                }
-                t.push('\"');
-                t
+                pr_readably(s)
             } else {
                 format!("\"{}\"", s)
             }
@@ -51,7 +32,31 @@ pub fn pr_str(x: &Mal, print_readably: bool) -> String {
 }
 
 // Helper function to format a sequence (without delimiters)
-fn seq(xs: &Vec<Mal>, print_readably: bool) -> String {
+fn seq(xs: &[Mal], print_readably: bool) -> String {
     let ys: Vec<String> = xs.iter().map(|y| pr_str(y, print_readably)).collect();
     ys.join(" ")
+}
+
+// Helper function to print a string readably
+fn pr_readably(s: &str) -> String {
+    let mut t = "\"".to_string();
+    for c in s.chars() {
+        match c {
+            '\n' => {
+                t.push('\\');
+                t.push('n');
+            }
+            '\\' => {
+                t.push('\\');
+                t.push('\\');
+            }
+            '"' => {
+                t.push('\\');
+                t.push('\"');
+            }
+            _ => t.push(c),
+        }
+    }
+    t.push('\"');
+    t
 }
