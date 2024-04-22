@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+type MalFunction = fn(&[Mal]) -> Result<Mal, String>;
+
 #[derive(Clone, Eq, PartialEq)]
 pub enum Mal {
     List(Vec<Mal>),
@@ -12,6 +14,7 @@ pub enum Mal {
     Nil,
     True,
     False,
+    Function(MalFunction),
 }
 
 // Types which can be used for HashMap keys

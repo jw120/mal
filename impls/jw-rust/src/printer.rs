@@ -28,6 +28,7 @@ pub fn pr_str(x: &Mal, print_readably: bool) -> String {
         Mal::Nil => "nil".to_string(),
         Mal::True => "true".to_string(),
         Mal::False => "false".to_string(),
+        Mal::Function(_) => "<fn>".to_string(),
     }
 }
 
