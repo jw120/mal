@@ -140,7 +140,11 @@ impl Reader<'_> {
             "false" => return Ok(Mal::False),
             _ => {}
         }
-        if token.chars().all(|c| c.is_ascii_digit()) {
+        if token.chars().all(|c| c.is_ascii_digit())
+            || (token.starts_with('-')
+                && token.len() > 1
+                && token.chars().skip(1).all(|c| c.is_ascii_digit()))
+        {
             return Ok(Mal::Int(token.parse::<i64>().unwrap()));
         }
         if token.starts_with('"') {

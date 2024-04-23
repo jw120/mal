@@ -4,7 +4,6 @@ use rustyline::error::ReadlineError;
 use rustyline::DefaultEditor;
 use std::collections::HashMap;
 
-use jw_rust_mal::core::plus;
 use jw_rust_mal::printer::pr_str;
 use jw_rust_mal::reader::{read_str, ReadError};
 use jw_rust_mal::types::Mal;
@@ -67,6 +66,20 @@ fn eval_ast(ast: &Mal, env: &Env) -> Result<Mal, String> {
             }
             Ok(Mal::List(ys))
         }
+        Mal::Vector(xs) => {
+            let mut ys = Vec::new();
+            for x in xs {
+                ys.push(EVAL(&x, env)?);
+            }
+            Ok(Mal::Vector(ys))
+        }
+        Mal::HashMap(m) => {
+            let mut n = HashMap::new();
+            for (k, v) in m {
+                n.insert(k.clone(), EVAL(v, env)?);
+            }
+            Ok(Mal::HashMap(n))
+        }
         other_value => Ok(other_value.clone()),
     }
 }
@@ -78,7 +91,12 @@ fn main() -> Result<(), ReadlineError> {
     }
 
     // Mini (read-only) environment
-    let repl_env: Env = HashMap::from([("+".to_string(), Mal::Function(plus))]);
+    let repl_env: Env = HashMap::from([
+        ("+".to_string(), Mal::Function(add)),
+        ("-".to_string(), Mal::Function(sub)),
+        ("*".to_string(), Mal::Function(mul)),
+        ("/".to_string(), Mal::Function(div)),
+    ]);
 
     loop {
         match rl.readline(RUSTYLINE_PROMPT) {
@@ -103,4 +121,33 @@ fn main() -> Result<(), ReadlineError> {
     }
     rl.save_history(RUSTYLINE_HISTORY_FILE)?;
     Ok(())
+}
+
+fn add(args: &[Mal]) -> Result<Mal, String> {
+    match args {
+        [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x + y)),
+        _ => Err("Bad arguments for +".to_string()),
+    }
+}
+
+fn sub(args: &[Mal]) -> Result<Mal, String> {
+    match args {
+        [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x - y)),
+        _ => Err("Bad arguments for +".to_string()),
+    }
+}
+
+fn mul(args: &[Mal]) -> Result<Mal, String> {
+    match args {
+        [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x * y)),
+        _ => Err("Bad arguments for +".to_string()),
+    }
+}
+
+fn div(args: &[Mal]) -> Result<Mal, String> {
+    match args {
+        [Mal::Int(_), Mal::Int(0)] => Err("Division by zero".to_string()),
+        [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x / y)),
+        _ => Err("Bad arguments for +".to_string()),
+    }
 }
