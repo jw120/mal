@@ -3,6 +3,7 @@
 use crate::types::{Mal, MalKey};
 use regex::Regex;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 // Top-level interface to reader. Returns None if input is empty or only comments
 pub fn read_str(s: &str) -> Option<Result<Mal, ReadError>> {
@@ -102,12 +103,12 @@ impl Reader<'_> {
                         (Some(Mal::Keyword(s)), Some(v)) => {
                             m.insert(MalKey::Keyword(s.to_string()), v.clone())
                         }
-                        (Some(Mal::String(_)), None) => return Ok(Mal::HashMap(m)),
-                        (Some(Mal::Keyword(_)), None) => return Ok(Mal::HashMap(m)),
+                        (Some(Mal::String(_)), None) => return Ok(Mal::HashMap(Rc::new(m))),
+                        (Some(Mal::Keyword(_)), None) => return Ok(Mal::HashMap(Rc::new(m))),
                         (Some(_bad_key), _) => {
                             return Err(ReadError::Parse("Bad key type in hash-map".to_string()))
                         }
-                        _ => return Ok(Mal::HashMap(m)),
+                        _ => return Ok(Mal::HashMap(Rc::new(m))),
                     };
                 }
             }
@@ -116,7 +117,7 @@ impl Reader<'_> {
         }
     }
 
-    fn read_seq(&mut self, closing: &str) -> Result<Vec<Mal>, ReadError> {
+    fn read_seq(&mut self, closing: &str) -> Result<Rc<Vec<Mal>>, ReadError> {
         let mut contents: Vec<Mal> = vec![];
         loop {
             if self.is_empty() {
@@ -126,7 +127,7 @@ impl Reader<'_> {
             }
             if self.peek()? == closing {
                 self.advance();
-                return Ok(contents);
+                return Ok(Rc::new(contents));
             }
             contents.push(self.read_form()?);
         }
@@ -194,34 +195,34 @@ impl Reader<'_> {
             return Ok(Mal::Keyword(rest));
         }
         match token {
-            "'" => Ok(Mal::List(vec![
+            "'" => Ok(Mal::List(Rc::new(vec![
                 Mal::Symbol("quote".to_string()),
                 self.read_form()?,
-            ])),
-            "`" => Ok(Mal::List(vec![
+            ]))),
+            "`" => Ok(Mal::List(Rc::new(vec![
                 Mal::Symbol("quasiquote".to_string()),
                 self.read_form()?,
-            ])),
-            "~" => Ok(Mal::List(vec![
+            ]))),
+            "~" => Ok(Mal::List(Rc::new(vec![
                 Mal::Symbol("unquote".to_string()),
                 self.read_form()?,
-            ])),
-            "@" => Ok(Mal::List(vec![
+            ]))),
+            "@" => Ok(Mal::List(Rc::new(vec![
                 Mal::Symbol("deref".to_string()),
                 self.read_form()?,
-            ])),
-            "~@" => Ok(Mal::List(vec![
+            ]))),
+            "~@" => Ok(Mal::List(Rc::new(vec![
                 Mal::Symbol("splice-unquote".to_string()),
                 self.read_form()?,
-            ])),
+            ]))),
             "^" => {
                 let meta = self.read_form()?;
                 let value = self.read_form()?;
-                Ok(Mal::List(vec![
+                Ok(Mal::List(Rc::new(vec![
                     Mal::Symbol("with-meta".to_string()),
                     value,
                     meta,
-                ]))
+                ])))
             }
             _ => Ok(Mal::Symbol(token.to_string())),
         }

@@ -12,6 +12,10 @@
     + jw-python (5ms, 19ms, 1862/10s)
 
 
+* Rust notes
+    + Env - code should use &self instead of self?
+
+
 * Note - how to update my repo for changes in the upstream https://github.com/kanaka/mal
 
 git fetch upstream  # Fetches upstream changes into local branch remotes/upstream/master (git branch -va to see)

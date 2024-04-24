@@ -5,6 +5,7 @@ use rustyline::DefaultEditor;
 use std::collections::HashMap;
 use std::rc::Rc;
 
+use jw_rust_mal::env::{env_get, env_new, env_set, env_set_list, Env};
 use jw_rust_mal::printer::pr_str;
 use jw_rust_mal::reader::{read_str, ReadError};
 use jw_rust_mal::types::Mal;
@@ -12,29 +13,39 @@ use jw_rust_mal::types::Mal;
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
 
-type Env = HashMap<String, Mal>;
-
 fn READ(s: &str) -> Option<Result<Mal, ReadError>> {
     read_str(s)
 }
 
 fn EVAL(ast: &Mal, env: &Env) -> Result<Mal, String> {
-    match ast {
-        Mal::List(xs) => {
-            if xs.is_empty() {
-                Ok(ast.clone())
-            } else {
-                match eval_ast(ast, env)? {
-                    Mal::List(ys) => match ys.as_slice() {
+    if let Mal::List(xs) = ast {
+        match xs.as_slice() {
+            [] => Ok(ast.clone()),
+            [Mal::Symbol(n), Mal::Symbol(s), x] if n == "def!" => {
+                let y = EVAL(x, env)?;
+                env_set(env, s, y.clone());
+                Ok(y)
+            }
+            [Mal::Symbol(n), Mal::List(xs), z] if n == "let*" => {
+                let new_env = env_new(Some(env.clone()));
+                env_set_list(&new_env, xs);
+                EVAL(z, &new_env)
+            }
+            _ => {
+                if let Mal::List(ys) = eval_ast(ast, env)? {
+                    match ys.as_slice() {
                         [Mal::Function(f), tail @ ..] => Ok(f(tail)?),
                         [_non_function, _tail @ ..] => Err("Applying non-function".to_string()),
                         [] => Err("List disappeared!".to_string()),
-                    },
-                    _non_list => Err("No longer a list!".to_string()),
+                    }
+                } else {
+                    Err("No longer a list!".to_string())
                 }
             }
         }
-        non_list => eval_ast(non_list, env),
+    } else {
+        // Non-list
+        eval_ast(ast, env)
     }
 }
 
@@ -56,10 +67,7 @@ fn rep(s: &str, env: &Env) {
 
 fn eval_ast(ast: &Mal, env: &Env) -> Result<Mal, String> {
     match ast {
-        Mal::Symbol(s) => match env.get(s) {
-            Some(value) => Ok(value.clone()),
-            None => Err(format!("Can't find value for symbol '{}'", s).to_string()),
-        },
+        Mal::Symbol(s) => env_get(env, s),
         Mal::List(xs) => {
             let mut ys = Vec::new();
             for x in xs.iter() {
@@ -92,12 +100,11 @@ fn main() -> Result<(), ReadlineError> {
     }
 
     // Mini (read-only) environment
-    let repl_env: Env = HashMap::from([
-        ("+".to_string(), Mal::Function(add)),
-        ("-".to_string(), Mal::Function(sub)),
-        ("*".to_string(), Mal::Function(mul)),
-        ("/".to_string(), Mal::Function(div)),
-    ]);
+    let repl_env: Env = env_new(None);
+    env_set(&repl_env, "+", Mal::Function(add));
+    env_set(&repl_env, "-", Mal::Function(sub));
+    env_set(&repl_env, "*", Mal::Function(mul));
+    env_set(&repl_env, "/", Mal::Function(div));
 
     loop {
         match rl.readline(RUSTYLINE_PROMPT) {

@@ -3,11 +3,11 @@ use crate::types::{Mal, MalKey};
 pub fn pr_str(x: &Mal, print_readably: bool) -> String {
     match x {
         Mal::Int(i) => i.to_string(),
-        Mal::List(xs) => format!("({})", seq(xs, print_readably)),
-        Mal::Vector(xs) => format!("[{}]", seq(xs, print_readably)),
+        Mal::List(xs) => format!("({})", seq(&*xs, print_readably)),
+        Mal::Vector(xs) => format!("[{}]", seq(&*xs, print_readably)),
         Mal::HashMap(m) => {
             let mut xs = Vec::new();
-            for (k, v) in m {
+            for (k, v) in m.iter() {
                 match k {
                     MalKey::String(s) => xs.push(Mal::String(s.to_string())),
                     MalKey::Keyword(s) => xs.push(Mal::Keyword(s.to_string())),
@@ -18,7 +18,7 @@ pub fn pr_str(x: &Mal, print_readably: bool) -> String {
         }
         Mal::String(s) => {
             if print_readably {
-                pr_readably(s)
+                pr_readably(&s)
             } else {
                 format!("\"{}\"", s)
             }
