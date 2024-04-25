@@ -18,8 +18,21 @@ pub fn env_set(env: &Env, key: &str, value: Mal) {
     env.data.borrow_mut().insert(key.to_string(), value);
 }
 
-pub fn env_set_list(_env: &Env, _xs: &[Mal]) {
-    unimplemented!()
+pub fn env_set_list(env: &Env, xs: &[Mal]) -> Result<(), String> {
+    let mut xs_iter = xs.iter();
+    loop {
+        match xs_iter.next() {
+            None => return Ok(()),
+            Some(Mal::Symbol(s)) => {
+                if let Some(value) = xs_iter.next() {
+                    env_set(env, s, value.clone());
+                } else {
+                    return Err("Bad value in set list".to_string());
+                }
+            }
+            Some(_non_symbol) => return Err("Bad symbol in set list".to_string()),
+        }
+    }
 }
 
 pub fn env_find(env: &Env, key: &str) -> Option<Env> {

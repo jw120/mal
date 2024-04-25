@@ -21,16 +21,9 @@ fn EVAL(ast: &Mal, env: &Env) -> Result<Mal, String> {
     if let Mal::List(xs) = ast {
         match xs.as_slice() {
             [] => Ok(ast.clone()),
-            [Mal::Symbol(n), Mal::Symbol(s), x] if n == "def!" => {
-                let y = EVAL(x, env)?;
-                env_set(env, s, y.clone());
-                Ok(y)
-            }
-            [Mal::Symbol(n), Mal::List(xs), z] if n == "let*" => {
-                let new_env = env_new(Some(env.clone()));
-                env_set_list(&new_env, xs);
-                EVAL(z, &new_env)
-            }
+            [Mal::Symbol(n), Mal::Symbol(s), x] if n == "def!" => apply_def(env, s, x),
+            [Mal::Symbol(n), Mal::List(xs), z] if n == "let*" => apply_let_star(env, xs, z),
+            [Mal::Symbol(n), Mal::Vector(xs), z] if n == "let*" => apply_let_star(env, xs, z),
             _ => {
                 if let Mal::List(ys) = eval_ast(ast, env)? {
                     match ys.as_slice() {
@@ -49,19 +42,29 @@ fn EVAL(ast: &Mal, env: &Env) -> Result<Mal, String> {
     }
 }
 
-fn PRINT(x: &Mal) {
-    println!("{}", pr_str(&x, true));
+fn apply_def(env: &Env, s: &str, x: &Mal) -> Result<Mal, String> {
+    let y = EVAL(x, env)?;
+    env_set(env, s, y.clone());
+    Ok(y)
 }
 
-fn rep(s: &str, env: &Env) {
-    match READ(s) {
-        None => {}
-        Some(Ok(x)) => match EVAL(&x, env) {
-            Ok(value) => PRINT(&value),
-            Err(msg) => println!("Evaluation error: {}", msg),
-        },
-        Some(Err(ReadError::Internal(msg))) => println!("Internal error: {}", msg),
-        Some(Err(ReadError::Parse(msg))) => println!("Parse error: {}", msg),
+fn apply_let_star(env: &Env, xs: &[Mal], z: &Mal) -> Result<Mal, String> {
+    let new_env = env_new(Some(env.clone()));
+    env_set_list(&new_env, xs)?;
+    let mut xs_iter = xs.iter();
+    loop {
+        match xs_iter.next() {
+            None => return EVAL(z, &new_env),
+            Some(Mal::Symbol(s)) => {
+                if let Some(value) = xs_iter.next() {
+                    let value_eval = EVAL(value, &new_env)?;
+                    env_set(&new_env, s, value_eval.clone());
+                } else {
+                    return Err("Bad value in set list".to_string());
+                }
+            }
+            Some(_non_symbol) => return Err("Bad symbol in set list".to_string()),
+        }
     }
 }
 
@@ -90,6 +93,22 @@ fn eval_ast(ast: &Mal, env: &Env) -> Result<Mal, String> {
             Ok(Mal::HashMap(Rc::new(n)))
         }
         other_value => Ok(other_value.clone()),
+    }
+}
+
+fn PRINT(x: &Mal) {
+    println!("{}", pr_str(&x, true));
+}
+
+fn rep(s: &str, env: &Env) {
+    match READ(s) {
+        None => {}
+        Some(Ok(x)) => match EVAL(&x, env) {
+            Ok(value) => PRINT(&value),
+            Err(msg) => println!("Evaluation error: {}", msg),
+        },
+        Some(Err(ReadError::Internal(msg))) => println!("Internal error: {}", msg),
+        Some(Err(ReadError::Parse(msg))) => println!("Parse error: {}", msg),
     }
 }
 
