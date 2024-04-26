@@ -26,7 +26,7 @@ fn EVAL(ast: &Mal, env: &Env) -> Result<Mal, String> {
             } else {
                 match eval_ast(ast, env)? {
                     Mal::List(ys) => match ys.as_slice() {
-                        [Mal::Function(f), tail @ ..] => Ok(f(tail)?),
+                        [Mal::Function(f), tail @ ..] => Ok(f(tail)?.clone()),
                         [_non_function, _tail @ ..] => Err("Applying non-function".to_string()),
                         [] => Err("List disappeared!".to_string()),
                     },
@@ -39,7 +39,7 @@ fn EVAL(ast: &Mal, env: &Env) -> Result<Mal, String> {
 }
 
 fn PRINT(x: &Mal) {
-    println!("{}", pr_str(&x, true));
+    println!("{}", pr_str(x, true));
 }
 
 fn rep(s: &str, env: &Env) {
@@ -63,14 +63,14 @@ fn eval_ast(ast: &Mal, env: &Env) -> Result<Mal, String> {
         Mal::List(xs) => {
             let mut ys = Vec::new();
             for x in xs.iter() {
-                ys.push(EVAL(&x, env)?);
+                ys.push(EVAL(x, env)?);
             }
             Ok(Mal::List(Rc::new(ys)))
         }
         Mal::Vector(xs) => {
             let mut ys = Vec::new();
             for x in xs.iter() {
-                ys.push(EVAL(&x, env)?);
+                ys.push(EVAL(x, env)?);
             }
             Ok(Mal::Vector(Rc::new(ys)))
         }
@@ -93,10 +93,10 @@ fn main() -> Result<(), ReadlineError> {
 
     // Mini (read-only) environment
     let repl_env: Env = HashMap::from([
-        ("+".to_string(), Mal::Function(add)),
-        ("-".to_string(), Mal::Function(sub)),
-        ("*".to_string(), Mal::Function(mul)),
-        ("/".to_string(), Mal::Function(div)),
+        ("+".to_string(), Mal::Function(Rc::new(add))),
+        ("-".to_string(), Mal::Function(Rc::new(sub))),
+        ("*".to_string(), Mal::Function(Rc::new(mul))),
+        ("/".to_string(), Mal::Function(Rc::new(div))),
     ]);
 
     loop {

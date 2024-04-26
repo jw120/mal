@@ -3,9 +3,9 @@ use crate::types::{Mal, MalKey};
 pub fn pr_str(x: &Mal, print_readably: bool) -> String {
     match x {
         Mal::Int(i) => i.to_string(),
-        Mal::List(xs) => format!("({})", seq(&*xs, print_readably)),
-        Mal::Vector(xs) => format!("[{}]", seq(&*xs, print_readably)),
-        Mal::HashMap(m) => {
+        Mal::List(xs, _) => format!("({})", seq(xs, print_readably)),
+        Mal::Vector(xs, _) => format!("[{}]", seq(xs, print_readably)),
+        Mal::HashMap(m, _) => {
             let mut xs = Vec::new();
             for (k, v) in m.iter() {
                 match k {
@@ -18,7 +18,7 @@ pub fn pr_str(x: &Mal, print_readably: bool) -> String {
         }
         Mal::String(s) => {
             if print_readably {
-                pr_readably(&s)
+                pr_readably(s)
             } else {
                 format!("\"{}\"", s)
             }
@@ -28,7 +28,7 @@ pub fn pr_str(x: &Mal, print_readably: bool) -> String {
         Mal::Nil => "nil".to_string(),
         Mal::True => "true".to_string(),
         Mal::False => "false".to_string(),
-        Mal::Function(_) => "<fn>".to_string(),
+        Mal::Function(_, _) => "<fn>".to_string(),
     }
 }
 

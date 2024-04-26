@@ -84,11 +84,13 @@ impl Reader<'_> {
         match first.chars().next() {
             Some('(') => {
                 self.advance();
-                self.read_seq(")").map(Mal::List)
+                self.read_seq(")")
+                    .map(|xs| Mal::List(xs, Rc::new(Mal::Nil)))
             }
             Some('[') => {
                 self.advance();
-                self.read_seq("]").map(Mal::Vector)
+                self.read_seq("]")
+                    .map(|xs| Mal::Vector(xs, Rc::new(Mal::Nil)))
             }
             Some('{') => {
                 self.advance();
@@ -103,12 +105,16 @@ impl Reader<'_> {
                         (Some(Mal::Keyword(s)), Some(v)) => {
                             m.insert(MalKey::Keyword(s.to_string()), v.clone())
                         }
-                        (Some(Mal::String(_)), None) => return Ok(Mal::HashMap(Rc::new(m))),
-                        (Some(Mal::Keyword(_)), None) => return Ok(Mal::HashMap(Rc::new(m))),
+                        (Some(Mal::String(_)), None) => {
+                            return Ok(Mal::HashMap(Rc::new(m), Rc::new(Mal::Nil)))
+                        }
+                        (Some(Mal::Keyword(_)), None) => {
+                            return Ok(Mal::HashMap(Rc::new(m), Rc::new(Mal::Nil)))
+                        }
                         (Some(_bad_key), _) => {
                             return Err(ReadError::Parse("Bad key type in hash-map".to_string()))
                         }
-                        _ => return Ok(Mal::HashMap(Rc::new(m))),
+                        _ => return Ok(Mal::HashMap(Rc::new(m), Rc::new(Mal::Nil))),
                     };
                 }
             }
@@ -195,34 +201,39 @@ impl Reader<'_> {
             return Ok(Mal::Keyword(rest));
         }
         match token {
-            "'" => Ok(Mal::List(Rc::new(vec![
-                Mal::Symbol("quote".to_string()),
-                self.read_form()?,
-            ]))),
-            "`" => Ok(Mal::List(Rc::new(vec![
-                Mal::Symbol("quasiquote".to_string()),
-                self.read_form()?,
-            ]))),
-            "~" => Ok(Mal::List(Rc::new(vec![
-                Mal::Symbol("unquote".to_string()),
-                self.read_form()?,
-            ]))),
-            "@" => Ok(Mal::List(Rc::new(vec![
-                Mal::Symbol("deref".to_string()),
-                self.read_form()?,
-            ]))),
-            "~@" => Ok(Mal::List(Rc::new(vec![
-                Mal::Symbol("splice-unquote".to_string()),
-                self.read_form()?,
-            ]))),
+            "'" => Ok(Mal::List(
+                Rc::new(vec![Mal::Symbol("quote".to_string()), self.read_form()?]),
+                Rc::new(Mal::Nil),
+            )),
+            "`" => Ok(Mal::List(
+                Rc::new(vec![
+                    Mal::Symbol("quasiquote".to_string()),
+                    self.read_form()?,
+                ]),
+                Rc::new(Mal::Nil),
+            )),
+            "~" => Ok(Mal::List(
+                Rc::new(vec![Mal::Symbol("unquote".to_string()), self.read_form()?]),
+                Rc::new(Mal::Nil),
+            )),
+            "@" => Ok(Mal::List(
+                Rc::new(vec![Mal::Symbol("deref".to_string()), self.read_form()?]),
+                Rc::new(Mal::Nil),
+            )),
+            "~@" => Ok(Mal::List(
+                Rc::new(vec![
+                    Mal::Symbol("splice-unquote".to_string()),
+                    self.read_form()?,
+                ]),
+                Rc::new(Mal::Nil),
+            )),
             "^" => {
                 let meta = self.read_form()?;
                 let value = self.read_form()?;
-                Ok(Mal::List(Rc::new(vec![
-                    Mal::Symbol("with-meta".to_string()),
-                    value,
-                    meta,
-                ])))
+                Ok(Mal::List(
+                    Rc::new(vec![Mal::Symbol("with-meta".to_string()), value, meta]),
+                    Rc::new(Mal::Nil),
+                ))
             }
             _ => Ok(Mal::Symbol(token.to_string())),
         }
