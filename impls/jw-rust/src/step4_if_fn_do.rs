@@ -3,13 +3,13 @@
 use rustyline::error::ReadlineError;
 use rustyline::DefaultEditor;
 use std::collections::HashMap;
-use std::ops;
 use std::rc::Rc;
 
+use jw_rust_mal::core::get_ns;
 use jw_rust_mal::env::{env_get, env_new, env_new_binds, env_set, Env};
 use jw_rust_mal::printer::pr_str;
 use jw_rust_mal::reader::{read_str, ReadError};
-use jw_rust_mal::types::{into_mal_fn, into_mal_list, mk_err, Mal};
+use jw_rust_mal::types::{into_mal_list, mk_err, Mal};
 
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
@@ -52,7 +52,7 @@ fn EVAL(ast: &Mal, env: &Env) -> Result<Mal, String> {
 fn apply_do(env: &Env, xs: &[Mal]) -> Result<Mal, String> {
     let mut last = Mal::Nil;
     for x in xs {
-        last = eval_ast(x, env)?;
+        last = EVAL(x, env)?;
     }
     Ok(last)
 }
@@ -148,12 +148,10 @@ fn main() -> Result<(), ReadlineError> {
         println!("No previous history.");
     }
 
-    // Mini (read-only) environment
     let repl_env: Env = env_new(None);
-    env_set(&repl_env, "+", into_mal_fn(Rc::new(add)));
-    env_set(&repl_env, "-", into_mal_fn(Rc::new(sub)));
-    env_set(&repl_env, "*", into_mal_fn(Rc::new(mul)));
-    env_set(&repl_env, "/", into_mal_fn(Rc::new(div)));
+    for (name, value) in get_ns() {
+        env_set(&repl_env, name, value);
+    }
 
     loop {
         match rl.readline(RUSTYLINE_PROMPT) {
@@ -178,45 +176,4 @@ fn main() -> Result<(), ReadlineError> {
     }
     rl.save_history(RUSTYLINE_HISTORY_FILE)?;
     Ok(())
-}
-
-// fn add(args: Vec<Mal>) -> Result<Mal, String> {
-//     match args.as_slice() {
-//         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x + y)),
-//         _ => mk_err("Bad arguments for +"),
-//     }
-// }
-
-fn add(args: Vec<Mal>) -> Result<Mal, String> {
-    do_iii(ops::Add::add, "+", args)
-}
-
-fn sub(args: Vec<Mal>) -> Result<Mal, String> {
-    do_iii(ops::Sub::sub, "-", args)
-}
-
-fn mul(args: Vec<Mal>) -> Result<Mal, String> {
-    do_iii(ops::Mul::mul, "*", args)
-}
-
-// fn div(args: Vec<Mal>) -> Result<Mal, String> {
-//     do_iii(ops::Div::div, "/", args)
-// }
-
-fn div(args: Vec<Mal>) -> Result<Mal, String> {
-    match args.as_slice() {
-        [Mal::Int(_), Mal::Int(0)] => Err("Division by zero".to_string()),
-        [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x / y)),
-        _ => Err("Bad arguments for /".to_string()),
-    }
-}
-
-fn do_iii(op: fn(i64, i64) -> i64, name: &str, args: Vec<Mal>) -> Result<Mal, String> {
-    match args.as_slice() {
-        [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(op(*x, *y))),
-        _ => {
-            let msg = format!("Bad arguments for {}", name);
-            mk_err(&msg)
-        }
-    }
 }
