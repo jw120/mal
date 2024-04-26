@@ -15,13 +15,13 @@
   * Env - code should use &self instead of self?
   * Differences form impl/rust - using a closure (with owned arguments) for Mal Functions
 
-* Note - how to update my repo for changes in the upstream https://github.com/kanaka/mal
+* Note - how to update my repo for changes in the upstream <https://github.com/kanaka/mal>
 
 git fetch upstream  # Fetches upstream changes into local branch remotes/upstream/master (git branch -va to see)
 git checkout master # Make sure we are on our master branch
 git merge remotes/upstream/master
 
-## My implementations of mal (https://github.com/kanaka/mal)
+## My implementations of mal (<https://github.com/kanaka/mal>)
 
 I have implemented the mal ("make a lisp") interpreter in several languages as
 a programmer exercise and a way to learn (or re-learn) those languages.
@@ -127,16 +127,16 @@ Implementation choices:
 * Use modern C (C11/C17) as much as possible
 * More unit tests that other implementations as C is error-prone
 * Exceptions handled by returning an exception type and manually ensuring
-  exceptions propogate during evaluation
+  exceptions propagate during evaluation
 * No garbage collection is done, we call `malloc()` many times but almost never `free()`
 
 ## Swift
 
 Implementation choices:
 
-* Uses DIY parser combinator library (instead of regexes) for parsing
+* Uses DIY parser combinator library (instead of reggaes) for parsing
 * Swift package (can build from command line)
-* Mal arrays and lists implemented as swift arrayslices
+* Mal arrays and lists implemented as swift array slices
 
 Git notes. After adding `https://github.com/kanaka/mal` as an upstream remote
 

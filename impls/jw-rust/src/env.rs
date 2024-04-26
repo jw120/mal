@@ -19,31 +19,31 @@ pub fn env_set(env: &Env, key: &str, value: Mal) {
     env.data.borrow_mut().insert(key.to_string(), value);
 }
 
-pub fn env_find(env: Env, key: &str) -> Option<Env> {
+pub fn env_find(env: &Env, key: &str) -> Option<Env> {
     if env.data.borrow().contains_key(key) {
-        return Some(Rc::clone(&env));
+        return Some(Rc::clone(env));
     }
     match &env.outer {
-        Some(o) => env_find(o.clone(), key),
+        Some(o) => env_find(o, key),
         None => None,
     }
 }
 
-pub fn env_get(env: Env, key: &String) -> Result<Mal, String> {
+pub fn env_get(env: &Env, key: &String) -> Result<Mal, String> {
     match env_find(env, key) {
         Some(e) => Ok(e.data.borrow()[key].clone()),
         None => Err(format!("{} not found.", key).to_string()),
     }
 }
 
-pub fn env_new(outer: Option<Env>) -> Env {
+pub fn env_new(outer: Option<&Env>) -> Env {
     Rc::new(EnvStruct {
         data: RefCell::new(HashMap::new()),
-        outer,
+        outer: outer.cloned(),
     })
 }
 
-pub fn env_new_binds(outer: Option<Env>, binds: &[Mal], exprs: &[Mal]) -> Result<Env, String> {
+pub fn env_new_binds(outer: Option<&Env>, binds: &[Mal], exprs: &[Mal]) -> Result<Env, String> {
     let env = env_new(outer);
     if binds.len() != exprs.len() {
         return Err("Mismatched binds and exprs".to_string());

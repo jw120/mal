@@ -31,6 +31,18 @@ impl PartialEq for Mal {
     }
 }
 
+pub fn mk_err<T>(s: &str) -> Result<T, String> {
+    Err(s.to_string())
+}
+
+pub fn into_mal_list(v: Vec<Mal>) -> Mal {
+    Mal::List(Rc::new(v), Rc::new(Mal::Nil))
+}
+
+pub fn into_mal_fn(f: Rc<dyn Fn(Vec<Mal>) -> Result<Mal, String>>) -> Mal {
+    Mal::Function(f, Rc::new(Mal::Nil))
+}
+
 // Types which can be used for HashMap keys
 #[derive(Clone, Eq, PartialEq, Hash)]
 pub enum MalKey {

@@ -3,12 +3,13 @@
 use rustyline::error::ReadlineError;
 use rustyline::DefaultEditor;
 use std::collections::HashMap;
+use std::ops;
 use std::rc::Rc;
 
 use jw_rust_mal::env::{env_get, env_new, env_new_binds, env_set, Env};
 use jw_rust_mal::printer::pr_str;
 use jw_rust_mal::reader::{read_str, ReadError};
-use jw_rust_mal::types::Mal;
+use jw_rust_mal::types::{into_mal_fn, into_mal_list, mk_err, Mal};
 
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
@@ -17,7 +18,7 @@ fn READ(s: &str) -> Option<Result<Mal, ReadError>> {
     read_str(s)
 }
 
-fn EVAL(ast: &Mal, env: Env) -> Result<Mal, String> {
+fn EVAL(ast: &Mal, env: &Env) -> Result<Mal, String> {
     if let Mal::List(xs, _meta) = ast {
         match xs.as_slice() {
             [] => Ok(ast.clone()),
@@ -28,17 +29,17 @@ fn EVAL(ast: &Mal, env: Env) -> Result<Mal, String> {
             [Mal::Symbol(n), Mal::List(xs, _), z] if n == "let*" => apply_let(env, xs, z),
             [Mal::Symbol(n), Mal::Vector(xs, _), z] if n == "let*" => apply_let(env, xs, z),
             [Mal::Symbol(n), Mal::List(params, _), body] if n == "fn*" => {
-                apply_fn(env, params.to_vec(), body.clone())
+                apply_fn(env.clone(), params.to_vec(), body.clone())
             }
             _ => {
                 if let Mal::List(ys, _) = eval_ast(ast, env)? {
                     match ys.as_slice() {
                         [Mal::Function(f, _), tail @ ..] => Ok(f(tail.to_vec())?),
-                        [_non_function, _tail @ ..] => Err("Applying non-function".to_string()),
-                        [] => Err("List disappeared!".to_string()),
+                        [_non_function, _tail @ ..] => mk_err("Applying non-function"),
+                        [] => mk_err("List disappeared!"),
                     }
                 } else {
-                    Err("No longer a list!".to_string())
+                    mk_err("No longer a list!")
                 }
             }
         }
@@ -48,75 +49,76 @@ fn EVAL(ast: &Mal, env: Env) -> Result<Mal, String> {
     }
 }
 
-fn apply_do(env: Env, xs: &[Mal]) -> Result<Mal, String> {
+fn apply_do(env: &Env, xs: &[Mal]) -> Result<Mal, String> {
     let mut last = Mal::Nil;
     for x in xs {
-        last = eval_ast(x, env.clone())?;
+        last = eval_ast(x, env)?;
     }
     Ok(last)
 }
 
-fn apply_def(env: Env, s: &str, x: &Mal) -> Result<Mal, String> {
-    let y = EVAL(x, env.clone())?;
-    env_set(&env, s, y.clone());
+fn apply_def(env: &Env, s: &str, x: &Mal) -> Result<Mal, String> {
+    let y = EVAL(x, env)?;
+    env_set(env, s, y.clone());
     Ok(y)
 }
 
-fn apply_if(env: Env, cond: &Mal, t: &Mal, f: &Mal) -> Result<Mal, String> {
-    match EVAL(cond, env.clone())? {
-        Mal::Nil | Mal::False => EVAL(f, env.clone()),
+fn apply_if(env: &Env, cond: &Mal, t: &Mal, f: &Mal) -> Result<Mal, String> {
+    match EVAL(cond, env)? {
+        Mal::Nil | Mal::False => EVAL(f, env),
         _ => EVAL(t, env),
     }
 }
 
 fn apply_fn(env: Env, params: Vec<Mal>, body: Mal) -> Result<Mal, String> {
     let closure = move |values: Vec<Mal>| {
-        let new_env = env_new_binds(Some(env.clone()), &params, &values)?;
-        EVAL(&body, new_env)
+        let new_env = env_new_binds(Some(&env), &params, &values)?;
+        EVAL(&body, &new_env)
     };
     Ok(Mal::Function(Rc::new(closure), Rc::new(Mal::Nil)))
 }
 
-fn apply_let(env: Env, xs: &[Mal], z: &Mal) -> Result<Mal, String> {
-    let new_env = env_new(Some(env.clone()));
+fn apply_let(env: &Env, xs: &[Mal], z: &Mal) -> Result<Mal, String> {
+    let new_env = env_new(Some(env));
     let mut xs_iter = xs.iter();
     loop {
         match xs_iter.next() {
-            None => return EVAL(z, new_env),
+            None => return EVAL(z, &new_env),
             Some(Mal::Symbol(s)) => {
                 if let Some(value) = xs_iter.next() {
-                    let value_eval = EVAL(value, new_env.clone())?;
+                    let value_eval = EVAL(value, &new_env)?;
                     env_set(&new_env, s, value_eval.clone());
                 } else {
-                    return Err("Bad value in set list".to_string());
+                    return mk_err("Bad value in set list");
                 }
             }
-            Some(_non_symbol) => return Err("Bad symbol in set list".to_string()),
+            Some(_non_symbol) => return mk_err("Bad symbol in set list"),
         }
     }
 }
 
-fn eval_ast(ast: &Mal, env: Env) -> Result<Mal, String> {
+fn eval_ast(ast: &Mal, env: &Env) -> Result<Mal, String> {
     match ast {
         Mal::Symbol(s) => env_get(env, s),
         Mal::List(xs, _) => {
             let mut ys = Vec::new();
             for x in xs.iter() {
-                ys.push(EVAL(x, env.clone())?);
+                ys.push(EVAL(x, env)?);
             }
-            Ok(Mal::List(Rc::new(ys), Rc::new(Mal::Nil)))
+            Ok(into_mal_list(ys))
+            // Ok(Mal::List(Rc::new(ys), Rc::new(Mal::Nil)))
         }
         Mal::Vector(xs, _) => {
             let mut ys = Vec::new();
             for x in xs.iter() {
-                ys.push(EVAL(x, env.clone())?);
+                ys.push(EVAL(x, env)?);
             }
             Ok(Mal::Vector(Rc::new(ys), Rc::new(Mal::Nil)))
         }
         Mal::HashMap(m, _) => {
             let mut n = HashMap::new();
             for (k, v) in m.iter() {
-                n.insert(k.clone(), EVAL(v, env.clone())?);
+                n.insert(k.clone(), EVAL(v, env)?);
             }
             Ok(Mal::HashMap(Rc::new(n), Rc::new(Mal::Nil)))
         }
@@ -128,7 +130,7 @@ fn PRINT(x: &Mal) {
     println!("{}", pr_str(x, true));
 }
 
-fn rep(s: &str, env: Env) {
+fn rep(s: &str, env: &Env) {
     match READ(s) {
         None => {}
         Some(Ok(x)) => match EVAL(&x, env) {
@@ -148,14 +150,10 @@ fn main() -> Result<(), ReadlineError> {
 
     // Mini (read-only) environment
     let repl_env: Env = env_new(None);
-    env_set(
-        &repl_env,
-        "+",
-        Mal::Function(Rc::new(add), Rc::new(Mal::Nil)),
-    );
-    // env_set(repl_env.clone(), "-", Mal::Function(Rc::new(|xs| sub(xs))));
-    // env_set(repl_env.clone(), "*", Mal::Function(Rc::new(|xs| mul(xs))));
-    // env_set(repl_env.clone(), "/", Mal::Function(Rc::new(|xs| div(xs))));
+    env_set(&repl_env, "+", into_mal_fn(Rc::new(add)));
+    env_set(&repl_env, "-", into_mal_fn(Rc::new(sub)));
+    env_set(&repl_env, "*", into_mal_fn(Rc::new(mul)));
+    env_set(&repl_env, "/", into_mal_fn(Rc::new(div)));
 
     loop {
         match rl.readline(RUSTYLINE_PROMPT) {
@@ -163,7 +161,7 @@ fn main() -> Result<(), ReadlineError> {
                 let line = line.trim_end_matches("\n\r");
                 if !line.is_empty() {
                     rl.add_history_entry(line)?;
-                    rep(line, repl_env.clone());
+                    rep(line, &repl_env);
                 }
             }
             Err(ReadlineError::Interrupted) => {
@@ -182,31 +180,43 @@ fn main() -> Result<(), ReadlineError> {
     Ok(())
 }
 
+// fn add(args: Vec<Mal>) -> Result<Mal, String> {
+//     match args.as_slice() {
+//         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x + y)),
+//         _ => mk_err("Bad arguments for +"),
+//     }
+// }
+
 fn add(args: Vec<Mal>) -> Result<Mal, String> {
+    do_iii(ops::Add::add, "+", args)
+}
+
+fn sub(args: Vec<Mal>) -> Result<Mal, String> {
+    do_iii(ops::Sub::sub, "-", args)
+}
+
+fn mul(args: Vec<Mal>) -> Result<Mal, String> {
+    do_iii(ops::Mul::mul, "*", args)
+}
+
+// fn div(args: Vec<Mal>) -> Result<Mal, String> {
+//     do_iii(ops::Div::div, "/", args)
+// }
+
+fn div(args: Vec<Mal>) -> Result<Mal, String> {
     match args.as_slice() {
-        [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x + y)),
-        _ => Err("Bad arguments for +".to_string()),
+        [Mal::Int(_), Mal::Int(0)] => Err("Division by zero".to_string()),
+        [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x / y)),
+        _ => Err("Bad arguments for /".to_string()),
     }
 }
 
-// fn sub(args: &[Mal]) -> Result<Mal, String> {
-//     match args {
-//         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x - y)),
-//         _ => Err("Bad arguments for +".to_string()),
-//     }
-// }
-
-// fn mul(args: &[Mal]) -> Result<Mal, String> {
-//     match args {
-//         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x * y)),
-//         _ => Err("Bad arguments for +".to_string()),
-//     }
-// }
-
-// fn div(args: &[Mal]) -> Result<Mal, String> {
-//     match args {
-//         [Mal::Int(_), Mal::Int(0)] => Err("Division by zero".to_string()),
-//         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x / y)),
-//         _ => Err("Bad arguments for +".to_string()),
-//     }
-// }
+fn do_iii(op: fn(i64, i64) -> i64, name: &str, args: Vec<Mal>) -> Result<Mal, String> {
+    match args.as_slice() {
+        [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(op(*x, *y))),
+        _ => {
+            let msg = format!("Bad arguments for {}", name);
+            mk_err(&msg)
+        }
+    }
+}
