@@ -5,7 +5,7 @@ use rustyline::DefaultEditor;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use jw_rust_mal::core::get_ns;
+use jw_rust_mal::core::get_builtins;
 use jw_rust_mal::env::{env_get, env_new, env_new_binds, env_set, Env};
 use jw_rust_mal::printer::pr_str;
 use jw_rust_mal::reader::{read_str, ReadError};
@@ -118,11 +118,16 @@ fn PRINT(x: &Mal) {
     println!("{}", pr_str(x, true));
 }
 
-fn rep(s: &str, env: &Env) {
+// read, evaluate, print (quiet suppress non-error output for use with start-up code)
+fn rep(s: &str, env: &Env, quiet: bool) {
     match READ(s) {
         None => {}
         Some(Ok(x)) => match EVAL(&x, env) {
-            Ok(value) => PRINT(&value),
+            Ok(value) => {
+                if !quiet {
+                    PRINT(&value)
+                }
+            }
             Err(msg) => println!("Evaluation error: {}", msg),
         },
         Some(Err(ReadError::Internal(msg))) => println!("Internal error: {}", msg),
@@ -137,8 +142,12 @@ fn main() -> Result<(), ReadlineError> {
     }
 
     let repl_env: Env = env_new(None);
-    for (name, value) in get_ns() {
+    let (builtins_rust, builtins_mal) = get_builtins();
+    for (name, value) in builtins_rust {
         env_set(&repl_env, name, value);
+    }
+    for code in builtins_mal {
+        rep(code, &repl_env, true)
     }
 
     loop {
@@ -147,7 +156,7 @@ fn main() -> Result<(), ReadlineError> {
                 let line = line.trim_end_matches("\n\r");
                 if !line.is_empty() {
                     rl.add_history_entry(line)?;
-                    rep(line, &repl_env);
+                    rep(line, &repl_env, false);
                 }
             }
             Err(ReadlineError::Interrupted) => {

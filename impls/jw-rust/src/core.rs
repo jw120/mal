@@ -5,29 +5,33 @@ use std::ops;
 use std::rc::Rc;
 
 use crate::printer::pr_str;
-use crate::types::{into_mal_fn, into_mal_seq, is_falsy, mk_err, Mal};
+use crate::types::{into_mal_fn, into_mal_seq, mk_err, Mal};
 
-pub fn get_ns() -> Vec<(&'static str, Mal)> {
-    vec![
-        ("list", into_mal_fn(Rc::new(list))),
-        ("list?", into_mal_fn(Rc::new(is_list))),
-        ("empty?", into_mal_fn(Rc::new(is_empty))),
-        ("count", into_mal_fn(Rc::new(count))),
-        ("+", into_mal_fn(Rc::new(add))),
-        ("-", into_mal_fn(Rc::new(sub))),
-        ("*", into_mal_fn(Rc::new(mul))),
-        ("/", into_mal_fn(Rc::new(div))),
-        ("=", into_mal_fn(Rc::new(eq))),
-        ("<", into_mal_fn(Rc::new(lt))),
-        ("<=", into_mal_fn(Rc::new(le))),
-        (">", into_mal_fn(Rc::new(gt))),
-        (">=", into_mal_fn(Rc::new(ge))),
-        ("not", into_mal_fn(Rc::new(not))),
-        ("pr-str", into_mal_fn(Rc::new(pr_dash_str))),
-        ("str", into_mal_fn(Rc::new(str))),
-        ("prn", into_mal_fn(Rc::new(prn))),
-        ("println", into_mal_fn(Rc::new(println))),
-    ]
+// Built-in definitions (rust code and mal code)
+pub fn get_builtins() -> (Vec<(&'static str, Mal)>, Vec<&'static str>) {
+    (
+        vec![
+            ("list", into_mal_fn(Rc::new(list))),
+            ("list?", into_mal_fn(Rc::new(is_list))),
+            ("empty?", into_mal_fn(Rc::new(is_empty))),
+            ("count", into_mal_fn(Rc::new(count))),
+            ("+", into_mal_fn(Rc::new(add))),
+            ("-", into_mal_fn(Rc::new(sub))),
+            ("*", into_mal_fn(Rc::new(mul))),
+            ("/", into_mal_fn(Rc::new(div))),
+            ("=", into_mal_fn(Rc::new(eq))),
+            ("<", into_mal_fn(Rc::new(lt))),
+            ("<=", into_mal_fn(Rc::new(le))),
+            (">", into_mal_fn(Rc::new(gt))),
+            (">=", into_mal_fn(Rc::new(ge))),
+            // ("not", into_mal_fn(Rc::new(not))),
+            ("pr-str", into_mal_fn(Rc::new(pr_dash_str))),
+            ("str", into_mal_fn(Rc::new(str))),
+            ("prn", into_mal_fn(Rc::new(prn))),
+            ("println", into_mal_fn(Rc::new(println))),
+        ],
+        vec!["(def! not (fn* (a) (if a false true)))"],
+    )
 }
 
 fn list(args: Vec<Mal>) -> Result<Mal, String> {
@@ -100,12 +104,12 @@ fn eq(args: Vec<Mal>) -> Result<Mal, String> {
     }
 }
 
-fn not(args: Vec<Mal>) -> Result<Mal, String> {
-    match args.as_slice() {
-        [x] => Ok(Mal::Bool(is_falsy(x))),
-        _ => Err("Bad arguments for not".to_string()),
-    }
-}
+// fn not(args: Vec<Mal>) -> Result<Mal, String> {
+//     match args.as_slice() {
+//         [x] => Ok(Mal::Bool(is_falsy(x))),
+//         _ => Err("Bad arguments for not".to_string()),
+//     }
+// }
 
 // pr-str function
 fn pr_dash_str(args: Vec<Mal>) -> Result<Mal, String> {

@@ -6,7 +6,7 @@ use regex::Regex;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-// Top-level interface to reader. Returns None if input is empty or only comments
+// Top-level interface to reader. Returns Nil if input is empty or only comments
 pub fn read_str(s: &str) -> Option<Result<Mal, ReadError>> {
     let mut reader = Reader::new(s);
     // println!("tokens: {:?}", reader.tokens);

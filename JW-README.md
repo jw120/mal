@@ -11,7 +11,6 @@
   * jw-python (5ms, 19ms, 1862/10s)
 
 * Rust notes
-  * Use Seq and Bool for Mal?
   * Differences form impl/rust - using a closure (with owned arguments) for Mal Functions
 
 * Note - how to update my repo for changes in the upstream <https://github.com/kanaka/mal>
