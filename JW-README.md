@@ -3,7 +3,6 @@
 * working on jw-rust
 * using devbox (single environment for all jw languages at top-level)
 * TODO
-  * Sync to original repo (how?)
   * test my old implementations
   * Fix Syntax warning in python testing code
 
@@ -12,7 +11,7 @@
   * jw-python (5ms, 19ms, 1862/10s)
 
 * Rust notes
-  * Env - code should use &self instead of self?
+  * Use Seq and Bool for Mal?
   * Differences form impl/rust - using a closure (with owned arguments) for Mal Functions
 
 * Note - how to update my repo for changes in the upstream <https://github.com/kanaka/mal>

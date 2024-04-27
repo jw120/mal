@@ -31,6 +31,9 @@ fn EVAL(ast: &Mal, env: &Env) -> Result<Mal, String> {
             [Mal::Symbol(n), Mal::List(params, _), body] if n == "fn*" => {
                 apply_fn(env.clone(), params.to_vec(), body.clone())
             }
+            [Mal::Symbol(n), Mal::Vector(params, _), body] if n == "fn*" => {
+                apply_fn(env.clone(), params.to_vec(), body.clone())
+            }
             _ => {
                 if let Mal::List(ys, _) = eval_ast(ast, env)? {
                     match ys.as_slice() {
