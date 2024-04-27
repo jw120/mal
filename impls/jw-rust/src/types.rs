@@ -46,6 +46,10 @@ pub fn into_mal_seq(is_list: bool, v: Vec<Mal>) -> Mal {
     Mal::Seq(is_list, Rc::new(v), Rc::new(Mal::Nil))
 }
 
+pub fn into_mal_hashmap(m: HashMap<MalKey, Mal>) -> Mal {
+    Mal::HashMap(Rc::new(m), Rc::new(Mal::Nil))
+}
+
 pub fn into_mal_fn(f: Rc<dyn Fn(Vec<Mal>) -> Result<Mal, String>>) -> Mal {
     Mal::Function(f, Rc::new(Mal::Nil))
 }

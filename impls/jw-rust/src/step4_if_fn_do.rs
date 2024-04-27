@@ -9,7 +9,7 @@ use jw_rust_mal::core::get_builtins;
 use jw_rust_mal::env::{env_get, env_new, env_new_binds, env_set, Env};
 use jw_rust_mal::printer::pr_str;
 use jw_rust_mal::reader::{read_str, ReadError};
-use jw_rust_mal::types::{into_mal_seq, is_falsy, mk_err, Mal};
+use jw_rust_mal::types::{into_mal_hashmap, into_mal_seq, is_falsy, mk_err, Mal};
 
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
@@ -108,7 +108,7 @@ fn eval_ast(ast: &Mal, env: &Env) -> Result<Mal, String> {
             for (k, v) in m.iter() {
                 n.insert(k.clone(), EVAL(v, env)?);
             }
-            Ok(Mal::HashMap(Rc::new(n), Rc::new(Mal::Nil)))
+            Ok(into_mal_hashmap(n))
         }
         other_value => Ok(other_value.clone()),
     }

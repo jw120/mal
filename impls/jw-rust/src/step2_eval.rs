@@ -7,7 +7,7 @@ use std::rc::Rc;
 
 use jw_rust_mal::printer::pr_str;
 use jw_rust_mal::reader::{read_str, ReadError};
-use jw_rust_mal::types::Mal;
+use jw_rust_mal::types::{into_mal_fn, into_mal_hashmap, into_mal_seq, mk_err, Mal};
 
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
@@ -19,22 +19,22 @@ fn READ(s: &str) -> Option<Result<Mal, ReadError>> {
 }
 
 fn EVAL(ast: &Mal, env: &Env) -> Result<Mal, String> {
-    match ast {
-        Mal::List(xs) => {
-            if xs.is_empty() {
-                Ok(ast.clone())
-            } else {
-                match eval_ast(ast, env)? {
-                    Mal::List(ys) => match ys.as_slice() {
-                        [Mal::Function(f), tail @ ..] => Ok(f(tail)?.clone()),
-                        [_non_function, _tail @ ..] => Err("Applying non-function".to_string()),
-                        [] => Err("List disappeared!".to_string()),
-                    },
-                    _non_list => Err("No longer a list!".to_string()),
-                }
+    if let Mal::Seq(true, xs, _) = ast {
+        if xs.is_empty() {
+            Ok(ast.clone())
+        } else {
+            match eval_ast(ast, env)? {
+                Mal::Seq(true, ys, _) => match ys.as_slice() {
+                    [Mal::Function(f, _), tail @ ..] => Ok(f(tail.to_vec())?),
+                    [_non_function, _tail @ ..] => mk_err("Applying non-function"),
+                    [] => mk_err("List disappeared!"),
+                },
+                _non_list => mk_err("No longer a list!"),
             }
         }
-        non_list => eval_ast(non_list, env),
+    } else {
+        // Non-list
+        eval_ast(ast, env)
     }
 }
 
@@ -58,28 +58,21 @@ fn eval_ast(ast: &Mal, env: &Env) -> Result<Mal, String> {
     match ast {
         Mal::Symbol(s) => match env.get(s) {
             Some(value) => Ok(value.clone()),
-            None => Err(format!("Can't find value for symbol '{}'", s).to_string()),
+            None => mk_err("Can't find value for symbol"),
         },
-        Mal::List(xs) => {
+        Mal::Seq(is_list, xs, _) => {
             let mut ys = Vec::new();
             for x in xs.iter() {
                 ys.push(EVAL(x, env)?);
             }
-            Ok(Mal::List(Rc::new(ys)))
+            Ok(into_mal_seq(*is_list, ys))
         }
-        Mal::Vector(xs) => {
-            let mut ys = Vec::new();
-            for x in xs.iter() {
-                ys.push(EVAL(x, env)?);
-            }
-            Ok(Mal::Vector(Rc::new(ys)))
-        }
-        Mal::HashMap(m) => {
+        Mal::HashMap(m, _) => {
             let mut n = HashMap::new();
             for (k, v) in m.iter() {
                 n.insert(k.clone(), EVAL(v, env)?);
             }
-            Ok(Mal::HashMap(Rc::new(n)))
+            Ok(into_mal_hashmap(n))
         }
         other_value => Ok(other_value.clone()),
     }
@@ -91,12 +84,12 @@ fn main() -> Result<(), ReadlineError> {
         println!("No previous history.");
     }
 
-    // Mini (read-only) environment
+    // Mini environment
     let repl_env: Env = HashMap::from([
-        ("+".to_string(), Mal::Function(Rc::new(add))),
-        ("-".to_string(), Mal::Function(Rc::new(sub))),
-        ("*".to_string(), Mal::Function(Rc::new(mul))),
-        ("/".to_string(), Mal::Function(Rc::new(div))),
+        ("+".to_string(), into_mal_fn(Rc::new(add))),
+        ("-".to_string(), into_mal_fn(Rc::new(sub))),
+        ("*".to_string(), into_mal_fn(Rc::new(mul))),
+        ("/".to_string(), into_mal_fn(Rc::new(div))),
     ]);
 
     loop {
@@ -124,31 +117,31 @@ fn main() -> Result<(), ReadlineError> {
     Ok(())
 }
 
-fn add(args: &[Mal]) -> Result<Mal, String> {
-    match args {
+fn add(args: Vec<Mal>) -> Result<Mal, String> {
+    match args.as_slice() {
         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x + y)),
-        _ => Err("Bad arguments for +".to_string()),
+        _ => mk_err("Bad arguments for +"),
     }
 }
 
-fn sub(args: &[Mal]) -> Result<Mal, String> {
-    match args {
+fn sub(args: Vec<Mal>) -> Result<Mal, String> {
+    match args.as_slice() {
         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x - y)),
-        _ => Err("Bad arguments for +".to_string()),
+        _ => mk_err("Bad arguments for +"),
     }
 }
 
-fn mul(args: &[Mal]) -> Result<Mal, String> {
-    match args {
+fn mul(args: Vec<Mal>) -> Result<Mal, String> {
+    match args.as_slice() {
         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x * y)),
-        _ => Err("Bad arguments for +".to_string()),
+        _ => mk_err("Bad arguments for +"),
     }
 }
 
-fn div(args: &[Mal]) -> Result<Mal, String> {
-    match args {
-        [Mal::Int(_), Mal::Int(0)] => Err("Division by zero".to_string()),
+fn div(args: Vec<Mal>) -> Result<Mal, String> {
+    match args.as_slice() {
+        [Mal::Int(_), Mal::Int(0)] => mk_err("Division by zero"),
         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x / y)),
-        _ => Err("Bad arguments for +".to_string()),
+        _ => mk_err("Bad arguments for +"),
     }
 }
