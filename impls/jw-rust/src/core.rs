@@ -1,11 +1,11 @@
 use std::ops;
 use std::rc::Rc;
 
+use crate::printer::pr_str;
 use crate::types::{into_mal_bool, into_mal_fn, into_mal_list, is_falsy, mk_err, Mal};
 
 pub fn get_ns() -> Vec<(&'static str, Mal)> {
     vec![
-        ("prn", into_mal_fn(Rc::new(prn))),
         ("list", into_mal_fn(Rc::new(list))),
         ("list?", into_mal_fn(Rc::new(is_list))),
         ("empty?", into_mal_fn(Rc::new(is_empty))),
@@ -20,11 +20,11 @@ pub fn get_ns() -> Vec<(&'static str, Mal)> {
         (">", into_mal_fn(Rc::new(gt))),
         (">=", into_mal_fn(Rc::new(ge))),
         ("not", into_mal_fn(Rc::new(not))),
+        ("pr-str", into_mal_fn(Rc::new(pr_dash_str))),
+        ("str", into_mal_fn(Rc::new(str))),
+        ("prn", into_mal_fn(Rc::new(prn))),
+        ("println", into_mal_fn(Rc::new(println))),
     ]
-}
-
-fn prn(_args: Vec<Mal>) -> Result<Mal, String> {
-    mk_err("NYI")
 }
 
 fn list(args: Vec<Mal>) -> Result<Mal, String> {
@@ -104,6 +104,29 @@ fn not(args: Vec<Mal>) -> Result<Mal, String> {
         [x] => Ok(into_mal_bool(is_falsy(x))),
         _ => Err("Bad arguments for not".to_string()),
     }
+}
+
+// pr-str function
+fn pr_dash_str(args: Vec<Mal>) -> Result<Mal, String> {
+    let arg_strings: Vec<String> = args.iter().map(|x| pr_str(x, true)).collect();
+    Ok(Mal::String(arg_strings.join(" ")))
+}
+
+fn str(args: Vec<Mal>) -> Result<Mal, String> {
+    let arg_strings: Vec<String> = args.iter().map(|x| pr_str(x, false)).collect();
+    Ok(Mal::String(arg_strings.join("")))
+}
+
+fn prn(args: Vec<Mal>) -> Result<Mal, String> {
+    let arg_strings: Vec<String> = args.iter().map(|x| pr_str(x, true)).collect();
+    println!("{}", arg_strings.join(" "));
+    Ok(Mal::Nil)
+}
+
+fn println(args: Vec<Mal>) -> Result<Mal, String> {
+    let arg_strings: Vec<String> = args.iter().map(|x| pr_str(x, false)).collect();
+    println!("{}", arg_strings.join(" "));
+    Ok(Mal::Nil)
 }
 
 // Helper functions

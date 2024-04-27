@@ -1,9 +1,8 @@
-use core::iter::zip;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use crate::types::Mal;
+use crate::types::{into_mal_list, mk_err, Mal};
 
 // Type borrowed from mal's supplied rust impl
 // Use RefCell so we can mutate the environment
@@ -45,13 +44,36 @@ pub fn env_new(outer: Option<&Env>) -> Env {
 
 pub fn env_new_binds(outer: Option<&Env>, binds: &[Mal], exprs: &[Mal]) -> Result<Env, String> {
     let env = env_new(outer);
-    if binds.len() != exprs.len() {
-        return Err("Mismatched binds and exprs".to_string());
-    }
-    for (bind, expr) in zip(binds, exprs) {
-        if let Mal::Symbol(s) = bind {
-            env_set(&env, s, expr.clone());
+    let mut binds_iter = binds.iter();
+    let mut exprs_iter = exprs.iter();
+    loop {
+        match binds_iter.next() {
+            Some(Mal::Symbol(s)) if s == "&" => {
+                if let Some(Mal::Symbol(s_var)) = binds_iter.next() {
+                    let mut xs: Vec<Mal> = Vec::new();
+                    for x in exprs_iter {
+                        xs.push(x.clone());
+                    }
+                    return match binds_iter.next() {
+                        None => {
+                            env_set(&env, s_var, into_mal_list(xs));
+                            Ok(env)
+                        }
+                        _ => mk_err("Extra argument in variadic bind"),
+                    };
+                } else {
+                    return mk_err("No symbol for variadic bind");
+                }
+            }
+            Some(Mal::Symbol(s)) => match exprs_iter.next() {
+                Some(expr) => env_set(&env, s, expr.clone()),
+                None => return mk_err("Missing expression in variadic bind"),
+            },
+            Some(_non_symbol) => return mk_err("Non-symbol in variadic bins"),
+            None => match exprs_iter.next() {
+                Some(_) => return mk_err("Extra expression in variadic bind"),
+                None => return Ok(env),
+            },
         }
     }
-    Ok(env)
 }

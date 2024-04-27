@@ -20,7 +20,7 @@ pub fn pr_str(x: &Mal, print_readably: bool) -> String {
             if print_readably {
                 pr_readably(s)
             } else {
-                format!("\"{}\"", s)
+                s.to_string()
             }
         }
         Mal::Keyword(s) => format!(":{}", s),
@@ -34,7 +34,7 @@ pub fn pr_str(x: &Mal, print_readably: bool) -> String {
 
 // Helper function to format a sequence (without delimiters)
 fn seq(xs: &[Mal], print_readably: bool) -> String {
-    let ys: Vec<String> = xs.iter().map(|y| pr_str(y, print_readably)).collect();
+    let ys: Vec<String> = xs.iter().map(|x| pr_str(x, print_readably)).collect();
     ys.join(" ")
 }
 
