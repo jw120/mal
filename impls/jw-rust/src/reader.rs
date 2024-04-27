@@ -1,4 +1,5 @@
 // Reader implemented following mal instructions
+// Used from step 1 onwards
 
 use crate::types::{Mal, MalKey};
 use regex::Regex;
@@ -85,12 +86,12 @@ impl Reader<'_> {
             Some('(') => {
                 self.advance();
                 self.read_seq(")")
-                    .map(|xs| Mal::List(xs, Rc::new(Mal::Nil)))
+                    .map(|xs| Mal::Seq(true, xs, Rc::new(Mal::Nil)))
             }
             Some('[') => {
                 self.advance();
                 self.read_seq("]")
-                    .map(|xs| Mal::Vector(xs, Rc::new(Mal::Nil)))
+                    .map(|xs| Mal::Seq(false, xs, Rc::new(Mal::Nil)))
             }
             Some('{') => {
                 self.advance();
@@ -143,8 +144,8 @@ impl Reader<'_> {
         let token = self.next()?;
         match token {
             "nil" => return Ok(Mal::Nil),
-            "true" => return Ok(Mal::True),
-            "false" => return Ok(Mal::False),
+            "true" => return Ok(Mal::Bool(true)),
+            "false" => return Ok(Mal::Bool(false)),
             _ => {}
         }
         if token.chars().all(|c| c.is_ascii_digit())
@@ -201,26 +202,31 @@ impl Reader<'_> {
             return Ok(Mal::Keyword(rest));
         }
         match token {
-            "'" => Ok(Mal::List(
+            "'" => Ok(Mal::Seq(
+                true,
                 Rc::new(vec![Mal::Symbol("quote".to_string()), self.read_form()?]),
                 Rc::new(Mal::Nil),
             )),
-            "`" => Ok(Mal::List(
+            "`" => Ok(Mal::Seq(
+                true,
                 Rc::new(vec![
                     Mal::Symbol("quasiquote".to_string()),
                     self.read_form()?,
                 ]),
                 Rc::new(Mal::Nil),
             )),
-            "~" => Ok(Mal::List(
+            "~" => Ok(Mal::Seq(
+                true,
                 Rc::new(vec![Mal::Symbol("unquote".to_string()), self.read_form()?]),
                 Rc::new(Mal::Nil),
             )),
-            "@" => Ok(Mal::List(
+            "@" => Ok(Mal::Seq(
+                true,
                 Rc::new(vec![Mal::Symbol("deref".to_string()), self.read_form()?]),
                 Rc::new(Mal::Nil),
             )),
-            "~@" => Ok(Mal::List(
+            "~@" => Ok(Mal::Seq(
+                true,
                 Rc::new(vec![
                     Mal::Symbol("splice-unquote".to_string()),
                     self.read_form()?,
@@ -230,7 +236,8 @@ impl Reader<'_> {
             "^" => {
                 let meta = self.read_form()?;
                 let value = self.read_form()?;
-                Ok(Mal::List(
+                Ok(Mal::Seq(
+                    true,
                     Rc::new(vec![Mal::Symbol("with-meta".to_string()), value, meta]),
                     Rc::new(Mal::Nil),
                 ))

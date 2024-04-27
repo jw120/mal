@@ -1,8 +1,11 @@
+// Definitions of built-in functions
+// Used from step 4 onwards
+
 use std::ops;
 use std::rc::Rc;
 
 use crate::printer::pr_str;
-use crate::types::{into_mal_bool, into_mal_fn, into_mal_list, is_falsy, mk_err, Mal};
+use crate::types::{into_mal_fn, into_mal_seq, is_falsy, mk_err, Mal};
 
 pub fn get_ns() -> Vec<(&'static str, Mal)> {
     vec![
@@ -28,29 +31,27 @@ pub fn get_ns() -> Vec<(&'static str, Mal)> {
 }
 
 fn list(args: Vec<Mal>) -> Result<Mal, String> {
-    Ok(into_mal_list(args))
+    Ok(into_mal_seq(true, args))
 }
 
 fn is_list(args: Vec<Mal>) -> Result<Mal, String> {
     match args.as_slice() {
         [] => mk_err("No argument for list?"),
-        [Mal::List(_, _), ..] => Ok(into_mal_bool(true)),
-        _ => Ok(into_mal_bool(false)),
+        [Mal::Seq(true, _, _), ..] => Ok(Mal::Bool(true)),
+        _ => Ok(Mal::Bool(false)),
     }
 }
 
 fn is_empty(args: Vec<Mal>) -> Result<Mal, String> {
     match args.as_slice() {
-        [Mal::List(xs, _), ..] => Ok(into_mal_bool(xs.is_empty())),
-        [Mal::Vector(xs, _), ..] => Ok(into_mal_bool(xs.is_empty())),
+        [Mal::Seq(_, xs, _), ..] => Ok(Mal::Bool(xs.is_empty())),
         _ => mk_err("empty? needs a list"),
     }
 }
 
 fn count(args: Vec<Mal>) -> Result<Mal, String> {
     match args.as_slice() {
-        [Mal::List(xs, _), ..] => Ok(Mal::Int(xs.len() as i64)),
-        [Mal::Vector(xs, _), ..] => Ok(Mal::Int(xs.len() as i64)),
+        [Mal::Seq(_, xs, _), ..] => Ok(Mal::Int(xs.len() as i64)),
         [Mal::Nil, ..] => Ok(Mal::Int(0)),
         _ => mk_err("count needs a list"),
     }
@@ -94,14 +95,14 @@ fn ge(args: Vec<Mal>) -> Result<Mal, String> {
 
 fn eq(args: Vec<Mal>) -> Result<Mal, String> {
     match args.as_slice() {
-        [x, y] => Ok(into_mal_bool(x == y)),
+        [x, y] => Ok(Mal::Bool(x == y)),
         _ => Err("Bad arguments for =".to_string()),
     }
 }
 
 fn not(args: Vec<Mal>) -> Result<Mal, String> {
     match args.as_slice() {
-        [x] => Ok(into_mal_bool(is_falsy(x))),
+        [x] => Ok(Mal::Bool(is_falsy(x))),
         _ => Err("Bad arguments for not".to_string()),
     }
 }
@@ -145,7 +146,7 @@ fn do_iii(op: fn(i64, i64) -> i64, name: &str, args: Vec<Mal>) -> Result<Mal, St
 // (int, int) -> bool
 fn do_iib(op: fn(i64, i64) -> bool, name: &str, args: Vec<Mal>) -> Result<Mal, String> {
     match args.as_slice() {
-        [Mal::Int(x), Mal::Int(y)] => Ok(into_mal_bool(op(*x, *y))),
+        [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Bool(op(*x, *y))),
         _ => {
             let msg = format!("Bad arguments for {}", name);
             mk_err(&msg)

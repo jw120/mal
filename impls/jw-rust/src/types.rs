@@ -1,3 +1,6 @@
+// Types for mal values
+// Used in step 1 onwards
+
 use std::collections::HashMap;
 use std::rc::Rc;
 
@@ -6,34 +9,30 @@ use std::rc::Rc;
 
 #[derive(Clone)]
 pub enum Mal {
-    List(Rc<Vec<Mal>>, Rc<Mal>),
-    Vector(Rc<Vec<Mal>>, Rc<Mal>),
+    // Seq is a list of vector (first param is true for a list)
+    Seq(bool, Rc<Vec<Mal>>, Rc<Mal>),
     HashMap(Rc<HashMap<MalKey, Mal>>, Rc<Mal>),
     Int(i64),
     Keyword(String),
     String(String),
     Symbol(String),
+    Bool(bool),
     Nil,
-    True,
-    False,
     Function(Rc<dyn Fn(Vec<Mal>) -> Result<Mal, String>>, Rc<Mal>),
 }
 
+// Lists and vectors treated as equal to each other. Functions always compare false.
 impl PartialEq for Mal {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Mal::List(xs, _), Mal::List(ys, _)) => xs == ys,
-            (Mal::Vector(xs, _), Mal::Vector(ys, _)) => xs == ys,
-            (Mal::List(xs, _), Mal::Vector(ys, _)) => xs == ys,
-            (Mal::Vector(xs, _), Mal::List(ys, _)) => xs == ys,
+            (Mal::Seq(_, xs, _), Mal::Seq(_, ys, _)) => xs == ys,
             (Mal::HashMap(xs, _), Mal::HashMap(ys, _)) => xs == ys,
             (Mal::Int(x), Mal::Int(y)) => x == y,
             (Mal::Keyword(x), Mal::Keyword(y)) => x == y,
             (Mal::String(x), Mal::String(y)) => x == y,
             (Mal::Symbol(x), Mal::Symbol(y)) => x == y,
+            (Mal::Bool(x), Mal::Bool(y)) => x == y,
             (Mal::Nil, Mal::Nil) => true,
-            (Mal::True, Mal::True) => true,
-            (Mal::False, Mal::False) => true,
             (_, _) => false,
         }
     }
@@ -43,16 +42,8 @@ pub fn mk_err<T>(s: &str) -> Result<T, String> {
     Err(s.to_string())
 }
 
-pub fn into_mal_bool(b: bool) -> Mal {
-    if b {
-        Mal::True
-    } else {
-        Mal::False
-    }
-}
-
-pub fn into_mal_list(v: Vec<Mal>) -> Mal {
-    Mal::List(Rc::new(v), Rc::new(Mal::Nil))
+pub fn into_mal_seq(is_list: bool, v: Vec<Mal>) -> Mal {
+    Mal::Seq(is_list, Rc::new(v), Rc::new(Mal::Nil))
 }
 
 pub fn into_mal_fn(f: Rc<dyn Fn(Vec<Mal>) -> Result<Mal, String>>) -> Mal {
@@ -60,11 +51,7 @@ pub fn into_mal_fn(f: Rc<dyn Fn(Vec<Mal>) -> Result<Mal, String>>) -> Mal {
 }
 
 pub fn is_falsy(x: &Mal) -> bool {
-    match x {
-        Mal::False => true,
-        Mal::Nil => true,
-        _ => false,
-    }
+    matches!(x, Mal::Bool(false) | Mal::Nil)
 }
 
 // Types which can be used for HashMap keys

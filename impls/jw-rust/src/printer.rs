@@ -1,10 +1,13 @@
+// Printing functions
+// Used in step 1 onwards
+
 use crate::types::{Mal, MalKey};
 
 pub fn pr_str(x: &Mal, print_readably: bool) -> String {
     match x {
         Mal::Int(i) => i.to_string(),
-        Mal::List(xs, _) => format!("({})", seq(xs, print_readably)),
-        Mal::Vector(xs, _) => format!("[{}]", seq(xs, print_readably)),
+        Mal::Seq(true, xs, _) => format!("({})", seq(xs, print_readably)),
+        Mal::Seq(false, xs, _) => format!("[{}]", seq(xs, print_readably)),
         Mal::HashMap(m, _) => {
             let mut xs = Vec::new();
             for (k, v) in m.iter() {
@@ -26,8 +29,7 @@ pub fn pr_str(x: &Mal, print_readably: bool) -> String {
         Mal::Keyword(s) => format!(":{}", s),
         Mal::Symbol(s) => s.to_string(),
         Mal::Nil => "nil".to_string(),
-        Mal::True => "true".to_string(),
-        Mal::False => "false".to_string(),
+        Mal::Bool(b) => b.to_string(),
         Mal::Function(_, _) => "<fn>".to_string(),
     }
 }

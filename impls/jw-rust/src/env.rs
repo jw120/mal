@@ -1,8 +1,11 @@
+// Environment data type and manipulation functions
+// Used in step 3 onwards
+
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use crate::types::{into_mal_list, mk_err, Mal};
+use crate::types::{into_mal_seq, mk_err, Mal};
 
 // Type borrowed from mal's supplied rust impl
 // Use RefCell so we can mutate the environment
@@ -56,7 +59,7 @@ pub fn env_new_binds(outer: Option<&Env>, binds: &[Mal], exprs: &[Mal]) -> Resul
                     }
                     return match binds_iter.next() {
                         None => {
-                            env_set(&env, s_var, into_mal_list(xs));
+                            env_set(&env, s_var, into_mal_seq(true, xs));
                             Ok(env)
                         }
                         _ => mk_err("Extra argument in variadic bind"),

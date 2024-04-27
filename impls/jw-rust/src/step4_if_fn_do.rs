@@ -9,7 +9,7 @@ use jw_rust_mal::core::get_ns;
 use jw_rust_mal::env::{env_get, env_new, env_new_binds, env_set, Env};
 use jw_rust_mal::printer::pr_str;
 use jw_rust_mal::reader::{read_str, ReadError};
-use jw_rust_mal::types::{into_mal_list, mk_err, Mal};
+use jw_rust_mal::types::{into_mal_seq, is_falsy, mk_err, Mal};
 
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
@@ -19,23 +19,19 @@ fn READ(s: &str) -> Option<Result<Mal, ReadError>> {
 }
 
 fn EVAL(ast: &Mal, env: &Env) -> Result<Mal, String> {
-    if let Mal::List(xs, _meta) = ast {
+    if let Mal::Seq(true, xs, _meta) = ast {
         match xs.as_slice() {
             [] => Ok(ast.clone()),
             [Mal::Symbol(n), tail @ ..] if n == "do" => apply_do(env, tail),
             [Mal::Symbol(n), cond, t, f] if n == "if" => apply_if(env, cond, t, f),
             [Mal::Symbol(n), cond, t] if n == "if" => apply_if(env, cond, t, &Mal::Nil),
             [Mal::Symbol(n), Mal::Symbol(s), x] if n == "def!" => apply_def(env, s, x),
-            [Mal::Symbol(n), Mal::List(xs, _), z] if n == "let*" => apply_let(env, xs, z),
-            [Mal::Symbol(n), Mal::Vector(xs, _), z] if n == "let*" => apply_let(env, xs, z),
-            [Mal::Symbol(n), Mal::List(params, _), body] if n == "fn*" => {
-                apply_fn(env.clone(), params.to_vec(), body.clone())
-            }
-            [Mal::Symbol(n), Mal::Vector(params, _), body] if n == "fn*" => {
+            [Mal::Symbol(n), Mal::Seq(_, xs, _), z] if n == "let*" => apply_let(env, xs, z),
+            [Mal::Symbol(n), Mal::Seq(_, params, _), body] if n == "fn*" => {
                 apply_fn(env.clone(), params.to_vec(), body.clone())
             }
             _ => {
-                if let Mal::List(ys, _) = eval_ast(ast, env)? {
+                if let Mal::Seq(true, ys, _) = eval_ast(ast, env)? {
                     match ys.as_slice() {
                         [Mal::Function(f, _), tail @ ..] => Ok(f(tail.to_vec())?),
                         [_non_function, _tail @ ..] => mk_err("Applying non-function"),
@@ -67,10 +63,7 @@ fn apply_def(env: &Env, s: &str, x: &Mal) -> Result<Mal, String> {
 }
 
 fn apply_if(env: &Env, cond: &Mal, t: &Mal, f: &Mal) -> Result<Mal, String> {
-    match EVAL(cond, env)? {
-        Mal::Nil | Mal::False => EVAL(f, env),
-        _ => EVAL(t, env),
-    }
+    EVAL(if is_falsy(&EVAL(cond, env)?) { f } else { t }, env)
 }
 
 fn apply_fn(env: Env, params: Vec<Mal>, body: Mal) -> Result<Mal, String> {
@@ -103,20 +96,12 @@ fn apply_let(env: &Env, xs: &[Mal], z: &Mal) -> Result<Mal, String> {
 fn eval_ast(ast: &Mal, env: &Env) -> Result<Mal, String> {
     match ast {
         Mal::Symbol(s) => env_get(env, s),
-        Mal::List(xs, _) => {
+        Mal::Seq(is_list, xs, _) => {
             let mut ys = Vec::new();
             for x in xs.iter() {
                 ys.push(EVAL(x, env)?);
             }
-            Ok(into_mal_list(ys))
-            // Ok(Mal::List(Rc::new(ys), Rc::new(Mal::Nil)))
-        }
-        Mal::Vector(xs, _) => {
-            let mut ys = Vec::new();
-            for x in xs.iter() {
-                ys.push(EVAL(x, env)?);
-            }
-            Ok(Mal::Vector(Rc::new(ys), Rc::new(Mal::Nil)))
+            Ok(into_mal_seq(*is_list, ys))
         }
         Mal::HashMap(m, _) => {
             let mut n = HashMap::new();
