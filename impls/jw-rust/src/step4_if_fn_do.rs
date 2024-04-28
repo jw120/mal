@@ -3,13 +3,12 @@
 use rustyline::error::ReadlineError;
 use rustyline::DefaultEditor;
 use std::collections::HashMap;
-use std::rc::Rc;
 
 use jw_rust_mal::core::get_builtins;
-use jw_rust_mal::env::{env_get, env_new, env_new_binds, env_set, Env};
+use jw_rust_mal::env::*;
 use jw_rust_mal::printer::pr_str;
 use jw_rust_mal::reader::{read_str, ReadError};
-use jw_rust_mal::types::{into_mal_hashmap, into_mal_seq, is_falsy, mk_err, Mal};
+use jw_rust_mal::types::*;
 
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
@@ -18,7 +17,7 @@ fn READ(s: &str) -> Option<Result<Mal, ReadError>> {
     read_str(s)
 }
 
-fn EVAL(ast: &Mal, env: &Env) -> Result<Mal, String> {
+fn EVAL(ast: &Mal, env: &Env) -> MalResult {
     if let Mal::Seq(true, xs, _meta) = ast {
         match xs.as_slice() {
             [] => Ok(ast.clone()),
@@ -28,14 +27,23 @@ fn EVAL(ast: &Mal, env: &Env) -> Result<Mal, String> {
             [Mal::Symbol(n), Mal::Symbol(s), x] if n == "def!" => apply_def(env, s, x),
             [Mal::Symbol(n), Mal::Seq(_, xs, _), z] if n == "let*" => apply_let(env, xs, z),
             [Mal::Symbol(n), Mal::Seq(_, params, _), body] if n == "fn*" => {
-                apply_fn(env.clone(), params.to_vec(), body.clone())
+                Ok(into_mal_closure(body.clone(), params, &env))
             }
             _ => {
                 if let Mal::Seq(true, ys, _) = eval_ast(ast, env)? {
                     match ys.as_slice() {
-                        [Mal::Function(f, _), tail @ ..] => Ok(f(tail.to_vec())?),
-                        [_non_function, _tail @ ..] => mk_err("Applying non-function"),
-                        [] => mk_err("List disappeared!"),
+                        [Mal::Function(f, _), tail @ ..] => Ok(f(tail)?),
+                        [Mal::Closure {
+                            ast: closure_ast,
+                            params,
+                            env: closure_env,
+                            meta: _,
+                        }, tail @ ..] => {
+                            let new_env = env_new_binds(Some(closure_env), params, tail)?;
+                            EVAL(closure_ast, &new_env)
+                        }
+                        // This should't happen
+                        _ => return mk_err("Applying non-function"),
                     }
                 } else {
                     mk_err("No longer a list!")
@@ -48,7 +56,7 @@ fn EVAL(ast: &Mal, env: &Env) -> Result<Mal, String> {
     }
 }
 
-fn apply_do(env: &Env, xs: &[Mal]) -> Result<Mal, String> {
+fn apply_do(env: &Env, xs: &[Mal]) -> MalResult {
     let mut last = Mal::Nil;
     for x in xs {
         last = EVAL(x, env)?;
@@ -56,25 +64,17 @@ fn apply_do(env: &Env, xs: &[Mal]) -> Result<Mal, String> {
     Ok(last)
 }
 
-fn apply_def(env: &Env, s: &str, x: &Mal) -> Result<Mal, String> {
+fn apply_def(env: &Env, s: &str, x: &Mal) -> MalResult {
     let y = EVAL(x, env)?;
     env_set(env, s, y.clone());
     Ok(y)
 }
 
-fn apply_if(env: &Env, cond: &Mal, t: &Mal, f: &Mal) -> Result<Mal, String> {
+fn apply_if(env: &Env, cond: &Mal, t: &Mal, f: &Mal) -> MalResult {
     EVAL(if is_falsy(&EVAL(cond, env)?) { f } else { t }, env)
 }
 
-fn apply_fn(env: Env, params: Vec<Mal>, body: Mal) -> Result<Mal, String> {
-    let closure = move |values: Vec<Mal>| {
-        let new_env = env_new_binds(Some(&env), &params, &values)?;
-        EVAL(&body, &new_env)
-    };
-    Ok(Mal::Function(Rc::new(closure), Rc::new(Mal::Nil)))
-}
-
-fn apply_let(env: &Env, xs: &[Mal], z: &Mal) -> Result<Mal, String> {
+fn apply_let(env: &Env, xs: &[Mal], z: &Mal) -> MalResult {
     let new_env = env_new(Some(env));
     let mut xs_iter = xs.iter();
     loop {
@@ -93,7 +93,7 @@ fn apply_let(env: &Env, xs: &[Mal], z: &Mal) -> Result<Mal, String> {
     }
 }
 
-fn eval_ast(ast: &Mal, env: &Env) -> Result<Mal, String> {
+fn eval_ast(ast: &Mal, env: &Env) -> MalResult {
     match ast {
         Mal::Symbol(s) => env_get(env, s),
         Mal::Seq(is_list, xs, _) => {

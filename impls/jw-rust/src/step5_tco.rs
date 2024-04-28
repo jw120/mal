@@ -5,7 +5,7 @@ use rustyline::DefaultEditor;
 use std::collections::HashMap;
 
 use jw_rust_mal::core::get_builtins;
-use jw_rust_mal::env::{env_get, env_new, env_new_binds, env_set};
+use jw_rust_mal::env::*;
 use jw_rust_mal::printer::pr_str;
 use jw_rust_mal::reader::{read_str, ReadError};
 use jw_rust_mal::types::*;
@@ -94,6 +94,8 @@ fn EVAL(mut ast: Mal, mut env: Env) -> Result<Mal, String> {
                         match ys.as_slice() {
                             // Builtin function, apply and done
                             [Mal::Function(f, _), tail @ ..] => return f(tail),
+
+                            // Mal closure - move to new environment and continue with closure body
                             [Mal::Closure {
                                 ast: closure_ast,
                                 params,
@@ -103,6 +105,8 @@ fn EVAL(mut ast: Mal, mut env: Env) -> Result<Mal, String> {
                                 env = env_new_binds(Some(closure_env), params, tail)?;
                                 ast = (**closure_ast).clone();
                             }
+
+                            // This should't happen
                             _ => return mk_err("Applying non-function"),
                         }
                     } else {
@@ -116,48 +120,6 @@ fn EVAL(mut ast: Mal, mut env: Env) -> Result<Mal, String> {
         }
     }
 }
-
-// // Evaluate all arguments, return last one un-evaluated
-// fn apply_do(env: &Env, xs: &[Mal]) -> Result<Mal, String> {
-//     for x in xs[..xs.len() - 1].iter() {
-//         EVAL(x, env)?;
-//     }
-//     Ok(xs[xs.len() - 1])
-// }
-
-// fn apply_def(env: &Env, s: &str, x: &Mal) -> Result<Mal, String> {
-//     let y = EVAL(x, env)?;
-//     env_set(env, s, y.clone());
-//     Ok(y)
-// }
-
-// Return appropriate argument unevaluated
-// fn apply_if(env: &Env, cond: &Mal, t: &Mal, f: &Mal) -> Result<Mal, String> {
-//     if is_falsy(&EVAL(cond.clone(), env)?) {
-//         Ok(*f)
-//     } else {
-//         Ok(*t)
-//     }
-// }
-
-// fn apply_let(env: &Env, xs: &[Mal]) -> Result<Env, String> {
-//     let new_env = env_new(Some(env));
-//     let mut xs_iter = xs.iter();
-//     loop {
-//         match xs_iter.next() {
-//             None => return Ok(new_env),
-//             Some(Mal::Symbol(s)) => {
-//                 if let Some(value) = xs_iter.next() {
-//                     let value_eval = EVAL(value, &new_env)?;
-//                     env_set(&new_env, s, value_eval.clone());
-//                 } else {
-//                     return mk_err("Bad value in set list");
-//                 }
-//             }
-//             Some(_non_symbol) => return mk_err("Bad symbol in set list"),
-//         }
-//     }
-// }
 
 fn eval_ast(ast: &Mal, env: &Env) -> Result<Mal, String> {
     match ast {

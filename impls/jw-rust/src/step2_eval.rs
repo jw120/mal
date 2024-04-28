@@ -3,11 +3,10 @@
 use rustyline::error::ReadlineError;
 use rustyline::DefaultEditor;
 use std::collections::HashMap;
-use std::rc::Rc;
 
 use jw_rust_mal::printer::pr_str;
 use jw_rust_mal::reader::{read_str, ReadError};
-use jw_rust_mal::types::{into_mal_fn, into_mal_hashmap, into_mal_seq, mk_err, Mal};
+use jw_rust_mal::types::*;
 
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
@@ -18,14 +17,14 @@ fn READ(s: &str) -> Option<Result<Mal, ReadError>> {
     read_str(s)
 }
 
-fn EVAL(ast: &Mal, env: &Env) -> Result<Mal, String> {
+fn EVAL(ast: &Mal, env: &Env) -> MalResult {
     if let Mal::Seq(true, xs, _) = ast {
         if xs.is_empty() {
             Ok(ast.clone())
         } else {
             match eval_ast(ast, env)? {
                 Mal::Seq(true, ys, _) => match ys.as_slice() {
-                    [Mal::Function(f, _), tail @ ..] => Ok(f(tail.to_vec())?),
+                    [Mal::Function(f, _), tail @ ..] => Ok(f(tail)?),
                     [_non_function, _tail @ ..] => mk_err("Applying non-function"),
                     [] => mk_err("List disappeared!"),
                 },
@@ -54,7 +53,7 @@ fn rep(s: &str, env: &Env) {
     }
 }
 
-fn eval_ast(ast: &Mal, env: &Env) -> Result<Mal, String> {
+fn eval_ast(ast: &Mal, env: &Env) -> MalResult {
     match ast {
         Mal::Symbol(s) => match env.get(s) {
             Some(value) => Ok(value.clone()),
@@ -86,10 +85,10 @@ fn main() -> Result<(), ReadlineError> {
 
     // Mini environment
     let repl_env: Env = HashMap::from([
-        ("+".to_string(), into_mal_fn(Rc::new(add))),
-        ("-".to_string(), into_mal_fn(Rc::new(sub))),
-        ("*".to_string(), into_mal_fn(Rc::new(mul))),
-        ("/".to_string(), into_mal_fn(Rc::new(div))),
+        ("+".to_string(), into_mal_fn(add)),
+        ("-".to_string(), into_mal_fn(sub)),
+        ("*".to_string(), into_mal_fn(mul)),
+        ("/".to_string(), into_mal_fn(div)),
     ]);
 
     loop {
@@ -117,29 +116,29 @@ fn main() -> Result<(), ReadlineError> {
     Ok(())
 }
 
-fn add(args: Vec<Mal>) -> Result<Mal, String> {
-    match args.as_slice() {
+fn add(args: &[Mal]) -> MalResult {
+    match args {
         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x + y)),
         _ => mk_err("Bad arguments for +"),
     }
 }
 
-fn sub(args: Vec<Mal>) -> Result<Mal, String> {
-    match args.as_slice() {
+fn sub(args: &[Mal]) -> MalResult {
+    match args {
         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x - y)),
         _ => mk_err("Bad arguments for +"),
     }
 }
 
-fn mul(args: Vec<Mal>) -> Result<Mal, String> {
-    match args.as_slice() {
+fn mul(args: &[Mal]) -> MalResult {
+    match args {
         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x * y)),
         _ => mk_err("Bad arguments for +"),
     }
 }
 
-fn div(args: Vec<Mal>) -> Result<Mal, String> {
-    match args.as_slice() {
+fn div(args: &[Mal]) -> MalResult {
+    match args {
         [Mal::Int(_), Mal::Int(0)] => mk_err("Division by zero"),
         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x / y)),
         _ => mk_err("Bad arguments for +"),

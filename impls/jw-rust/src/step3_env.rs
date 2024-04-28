@@ -3,12 +3,11 @@
 use rustyline::error::ReadlineError;
 use rustyline::DefaultEditor;
 use std::collections::HashMap;
-use std::rc::Rc;
 
-use jw_rust_mal::env::{env_get, env_new, env_set, Env};
+use jw_rust_mal::env::*;
 use jw_rust_mal::printer::pr_str;
 use jw_rust_mal::reader::{read_str, ReadError};
-use jw_rust_mal::types::{into_mal_fn, into_mal_hashmap, into_mal_seq, mk_err, Mal};
+use jw_rust_mal::types::*;
 
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
@@ -17,7 +16,7 @@ fn READ(s: &str) -> Option<Result<Mal, ReadError>> {
     read_str(s)
 }
 
-fn EVAL(ast: &Mal, env: &Env) -> Result<Mal, String> {
+fn EVAL(ast: &Mal, env: &Env) -> MalResult {
     if let Mal::Seq(true, xs, _) = ast {
         match xs.as_slice() {
             [] => Ok(ast.clone()),
@@ -26,9 +25,18 @@ fn EVAL(ast: &Mal, env: &Env) -> Result<Mal, String> {
             _ => {
                 if let Mal::Seq(true, ys, _) = eval_ast(ast, env)? {
                     match ys.as_slice() {
-                        [Mal::Function(f, _), tail @ ..] => Ok(f(tail.to_vec())?),
-                        [_non_function, _tail @ ..] => mk_err("Applying non-function"),
-                        [] => mk_err("List disappeared!"),
+                        [Mal::Function(f, _), tail @ ..] => Ok(f(tail)?),
+                        [Mal::Closure {
+                            ast: closure_ast,
+                            params,
+                            env: closure_env,
+                            meta: _,
+                        }, tail @ ..] => {
+                            let new_env = env_new_binds(Some(closure_env), params, tail)?;
+                            EVAL(closure_ast, &new_env)
+                        }
+                        // This should't happen
+                        _ => return mk_err("Applying non-function"),
                     }
                 } else {
                     mk_err("No longer a list!")
@@ -41,13 +49,13 @@ fn EVAL(ast: &Mal, env: &Env) -> Result<Mal, String> {
     }
 }
 
-fn apply_def(env: &Env, s: &str, x: &Mal) -> Result<Mal, String> {
+fn apply_def(env: &Env, s: &str, x: &Mal) -> MalResult {
     let y = EVAL(x, env)?;
     env_set(env, s, y.clone());
     Ok(y)
 }
 
-fn apply_let_star(env: &Env, xs: &[Mal], z: &Mal) -> Result<Mal, String> {
+fn apply_let_star(env: &Env, xs: &[Mal], z: &Mal) -> MalResult {
     let new_env = env_new(Some(env));
     let mut xs_iter = xs.iter();
     loop {
@@ -66,7 +74,7 @@ fn apply_let_star(env: &Env, xs: &[Mal], z: &Mal) -> Result<Mal, String> {
     }
 }
 
-fn eval_ast(ast: &Mal, env: &Env) -> Result<Mal, String> {
+fn eval_ast(ast: &Mal, env: &Env) -> MalResult {
     match ast {
         Mal::Symbol(s) => env_get(env, s),
         Mal::Seq(is_list, xs, _) => {
@@ -111,10 +119,10 @@ fn main() -> Result<(), ReadlineError> {
 
     // Mini environment
     let repl_env: Env = env_new(None);
-    env_set(&repl_env, "+", into_mal_fn(Rc::new(add)));
-    env_set(&repl_env, "-", into_mal_fn(Rc::new(sub)));
-    env_set(&repl_env, "*", into_mal_fn(Rc::new(mul)));
-    env_set(&repl_env, "/", into_mal_fn(Rc::new(div)));
+    env_set(&repl_env, "+", into_mal_fn(add));
+    env_set(&repl_env, "-", into_mal_fn(sub));
+    env_set(&repl_env, "*", into_mal_fn(mul));
+    env_set(&repl_env, "/", into_mal_fn(div));
     loop {
         match rl.readline(RUSTYLINE_PROMPT) {
             Ok(line) => {
@@ -140,29 +148,29 @@ fn main() -> Result<(), ReadlineError> {
     Ok(())
 }
 
-fn add(args: Vec<Mal>) -> Result<Mal, String> {
-    match args.as_slice() {
+fn add(args: &[Mal]) -> MalResult {
+    match args {
         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x + y)),
         _ => mk_err("Bad arguments for +"),
     }
 }
 
-fn sub(args: Vec<Mal>) -> Result<Mal, String> {
-    match args.as_slice() {
+fn sub(args: &[Mal]) -> MalResult {
+    match args {
         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x - y)),
         _ => mk_err("Bad arguments for +"),
     }
 }
 
-fn mul(args: Vec<Mal>) -> Result<Mal, String> {
-    match args.as_slice() {
+fn mul(args: &[Mal]) -> MalResult {
+    match args {
         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x * y)),
         _ => mk_err("Bad arguments for +"),
     }
 }
 
-fn div(args: Vec<Mal>) -> Result<Mal, String> {
-    match args.as_slice() {
+fn div(args: &[Mal]) -> MalResult {
+    match args {
         [Mal::Int(_), Mal::Int(0)] => mk_err("Division by zero"),
         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x / y)),
         _ => mk_err("Bad arguments for +"),
