@@ -1,10 +1,11 @@
 // Reader implemented following mal instructions
 // Used from step 1 onwards
 
-use crate::types::{Mal, MalKey};
 use regex::Regex;
 use std::collections::HashMap;
 use std::rc::Rc;
+
+use crate::types::*;
 
 // Top-level interface to reader. Returns Nil if input is empty or only comments
 pub fn read_str(s: &str) -> Option<Result<Mal, ReadError>> {

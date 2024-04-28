@@ -1,6 +1,7 @@
 // Types for mal values
 // Used in step 1 onwards
 
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
@@ -18,7 +19,13 @@ pub enum Mal {
     Symbol(String),
     Bool(bool),
     Nil,
-    Function(Rc<dyn Fn(Vec<Mal>) -> Result<Mal, String>>, Rc<Mal>),
+    Function(fn(&[Mal]) -> MalResult, Rc<Mal>), // Rust function
+    Closure {
+        ast: Rc<Mal>,
+        params: Vec<Mal>,
+        env: Env,
+        meta: Rc<Mal>,
+    },
 }
 
 // Lists and vectors treated as equal to each other. Functions always compare false.
@@ -38,24 +45,37 @@ impl PartialEq for Mal {
     }
 }
 
-pub fn mk_err<T>(s: &str) -> Result<T, String> {
-    Err(s.to_string())
-}
+// Helper constructor functions to reduce boilerplate
 
-pub fn into_mal_seq(is_list: bool, v: Vec<Mal>) -> Mal {
-    Mal::Seq(is_list, Rc::new(v), Rc::new(Mal::Nil))
+pub fn into_mal_closure(ast: Mal, params: &[Mal], env: &Env) -> Mal {
+    Mal::Closure {
+        ast: Rc::new(ast),
+        params: params.to_vec(),
+        env: env.clone(),
+        meta: Rc::new(Mal::Nil),
+    }
 }
 
 pub fn into_mal_hashmap(m: HashMap<MalKey, Mal>) -> Mal {
     Mal::HashMap(Rc::new(m), Rc::new(Mal::Nil))
 }
 
-pub fn into_mal_fn(f: Rc<dyn Fn(Vec<Mal>) -> Result<Mal, String>>) -> Mal {
+pub fn into_mal_fn(f: fn(&[Mal]) -> MalResult) -> Mal {
     Mal::Function(f, Rc::new(Mal::Nil))
+}
+
+pub fn into_mal_seq(is_list: bool, v: Vec<Mal>) -> Mal {
+    Mal::Seq(is_list, Rc::new(v), Rc::new(Mal::Nil))
 }
 
 pub fn is_falsy(x: &Mal) -> bool {
     matches!(x, Mal::Bool(false) | Mal::Nil)
+}
+
+pub type MalResult = Result<Mal, String>;
+
+pub fn mk_err<T>(s: &str) -> Result<T, String> {
+    Err(s.to_string())
 }
 
 // Types which can be used for HashMap keys
@@ -64,3 +84,10 @@ pub enum MalKey {
     Keyword(String),
     String(String),
 }
+
+pub struct EnvStruct {
+    pub data: RefCell<HashMap<String, Mal>>,
+    pub outer: Option<Env>,
+}
+
+pub type Env = Rc<EnvStruct>;

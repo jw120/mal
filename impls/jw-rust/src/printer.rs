@@ -1,7 +1,7 @@
 // Printing functions
 // Used in step 1 onwards
 
-use crate::types::{Mal, MalKey};
+use crate::types::*;
 
 pub fn pr_str(x: &Mal, print_readably: bool) -> String {
     match x {
@@ -30,7 +30,13 @@ pub fn pr_str(x: &Mal, print_readably: bool) -> String {
         Mal::Symbol(s) => s.to_string(),
         Mal::Nil => "nil".to_string(),
         Mal::Bool(b) => b.to_string(),
-        Mal::Function(_, _) => "<fn>".to_string(),
+        Mal::Function(_, _) => "<function>".to_string(),
+        Mal::Closure {
+            ast: _,
+            params: _,
+            env: _,
+            meta: _,
+        } => "<closure>".to_string(),
     }
 }
 

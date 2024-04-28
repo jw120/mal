@@ -5,17 +5,10 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use crate::types::{into_mal_seq, mk_err, Mal};
+use crate::types::*;
 
 // Type borrowed from mal's supplied rust impl
 // Use RefCell so we can mutate the environment
-
-pub struct EnvStruct {
-    data: RefCell<HashMap<String, Mal>>,
-    outer: Option<Env>,
-}
-
-pub type Env = Rc<EnvStruct>;
 
 pub fn env_set(env: &Env, key: &str, value: Mal) {
     env.data.borrow_mut().insert(key.to_string(), value);
