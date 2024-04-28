@@ -1,9 +1,11 @@
 // Definitions of built-in functions
 // Used from step 4 onwards
 
+use std::fs;
 use std::ops;
 
 use crate::printer::pr_str;
+use crate::reader;
 use crate::types::*;
 
 // Built-in definitions (rust code and mal code)
@@ -27,8 +29,13 @@ pub fn get_builtins() -> (Vec<(&'static str, Mal)>, Vec<&'static str>) {
             ("str", into_mal_fn(str)),
             ("prn", into_mal_fn(prn)),
             ("println", into_mal_fn(println)),
+            ("read-string", into_mal_fn(read_string)),
+            ("slurp", into_mal_fn(slurp)),
         ],
-        vec!["(def! not (fn* (a) (if a false true)))"],
+        vec![
+            "(def! not (fn* (a) (if a false true)))",
+            "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\\nnil)\")))))",
+        ],
     )
 }
 
@@ -102,13 +109,6 @@ fn eq(args: &[Mal]) -> MalResult {
     }
 }
 
-// fn not(args: &[Mal]) -> MalResult {
-//     match args {
-//         [x] => Ok(Mal::Bool(is_falsy(x))),
-//         _ => Err("Bad arguments for not".to_string()),
-//     }
-// }
-
 // pr-str function
 fn pr_dash_str(args: &[Mal]) -> MalResult {
     let arg_strings: Vec<String> = args.iter().map(|x| pr_str(x, true)).collect();
@@ -130,6 +130,32 @@ fn println(args: &[Mal]) -> MalResult {
     let arg_strings: Vec<String> = args.iter().map(|x| pr_str(x, false)).collect();
     println!("{}", arg_strings.join(" "));
     Ok(Mal::Nil)
+}
+
+// Other functions
+
+fn read_string(args: &[Mal]) -> MalResult {
+    if let [Mal::String(s)] = args {
+        match reader::read_str(s) {
+            Some(Ok(x)) => Ok(x),
+            Some(Err(reader::ReadError::Internal(msg))) => Err(msg),
+            Some(Err(reader::ReadError::Parse(msg))) => Err(msg),
+            None => Ok(Mal::Nil),
+        }
+    } else {
+        mk_err("read-string needs a string")
+    }
+}
+
+fn slurp(args: &[Mal]) -> MalResult {
+    if let [Mal::String(path)] = args {
+        match fs::read_to_string(path) {
+            Ok(s) => Ok(Mal::String(s)),
+            Err(e) => Err(e.to_string()),
+        }
+    } else {
+        mk_err("slurp takes a filename")
+    }
 }
 
 // Helper functions

@@ -38,6 +38,14 @@ pub fn env_new(outer: Option<&Env>) -> Env {
     })
 }
 
+pub fn env_outermost(env: &Env) -> Env {
+    let mut e = env.clone();
+    while let Some(outer) = &e.outer {
+        e = outer.clone();
+    }
+    e
+}
+
 pub fn env_new_binds(outer: Option<&Env>, binds: &[Mal], exprs: &[Mal]) -> Result<Env, String> {
     let env = env_new(outer);
     let mut binds_iter = binds.iter();

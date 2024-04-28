@@ -11,7 +11,7 @@
   * jw-python (5ms, 19ms, 1862/10s)
 
 * Rust notes
-  * Differences form impl/rust - using a closure (with owned arguments) for Mal Functions
+  * eval as a special form not a bound function (with hack to find outermost environment) - borrowed from impls/rust
 
 * Note - how to update my repo for changes in the upstream <https://github.com/kanaka/mal>
 
