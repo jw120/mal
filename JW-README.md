@@ -11,7 +11,7 @@
   * jw-python (5ms, 19ms, 1862/10s)
 
 * Rust notes
-  * eval as a special form not a bound function (with hack to find outermost environment) - borrowed from impls/rust
+  * eval as a special form not a bound function (with hack to find outermost environment) - borrowed from supplied rust implementation
 
 * Note - how to update my repo for changes in the upstream <https://github.com/kanaka/mal>
 

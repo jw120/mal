@@ -8,13 +8,13 @@ use std::rc::Rc;
 use crate::types::*;
 
 // Top-level interface to reader. Returns Nil if input is empty or only comments
-pub fn read_str(s: &str) -> Option<Result<Mal, ReadError>> {
+pub fn read_str(s: &str) -> Result<Mal, ReadError> {
     let mut reader = Reader::new(s);
     // println!("tokens: {:?}", reader.tokens);
     if reader.tokens.is_empty() {
-        return None;
+        return Ok(Mal::Nil);
     }
-    Some(reader.read_form())
+    reader.read_form()
 }
 
 // Errors returned by read_str

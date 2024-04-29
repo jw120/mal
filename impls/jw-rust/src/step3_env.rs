@@ -12,7 +12,7 @@ use jw_rust_mal::types::*;
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
 
-fn READ(s: &str) -> Option<Result<Mal, ReadError>> {
+fn READ(s: &str) -> Result<Mal, ReadError> {
     read_str(s)
 }
 
@@ -36,7 +36,7 @@ fn EVAL(ast: &Mal, env: &Env) -> MalResult {
                             EVAL(closure_ast, &new_env)
                         }
                         // This should't happen
-                        _ => return mk_err("Applying non-function"),
+                        _ => mk_err("Applying non-function"),
                     }
                 } else {
                     mk_err("No longer a list!")
@@ -101,13 +101,13 @@ fn PRINT(x: &Mal) {
 
 fn rep(s: &str, env: &Env) {
     match READ(s) {
-        None => {}
-        Some(Ok(x)) => match EVAL(&x, env) {
+        Ok(Mal::Nil) => {}
+        Ok(x) => match EVAL(&x, env) {
             Ok(value) => PRINT(&value),
             Err(msg) => println!("Evaluation error: {}", msg),
         },
-        Some(Err(ReadError::Internal(msg))) => println!("Internal error: {}", msg),
-        Some(Err(ReadError::Parse(msg))) => println!("Parse error: {}", msg),
+        Err(ReadError::Internal(msg)) => println!("Internal error: {}", msg),
+        Err(ReadError::Parse(msg)) => println!("Parse error: {}", msg),
     }
 }
 

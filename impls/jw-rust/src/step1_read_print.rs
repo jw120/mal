@@ -10,7 +10,7 @@ use jw_rust_mal::types::Mal;
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
 
-fn READ(s: &str) -> Option<Result<Mal, ReadError>> {
+fn READ(s: &str) -> Result<Mal, ReadError> {
     read_str(s)
 }
 
@@ -24,10 +24,10 @@ fn PRINT(x: Mal) {
 
 fn rep(s: &str) {
     match READ(s) {
-        None => {}
-        Some(Ok(x)) => PRINT(EVAL(x)),
-        Some(Err(ReadError::Internal(msg))) => println!("Internal error: {}", msg),
-        Some(Err(ReadError::Parse(msg))) => println!("Parse error: {}", msg),
+        Ok(Mal::Nil) => {}
+        Ok(x) => PRINT(EVAL(x)),
+        Err(ReadError::Internal(msg)) => println!("Internal error: {}", msg),
+        Err(ReadError::Parse(msg)) => println!("Parse error: {}", msg),
     }
 }
 

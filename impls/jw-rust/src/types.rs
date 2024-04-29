@@ -26,6 +26,7 @@ pub enum Mal {
         env: Env,
         meta: Rc<Mal>,
     },
+    Atom(Rc<RefCell<Mal>>),
 }
 
 // Lists and vectors treated as equal to each other. Functions always compare false.
@@ -46,6 +47,10 @@ impl PartialEq for Mal {
 }
 
 // Helper constructor functions to reduce boilerplate
+
+pub fn into_mal_atom(value: Mal) -> Mal {
+    Mal::Atom(Rc::new(RefCell::new(value)))
+}
 
 pub fn into_mal_closure(ast: Mal, params: &[Mal], env: &Env) -> Mal {
     Mal::Closure {

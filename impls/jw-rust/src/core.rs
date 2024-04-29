@@ -29,6 +29,11 @@ pub fn get_builtins() -> (Vec<(&'static str, Mal)>, Vec<&'static str>) {
             ("str", into_mal_fn(str)),
             ("prn", into_mal_fn(prn)),
             ("println", into_mal_fn(println)),
+            ("atom", into_mal_fn(atom)),
+            ("atom?", into_mal_fn(is_atom)),
+            ("deref", into_mal_fn(deref)),
+            ("reset!", into_mal_fn(reset)),
+            ("swap!", into_mal_fn(swap)),
             ("read-string", into_mal_fn(read_string)),
             ("slurp", into_mal_fn(slurp)),
         ],
@@ -132,15 +137,57 @@ fn println(args: &[Mal]) -> MalResult {
     Ok(Mal::Nil)
 }
 
+// Atom functions
+
+fn atom(args: &[Mal]) -> MalResult {
+    if let [x] = args {
+        Ok(into_mal_atom(x.clone()))
+    } else {
+        mk_err("atom takes one value")
+    }
+}
+
+fn is_atom(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::Atom(_)] => Ok(Mal::Bool(true)),
+        [_] => Ok(Mal::Bool(false)),
+        _ => mk_err("atom? takes on value"),
+    }
+}
+
+fn deref(args: &[Mal]) -> MalResult {
+    if let [Mal::Atom(a)] = args {
+        Ok(((*a).borrow()).clone())
+    } else {
+        mk_err("NYI")
+    }
+}
+
+fn reset(args: &[Mal]) -> MalResult {
+    if let [Mal::Atom(a), value] = args {
+        *((*a).borrow_mut()) = value.clone();
+        Ok(value.clone())
+    } else {
+        mk_err("reset takes an atom and a mal value")
+    }
+}
+
+fn swap(args: &[Mal]) -> MalResult {
+    if let [_x] = args {
+        Ok(Mal::Nil)
+    } else {
+        mk_err("NYI")
+    }
+}
+
 // Other functions
 
 fn read_string(args: &[Mal]) -> MalResult {
     if let [Mal::String(s)] = args {
         match reader::read_str(s) {
-            Some(Ok(x)) => Ok(x),
-            Some(Err(reader::ReadError::Internal(msg))) => Err(msg),
-            Some(Err(reader::ReadError::Parse(msg))) => Err(msg),
-            None => Ok(Mal::Nil),
+            Ok(x) => Ok(x),
+            Err(reader::ReadError::Internal(msg)) => Err(msg),
+            Err(reader::ReadError::Parse(msg)) => Err(msg),
         }
     } else {
         mk_err("read-string needs a string")

@@ -13,7 +13,7 @@ use jw_rust_mal::types::*;
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
 
-fn READ(s: &str) -> Option<Result<Mal, ReadError>> {
+fn READ(s: &str) -> Result<Mal, ReadError> {
     read_str(s)
 }
 
@@ -27,7 +27,7 @@ fn EVAL(ast: &Mal, env: &Env) -> MalResult {
             [Mal::Symbol(n), Mal::Symbol(s), x] if n == "def!" => apply_def(env, s, x),
             [Mal::Symbol(n), Mal::Seq(_, xs, _), z] if n == "let*" => apply_let(env, xs, z),
             [Mal::Symbol(n), Mal::Seq(_, params, _), body] if n == "fn*" => {
-                Ok(into_mal_closure(body.clone(), params, &env))
+                Ok(into_mal_closure(body.clone(), params, env))
             }
             _ => {
                 if let Mal::Seq(true, ys, _) = eval_ast(ast, env)? {
@@ -43,7 +43,7 @@ fn EVAL(ast: &Mal, env: &Env) -> MalResult {
                             EVAL(closure_ast, &new_env)
                         }
                         // This should't happen
-                        _ => return mk_err("Applying non-function"),
+                        _ => mk_err("Applying non-function"),
                     }
                 } else {
                     mk_err("No longer a list!")
@@ -121,8 +121,8 @@ fn PRINT(x: &Mal) {
 // read, evaluate, print (quiet suppress non-error output for use with start-up code)
 fn rep(s: &str, env: &Env, quiet: bool) {
     match READ(s) {
-        None => {}
-        Some(Ok(x)) => match EVAL(&x, env) {
+        Ok(Mal::Nil) => {}
+        Ok(x) => match EVAL(&x, env) {
             Ok(value) => {
                 if !quiet {
                     PRINT(&value)
@@ -130,8 +130,8 @@ fn rep(s: &str, env: &Env, quiet: bool) {
             }
             Err(msg) => println!("Evaluation error: {}", msg),
         },
-        Some(Err(ReadError::Internal(msg))) => println!("Internal error: {}", msg),
-        Some(Err(ReadError::Parse(msg))) => println!("Parse error: {}", msg),
+        Err(ReadError::Internal(msg)) => println!("Internal error: {}", msg),
+        Err(ReadError::Parse(msg)) => println!("Parse error: {}", msg),
     }
 }
 
