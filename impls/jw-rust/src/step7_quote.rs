@@ -30,7 +30,7 @@ fn EVAL(mut ast: Mal, mut env: Env) -> MalResult {
                 // do special form - evaluate all but last element and loop with last element
                 [Mal::Symbol(n), tail @ ..] if n == "do" => {
                     if tail.is_empty() {
-                        return mk_err("No arguments to do");
+                        return err("No arguments to do");
                     } else {
                         for x in tail[..xs.len() - 1].iter() {
                             EVAL(x.clone(), env.clone())?;
@@ -75,10 +75,10 @@ fn EVAL(mut ast: Mal, mut env: Env) -> MalResult {
                                     let value_eval = EVAL(value.clone(), env.clone())?;
                                     env::set(&env, s, value_eval.clone());
                                 } else {
-                                    return mk_err("Bad value in set list");
+                                    return err("Bad value in set list");
                                 }
                             }
-                            Some(_non_symbol) => return mk_err("Bad symbol in set list"),
+                            Some(_non_symbol) => return err("Bad symbol in set list"),
                         }
                     }
                     ast = z.clone();
@@ -127,10 +127,10 @@ fn EVAL(mut ast: Mal, mut env: Env) -> MalResult {
                             }
 
                             // This should't happen
-                            _ => return mk_err("Applying non-function"),
+                            _ => return err("Applying non-function"),
                         }
                     } else {
-                        return mk_err("No longer a list!");
+                        return err("No longer a list!");
                     }
                 }
             }
@@ -165,7 +165,7 @@ fn eval_ast(ast: &Mal, env: &Env) -> MalResult {
 fn quasiquote(ast: Mal) -> Mal {
     match ast {
         Mal::Seq(false, xs, _meta) => {
-            return into_mal_seq(true, vec![mk_sym("vec"), quasiquote_elements(&xs)]);
+            return into_mal_seq(true, vec![sym("vec"), quasiquote_elements(&xs)]);
         }
         Mal::Seq(true, xs, _meta) => {
             if let [Mal::Symbol(n), value, _rest @ ..] = xs.as_slice() {
@@ -186,12 +186,12 @@ fn quasiquote_elements(xs: &[Mal]) -> Mal {
     let mut result: Mal = into_mal_seq(true, vec![]);
     for elt in xs.iter().rev() {
         if let Mal::Seq(true, ys, _meta) = elt {
-            if ys.len() >= 2 && ys[0] == mk_sym("splice-unquote") {
-                result = into_mal_seq(true, vec![mk_sym("concat"), ys[1].clone(), result]);
+            if ys.len() >= 2 && ys[0] == sym("splice-unquote") {
+                result = into_mal_seq(true, vec![sym("concat"), ys[1].clone(), result]);
                 continue;
             }
         }
-        result = into_mal_seq(true, vec![mk_sym("cons"), quasiquote(elt.clone()), result]);
+        result = into_mal_seq(true, vec![sym("cons"), quasiquote(elt.clone()), result]);
     }
     return result;
 }

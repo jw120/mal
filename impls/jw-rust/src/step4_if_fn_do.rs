@@ -44,10 +44,10 @@ fn EVAL(ast: Mal, env: Env) -> MalResult {
                             EVAL((**closure_ast).clone(), new_env)
                         }
                         // This should't happen
-                        _ => mk_err("Applying non-function"),
+                        _ => err("Applying non-function"),
                     }
                 } else {
-                    mk_err("No longer a list!")
+                    err("No longer a list!")
                 }
             }
         }
@@ -93,10 +93,10 @@ fn apply_let(env: &Env, xs: &[Mal], z: &Mal) -> MalResult {
                     let value_eval = EVAL(value.clone(), new_env.clone())?;
                     env::set(&new_env, s, value_eval.clone());
                 } else {
-                    return mk_err("Bad value in set list");
+                    return err("Bad value in set list");
                 }
             }
-            Some(_non_symbol) => return mk_err("Bad symbol in set list"),
+            Some(_non_symbol) => return err("Bad symbol in set list"),
         }
     }
 }

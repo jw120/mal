@@ -63,19 +63,19 @@ pub fn new_binds(outer: Option<&Env>, binds: &[Mal], exprs: &[Mal]) -> Result<En
                             set(&env, s_var, into_mal_seq(true, xs));
                             Ok(env)
                         }
-                        _ => mk_err("Extra argument in variadic bind"),
+                        _ => err("Extra argument in variadic bind"),
                     };
                 } else {
-                    return mk_err("No symbol for variadic bind");
+                    return err("No symbol for variadic bind");
                 }
             }
             Some(Mal::Symbol(s)) => match exprs_iter.next() {
                 Some(expr) => set(&env, s, expr.clone()),
-                None => return mk_err("Missing expression in variadic bind"),
+                None => return err("Missing expression in variadic bind"),
             },
-            Some(_non_symbol) => return mk_err("Non-symbol in variadic bins"),
+            Some(_non_symbol) => return err("Non-symbol in variadic bins"),
             None => match exprs_iter.next() {
-                Some(_) => return mk_err("Extra expression in variadic bind"),
+                Some(_) => return err("Extra expression in variadic bind"),
                 None => return Ok(env),
             },
         }

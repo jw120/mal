@@ -55,7 +55,7 @@ impl Reader<'_> {
 
     fn peek(&self) -> Result<&str, String> {
         if self.is_empty() {
-            mk_err("Peek on empty reader")
+            err("Peek on empty reader")
         } else {
             Ok(self.tokens[self.current])
         }
@@ -67,7 +67,7 @@ impl Reader<'_> {
 
     fn next(&mut self) -> Result<&str, String> {
         if self.is_empty() {
-            mk_err("Next on empty reader")
+            err("Next on empty reader")
         } else {
             let token = self.tokens[self.current];
             self.advance();
@@ -108,14 +108,14 @@ impl Reader<'_> {
                             return Ok(Mal::HashMap(Rc::new(m), Rc::new(Mal::Nil)))
                         }
                         (Some(_bad_key), _) => {
-                            return mk_err("Bad key type in hash-map");
+                            return err("Bad key type in hash-map");
                         }
                         _ => return Ok(Mal::HashMap(Rc::new(m), Rc::new(Mal::Nil))),
                     };
                 }
             }
             Some(_) => self.read_atom(),
-            None => mk_err("Empty token in read_form"),
+            None => err("Empty token in read_form"),
         }
     }
 
@@ -123,7 +123,7 @@ impl Reader<'_> {
         let mut contents: Vec<Mal> = vec![];
         loop {
             if self.is_empty() {
-                return mk_err("Expected sequence close, found end of input");
+                return err("Expected sequence close, found end of input");
             }
             if self.peek()? == closing {
                 self.advance();
@@ -160,12 +160,12 @@ impl Reader<'_> {
                         if cs.next().is_none() {
                             return Ok(Mal::String(s));
                         } else {
-                            return mk_err("Interior double-quote in string");
+                            return err("Interior double-quote in string");
                         }
                     }
                     (false, Some(c)) => s.push(c),
                     (false, None) => {
-                        return mk_err("Expected closing double-quote, found end of input");
+                        return err("Expected closing double-quote, found end of input");
                     }
                     (true, Some('\\')) => {
                         s.push('\\');
@@ -179,13 +179,13 @@ impl Reader<'_> {
                         s.push('\"');
                         in_quote = false;
                     }
-                    (true, _) => return mk_err("Bad escape sequence"),
+                    (true, _) => return err("Bad escape sequence"),
                 }
             }
         }
         if token.starts_with(':') {
             if token.len() == 1 {
-                return mk_err("Empty keyword name");
+                return err("Empty keyword name");
             }
             let rest = token.to_string().split_off(1);
             return Ok(Mal::Keyword(rest));

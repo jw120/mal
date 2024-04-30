@@ -37,10 +37,10 @@ fn EVAL(ast: &Mal, env: &Env) -> MalResult {
                             EVAL(closure_ast, &new_env)
                         }
                         // This should't happen
-                        _ => mk_err("Applying non-function"),
+                        _ => err("Applying non-function"),
                     }
                 } else {
-                    mk_err("No longer a list!")
+                    err("No longer a list!")
                 }
             }
         }
@@ -67,10 +67,10 @@ fn apply_let_star(env: &Env, xs: &[Mal], z: &Mal) -> MalResult {
                     let value_eval = EVAL(value, &new_env)?;
                     env::set(&new_env, s, value_eval.clone());
                 } else {
-                    return mk_err("Bad value in set list");
+                    return err("Bad value in set list");
                 }
             }
-            Some(_non_symbol) => return mk_err("Bad symbol in set list"),
+            Some(_non_symbol) => return err("Bad symbol in set list"),
         }
     }
 }
@@ -151,28 +151,28 @@ fn main() -> Result<(), ReadlineError> {
 fn add(args: &[Mal]) -> MalResult {
     match args {
         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x + y)),
-        _ => mk_err("Bad arguments for +"),
+        _ => err("Bad arguments for +"),
     }
 }
 
 fn sub(args: &[Mal]) -> MalResult {
     match args {
         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x - y)),
-        _ => mk_err("Bad arguments for +"),
+        _ => err("Bad arguments for +"),
     }
 }
 
 fn mul(args: &[Mal]) -> MalResult {
     match args {
         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x * y)),
-        _ => mk_err("Bad arguments for +"),
+        _ => err("Bad arguments for +"),
     }
 }
 
 fn div(args: &[Mal]) -> MalResult {
     match args {
-        [Mal::Int(_), Mal::Int(0)] => mk_err("Division by zero"),
+        [Mal::Int(_), Mal::Int(0)] => err("Division by zero"),
         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x / y)),
-        _ => mk_err("Bad arguments for +"),
+        _ => err("Bad arguments for +"),
     }
 }

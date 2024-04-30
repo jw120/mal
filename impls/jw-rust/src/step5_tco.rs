@@ -29,7 +29,7 @@ fn EVAL(mut ast: Mal, mut env: Env) -> MalResult {
                 // do special form - evaluate all but last element and loop with last element
                 [Mal::Symbol(n), tail @ ..] if n == "do" => {
                     if tail.is_empty() {
-                        return mk_err("No arguments to do");
+                        return err("No arguments to do");
                     } else {
                         for x in tail[..xs.len() - 1].iter() {
                             EVAL(x.clone(), env.clone())?;
@@ -74,10 +74,10 @@ fn EVAL(mut ast: Mal, mut env: Env) -> MalResult {
                                     let value_eval = EVAL(value.clone(), env.clone())?;
                                     env::set(&env, s, value_eval.clone());
                                 } else {
-                                    return mk_err("Bad value in set list");
+                                    return err("Bad value in set list");
                                 }
                             }
-                            Some(_non_symbol) => return mk_err("Bad symbol in set list"),
+                            Some(_non_symbol) => return err("Bad symbol in set list"),
                         }
                     }
                     ast = z.clone();
@@ -108,10 +108,10 @@ fn EVAL(mut ast: Mal, mut env: Env) -> MalResult {
                             }
 
                             // This should't happen
-                            _ => return mk_err("Applying non-function"),
+                            _ => return err("Applying non-function"),
                         }
                     } else {
-                        return mk_err("No longer a list!");
+                        return err("No longer a list!");
                     }
                 }
             }

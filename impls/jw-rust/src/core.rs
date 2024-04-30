@@ -57,7 +57,7 @@ fn list(args: &[Mal]) -> MalResult {
 
 fn is_list(args: &[Mal]) -> MalResult {
     match args {
-        [] => mk_err("No argument for list?"),
+        [] => err("No argument for list?"),
         [Mal::Seq(true, _, _), ..] => Ok(Mal::Bool(true)),
         _ => Ok(Mal::Bool(false)),
     }
@@ -66,7 +66,7 @@ fn is_list(args: &[Mal]) -> MalResult {
 fn is_empty(args: &[Mal]) -> MalResult {
     match args {
         [Mal::Seq(_, xs, _), ..] => Ok(Mal::Bool(xs.is_empty())),
-        _ => mk_err("empty? needs a list"),
+        _ => err("empty? needs a list"),
     }
 }
 
@@ -74,7 +74,7 @@ fn count(args: &[Mal]) -> MalResult {
     match args {
         [Mal::Seq(_, xs, _), ..] => Ok(Mal::Int(xs.len() as i64)),
         [Mal::Nil, ..] => Ok(Mal::Int(0)),
-        _ => mk_err("count needs a list"),
+        _ => err("count needs a list"),
     }
 }
 
@@ -86,7 +86,7 @@ fn cons(args: &[Mal]) -> MalResult {
             ys.extend_from_slice(xs);
             Ok(into_mal_seq(true, ys))
         }
-        _ => mk_err("cons takes a value and a sequence"),
+        _ => err("cons takes a value and a sequence"),
     }
 }
 
@@ -96,7 +96,7 @@ fn concat(args: &[Mal]) -> MalResult {
         if let Mal::Seq(_is_list, xs, _meta) = x {
             zs.extend_from_slice(xs);
         } else {
-            return mk_err("concat takes zero or more sequences");
+            return err("concat takes zero or more sequences");
         }
     }
     Ok(into_mal_seq(true, zs))
@@ -107,9 +107,9 @@ fn vec(args: &[Mal]) -> MalResult {
         [arg] => match arg {
             Mal::Seq(false, _, _) => Ok(arg.clone()),
             Mal::Seq(true, xs, _) => Ok(into_mal_seq(false, xs.to_vec())),
-            _ => mk_err("vec takes a sequence"),
+            _ => err("vec takes a sequence"),
         },
-        _ => mk_err("vec takes a sequence"),
+        _ => err("vec takes a sequence"),
     }
 }
 
@@ -188,7 +188,7 @@ fn atom(args: &[Mal]) -> MalResult {
     if let [x] = args {
         Ok(into_mal_atom(x.clone()))
     } else {
-        mk_err("atom takes one value")
+        err("atom takes one value")
     }
 }
 
@@ -196,7 +196,7 @@ fn is_atom(args: &[Mal]) -> MalResult {
     match args {
         [Mal::Atom(_)] => Ok(Mal::Bool(true)),
         [_] => Ok(Mal::Bool(false)),
-        _ => mk_err("atom? takes on value"),
+        _ => err("atom? takes on value"),
     }
 }
 
@@ -204,7 +204,7 @@ fn deref(args: &[Mal]) -> MalResult {
     if let [Mal::Atom(a)] = args {
         Ok(((*a).borrow()).clone())
     } else {
-        mk_err("NYI")
+        err("NYI")
     }
 }
 
@@ -213,7 +213,7 @@ fn reset(args: &[Mal]) -> MalResult {
         *((*a).borrow_mut()) = value.clone();
         Ok(value.clone())
     } else {
-        mk_err("reset takes an atom and a mal value")
+        err("reset takes an atom and a mal value")
     }
 }
 
@@ -247,7 +247,7 @@ fn swap(args: &[Mal]) -> MalResult {
             Ok(new_value)
         }
 
-        _ => mk_err("swap! takes an atom, a function and optionally additional arguments"),
+        _ => err("swap! takes an atom, a function and optionally additional arguments"),
     }
 }
 
@@ -257,7 +257,7 @@ fn read_string(args: &[Mal]) -> MalResult {
     if let [Mal::String(s)] = args {
         reader::read_str(s)
     } else {
-        mk_err("read-string needs a string")
+        err("read-string needs a string")
     }
 }
 
@@ -268,7 +268,7 @@ fn slurp(args: &[Mal]) -> MalResult {
             Err(e) => Err(e.to_string()),
         }
     } else {
-        mk_err("slurp takes a filename")
+        err("slurp takes a filename")
     }
 }
 
@@ -280,7 +280,7 @@ fn do_iii(op: fn(i64, i64) -> i64, name: &str, args: &[Mal]) -> MalResult {
         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(op(*x, *y))),
         _ => {
             let msg = format!("Bad arguments for {}", name);
-            mk_err(&msg)
+            err(&msg)
         }
     }
 }
@@ -291,7 +291,7 @@ fn do_iib(op: fn(i64, i64) -> bool, name: &str, args: &[Mal]) -> MalResult {
         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Bool(op(*x, *y))),
         _ => {
             let msg = format!("Bad arguments for {}", name);
-            mk_err(&msg)
+            err(&msg)
         }
     }
 }

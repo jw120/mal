@@ -81,7 +81,7 @@ pub fn into_mal_seq(is_list: bool, v: Vec<Mal>) -> Mal {
     Mal::Seq(is_list, Rc::new(v), Rc::new(Mal::Nil))
 }
 
-pub fn mk_sym(s: &str) -> Mal {
+pub fn sym(s: &str) -> Mal {
     Mal::Symbol(s.to_string())
 }
 
@@ -91,7 +91,7 @@ pub fn is_falsy(x: &Mal) -> bool {
 
 pub type MalResult = Result<Mal, String>;
 
-pub fn mk_err<T>(s: &str) -> Result<T, String> {
+pub fn err<T>(s: &str) -> Result<T, String> {
     Err(s.to_string())
 }
 
