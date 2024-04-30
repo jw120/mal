@@ -4,16 +4,16 @@ use rustyline::error::ReadlineError;
 use rustyline::DefaultEditor;
 use std::collections::HashMap;
 
-use jw_rust_mal::env::*;
-use jw_rust_mal::printer::pr_str;
-use jw_rust_mal::reader::{read_str, ReadError};
+use jw_rust_mal::env;
+use jw_rust_mal::printer;
+use jw_rust_mal::reader;
 use jw_rust_mal::types::*;
 
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
 
-fn READ(s: &str) -> Result<Mal, ReadError> {
-    read_str(s)
+fn READ(s: &str) -> MalResult {
+    reader::read_str(s)
 }
 
 fn EVAL(ast: &Mal, env: &Env) -> MalResult {
@@ -27,12 +27,13 @@ fn EVAL(ast: &Mal, env: &Env) -> MalResult {
                     match ys.as_slice() {
                         [Mal::Function(f, _), tail @ ..] => Ok(f(tail)?),
                         [Mal::Closure {
+                            eval: _,
                             ast: closure_ast,
                             params,
                             env: closure_env,
                             meta: _,
                         }, tail @ ..] => {
-                            let new_env = env_new_binds(Some(closure_env), params, tail)?;
+                            let new_env = env::new_binds(Some(closure_env), params, tail)?;
                             EVAL(closure_ast, &new_env)
                         }
                         // This should't happen
@@ -51,12 +52,12 @@ fn EVAL(ast: &Mal, env: &Env) -> MalResult {
 
 fn apply_def(env: &Env, s: &str, x: &Mal) -> MalResult {
     let y = EVAL(x, env)?;
-    env_set(env, s, y.clone());
+    env::set(env, s, y.clone());
     Ok(y)
 }
 
 fn apply_let_star(env: &Env, xs: &[Mal], z: &Mal) -> MalResult {
-    let new_env = env_new(Some(env));
+    let new_env = env::new(Some(env));
     let mut xs_iter = xs.iter();
     loop {
         match xs_iter.next() {
@@ -64,7 +65,7 @@ fn apply_let_star(env: &Env, xs: &[Mal], z: &Mal) -> MalResult {
             Some(Mal::Symbol(s)) => {
                 if let Some(value) = xs_iter.next() {
                     let value_eval = EVAL(value, &new_env)?;
-                    env_set(&new_env, s, value_eval.clone());
+                    env::set(&new_env, s, value_eval.clone());
                 } else {
                     return mk_err("Bad value in set list");
                 }
@@ -76,7 +77,7 @@ fn apply_let_star(env: &Env, xs: &[Mal], z: &Mal) -> MalResult {
 
 fn eval_ast(ast: &Mal, env: &Env) -> MalResult {
     match ast {
-        Mal::Symbol(s) => env_get(env, s),
+        Mal::Symbol(s) => env::get(env, s),
         Mal::Seq(is_list, xs, _) => {
             let mut ys = Vec::new();
             for x in xs.iter() {
@@ -96,7 +97,7 @@ fn eval_ast(ast: &Mal, env: &Env) -> MalResult {
 }
 
 fn PRINT(x: &Mal) {
-    println!("{}", pr_str(x, true));
+    println!("{}", printer::pr_str(x, true));
 }
 
 fn rep(s: &str, env: &Env) {
@@ -106,8 +107,7 @@ fn rep(s: &str, env: &Env) {
             Ok(value) => PRINT(&value),
             Err(msg) => println!("Evaluation error: {}", msg),
         },
-        Err(ReadError::Internal(msg)) => println!("Internal error: {}", msg),
-        Err(ReadError::Parse(msg)) => println!("Parse error: {}", msg),
+        Err(msg) => println!("{}", msg),
     }
 }
 
@@ -118,11 +118,11 @@ fn main() -> Result<(), ReadlineError> {
     }
 
     // Mini environment
-    let repl_env: Env = env_new(None);
-    env_set(&repl_env, "+", into_mal_fn(add));
-    env_set(&repl_env, "-", into_mal_fn(sub));
-    env_set(&repl_env, "*", into_mal_fn(mul));
-    env_set(&repl_env, "/", into_mal_fn(div));
+    let repl_env: Env = env::new(None);
+    env::set(&repl_env, "+", into_mal_fn(add));
+    env::set(&repl_env, "-", into_mal_fn(sub));
+    env::set(&repl_env, "*", into_mal_fn(mul));
+    env::set(&repl_env, "/", into_mal_fn(div));
     loop {
         match rl.readline(RUSTYLINE_PROMPT) {
             Ok(line) => {

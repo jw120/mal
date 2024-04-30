@@ -12,6 +12,7 @@
 
 * Rust notes
   * eval as a special form not a bound function (with hack to find outermost environment) - borrowed from supplied rust implementation
+  * skip printing nil in repl (not in step1 so we pass the tests)
 
 * Note - how to update my repo for changes in the upstream <https://github.com/kanaka/mal>
 

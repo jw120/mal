@@ -4,7 +4,8 @@
 use std::fs;
 use std::ops;
 
-use crate::printer::pr_str;
+use crate::env;
+use crate::printer;
 use crate::reader;
 use crate::types::*;
 
@@ -116,23 +117,23 @@ fn eq(args: &[Mal]) -> MalResult {
 
 // pr-str function
 fn pr_dash_str(args: &[Mal]) -> MalResult {
-    let arg_strings: Vec<String> = args.iter().map(|x| pr_str(x, true)).collect();
+    let arg_strings: Vec<String> = args.iter().map(|x| printer::pr_str(x, true)).collect();
     Ok(Mal::String(arg_strings.join(" ")))
 }
 
 fn str(args: &[Mal]) -> MalResult {
-    let arg_strings: Vec<String> = args.iter().map(|x| pr_str(x, false)).collect();
+    let arg_strings: Vec<String> = args.iter().map(|x| printer::pr_str(x, false)).collect();
     Ok(Mal::String(arg_strings.join("")))
 }
 
 fn prn(args: &[Mal]) -> MalResult {
-    let arg_strings: Vec<String> = args.iter().map(|x| pr_str(x, true)).collect();
+    let arg_strings: Vec<String> = args.iter().map(|x| printer::pr_str(x, true)).collect();
     println!("{}", arg_strings.join(" "));
     Ok(Mal::Nil)
 }
 
 fn println(args: &[Mal]) -> MalResult {
-    let arg_strings: Vec<String> = args.iter().map(|x| pr_str(x, false)).collect();
+    let arg_strings: Vec<String> = args.iter().map(|x| printer::pr_str(x, false)).collect();
     println!("{}", arg_strings.join(" "));
     Ok(Mal::Nil)
 }
@@ -173,10 +174,36 @@ fn reset(args: &[Mal]) -> MalResult {
 }
 
 fn swap(args: &[Mal]) -> MalResult {
-    if let [_x] = args {
-        Ok(Mal::Nil)
-    } else {
-        mk_err("NYI")
+    match args {
+        [Mal::Atom(a), Mal::Function(f, _), args @ ..] => {
+            let mut full_args: Vec<Mal> = Vec::new();
+            full_args.push((*a).borrow().clone());
+            for x in args {
+                full_args.push(x.clone());
+            }
+            let new_value = f(&full_args)?;
+            *((*a).borrow_mut()) = new_value.clone();
+            Ok(new_value)
+        }
+        [Mal::Atom(a), Mal::Closure {
+            eval,
+            ast,
+            params,
+            env,
+            meta: _meta,
+        }, args @ ..] => {
+            let mut full_args: Vec<Mal> = Vec::new();
+            full_args.push((*a).borrow().clone());
+            for x in args {
+                full_args.push(x.clone());
+            }
+            let new_env = env::new_binds(Some(env), params, &full_args)?;
+            let new_value = eval((**ast).clone(), new_env)?;
+            *((*a).borrow_mut()) = new_value.clone();
+            Ok(new_value)
+        }
+
+        _ => mk_err("swap! takes an atom, a function and optionally additional arguments"),
     }
 }
 
@@ -184,11 +211,7 @@ fn swap(args: &[Mal]) -> MalResult {
 
 fn read_string(args: &[Mal]) -> MalResult {
     if let [Mal::String(s)] = args {
-        match reader::read_str(s) {
-            Ok(x) => Ok(x),
-            Err(reader::ReadError::Internal(msg)) => Err(msg),
-            Err(reader::ReadError::Parse(msg)) => Err(msg),
-        }
+        reader::read_str(s)
     } else {
         mk_err("read-string needs a string")
     }

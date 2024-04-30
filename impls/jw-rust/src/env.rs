@@ -10,35 +10,35 @@ use crate::types::*;
 // Type borrowed from mal's supplied rust impl
 // Use RefCell so we can mutate the environment
 
-pub fn env_set(env: &Env, key: &str, value: Mal) {
+pub fn set(env: &Env, key: &str, value: Mal) {
     env.data.borrow_mut().insert(key.to_string(), value);
 }
 
-pub fn env_find(env: &Env, key: &str) -> Option<Env> {
+pub fn find(env: &Env, key: &str) -> Option<Env> {
     if env.data.borrow().contains_key(key) {
         return Some(Rc::clone(env));
     }
     match &env.outer {
-        Some(o) => env_find(o, key),
+        Some(o) => find(o, key),
         None => None,
     }
 }
 
-pub fn env_get(env: &Env, key: &String) -> Result<Mal, String> {
-    match env_find(env, key) {
+pub fn get(env: &Env, key: &String) -> MalResult {
+    match find(env, key) {
         Some(e) => Ok(e.data.borrow()[key].clone()),
         None => Err(format!("{} not found.", key).to_string()),
     }
 }
 
-pub fn env_new(outer: Option<&Env>) -> Env {
+pub fn new(outer: Option<&Env>) -> Env {
     Rc::new(EnvStruct {
         data: RefCell::new(HashMap::new()),
         outer: outer.cloned(),
     })
 }
 
-pub fn env_outermost(env: &Env) -> Env {
+pub fn outermost(env: &Env) -> Env {
     let mut e = env.clone();
     while let Some(outer) = &e.outer {
         e = outer.clone();
@@ -46,8 +46,8 @@ pub fn env_outermost(env: &Env) -> Env {
     e
 }
 
-pub fn env_new_binds(outer: Option<&Env>, binds: &[Mal], exprs: &[Mal]) -> Result<Env, String> {
-    let env = env_new(outer);
+pub fn new_binds(outer: Option<&Env>, binds: &[Mal], exprs: &[Mal]) -> Result<Env, String> {
+    let env = new(outer);
     let mut binds_iter = binds.iter();
     let mut exprs_iter = exprs.iter();
     loop {
@@ -60,7 +60,7 @@ pub fn env_new_binds(outer: Option<&Env>, binds: &[Mal], exprs: &[Mal]) -> Resul
                     }
                     return match binds_iter.next() {
                         None => {
-                            env_set(&env, s_var, into_mal_seq(true, xs));
+                            set(&env, s_var, into_mal_seq(true, xs));
                             Ok(env)
                         }
                         _ => mk_err("Extra argument in variadic bind"),
@@ -70,7 +70,7 @@ pub fn env_new_binds(outer: Option<&Env>, binds: &[Mal], exprs: &[Mal]) -> Resul
                 }
             }
             Some(Mal::Symbol(s)) => match exprs_iter.next() {
-                Some(expr) => env_set(&env, s, expr.clone()),
+                Some(expr) => set(&env, s, expr.clone()),
                 None => return mk_err("Missing expression in variadic bind"),
             },
             Some(_non_symbol) => return mk_err("Non-symbol in variadic bins"),

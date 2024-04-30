@@ -7,6 +7,7 @@ use std::rc::Rc;
 
 // All Mal values are immutable. We use Rc<> to avoid copying on complex types
 // Lists, Vectors, Hashmaps and Functions have a second meta argument
+// Closure carries its eval function to avoid awkward calling across modules
 
 #[derive(Clone)]
 pub enum Mal {
@@ -21,6 +22,7 @@ pub enum Mal {
     Nil,
     Function(fn(&[Mal]) -> MalResult, Rc<Mal>), // Rust function
     Closure {
+        eval: fn(Mal, Env) -> MalResult,
         ast: Rc<Mal>,
         params: Vec<Mal>,
         env: Env,
@@ -52,8 +54,14 @@ pub fn into_mal_atom(value: Mal) -> Mal {
     Mal::Atom(Rc::new(RefCell::new(value)))
 }
 
-pub fn into_mal_closure(ast: Mal, params: &[Mal], env: &Env) -> Mal {
+pub fn into_mal_closure(
+    eval: fn(Mal, Env) -> MalResult,
+    ast: Mal,
+    params: &[Mal],
+    env: &Env,
+) -> Mal {
     Mal::Closure {
+        eval,
         ast: Rc::new(ast),
         params: params.to_vec(),
         env: env.clone(),

@@ -32,6 +32,7 @@ pub fn pr_str(x: &Mal, print_readably: bool) -> String {
         Mal::Bool(b) => b.to_string(),
         Mal::Function(_, _) => "<function>".to_string(),
         Mal::Closure {
+            eval: _,
             ast: _,
             params: _,
             env: _,

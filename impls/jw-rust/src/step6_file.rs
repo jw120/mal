@@ -3,21 +3,22 @@
 use rustyline::error::ReadlineError;
 use rustyline::DefaultEditor;
 use std::collections::HashMap;
+use std::env as std_env;
 
-use jw_rust_mal::core::get_builtins;
-use jw_rust_mal::env::*;
-use jw_rust_mal::printer::pr_str;
-use jw_rust_mal::reader::{read_str, ReadError};
+use jw_rust_mal::core;
+use jw_rust_mal::env;
+use jw_rust_mal::printer;
+use jw_rust_mal::reader;
 use jw_rust_mal::types::*;
 
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
 
-fn READ(s: &str) -> Result<Mal, ReadError> {
-    read_str(s)
+fn READ(s: &str) -> MalResult {
+    reader::read_str(s)
 }
 
-fn EVAL(mut ast: Mal, mut env: Env) -> Result<Mal, String> {
+fn EVAL(mut ast: Mal, mut env: Env) -> MalResult {
     // Looping to implement TCO
     loop {
         // Evaluate a list applying functions and special forms
@@ -58,13 +59,13 @@ fn EVAL(mut ast: Mal, mut env: Env) -> Result<Mal, String> {
                 // def! special form - add to environment and done
                 [Mal::Symbol(n), Mal::Symbol(s), x] if n == "def!" => {
                     let y = EVAL(x.clone(), env.clone())?;
-                    env_set(&env, s, y.clone());
+                    env::set(&env, s, y.clone());
                     return Ok(y);
                 }
 
                 // let* special form -- update environment and continue
                 [Mal::Symbol(n), Mal::Seq(_, xs, _), z] if n == "let*" => {
-                    env = env_new(Some(&env));
+                    env = env::new(Some(&env));
                     let mut xs_iter = xs.iter();
                     loop {
                         match xs_iter.next() {
@@ -72,7 +73,7 @@ fn EVAL(mut ast: Mal, mut env: Env) -> Result<Mal, String> {
                             Some(Mal::Symbol(s)) => {
                                 if let Some(value) = xs_iter.next() {
                                     let value_eval = EVAL(value.clone(), env.clone())?;
-                                    env_set(&env, s, value_eval.clone());
+                                    env::set(&env, s, value_eval.clone());
                                 } else {
                                     return mk_err("Bad value in set list");
                                 }
@@ -85,7 +86,7 @@ fn EVAL(mut ast: Mal, mut env: Env) -> Result<Mal, String> {
 
                 // fn* special form - return closure
                 [Mal::Symbol(n), Mal::Seq(_, params, _), body] if n == "fn*" => {
-                    return Ok(into_mal_closure(body.clone(), params, &env))
+                    return Ok(into_mal_closure(EVAL, body.clone(), params, &env))
                 }
 
                 // eval as if it was a special form - continue with given ast and root environment
@@ -94,7 +95,7 @@ fn EVAL(mut ast: Mal, mut env: Env) -> Result<Mal, String> {
                     let eval_ast_evaluated = EVAL(eval_ast.clone(), env.clone())?;
                     // Then we continue with the argument
                     ast = eval_ast_evaluated.clone();
-                    env = env_outermost(&env).clone();
+                    env = env::outermost(&env).clone();
                 }
 
                 // Non-special form
@@ -106,12 +107,13 @@ fn EVAL(mut ast: Mal, mut env: Env) -> Result<Mal, String> {
 
                             // Mal closure - move to new environment and continue with closure body
                             [Mal::Closure {
+                                eval: _,
                                 ast: closure_ast,
                                 params,
                                 env: closure_env,
                                 meta: _,
                             }, tail @ ..] => {
-                                env = env_new_binds(Some(closure_env), params, tail)?;
+                                env = env::new_binds(Some(closure_env), params, tail)?;
                                 ast = (**closure_ast).clone();
                             }
 
@@ -130,9 +132,9 @@ fn EVAL(mut ast: Mal, mut env: Env) -> Result<Mal, String> {
     }
 }
 
-fn eval_ast(ast: &Mal, env: &Env) -> Result<Mal, String> {
+fn eval_ast(ast: &Mal, env: &Env) -> MalResult {
     match ast {
-        Mal::Symbol(s) => env_get(env, s),
+        Mal::Symbol(s) => env::get(env, s),
         Mal::Seq(is_list, xs, _) => {
             let mut ys = Vec::new();
             for x in xs.iter() {
@@ -152,7 +154,7 @@ fn eval_ast(ast: &Mal, env: &Env) -> Result<Mal, String> {
 }
 
 fn PRINT(x: &Mal) {
-    println!("{}", pr_str(x, true));
+    println!("{}", printer::pr_str(x, true));
 }
 
 // read, evaluate, print (quiet suppress non-error output for use with start-up code)
@@ -167,24 +169,40 @@ fn rep(s: &str, env: &Env, quiet: bool) {
             }
             Err(msg) => println!("Evaluation error: {}", msg),
         },
-        Err(ReadError::Internal(msg)) => println!("Internal error: {}", msg),
-        Err(ReadError::Parse(msg)) => println!("Parse error: {}", msg),
+        Err(msg) => println!("{}", msg),
     }
 }
 
 fn main() -> Result<(), ReadlineError> {
+    // Set-up root environment
+    let root_env: Env = env::new(None);
+    let (builtins_rust, builtins_mal) = core::get_builtins();
+    for (name, value) in builtins_rust {
+        env::set(&root_env, name, value);
+    }
+    for code in builtins_mal {
+        rep(code, &root_env, true)
+    }
+
+    // Check command line arguments
+    let mut args = std_env::args();
+    let _prog_name = args.next().expect("Missing program name in Argv");
+
+    // Run batch mode if a source file provided on the command line
+    if let Some(mal_source_file) = args.next() {
+        // Batch mode
+        let cmd = format!("(load-file \"{}\")", mal_source_file);
+        let argv: Vec<Mal> = args.map(Mal::String).collect();
+        env::set(&root_env, "*ARGV*", into_mal_seq(true, argv));
+        rep(&cmd, &root_env, true);
+        return Ok(());
+    }
+
+    // Otherwise, run interactively
+    env::set(&root_env, "*ARGV*", into_mal_seq(true, vec![]));
     let mut rl = DefaultEditor::new()?;
     if rl.load_history(RUSTYLINE_HISTORY_FILE).is_err() {
         println!("No previous history.");
-    }
-
-    let repl_env: Env = env_new(None);
-    let (builtins_rust, builtins_mal) = get_builtins();
-    for (name, value) in builtins_rust {
-        env_set(&repl_env, name, value);
-    }
-    for code in builtins_mal {
-        rep(code, &repl_env, true)
     }
 
     loop {
@@ -193,7 +211,7 @@ fn main() -> Result<(), ReadlineError> {
                 let line = line.trim_end_matches("\n\r");
                 if !line.is_empty() {
                     rl.add_history_entry(line)?;
-                    rep(line, &repl_env, false);
+                    rep(line, &root_env, false);
                 }
             }
             Err(ReadlineError::Interrupted) => {

@@ -8,19 +8,13 @@ use std::rc::Rc;
 use crate::types::*;
 
 // Top-level interface to reader. Returns Nil if input is empty or only comments
-pub fn read_str(s: &str) -> Result<Mal, ReadError> {
+pub fn read_str(s: &str) -> MalResult {
     let mut reader = Reader::new(s);
     // println!("tokens: {:?}", reader.tokens);
     if reader.tokens.is_empty() {
         return Ok(Mal::Nil);
     }
     reader.read_form()
-}
-
-// Errors returned by read_str
-pub enum ReadError {
-    Internal(String), // Internal errors that should not happen
-    Parse(String),    // Errors called by illegal mal code
 }
 
 // Implementation based on mutable reader object
@@ -59,9 +53,9 @@ impl Reader<'_> {
         self.current >= self.tokens.len()
     }
 
-    fn peek(&self) -> Result<&str, ReadError> {
+    fn peek(&self) -> Result<&str, String> {
         if self.is_empty() {
-            Err(ReadError::Internal("Peek on empty reader".to_string()))
+            mk_err("Peek on empty reader")
         } else {
             Ok(self.tokens[self.current])
         }
@@ -71,9 +65,9 @@ impl Reader<'_> {
         self.current += 1;
     }
 
-    fn next(&mut self) -> Result<&str, ReadError> {
+    fn next(&mut self) -> Result<&str, String> {
         if self.is_empty() {
-            Err(ReadError::Internal("Next on empty reader".to_string()))
+            mk_err("Next on empty reader")
         } else {
             let token = self.tokens[self.current];
             self.advance();
@@ -81,7 +75,7 @@ impl Reader<'_> {
         }
     }
 
-    fn read_form(&mut self) -> Result<Mal, ReadError> {
+    fn read_form(&mut self) -> MalResult {
         let first = self.peek()?;
         match first.chars().next() {
             Some('(') => {
@@ -114,24 +108,22 @@ impl Reader<'_> {
                             return Ok(Mal::HashMap(Rc::new(m), Rc::new(Mal::Nil)))
                         }
                         (Some(_bad_key), _) => {
-                            return Err(ReadError::Parse("Bad key type in hash-map".to_string()))
+                            return mk_err("Bad key type in hash-map");
                         }
                         _ => return Ok(Mal::HashMap(Rc::new(m), Rc::new(Mal::Nil))),
                     };
                 }
             }
             Some(_) => self.read_atom(),
-            None => Err(ReadError::Internal("Empty token in read_form".to_string())),
+            None => mk_err("Empty token in read_form"),
         }
     }
 
-    fn read_seq(&mut self, closing: &str) -> Result<Rc<Vec<Mal>>, ReadError> {
+    fn read_seq(&mut self, closing: &str) -> Result<Rc<Vec<Mal>>, String> {
         let mut contents: Vec<Mal> = vec![];
         loop {
             if self.is_empty() {
-                return Err(ReadError::Parse(
-                    "Expected sequence close, found end of input".to_string(),
-                ));
+                return mk_err("Expected sequence close, found end of input");
             }
             if self.peek()? == closing {
                 self.advance();
@@ -141,7 +133,7 @@ impl Reader<'_> {
         }
     }
 
-    fn read_atom(&mut self) -> Result<Mal, ReadError> {
+    fn read_atom(&mut self) -> MalResult {
         let token = self.next()?;
         match token {
             "nil" => return Ok(Mal::Nil),
@@ -168,16 +160,12 @@ impl Reader<'_> {
                         if cs.next().is_none() {
                             return Ok(Mal::String(s));
                         } else {
-                            return Err(ReadError::Internal(
-                                "Interior double-quote in string".to_string(),
-                            ));
+                            return mk_err("Interior double-quote in string");
                         }
                     }
                     (false, Some(c)) => s.push(c),
                     (false, None) => {
-                        return Err(ReadError::Parse(
-                            "Expected closing double-quote, found end of input".to_string(),
-                        ))
+                        return mk_err("Expected closing double-quote, found end of input");
                     }
                     (true, Some('\\')) => {
                         s.push('\\');
@@ -191,13 +179,13 @@ impl Reader<'_> {
                         s.push('\"');
                         in_quote = false;
                     }
-                    (true, _) => return Err(ReadError::Parse("Bad escape sequence".to_string())),
+                    (true, _) => return mk_err("Bad escape sequence"),
                 }
             }
         }
         if token.starts_with(':') {
             if token.len() == 1 {
-                return Err(ReadError::Parse("Empty keyword name".to_string()));
+                return mk_err("Empty keyword name");
             }
             let rest = token.to_string().split_off(1);
             return Ok(Mal::Keyword(rest));

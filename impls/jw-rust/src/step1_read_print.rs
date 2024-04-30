@@ -3,15 +3,15 @@
 use rustyline::error::ReadlineError;
 use rustyline::DefaultEditor;
 
-use jw_rust_mal::printer::pr_str;
-use jw_rust_mal::reader::{read_str, ReadError};
-use jw_rust_mal::types::Mal;
+use jw_rust_mal::printer;
+use jw_rust_mal::reader;
+use jw_rust_mal::types::*;
 
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
 
-fn READ(s: &str) -> Result<Mal, ReadError> {
-    read_str(s)
+fn READ(s: &str) -> MalResult {
+    reader::read_str(s)
 }
 
 fn EVAL(x: Mal) -> Mal {
@@ -19,15 +19,13 @@ fn EVAL(x: Mal) -> Mal {
 }
 
 fn PRINT(x: Mal) {
-    println!("{}", pr_str(&x, true));
+    println!("{}", printer::pr_str(&x, true));
 }
 
 fn rep(s: &str) {
     match READ(s) {
-        Ok(Mal::Nil) => {}
         Ok(x) => PRINT(EVAL(x)),
-        Err(ReadError::Internal(msg)) => println!("Internal error: {}", msg),
-        Err(ReadError::Parse(msg)) => println!("Parse error: {}", msg),
+        Err(msg) => println!("{}", msg),
     }
 }
 

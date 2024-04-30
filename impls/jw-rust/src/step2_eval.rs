@@ -4,8 +4,8 @@ use rustyline::error::ReadlineError;
 use rustyline::DefaultEditor;
 use std::collections::HashMap;
 
-use jw_rust_mal::printer::pr_str;
-use jw_rust_mal::reader::{read_str, ReadError};
+use jw_rust_mal::printer;
+use jw_rust_mal::reader;
 use jw_rust_mal::types::*;
 
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
@@ -13,8 +13,8 @@ static RUSTYLINE_PROMPT: &str = "user> ";
 
 type Env = HashMap<String, Mal>;
 
-fn READ(s: &str) -> Result<Mal, ReadError> {
-    read_str(s)
+fn READ(s: &str) -> MalResult {
+    reader::read_str(s)
 }
 
 fn EVAL(ast: &Mal, env: &Env) -> MalResult {
@@ -38,7 +38,7 @@ fn EVAL(ast: &Mal, env: &Env) -> MalResult {
 }
 
 fn PRINT(x: &Mal) {
-    println!("{}", pr_str(x, true));
+    println!("{}", printer::pr_str(x, true));
 }
 
 fn rep(s: &str, env: &Env) {
@@ -48,8 +48,7 @@ fn rep(s: &str, env: &Env) {
             Ok(value) => PRINT(&value),
             Err(msg) => println!("Evaluation error: {}", msg),
         },
-        Err(ReadError::Internal(msg)) => println!("Internal error: {}", msg),
-        Err(ReadError::Parse(msg)) => println!("Parse error: {}", msg),
+        Err(msg) => println!("{}", msg),
     }
 }
 
