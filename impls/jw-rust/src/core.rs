@@ -14,9 +14,13 @@ pub fn get_builtins() -> (Vec<(&'static str, Mal)>, Vec<&'static str>) {
     (
         vec![
             ("list", into_mal_fn(list)),
+            ("cons", into_mal_fn(cons)),
             ("list?", into_mal_fn(is_list)),
             ("empty?", into_mal_fn(is_empty)),
             ("count", into_mal_fn(count)),
+            ("cons", into_mal_fn(cons)),
+            ("concat", into_mal_fn(concat)),
+            ("vec", into_mal_fn(vec)),
             ("+", into_mal_fn(add)),
             ("-", into_mal_fn(sub)),
             ("*", into_mal_fn(mul)),
@@ -45,6 +49,8 @@ pub fn get_builtins() -> (Vec<(&'static str, Mal)>, Vec<&'static str>) {
     )
 }
 
+// List functions
+
 fn list(args: &[Mal]) -> MalResult {
     Ok(into_mal_seq(true, args.to_vec()))
 }
@@ -71,6 +77,43 @@ fn count(args: &[Mal]) -> MalResult {
         _ => mk_err("count needs a list"),
     }
 }
+
+fn cons(args: &[Mal]) -> MalResult {
+    match args {
+        [value, Mal::Seq(_is_list, xs, _meta)] => {
+            let mut ys: Vec<Mal> = Vec::new();
+            ys.push(value.clone());
+            ys.extend_from_slice(xs);
+            Ok(into_mal_seq(true, ys))
+        }
+        _ => mk_err("cons takes a value and a sequence"),
+    }
+}
+
+fn concat(args: &[Mal]) -> MalResult {
+    let mut zs: Vec<Mal> = Vec::new();
+    for x in args {
+        if let Mal::Seq(_is_list, xs, _meta) = x {
+            zs.extend_from_slice(xs);
+        } else {
+            return mk_err("concat takes zero or more sequences");
+        }
+    }
+    Ok(into_mal_seq(true, zs))
+}
+
+fn vec(args: &[Mal]) -> MalResult {
+    match args {
+        [arg] => match arg {
+            Mal::Seq(false, _, _) => Ok(arg.clone()),
+            Mal::Seq(true, xs, _) => Ok(into_mal_seq(false, xs.to_vec())),
+            _ => mk_err("vec takes a sequence"),
+        },
+        _ => mk_err("vec takes a sequence"),
+    }
+}
+
+// Arithmetic and logic functions
 
 fn add(args: &[Mal]) -> MalResult {
     do_iii(ops::Add::add, "+", args)
@@ -115,7 +158,8 @@ fn eq(args: &[Mal]) -> MalResult {
     }
 }
 
-// pr-str function
+// Print functions
+
 fn pr_dash_str(args: &[Mal]) -> MalResult {
     let arg_strings: Vec<String> = args.iter().map(|x| printer::pr_str(x, true)).collect();
     Ok(Mal::String(arg_strings.join(" ")))

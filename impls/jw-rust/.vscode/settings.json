@@ -3,6 +3,7 @@
         "builtins",
         "mal's",
         "quasiquote",
+        "quasiquoteexpand",
         "Readline",
         "rustyline"
     ]

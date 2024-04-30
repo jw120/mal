@@ -81,6 +81,10 @@ pub fn into_mal_seq(is_list: bool, v: Vec<Mal>) -> Mal {
     Mal::Seq(is_list, Rc::new(v), Rc::new(Mal::Nil))
 }
 
+pub fn mk_sym(s: &str) -> Mal {
+    Mal::Symbol(s.to_string())
+}
+
 pub fn is_falsy(x: &Mal) -> bool {
     matches!(x, Mal::Bool(false) | Mal::Nil)
 }
