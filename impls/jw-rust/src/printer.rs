@@ -36,8 +36,9 @@ pub fn pr_str(x: &Mal, print_readably: bool) -> String {
             ast: _,
             params: _,
             env: _,
+            is_macro,
             meta: _,
-        } => "<closure>".to_string(),
+        } => (if *is_macro { "<macro>" } else { "<closure>" }).to_string(),
         Mal::Atom(a) => format!(
             "(atom {})",
             pr_str(&((*a).borrow()).clone(), print_readably)

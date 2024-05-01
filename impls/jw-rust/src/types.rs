@@ -26,6 +26,7 @@ pub enum Mal {
         ast: Rc<Mal>,
         params: Vec<Mal>,
         env: Env,
+        is_macro: bool,
         meta: Rc<Mal>,
     },
     Atom(Rc<RefCell<Mal>>),
@@ -65,6 +66,7 @@ pub fn into_mal_closure(
         ast: Rc::new(ast),
         params: params.to_vec(),
         env: env.clone(),
+        is_macro: false,
         meta: Rc::new(Mal::Nil),
     }
 }

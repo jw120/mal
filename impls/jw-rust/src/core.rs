@@ -234,7 +234,8 @@ fn swap(args: &[Mal]) -> MalResult {
             ast,
             params,
             env,
-            meta: _meta,
+            is_macro: _,
+            meta: _,
         }, args @ ..] => {
             let mut full_args: Vec<Mal> = Vec::new();
             full_args.push((*a).borrow().clone());

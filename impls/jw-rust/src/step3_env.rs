@@ -31,6 +31,7 @@ fn EVAL(ast: &Mal, env: &Env) -> MalResult {
                             ast: closure_ast,
                             params,
                             env: closure_env,
+                            is_macro: _,
                             meta: _,
                         }, tail @ ..] => {
                             let new_env = env::new_binds(Some(closure_env), params, tail)?;
