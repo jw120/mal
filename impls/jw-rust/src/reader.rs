@@ -27,7 +27,7 @@ impl Reader<'_> {
     // Initialise a new reader
     fn new(source: &str) -> Reader {
         let re = Regex::new(
-            r###"(?x)
+            r#"(?x)
             [\s,]* # Whitespace and commas not captured
             ( # Capture one of these alternatives
                 ~@|                 # Special two-character ~@ token
@@ -36,7 +36,7 @@ impl Reader<'_> {
                 ;.*|                # Anything starting with ;
                 [^\s\[\]{}('"`,;)]* # Zero-or-more non-special characters
             )
-            "###,
+            "#,
         )
         .unwrap();
         Reader {

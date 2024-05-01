@@ -7,6 +7,10 @@ edition = "2021"
 regex = "1.10.4"
 rustyline = "14.0.0"
 
+[lints.clippy]
+pedantic = "warn"
+nursery = "warn"
+
 [[bin]]
 name = "step0_repl"
 path = "src/step0_repl.rs"
