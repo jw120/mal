@@ -6,20 +6,20 @@ use rustyline::{DefaultEditor, Result};
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
 
-fn READ(s: &str) -> &str {
+const fn READ(s: &str) -> &str {
     s
 }
 
-fn EVAL(s: &str) -> &str {
+const fn EVAL(s: &str) -> &str {
     s
 }
 
 fn PRINT(s: &str) {
-    println!("{}", s);
+    println!("{s}");
 }
 
 fn rep(s: &str) {
-    PRINT(EVAL(READ(s)))
+    PRINT(EVAL(READ(s)));
 }
 
 fn main() -> Result<()> {
@@ -44,7 +44,7 @@ fn main() -> Result<()> {
                 break;
             }
             Err(err) => {
-                println!("Error reading line: {:?}", err);
+                println!("Error reading line: {err:?}");
             }
         }
     }

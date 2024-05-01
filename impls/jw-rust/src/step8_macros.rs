@@ -9,7 +9,9 @@ use jw_rust_mal::core;
 use jw_rust_mal::env;
 use jw_rust_mal::printer;
 use jw_rust_mal::reader;
-use jw_rust_mal::types::*;
+use jw_rust_mal::types::{
+    err, into_mal_closure, into_mal_hashmap, into_mal_seq, is_falsy, sym, Env, Mal, MalResult,
+};
 
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
@@ -25,18 +27,17 @@ fn EVAL(mut ast: Mal, mut env: Env) -> MalResult {
         if let Mal::Seq(true, xs, _meta) = ast.clone() {
             match xs.as_slice() {
                 // Empty list just returns itself
-                [] => return Ok(ast.clone()),
+                [] => return Ok(ast),
 
                 // do special form - evaluate all but last element and loop with last element
                 [Mal::Symbol(n), tail @ ..] if n == "do" => {
                     if tail.is_empty() {
                         return err("No arguments to do");
-                    } else {
-                        for x in tail[..xs.len() - 1].iter() {
-                            EVAL(x.clone(), env.clone())?;
-                        }
-                        ast = xs[xs.len() - 1].clone();
                     }
+                    for x in &tail[..xs.len() - 1] {
+                        EVAL(x.clone(), env.clone())?;
+                    }
+                    ast = xs[xs.len() - 1].clone();
                 }
                 // if special form - continue with appropriate branch
                 [Mal::Symbol(n), cond, t, f] if n == "if" => {
@@ -208,12 +209,12 @@ fn rep(s: &str, env: &Env, quiet: bool) {
         Ok(x) => match EVAL(x, env.clone()) {
             Ok(value) => {
                 if !quiet {
-                    PRINT(&value)
+                    PRINT(&value);
                 }
             }
-            Err(msg) => println!("Evaluation error: {}", msg),
+            Err(msg) => println!("Evaluation error: {msg}"),
         },
-        Err(msg) => println!("{}", msg),
+        Err(msg) => println!("{msg}"),
     }
 }
 
@@ -225,7 +226,7 @@ fn main() -> Result<(), ReadlineError> {
         env::set(&root_env, name, value);
     }
     for code in builtins_mal {
-        rep(code, &root_env, true)
+        rep(code, &root_env, true);
     }
 
     // Check command line arguments
@@ -235,7 +236,7 @@ fn main() -> Result<(), ReadlineError> {
     // Run batch mode if a source file provided on the command line
     if let Some(mal_source_file) = args.next() {
         // Batch mode
-        let cmd = format!("(load-file \"{}\")", mal_source_file);
+        let cmd = format!("(load-file \"{mal_source_file}\")");
         let argv: Vec<Mal> = args.map(Mal::String).collect();
         env::set(&root_env, "*ARGV*", into_mal_seq(true, argv));
         rep(&cmd, &root_env, true);
@@ -266,7 +267,7 @@ fn main() -> Result<(), ReadlineError> {
                 break;
             }
             Err(err) => {
-                println!("Error reading line: {:?}", err);
+                println!("Error reading line: {err:?}");
             }
         }
     }

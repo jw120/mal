@@ -1,9 +1,9 @@
 // Printing functions
 // Used in step 1 onwards
 
-use crate::types::*;
+use crate::types::{Mal, MalKey};
 
-pub fn pr_str(x: &Mal, print_readably: bool) -> String {
+#[must_use] pub fn pr_str(x: &Mal, print_readably: bool) -> String {
     match x {
         Mal::Int(i) => i.to_string(),
         Mal::Seq(true, xs, _) => format!("({})", seq(xs, print_readably)),
@@ -26,7 +26,7 @@ pub fn pr_str(x: &Mal, print_readably: bool) -> String {
                 s.to_string()
             }
         }
-        Mal::Keyword(s) => format!(":{}", s),
+        Mal::Keyword(s) => format!(":{s}"),
         Mal::Symbol(s) => s.to_string(),
         Mal::Nil => "nil".to_string(),
         Mal::Bool(b) => b.to_string(),

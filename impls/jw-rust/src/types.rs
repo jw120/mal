@@ -35,15 +35,16 @@ pub enum Mal {
 // Lists and vectors treated as equal to each other. Functions always compare false.
 impl PartialEq for Mal {
     fn eq(&self, other: &Self) -> bool {
+        #[allow(clippy::match_same_arms)]
         match (self, other) {
-            (Mal::Seq(_, xs, _), Mal::Seq(_, ys, _)) => xs == ys,
-            (Mal::HashMap(xs, _), Mal::HashMap(ys, _)) => xs == ys,
-            (Mal::Int(x), Mal::Int(y)) => x == y,
-            (Mal::Keyword(x), Mal::Keyword(y)) => x == y,
-            (Mal::String(x), Mal::String(y)) => x == y,
-            (Mal::Symbol(x), Mal::Symbol(y)) => x == y,
-            (Mal::Bool(x), Mal::Bool(y)) => x == y,
-            (Mal::Nil, Mal::Nil) => true,
+            (Self::Seq(_, xs, _), Self::Seq(_, ys, _)) => xs == ys,
+            (Self::HashMap(xs, _), Self::HashMap(ys, _)) => xs == ys,
+            (Self::Int(x), Self::Int(y)) => x == y,
+            (Self::Keyword(x), Self::Keyword(y)) => x == y,
+            (Self::String(x), Self::String(y)) => x == y,
+            (Self::Symbol(x), Self::Symbol(y)) => x == y,
+            (Self::Bool(x), Self::Bool(y)) => x == y,
+            (Self::Nil, Self::Nil) => true,
             (_, _) => false,
         }
     }
@@ -51,6 +52,7 @@ impl PartialEq for Mal {
 
 // Helper constructor functions to reduce boilerplate
 
+#[must_use]
 pub fn into_mal_atom(value: Mal) -> Mal {
     Mal::Atom(Rc::new(RefCell::new(value)))
 }
@@ -71,6 +73,7 @@ pub fn into_mal_closure(
     }
 }
 
+#[must_use]
 pub fn into_mal_hashmap(m: HashMap<MalKey, Mal>) -> Mal {
     Mal::HashMap(Rc::new(m), Rc::new(Mal::Nil))
 }
@@ -79,15 +82,18 @@ pub fn into_mal_fn(f: fn(&[Mal]) -> MalResult) -> Mal {
     Mal::Function(f, Rc::new(Mal::Nil))
 }
 
+#[must_use]
 pub fn into_mal_seq(is_list: bool, v: Vec<Mal>) -> Mal {
     Mal::Seq(is_list, Rc::new(v), Rc::new(Mal::Nil))
 }
 
+#[must_use]
 pub fn sym(s: &str) -> Mal {
     Mal::Symbol(s.to_string())
 }
 
-pub fn is_falsy(x: &Mal) -> bool {
+#[must_use]
+pub const fn is_falsy(x: &Mal) -> bool {
     matches!(x, Mal::Bool(false) | Mal::Nil)
 }
 

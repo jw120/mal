@@ -5,7 +5,7 @@ use regex::Regex;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use crate::types::*;
+use crate::types::{err, Mal, MalKey, MalResult};
 
 // Top-level interface to reader. Returns Nil if input is empty or only comments
 pub fn read_str(s: &str) -> MalResult {
@@ -157,11 +157,11 @@ impl Reader<'_> {
                 match (in_quote, cs.next()) {
                     (false, Some('\\')) => in_quote = true,
                     (false, Some('\"')) => {
-                        if cs.next().is_none() {
-                            return Ok(Mal::String(s));
+                        return if cs.next().is_none() {
+                            Ok(Mal::String(s))
                         } else {
-                            return err("Interior double-quote in string");
-                        }
+                            err("Interior double-quote in string")
+                        };
                     }
                     (false, Some(c)) => s.push(c),
                     (false, None) => {

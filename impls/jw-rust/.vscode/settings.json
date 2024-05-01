@@ -8,10 +8,5 @@
         "rustyline"
     ],
     "rust-analyzer.check.command": "clippy",
-    "rust-analyzer.check.workspace": true,
-    "rust-analyzer.check.extraArgs": [
-        "--",
-        "-W",
-        "clippy:pedantic"
-    ]
+    "rust-analyzer.check.workspace": true
 }

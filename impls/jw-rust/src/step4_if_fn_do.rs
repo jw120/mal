@@ -8,7 +8,9 @@ use jw_rust_mal::core;
 use jw_rust_mal::env;
 use jw_rust_mal::printer;
 use jw_rust_mal::reader;
-use jw_rust_mal::types::*;
+use jw_rust_mal::types::{
+    err, into_mal_closure, into_mal_hashmap, into_mal_seq, is_falsy, Env, Mal, MalResult,
+};
 
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
@@ -17,10 +19,11 @@ fn READ(s: &str) -> MalResult {
     reader::read_str(s)
 }
 
+#[allow(clippy::needless_pass_by_value)] // Need signature to be compatible with EVAL in later steps
 fn EVAL(ast: Mal, env: Env) -> MalResult {
     if let Mal::Seq(true, xs, _meta) = ast.clone() {
         match xs.as_slice() {
-            [] => Ok(ast.clone()),
+            [] => Ok(ast),
             [Mal::Symbol(n), tail @ ..] if n == "do" => apply_do(&env, tail),
             [Mal::Symbol(n), cond, t, f] if n == "if" => apply_if(&env, cond, t, f),
             [Mal::Symbol(n), cond, t] if n == "if" => apply_if(&env, cond, t, &Mal::Nil),
@@ -88,7 +91,7 @@ fn apply_let(env: &Env, xs: &[Mal], z: &Mal) -> MalResult {
     let mut xs_iter = xs.iter();
     loop {
         match xs_iter.next() {
-            None => return EVAL(z.clone(), new_env.clone()),
+            None => return EVAL(z.clone(), new_env),
             Some(Mal::Symbol(s)) => {
                 if let Some(value) = xs_iter.next() {
                     let value_eval = EVAL(value.clone(), new_env.clone())?;
@@ -134,12 +137,12 @@ fn rep(s: &str, env: &Env, quiet: bool) {
         Ok(x) => match EVAL(x, env.clone()) {
             Ok(value) => {
                 if !quiet {
-                    PRINT(&value)
+                    PRINT(&value);
                 }
             }
-            Err(msg) => println!("Evaluation error: {}", msg),
+            Err(msg) => println!("Evaluation error: {msg}"),
         },
-        Err(msg) => println!("{}", msg),
+        Err(msg) => println!("{msg}"),
     }
 }
 
@@ -155,7 +158,7 @@ fn main() -> Result<(), ReadlineError> {
         env::set(&repl_env, name, value);
     }
     for code in builtins_mal {
-        rep(code, &repl_env, true)
+        rep(code, &repl_env, true);
     }
 
     loop {
@@ -175,7 +178,7 @@ fn main() -> Result<(), ReadlineError> {
                 break;
             }
             Err(err) => {
-                println!("Error reading line: {:?}", err);
+                println!("Error reading line: {err:?}");
             }
         }
     }

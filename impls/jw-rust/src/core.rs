@@ -7,7 +7,7 @@ use std::ops;
 use crate::env;
 use crate::printer;
 use crate::reader;
-use crate::types::*;
+use crate::types::{err, into_mal_atom, into_mal_fn, into_mal_seq, Mal, MalResult};
 
 // Built-in definitions (rust code and mal code)
 pub fn get_builtins() -> (Vec<(&'static str, Mal)>, Vec<&'static str>) {
@@ -51,6 +51,7 @@ pub fn get_builtins() -> (Vec<(&'static str, Mal)>, Vec<&'static str>) {
 
 // List functions
 
+#[allow(clippy::unnecessary_wraps)] // Clippy does not think this should return a Result
 fn list(args: &[Mal]) -> MalResult {
     Ok(into_mal_seq(true, args.to_vec()))
 }
@@ -72,7 +73,9 @@ fn is_empty(args: &[Mal]) -> MalResult {
 
 fn count(args: &[Mal]) -> MalResult {
     match args {
-        [Mal::Seq(_, xs, _), ..] => Ok(Mal::Int(xs.len() as i64)),
+        [Mal::Seq(_, xs, _), ..] => {
+            i64::try_from(xs.len()).map_or(err("Integer overflow"), |i| Ok(Mal::Int(i)))
+        }
         [Mal::Nil, ..] => Ok(Mal::Int(0)),
         _ => err("count needs a list"),
     }
@@ -160,22 +163,26 @@ fn eq(args: &[Mal]) -> MalResult {
 
 // Print functions
 
+#[allow(clippy::unnecessary_wraps)] // Clippy does not think this should return a Result
 fn pr_dash_str(args: &[Mal]) -> MalResult {
     let arg_strings: Vec<String> = args.iter().map(|x| printer::pr_str(x, true)).collect();
     Ok(Mal::String(arg_strings.join(" ")))
 }
 
+#[allow(clippy::unnecessary_wraps)] // Clippy does not think this should return a Result
 fn str(args: &[Mal]) -> MalResult {
     let arg_strings: Vec<String> = args.iter().map(|x| printer::pr_str(x, false)).collect();
     Ok(Mal::String(arg_strings.join("")))
 }
 
+#[allow(clippy::unnecessary_wraps)] // Clippy does not think this should return a Result
 fn prn(args: &[Mal]) -> MalResult {
     let arg_strings: Vec<String> = args.iter().map(|x| printer::pr_str(x, true)).collect();
     println!("{}", arg_strings.join(" "));
     Ok(Mal::Nil)
 }
 
+#[allow(clippy::unnecessary_wraps)] // Clippy does not think this should return a Result
 fn println(args: &[Mal]) -> MalResult {
     let arg_strings: Vec<String> = args.iter().map(|x| printer::pr_str(x, false)).collect();
     println!("{}", arg_strings.join(" "));
@@ -277,22 +284,20 @@ fn slurp(args: &[Mal]) -> MalResult {
 
 // (int, int) -> int
 fn do_iii(op: fn(i64, i64) -> i64, name: &str, args: &[Mal]) -> MalResult {
-    match args {
-        [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(op(*x, *y))),
-        _ => {
-            let msg = format!("Bad arguments for {}", name);
-            err(&msg)
-        }
+    if let [Mal::Int(x), Mal::Int(y)] = args {
+        Ok(Mal::Int(op(*x, *y)))
+    } else {
+        let msg = format!("Bad arguments for {name}");
+        err(&msg)
     }
 }
 
 // (int, int) -> bool
 fn do_iib(op: fn(i64, i64) -> bool, name: &str, args: &[Mal]) -> MalResult {
-    match args {
-        [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Bool(op(*x, *y))),
-        _ => {
-            let msg = format!("Bad arguments for {}", name);
-            err(&msg)
-        }
+    if let [Mal::Int(x), Mal::Int(y)] = args {
+        Ok(Mal::Bool(op(*x, *y)))
+    } else {
+        let msg = format!("Bad arguments for {name}");
+        err(&msg)
     }
 }

@@ -5,7 +5,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use crate::types::*;
+use crate::types::{err, into_mal_seq, Env, EnvStruct, Mal, MalResult};
 
 // Type borrowed from mal's supplied rust impl
 // Use RefCell so we can mutate the environment
@@ -18,19 +18,21 @@ pub fn find(env: &Env, key: &str) -> Option<Env> {
     if env.data.borrow().contains_key(key) {
         return Some(Rc::clone(env));
     }
-    match &env.outer {
-        Some(o) => find(o, key),
-        None => None,
-    }
+    env.outer.as_ref().and_then(|o| find(o, key))
+    // match &env.outer {
+    //     Some(o) => find(o, key),
+    //     None => None,
+    // }
 }
 
 pub fn get(env: &Env, key: &String) -> MalResult {
-    match find(env, key) {
-        Some(e) => Ok(e.data.borrow()[key].clone()),
-        None => Err(format!("{} not found.", key).to_string()),
-    }
+    find(env, key).map_or_else(
+        || Err(format!("{key} not found.")),
+        |e| Ok(e.data.borrow()[key].clone()),
+    )
 }
 
+#[must_use]
 pub fn new(outer: Option<&Env>) -> Env {
     Rc::new(EnvStruct {
         data: RefCell::new(HashMap::new()),
@@ -65,9 +67,8 @@ pub fn new_binds(outer: Option<&Env>, binds: &[Mal], exprs: &[Mal]) -> Result<En
                         }
                         _ => err("Extra argument in variadic bind"),
                     };
-                } else {
-                    return err("No symbol for variadic bind");
                 }
+                return err("No symbol for variadic bind");
             }
             Some(Mal::Symbol(s)) => match exprs_iter.next() {
                 Some(expr) => set(&env, s, expr.clone()),

@@ -6,7 +6,7 @@ use std::collections::HashMap;
 
 use jw_rust_mal::printer;
 use jw_rust_mal::reader;
-use jw_rust_mal::types::*;
+use jw_rust_mal::types::{err, into_mal_fn, into_mal_hashmap, into_mal_seq, Mal, MalResult};
 
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
@@ -46,18 +46,18 @@ fn rep(s: &str, env: &Env) {
         Ok(Mal::Nil) => {}
         Ok(x) => match EVAL(&x, env) {
             Ok(value) => PRINT(&value),
-            Err(msg) => println!("Evaluation error: {}", msg),
+            Err(msg) => println!("Evaluation error: {msg}"),
         },
-        Err(msg) => println!("{}", msg),
+        Err(msg) => println!("{msg}"),
     }
 }
 
 fn eval_ast(ast: &Mal, env: &Env) -> MalResult {
     match ast {
-        Mal::Symbol(s) => match env.get(s) {
-            Some(value) => Ok(value.clone()),
-            None => err("Can't find value for symbol"),
-        },
+        Mal::Symbol(s) => env.get(s).map_or_else(
+            || err("Can't find value for symbol"),
+            |value| Ok(value.clone()),
+        ),
         Mal::Seq(is_list, xs, _) => {
             let mut ys = Vec::new();
             for x in xs.iter() {
@@ -107,7 +107,7 @@ fn main() -> Result<(), ReadlineError> {
                 break;
             }
             Err(err) => {
-                println!("Error reading line: {:?}", err);
+                println!("Error reading line: {err:?}");
             }
         }
     }

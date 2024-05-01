@@ -13,6 +13,7 @@
 * Rust notes
   * eval as a special form not a bound function (with hack to find outermost environment) - borrowed from supplied rust implementation
   * skip printing nil in repl (not in step1 so we pass the tests)
+  * Running clippy from within VS Code does not pick up config from Cargo.toml
 
 * Note - how to update my repo for changes in the upstream <https://github.com/kanaka/mal>
 
@@ -154,3 +155,5 @@ Implementation choices:
 * Use a mix of native types and structs as mal values. Structs for mal's nil, collection and function types
 * Uses rackets void type to signal no value from reader
 * Relies on native TCO (so step 5 largely skipped)
+
+cspell:words clippy
