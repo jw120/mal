@@ -23,6 +23,9 @@ fn READ(s: &str) -> MalResult {
 fn EVAL(mut ast: Mal, mut env: Env) -> MalResult {
     // Looping to implement TCO
     loop {
+        // macro-expand
+        ast = macroexpand(ast, &env)?;
+
         // Evaluate a list applying functions and special forms
         if let Mal::Seq(true, xs, _meta) = ast.clone() {
             match xs.as_slice() {
@@ -64,6 +67,32 @@ fn EVAL(mut ast: Mal, mut env: Env) -> MalResult {
                     return Ok(y);
                 }
 
+                // defmacro! special form - add as macro to environment and done
+                [Mal::Symbol(n), Mal::Symbol(s), x] if n == "defmacro!" => {
+                    return if let Mal::Closure {
+                        eval,
+                        params,
+                        ast: closure_ast,
+                        env: closure_env,
+                        is_macro: _is_macro,
+                        meta,
+                    } = EVAL(x.clone(), env.clone())?
+                    {
+                        let y = Mal::Closure {
+                            eval,
+                            params,
+                            ast: closure_ast,
+                            env: closure_env,
+                            is_macro: true,
+                            meta,
+                        };
+                        env::set(&env, s, y.clone());
+                        Ok(y)
+                    } else {
+                        err("defmacro! takes a closure")
+                    }
+                }
+
                 // let* special form -- update environment and continue
                 [Mal::Symbol(n), Mal::Seq(_, xs, _), z] if n == "let*" => {
                     env = env::new(Some(&env));
@@ -98,6 +127,9 @@ fn EVAL(mut ast: Mal, mut env: Env) -> MalResult {
 
                 // quasi-quote special form (quasi-quote and continues to evaluate)
                 [Mal::Symbol(n), x] if n == "quasiquote" => ast = quasiquote(x.clone()),
+
+                // macroexpand special form
+                [Mal::Symbol(n), x] if n == "macroexpand" => return macroexpand(x.clone(), &env),
 
                 // eval as if it was a special form - continue with given ast and root environment
                 [Mal::Symbol(n), eval_ast] if n == "eval" => {
@@ -196,6 +228,57 @@ fn quasiquote_elements(xs: &[Mal]) -> Mal {
         result = into_mal_seq(true, vec![sym("cons"), quasiquote(elt.clone()), result]);
     }
     result
+}
+
+fn is_macro_call(ast: &Mal, env: &Env) -> bool {
+    if let Mal::Seq(true, xs, _meta) = ast {
+        if let [Mal::Symbol(s), _rest @ ..] = xs.as_ref().as_slice() {
+            return matches!(
+                env::get(env, s),
+                Ok(Mal::Closure {
+                    eval: _,
+                    params: _,
+                    ast: _,
+                    env: _,
+                    is_macro: true,
+                    meta: _
+                })
+            );
+        }
+    }
+    false
+}
+
+fn macroexpand(mut ast: Mal, env: &Env) -> MalResult {
+    while is_macro_call(&ast, env) {
+        if let Mal::Seq(true, ref xs, _) = ast {
+            if let [Mal::Symbol(s), tail @ ..] = xs.as_slice() {
+                match env::get(env, s)? {
+                    Mal::Closure {
+                        eval,
+                        params,
+                        ast: closure_ast,
+                        env: closure_env,
+                        is_macro: true,
+                        meta: _,
+                    } => {
+                        let new_env = env::new_binds(Some(&closure_env), &params, tail)?;
+                        ast = eval(closure_ast.as_ref().clone(), new_env)?;
+                    }
+                    // Mal::Function(f, _meta) => ast = f(tail)?,
+                    _ => {
+                        println!("xs: {:?}, get {:?}", xs, env::get(env, s));
+                        return err("Internal error - lost closure");
+                    }
+                }
+            } else {
+                return err("Internal error - lost symbol");
+            }
+        } else {
+            return err("Internal error - lost list");
+        }
+    }
+    Ok(ast)
 }
 
 fn PRINT(x: &Mal) {

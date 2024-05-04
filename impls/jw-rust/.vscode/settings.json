@@ -1,6 +1,8 @@
 {
     "cSpell.words": [
         "builtins",
+        "defmacro",
+        "macroexpand",
         "mal's",
         "quasiquote",
         "quasiquoteexpand",

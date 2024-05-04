@@ -9,7 +9,7 @@ use std::rc::Rc;
 // Lists, Vectors, Hashmaps and Functions have a second meta argument
 // Closure carries its eval function to avoid awkward calling across modules
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Mal {
     // Seq is a list of vector (first param is true for a list)
     Seq(bool, Rc<Vec<Mal>>, Rc<Mal>),
@@ -104,12 +104,13 @@ pub fn err<T>(s: &str) -> Result<T, String> {
 }
 
 // Types which can be used for HashMap keys
-#[derive(Clone, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum MalKey {
     Keyword(String),
     String(String),
 }
 
+#[derive(Debug)]
 pub struct EnvStruct {
     pub data: RefCell<HashMap<String, Mal>>,
     pub outer: Option<Env>,
