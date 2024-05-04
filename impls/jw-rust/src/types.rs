@@ -97,10 +97,16 @@ pub const fn is_falsy(x: &Mal) -> bool {
     matches!(x, Mal::Bool(false) | Mal::Nil)
 }
 
-pub type MalResult = Result<Mal, String>;
+#[derive(Debug)]
+pub enum MalError {
+    Msg(String),
+    Exception(Mal), // Thrown during execution
+}
 
-pub fn err<T>(s: &str) -> Result<T, String> {
-    Err(s.to_string())
+pub type MalResult = Result<Mal, MalError>;
+
+pub fn err<T>(s: &str) -> Result<T, MalError> {
+    Err(MalError::Msg(s.to_string()))
 }
 
 // Types which can be used for HashMap keys

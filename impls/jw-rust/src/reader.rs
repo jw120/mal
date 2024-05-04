@@ -5,7 +5,7 @@ use regex::Regex;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use crate::types::{err, Mal, MalKey, MalResult};
+use crate::types::{err, Mal, MalError, MalKey, MalResult};
 
 // Top-level interface to reader. Returns Nil if input is empty or only comments
 pub fn read_str(s: &str) -> MalResult {
@@ -53,7 +53,7 @@ impl Reader<'_> {
         self.current >= self.tokens.len()
     }
 
-    fn peek(&self) -> Result<&str, String> {
+    fn peek(&self) -> Result<&str, MalError> {
         if self.is_empty() {
             err("Peek on empty reader")
         } else {
@@ -65,7 +65,7 @@ impl Reader<'_> {
         self.current += 1;
     }
 
-    fn next(&mut self) -> Result<&str, String> {
+    fn next(&mut self) -> Result<&str, MalError> {
         if self.is_empty() {
             err("Next on empty reader")
         } else {
@@ -119,7 +119,7 @@ impl Reader<'_> {
         }
     }
 
-    fn read_seq(&mut self, closing: &str) -> Result<Rc<Vec<Mal>>, String> {
+    fn read_seq(&mut self, closing: &str) -> Result<Rc<Vec<Mal>>, MalError> {
         let mut contents: Vec<Mal> = vec![];
         loop {
             if self.is_empty() {

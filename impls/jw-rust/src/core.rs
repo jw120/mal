@@ -7,7 +7,7 @@ use std::ops;
 use crate::env;
 use crate::printer;
 use crate::reader;
-use crate::types::{err, into_mal_atom, into_mal_fn, into_mal_seq, Mal, MalResult};
+use crate::types::{err, into_mal_atom, into_mal_fn, into_mal_seq, Mal, MalError, MalResult};
 
 // Built-in definitions (rust code and mal code)
 pub fn get_builtins() -> (Vec<(&'static str, Mal)>, Vec<&'static str>) {
@@ -44,6 +44,9 @@ pub fn get_builtins() -> (Vec<(&'static str, Mal)>, Vec<&'static str>) {
             ("swap!", into_mal_fn(swap)),
             ("read-string", into_mal_fn(read_string)),
             ("slurp", into_mal_fn(slurp)),
+            ("throw", into_mal_fn(throw)),
+            ("map", into_mal_fn(map)),
+            ("apply", into_mal_fn(apply)),
         ],
         vec![
             "(def! not (fn* (a) 
@@ -130,9 +133,10 @@ fn vec(args: &[Mal]) -> MalResult {
 fn nth(args: &[Mal]) -> MalResult {
     match args {
         [Mal::Seq(_is_list, xs, _meta), Mal::Int(i)] => {
-            let index = usize::try_from(*i).map_err(|_| "Index out of range".to_string())?;
+            let index =
+                usize::try_from(*i).map_err(|_| MalError::Msg("Index out of range".to_string()))?;
             xs.get(index)
-                .map_or_else(|| err("Invalid index in nth"), |x| Ok(x.clone()))
+                .map_or_else(|| err("Index out of bounds in nth"), |x| Ok(x.clone()))
         }
         _ => err("nth takes a sequence and an index"),
     }
@@ -172,9 +176,9 @@ fn mul(args: &[Mal]) -> MalResult {
 
 fn div(args: &[Mal]) -> MalResult {
     match args {
-        [Mal::Int(_), Mal::Int(0)] => Err("Division by zero".to_string()),
+        [Mal::Int(_), Mal::Int(0)] => err("Division by zero"),
         [Mal::Int(x), Mal::Int(y)] => Ok(Mal::Int(x / y)),
-        _ => Err("Bad arguments for /".to_string()),
+        _ => err("Bad arguments for /"),
     }
 }
 
@@ -197,7 +201,7 @@ fn ge(args: &[Mal]) -> MalResult {
 fn eq(args: &[Mal]) -> MalResult {
     match args {
         [x, y] => Ok(Mal::Bool(x == y)),
-        _ => Err("Bad arguments for =".to_string()),
+        _ => err("Bad arguments for ="),
     }
 }
 
@@ -313,11 +317,53 @@ fn slurp(args: &[Mal]) -> MalResult {
     if let [Mal::String(path)] = args {
         match fs::read_to_string(path) {
             Ok(s) => Ok(Mal::String(s)),
-            Err(e) => Err(e.to_string()),
+            Err(e) => err(&e.to_string()),
         }
     } else {
         err("slurp takes a filename")
     }
+}
+
+fn throw(args: &[Mal]) -> MalResult {
+    if let [e] = args {
+        Err(MalError::Exception(e.clone()))
+    } else {
+        err("throw takes one argument")
+    }
+}
+
+fn map(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::Closure {
+            eval,
+            ast,
+            params,
+            env,
+            is_macro: false,
+            meta: _,
+        }, Mal::Seq(_is_list, xs, _meta)] => {
+            let mut v: Vec<Mal> = Vec::new();
+            for x in xs.as_ref() {
+                let args: Vec<Mal> = vec![x.clone()];
+                let map_env = env::new_binds(Some(env), params, &args)?;
+                v.push(eval(ast.as_ref().clone(), map_env)?);
+            }
+            Ok(into_mal_seq(true, v))
+        }
+        [Mal::Function(f, _), Mal::Seq(_is_list, xs, _)] => {
+            let mut v: Vec<Mal> = Vec::new();
+            for x in xs.as_ref() {
+                let args: Vec<Mal> = vec![x.clone()];
+                v.push(f(&args)?);
+            }
+            Ok(into_mal_seq(true, v))
+        }
+        _ => err("map takes a function or closure and a sequence"),
+    }
+}
+
+fn apply(_args: &[Mal]) -> MalResult {
+    err("NYI")
 }
 
 // Helper functions

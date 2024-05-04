@@ -5,7 +5,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use crate::types::{err, into_mal_seq, Env, EnvStruct, Mal, MalResult};
+use crate::types::{err, into_mal_seq, Env, EnvStruct, Mal, MalError, MalResult};
 
 // Type borrowed from mal's supplied rust impl
 // Use RefCell so we can mutate the environment
@@ -27,7 +27,7 @@ pub fn find(env: &Env, key: &str) -> Option<Env> {
 
 pub fn get(env: &Env, key: &String) -> MalResult {
     find(env, key).map_or_else(
-        || Err(format!("{key} not found.")),
+        || err(&format!("'{key}' not found")),
         |e| Ok(e.data.borrow()[key].clone()),
     )
 }
@@ -48,7 +48,7 @@ pub fn outermost(env: &Env) -> Env {
     e
 }
 
-pub fn new_binds(outer: Option<&Env>, binds: &[Mal], exprs: &[Mal]) -> Result<Env, String> {
+pub fn new_binds(outer: Option<&Env>, binds: &[Mal], exprs: &[Mal]) -> Result<Env, MalError> {
     let env = new(outer);
     let mut binds_iter = binds.iter();
     let mut exprs_iter = exprs.iter();
