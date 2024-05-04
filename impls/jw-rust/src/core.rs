@@ -46,9 +46,16 @@ pub fn get_builtins() -> (Vec<(&'static str, Mal)>, Vec<&'static str>) {
             ("slurp", into_mal_fn(slurp)),
         ],
         vec![
-            "(def! not (fn* (a) (if a false true)))",
-            "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\\nnil)\")))))",
-            "(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) (cons 'cond (rest (rest xs)))))))"
+            "(def! not (fn* (a) 
+                (if a false true)))",
+            "(def! load-file (fn* (f) 
+                (eval (read-string (str \"(do \" (slurp f) \"\\nnil)\")))))",
+            "(defmacro! cond (fn* (& xs) 
+                (if (> (count xs) 0) 
+                    (list 'if (first xs) (if (> (count xs) 1) 
+                                            (nth xs 1) 
+                                            (throw \"odd number of forms to cond\")) 
+                    (cons 'cond (rest (rest xs)))))))",
         ],
     )
 }
@@ -122,20 +129,20 @@ fn vec(args: &[Mal]) -> MalResult {
 
 fn nth(args: &[Mal]) -> MalResult {
     match args {
-        [Mal::Seq(_is_list, xs, _meta), Mal::Int(i)] => match xs.get(*i as usize) {
-            Some(x) => Ok(x.clone()),
-            None => err("Invalid index in nth"),
-        },
+        [Mal::Seq(_is_list, xs, _meta), Mal::Int(i)] => {
+            let index = usize::try_from(*i).map_err(|_| "Index out of range".to_string())?;
+            xs.get(index)
+                .map_or_else(|| err("Invalid index in nth"), |x| Ok(x.clone()))
+        }
         _ => err("nth takes a sequence and an index"),
     }
 }
 
 fn first(args: &[Mal]) -> MalResult {
     match args {
-        [Mal::Seq(_is_list, xs, _meta)] => Ok(match xs.get(0) {
-            Some(x) => x.clone(),
-            None => Mal::Nil,
-        }),
+        [Mal::Seq(_is_list, xs, _meta)] => {
+            Ok(xs.first().map_or(Mal::Nil, std::clone::Clone::clone))
+        }
         [Mal::Nil] => Ok(Mal::Nil),
         _ => err("first takes a sequence or nil"),
     }
@@ -144,7 +151,7 @@ fn first(args: &[Mal]) -> MalResult {
 fn rest(args: &[Mal]) -> MalResult {
     match args {
         [Mal::Seq(_is_list, xs, _meta)] if xs.len() > 0 => Ok(into_mal_seq(true, xs[1..].to_vec())),
-        [Mal::Seq(_, _, _)] | [Mal::Nil] => Ok(into_mal_seq(true, Vec::new())),
+        [Mal::Seq(_, _, _) | Mal::Nil] => Ok(into_mal_seq(true, Vec::new())),
         _ => err("rest takes a sequence or nil"),
     }
 }

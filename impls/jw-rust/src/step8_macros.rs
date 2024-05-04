@@ -253,23 +253,20 @@ fn macroexpand(mut ast: Mal, env: &Env) -> MalResult {
     while is_macro_call(&ast, env) {
         if let Mal::Seq(true, ref xs, _) = ast {
             if let [Mal::Symbol(s), tail @ ..] = xs.as_slice() {
-                match env::get(env, s)? {
-                    Mal::Closure {
-                        eval,
-                        params,
-                        ast: closure_ast,
-                        env: closure_env,
-                        is_macro: true,
-                        meta: _,
-                    } => {
-                        let new_env = env::new_binds(Some(&closure_env), &params, tail)?;
-                        ast = eval(closure_ast.as_ref().clone(), new_env)?;
-                    }
-                    // Mal::Function(f, _meta) => ast = f(tail)?,
-                    _ => {
-                        println!("xs: {:?}, get {:?}", xs, env::get(env, s));
-                        return err("Internal error - lost closure");
-                    }
+                if let Mal::Closure {
+                    eval,
+                    params,
+                    ast: closure_ast,
+                    env: closure_env,
+                    is_macro: true,
+                    meta: _,
+                } = env::get(env, s)?
+                {
+                    let new_env = env::new_binds(Some(&closure_env), &params, tail)?;
+                    ast = eval(closure_ast.as_ref().clone(), new_env)?;
+                } else {
+                    println!("xs: {:?}, get {:?}", xs, env::get(env, s));
+                    return err("Internal error - lost closure");
                 }
             } else {
                 return err("Internal error - lost symbol");

@@ -226,7 +226,10 @@ fn main() -> Result<(), ReadlineError> {
         env::set(&root_env, name, value);
     }
     for code in builtins_mal {
-        rep(code, &root_env, true);
+        // Macros not implemented until step 8
+        if !code.contains("defmacro!") {
+            rep(code, &root_env, true);
+        }
     }
 
     // Check command line arguments

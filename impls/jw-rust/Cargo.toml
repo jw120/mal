@@ -16,7 +16,8 @@ nursery = { level = "warn", priority = -1 }
 similar_names = "allow"  # Permit e.g., args and argv
 missing_errors_doc = "allow" # Not using doc comments
 implicit_hasher = "allow" # Don't care to specifiy hashmap hash algorithm
-match_same_arms = "allow" # Gives false positives
+match_same_arms = "allow" # Gives false 
+too-many-lines = "allow" # Allow a big EVAL function
 
 [[bin]]
 name = "step0_repl"
