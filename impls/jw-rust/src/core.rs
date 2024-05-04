@@ -21,6 +21,9 @@ pub fn get_builtins() -> (Vec<(&'static str, Mal)>, Vec<&'static str>) {
             ("cons", into_mal_fn(cons)),
             ("concat", into_mal_fn(concat)),
             ("vec", into_mal_fn(vec)),
+            ("nth", into_mal_fn(nth)),
+            ("first", into_mal_fn(first)),
+            ("rest", into_mal_fn(rest)),
             ("+", into_mal_fn(add)),
             ("-", into_mal_fn(sub)),
             ("*", into_mal_fn(mul)),
@@ -45,6 +48,7 @@ pub fn get_builtins() -> (Vec<(&'static str, Mal)>, Vec<&'static str>) {
         vec![
             "(def! not (fn* (a) (if a false true)))",
             "(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\\nnil)\")))))",
+            "(defmacro! cond (fn* (& xs) (if (> (count xs) 0) (list 'if (first xs) (if (> (count xs) 1) (nth xs 1) (throw \"odd number of forms to cond\")) (cons 'cond (rest (rest xs)))))))"
         ],
     )
 }
@@ -113,6 +117,35 @@ fn vec(args: &[Mal]) -> MalResult {
             _ => err("vec takes a sequence"),
         },
         _ => err("vec takes a sequence"),
+    }
+}
+
+fn nth(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::Seq(_is_list, xs, _meta), Mal::Int(i)] => match xs.get(*i as usize) {
+            Some(x) => Ok(x.clone()),
+            None => err("Invalid index in nth"),
+        },
+        _ => err("nth takes a sequence and an index"),
+    }
+}
+
+fn first(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::Seq(_is_list, xs, _meta)] => Ok(match xs.get(0) {
+            Some(x) => x.clone(),
+            None => Mal::Nil,
+        }),
+        [Mal::Nil] => Ok(Mal::Nil),
+        _ => err("first takes a sequence or nil"),
+    }
+}
+
+fn rest(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::Seq(_is_list, xs, _meta)] if xs.len() > 0 => Ok(into_mal_seq(true, xs[1..].to_vec())),
+        [Mal::Seq(_, _, _)] | [Mal::Nil] => Ok(into_mal_seq(true, Vec::new())),
+        _ => err("rest takes a sequence or nil"),
     }
 }
 
