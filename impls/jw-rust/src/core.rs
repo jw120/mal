@@ -579,15 +579,12 @@ fn dissoc(args: &[Mal]) -> MalResult {
 // get: takes a hash-map and a key and returns the value of looking up that key in the hash-map. If the key is not found in the hash-map then nil is returned.
 fn get(args: &[Mal]) -> MalResult {
     let lookup = match args {
-        [Mal::HashMap(m, _meta), key] => match into_key(key) {
-            Some(k) => m.get(&k),
-            None => None,
-        },
+        [Mal::HashMap(m, _meta), key] => into_key(key).and_then(|k| m.get(&k)),
         [Mal::Nil, _] => None,
         _ => return err("get takes a hash-map (or nil) and a key"),
     };
 
-    Ok(lookup.map_or(Mal::Nil, |x| x.clone()))
+    Ok(lookup.map_or(Mal::Nil, std::clone::Clone::clone))
 }
 
 // contains?: takes a hash-map and a key and returns true (mal true value) if the key exists
@@ -595,10 +592,9 @@ fn get(args: &[Mal]) -> MalResult {
 
 fn contains(args: &[Mal]) -> MalResult {
     if let [Mal::HashMap(m, _meta), key] = args {
-        Ok(Mal::Bool(match into_key(key) {
-            Some(k) => m.contains_key(&k),
-            None => false,
-        }))
+        Ok(Mal::Bool(
+            into_key(key).map_or(false, |k| m.contains_key(&k)),
+        ))
     } else {
         err("contains? takes a hash-map and a key value")
     }

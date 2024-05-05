@@ -10,7 +10,7 @@ use jw_rust_mal::env;
 use jw_rust_mal::printer;
 use jw_rust_mal::reader;
 use jw_rust_mal::types::{
-    err, into_mal_closure, into_mal_hashmap, into_mal_seq, is_falsy, Env, Mal, MalResult,
+    err, into_mal_closure, into_mal_hashmap, into_mal_seq, is_falsy, Env, Mal, MalError, MalResult,
 };
 
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
@@ -169,9 +169,16 @@ fn rep(s: &str, env: &Env, quiet: bool) {
                     PRINT(&value);
                 }
             }
-            Err(msg) => println!("Evaluation error: {msg}"),
+            Err(MalError::Msg(msg)) => println!("Evaluation error: {msg}"),
+            Err(MalError::Exception(e)) => {
+                println!("Uncaught exception {}", printer::pr_str(&e, true));
+            }
         },
-        Err(msg) => println!("{msg}"),
+        Err(MalError::Msg(msg)) => println!("Read error: {msg}"),
+        Err(MalError::Exception(e)) => println!(
+            "Unexpected exception during read {}",
+            printer::pr_str(&e, true)
+        ),
     }
 }
 

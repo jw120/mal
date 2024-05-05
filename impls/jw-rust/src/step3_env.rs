@@ -7,7 +7,9 @@ use std::collections::HashMap;
 use jw_rust_mal::env;
 use jw_rust_mal::printer;
 use jw_rust_mal::reader;
-use jw_rust_mal::types::{Env, Mal, MalResult, err, into_mal_fn, into_mal_hashmap, into_mal_seq};
+use jw_rust_mal::types::{
+    err, into_mal_fn, into_mal_hashmap, into_mal_seq, Env, Mal, MalError, MalResult,
+};
 
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
@@ -106,9 +108,16 @@ fn rep(s: &str, env: &Env) {
         Ok(Mal::Nil) => {}
         Ok(x) => match EVAL(&x, env) {
             Ok(value) => PRINT(&value),
-            Err(msg) => println!("Evaluation error: {msg}"),
+            Err(MalError::Msg(msg)) => println!("Evaluation error: {msg}"),
+            Err(MalError::Exception(e)) => {
+                println!("Uncaught exception {}", printer::pr_str(&e, true));
+            }
         },
-        Err(msg) => println!("{msg}"),
+        Err(MalError::Msg(msg)) => println!("Read error: {msg}"),
+        Err(MalError::Exception(e)) => println!(
+            "Unexpected exception during read {}",
+            printer::pr_str(&e, true)
+        ),
     }
 }
 

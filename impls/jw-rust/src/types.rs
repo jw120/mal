@@ -116,6 +116,7 @@ pub enum MalKey {
     String(String),
 }
 
+#[must_use]
 pub fn from_key(key: &MalKey) -> Mal {
     match key {
         MalKey::Keyword(s) => Mal::Keyword(s.to_string()),
@@ -123,6 +124,7 @@ pub fn from_key(key: &MalKey) -> Mal {
     }
 }
 
+#[must_use]
 pub fn into_key(x: &Mal) -> Option<MalKey> {
     match x {
         Mal::Keyword(s) => Some(MalKey::Keyword(s.to_string())),

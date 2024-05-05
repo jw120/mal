@@ -5,7 +5,7 @@ use rustyline::DefaultEditor;
 
 use jw_rust_mal::printer;
 use jw_rust_mal::reader;
-use jw_rust_mal::types::{Mal, MalResult};
+use jw_rust_mal::types::{Mal, MalError, MalResult};
 
 static RUSTYLINE_HISTORY_FILE: &str = ".jw-rust-mal-history";
 static RUSTYLINE_PROMPT: &str = "user> ";
@@ -25,7 +25,11 @@ fn PRINT(x: &Mal) {
 fn rep(s: &str) {
     match READ(s) {
         Ok(x) => PRINT(EVAL(&x)),
-        Err(msg) => println!("{msg}"),
+        Err(MalError::Msg(msg)) => println!("Read error: {msg}"),
+        Err(MalError::Exception(e)) => println!(
+            "Unexpected exception during read {}",
+            printer::pr_str(&e, true)
+        ),
     }
 }
 
