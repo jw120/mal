@@ -1,13 +1,17 @@
 // Definitions of built-in functions
 // Used from step 4 onwards
 
+use std::collections::HashMap;
 use std::fs;
 use std::ops;
 
 use crate::env;
 use crate::printer;
 use crate::reader;
-use crate::types::{err, into_mal_atom, into_mal_fn, into_mal_seq, Mal, MalError, MalResult};
+use crate::types::{
+    err, into_mal_atom, into_mal_fn, into_mal_hashmap, into_mal_seq, Mal, MalError, MalKey,
+    MalResult,
+};
 
 // Built-in definitions (rust code and mal code)
 pub fn get_builtins() -> (Vec<(&'static str, Mal)>, Vec<&'static str>) {
@@ -42,11 +46,29 @@ pub fn get_builtins() -> (Vec<(&'static str, Mal)>, Vec<&'static str>) {
             ("deref", into_mal_fn(deref)),
             ("reset!", into_mal_fn(reset)),
             ("swap!", into_mal_fn(swap)),
+            ("nil?", into_mal_fn(is_nil)),
+            ("true?", into_mal_fn(is_true)),
+            ("false?", into_mal_fn(is_false)),
+            ("symbol?", into_mal_fn(is_symbol)),
             ("read-string", into_mal_fn(read_string)),
             ("slurp", into_mal_fn(slurp)),
             ("throw", into_mal_fn(throw)),
             ("map", into_mal_fn(map)),
             ("apply", into_mal_fn(apply)),
+            ("symbol", into_mal_fn(symbol)),
+            ("keyword", into_mal_fn(keyword)),
+            ("keyword?", into_mal_fn(is_keyword)),
+            ("vector", into_mal_fn(vector)),
+            ("vector?", into_mal_fn(is_vector)),
+            ("sequential?", into_mal_fn(is_sequential)),
+            ("hash-map", into_mal_fn(hash_map)),
+            ("map?", into_mal_fn(is_map)),
+            ("assoc", into_mal_fn(nyi)),
+            ("dissoc", into_mal_fn(nyi)),
+            ("get", into_mal_fn(nyi)),
+            ("contains?", into_mal_fn(nyi)),
+            ("keys", into_mal_fn(nyi)),
+            ("vals", into_mal_fn(nyi)),
         ],
         vec![
             "(def! not (fn* (a) 
@@ -303,6 +325,40 @@ fn swap(args: &[Mal]) -> MalResult {
     }
 }
 
+// Type predicate functions
+
+fn is_nil(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::Nil] => Ok(Mal::Bool(true)),
+        [_] => Ok(Mal::Bool(false)),
+        _ => err("nil? takes one argument"),
+    }
+}
+
+fn is_true(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::Bool(true)] => Ok(Mal::Bool(true)),
+        [_] => Ok(Mal::Bool(false)),
+        _ => err("true? takes one argument"),
+    }
+}
+
+fn is_false(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::Bool(false)] => Ok(Mal::Bool(true)),
+        [_] => Ok(Mal::Bool(false)),
+        _ => err("false? takes one argument"),
+    }
+}
+
+fn is_symbol(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::Symbol(_)] => Ok(Mal::Bool(true)),
+        [_] => Ok(Mal::Bool(false)),
+        _ => err("symbol? takes one argument"),
+    }
+}
+
 // Other functions
 
 fn read_string(args: &[Mal]) -> MalResult {
@@ -362,7 +418,125 @@ fn map(args: &[Mal]) -> MalResult {
     }
 }
 
-fn apply(_args: &[Mal]) -> MalResult {
+fn apply(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::Function(f, _meta), rest @ ..] => {
+            let ys = copy_args(rest);
+            f(&ys)
+        }
+        [Mal::Closure {
+            eval,
+            ast,
+            params,
+            env,
+            is_macro: false,
+            meta: _,
+        }, rest @ ..] => {
+            let ys = copy_args(rest);
+            let apply_env = env::new_binds(Some(env), params, &ys)?;
+            eval(ast.as_ref().clone(), apply_env)
+        }
+        _ => err("apply requires a function or closure"),
+    }
+}
+
+// Step 9 functions
+
+// symbol: takes a string and returns a new symbol with the string as its name.
+
+fn symbol(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::String(s)] => Ok(Mal::Symbol(s.to_string())),
+        _ => err("symbol takes a string"),
+    }
+}
+
+// keyword: takes a string and returns a keyword with the same name
+// This function should also detect if the argument is already a keyword and just return it.
+fn keyword(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::String(s) | Mal::Keyword(s)] => Ok(Mal::Keyword(s.to_string())),
+        _ => err("keyword takes a string or a keyword"),
+    }
+}
+
+// keyword?: takes a single argument and returns true (mal true value) if the argument is a keyword,
+// otherwise returns false (mal false value).
+
+fn is_keyword(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::Keyword(_)] => Ok(Mal::Bool(true)),
+        [_] => Ok(Mal::Bool(false)),
+        _ => err("keyword? takes one argument"),
+    }
+}
+
+// vector: takes a variable number of arguments and returns a vector containing those arguments.
+
+#[allow(clippy::unnecessary_wraps)] // Clippy does not think this should return a Result
+fn vector(args: &[Mal]) -> MalResult {
+    Ok(into_mal_seq(false, args.to_vec()))
+}
+
+// vector?: takes a single argument and returns true (mal true value) if the argument is a vector
+// otherwise returns false (mal false value).
+
+fn is_vector(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::Seq(false, _, _)] => Ok(Mal::Bool(true)),
+        [_] => Ok(Mal::Bool(false)),
+        _ => err("vector? takes one argument"),
+    }
+}
+
+// sequential?: takes a single argument and returns true (mal true value) if it is a list or a vector, otherwise returns false (mal false value).
+
+fn is_sequential(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::Seq(_, _, _)] => Ok(Mal::Bool(true)),
+        [_] => Ok(Mal::Bool(false)),
+        _ => err("sequential? takes one argument"),
+    }
+}
+
+// hash-map: takes a variable but even number of arguments and returns a new mal hash-map value with keys from the odd arguments and values from the even arguments respectively. This is basically the functional form of the {} reader literal syntax.
+
+fn hash_map(args: &[Mal]) -> MalResult {
+    let mut args_iter = args.iter();
+    let mut m: HashMap<MalKey, Mal> = HashMap::new();
+    loop {
+        match (args_iter.next(), args_iter.next()) {
+            (Some(Mal::String(s)), Some(v)) => m.insert(MalKey::String(s.to_string()), v.clone()),
+            (Some(Mal::Keyword(s)), Some(v)) => m.insert(MalKey::Keyword(s.to_string()), v.clone()),
+            (Some(_), Some(_)) => return err("Bad key in hash-map"),
+            (Some(_), None) => {
+                return err("hash-map takes an even number of arguments");
+            }
+            (None, Some(_)) => return err("internal error!"),
+            (None, None) => {
+                return Ok(into_mal_hashmap(m));
+            }
+        };
+    }
+}
+
+// map?: takes a single argument and returns true (mal true value) if the argument is a hash-map, otherwise returns false (mal false value).
+fn is_map(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::HashMap(_, _)] => Ok(Mal::Bool(true)),
+        [_] => Ok(Mal::Bool(false)),
+        _ => err("map? takes one argument"),
+    }
+}
+
+// assoc: takes a hash-map as the first argument and the remaining arguments are odd/even key/value pairs to "associate" (merge) into the hash-map. Note that the original hash-map is unchanged (remember, mal values are immutable), and a new hash-map containing the old hash-maps key/values plus the merged key/value arguments is returned.
+// dissoc: takes a hash-map and a list of keys to remove from the hash-map. Again, note that the original hash-map is unchanged and a new hash-map with the keys removed is returned. Key arguments that do not exist in the hash-map are ignored.
+// get: takes a hash-map and a key and returns the value of looking up that key in the hash-map. If the key is not found in the hash-map then nil is returned.
+// contains?: takes a hash-map and a key and returns true (mal true value) if the key exists in the hash-map and false (mal false value) otherwise.
+// keys: takes a hash-map and returns a list (mal list value) of all the keys in the hash-map.
+// vals: takes a hash-map and returns a list (mal list value) of all the values in the hash-map.
+
+fn nyi(_args: &[Mal]) -> MalResult {
     err("NYI")
 }
 
@@ -386,4 +560,16 @@ fn do_iib(op: fn(i64, i64) -> bool, name: &str, args: &[Mal]) -> MalResult {
         let msg = format!("Bad arguments for {name}");
         err(&msg)
     }
+}
+
+// copy arguments to a new vector, with sequences replaced by their contents
+fn copy_args(xs: &[Mal]) -> Vec<Mal> {
+    let mut ys: Vec<Mal> = Vec::new();
+    for x in xs {
+        match x {
+            Mal::Seq(_is_list, zs, _meta) => ys.extend_from_slice(zs.as_ref()),
+            _ => ys.push(x.clone()),
+        }
+    }
+    ys
 }

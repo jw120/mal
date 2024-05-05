@@ -1,13 +1,16 @@
 {
     "cSpell.words": [
+        "assoc",
         "builtins",
         "defmacro",
+        "dissoc",
         "macroexpand",
         "mal's",
         "quasiquote",
         "quasiquoteexpand",
         "Readline",
-        "rustyline"
+        "rustyline",
+        "vals"
     ],
     "rust-analyzer.check.command": "clippy",
     "rust-analyzer.check.workspace": true
