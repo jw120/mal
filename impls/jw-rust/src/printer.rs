@@ -1,9 +1,10 @@
 // Printing functions
 // Used in step 1 onwards
 
-use crate::types::{Mal, MalKey};
+use crate::types::{from_key, Mal};
 
-#[must_use] pub fn pr_str(x: &Mal, print_readably: bool) -> String {
+#[must_use]
+pub fn pr_str(x: &Mal, print_readably: bool) -> String {
     match x {
         Mal::Int(i) => i.to_string(),
         Mal::Seq(true, xs, _) => format!("({})", seq(xs, print_readably)),
@@ -11,10 +12,7 @@ use crate::types::{Mal, MalKey};
         Mal::HashMap(m, _) => {
             let mut xs = Vec::new();
             for (k, v) in m.iter() {
-                match k {
-                    MalKey::String(s) => xs.push(Mal::String(s.to_string())),
-                    MalKey::Keyword(s) => xs.push(Mal::Keyword(s.to_string())),
-                };
+                xs.push(from_key(k));
                 xs.push(v.clone());
             }
             format!("{{{}}}", seq(&xs, print_readably))

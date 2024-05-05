@@ -9,8 +9,8 @@ use crate::env;
 use crate::printer;
 use crate::reader;
 use crate::types::{
-    err, into_mal_atom, into_mal_fn, into_mal_hashmap, into_mal_seq, Mal, MalError, MalKey,
-    MalResult,
+    err, from_key, into_key, into_mal_atom, into_mal_fn, into_mal_hashmap, into_mal_seq, Mal,
+    MalError, MalKey, MalResult,
 };
 
 // Built-in definitions (rust code and mal code)
@@ -63,12 +63,12 @@ pub fn get_builtins() -> (Vec<(&'static str, Mal)>, Vec<&'static str>) {
             ("sequential?", into_mal_fn(is_sequential)),
             ("hash-map", into_mal_fn(hash_map)),
             ("map?", into_mal_fn(is_map)),
-            ("assoc", into_mal_fn(nyi)),
-            ("dissoc", into_mal_fn(nyi)),
-            ("get", into_mal_fn(nyi)),
-            ("contains?", into_mal_fn(nyi)),
-            ("keys", into_mal_fn(nyi)),
-            ("vals", into_mal_fn(nyi)),
+            ("assoc", into_mal_fn(assoc)),
+            ("dissoc", into_mal_fn(dissoc)),
+            ("get", into_mal_fn(get)),
+            ("contains?", into_mal_fn(contains)),
+            ("keys", into_mal_fn(keys)),
+            ("vals", into_mal_fn(vals)),
         ],
         vec![
             "(def! not (fn* (a) 
@@ -506,9 +506,10 @@ fn hash_map(args: &[Mal]) -> MalResult {
     let mut m: HashMap<MalKey, Mal> = HashMap::new();
     loop {
         match (args_iter.next(), args_iter.next()) {
-            (Some(Mal::String(s)), Some(v)) => m.insert(MalKey::String(s.to_string()), v.clone()),
-            (Some(Mal::Keyword(s)), Some(v)) => m.insert(MalKey::Keyword(s.to_string()), v.clone()),
-            (Some(_), Some(_)) => return err("Bad key in hash-map"),
+            (Some(key), Some(v)) => match into_key(key) {
+                Some(k) => m.insert(k, v.clone()),
+                None => return err("Bad key in hash-map"),
+            },
             (Some(_), None) => {
                 return err("hash-map takes an even number of arguments");
             }
@@ -530,15 +531,104 @@ fn is_map(args: &[Mal]) -> MalResult {
 }
 
 // assoc: takes a hash-map as the first argument and the remaining arguments are odd/even key/value pairs to "associate" (merge) into the hash-map. Note that the original hash-map is unchanged (remember, mal values are immutable), and a new hash-map containing the old hash-maps key/values plus the merged key/value arguments is returned.
-// dissoc: takes a hash-map and a list of keys to remove from the hash-map. Again, note that the original hash-map is unchanged and a new hash-map with the keys removed is returned. Key arguments that do not exist in the hash-map are ignored.
+
+fn assoc(args: &[Mal]) -> MalResult {
+    if let [Mal::HashMap(m, _meta), rest @ ..] = args {
+        let mut rest_iter = rest.iter();
+        let mut n: HashMap<MalKey, Mal> = HashMap::new();
+        n.clone_from(m);
+        loop {
+            match (rest_iter.next(), rest_iter.next()) {
+                (Some(key), Some(v)) => match into_key(key) {
+                    Some(k) => n.insert(k, v.clone()),
+                    None => return err("Bad key in assoc"),
+                },
+                (Some(_), None) => {
+                    return err("assoc must have an even number of key, value arguments");
+                }
+                (None, Some(_)) => return err("internal error!"),
+                (None, None) => {
+                    return Ok(into_mal_hashmap(n));
+                }
+            };
+        }
+    } else {
+        err("assoc takes a hash-map and an even number of arguments for the new keys and values")
+    }
+}
+
+// dissoc: takes a hash-map and a list of keys to remove from the hash-map. Again,
+// note that the original hash-map is unchanged and a new hash-map with the keys removed is returned.
+// Key arguments that do not exist in the hash-map are ignored.
+
+fn dissoc(args: &[Mal]) -> MalResult {
+    if let [Mal::HashMap(m, _meta), keys @ ..] = args {
+        let mut n: HashMap<MalKey, Mal> = HashMap::new();
+        n.clone_from(m);
+        for key in keys {
+            if let Some(k) = into_key(key) {
+                n.remove(&k);
+            }
+        }
+        Ok(into_mal_hashmap(n))
+    } else {
+        err("dissoc takes a hash-map and keys")
+    }
+}
+
 // get: takes a hash-map and a key and returns the value of looking up that key in the hash-map. If the key is not found in the hash-map then nil is returned.
-// contains?: takes a hash-map and a key and returns true (mal true value) if the key exists in the hash-map and false (mal false value) otherwise.
+fn get(args: &[Mal]) -> MalResult {
+    let lookup = match args {
+        [Mal::HashMap(m, _meta), key] => match into_key(key) {
+            Some(k) => m.get(&k),
+            None => None,
+        },
+        [Mal::Nil, _] => None,
+        _ => return err("get takes a hash-map (or nil) and a key"),
+    };
+
+    Ok(lookup.map_or(Mal::Nil, |x| x.clone()))
+}
+
+// contains?: takes a hash-map and a key and returns true (mal true value) if the key exists
+// in the hash-map and false (mal false value) otherwise.
+
+fn contains(args: &[Mal]) -> MalResult {
+    if let [Mal::HashMap(m, _meta), key] = args {
+        Ok(Mal::Bool(match into_key(key) {
+            Some(k) => m.contains_key(&k),
+            None => false,
+        }))
+    } else {
+        err("contains? takes a hash-map and a key value")
+    }
+}
+
 // keys: takes a hash-map and returns a list (mal list value) of all the keys in the hash-map.
+
+fn keys(args: &[Mal]) -> MalResult {
+    if let [Mal::HashMap(m, _meta)] = args {
+        let ys: Vec<Mal> = m.keys().map(from_key).collect();
+        Ok(into_mal_seq(true, ys))
+    } else {
+        err("keys takes a hash-map")
+    }
+}
+
 // vals: takes a hash-map and returns a list (mal list value) of all the values in the hash-map.
 
-fn nyi(_args: &[Mal]) -> MalResult {
-    err("NYI")
+fn vals(args: &[Mal]) -> MalResult {
+    if let [Mal::HashMap(m, _meta)] = args {
+        let ys: Vec<Mal> = m.values().cloned().collect();
+        Ok(into_mal_seq(true, ys))
+    } else {
+        err("vals takes a hash-map")
+    }
 }
+
+// fn nyi(_args: &[Mal]) -> MalResult {
+//     err("NYI")
+// }
 
 // Helper functions
 

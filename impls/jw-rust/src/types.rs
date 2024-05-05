@@ -116,6 +116,21 @@ pub enum MalKey {
     String(String),
 }
 
+pub fn from_key(key: &MalKey) -> Mal {
+    match key {
+        MalKey::Keyword(s) => Mal::Keyword(s.to_string()),
+        MalKey::String(s) => Mal::String(s.to_string()),
+    }
+}
+
+pub fn into_key(x: &Mal) -> Option<MalKey> {
+    match x {
+        Mal::Keyword(s) => Some(MalKey::Keyword(s.to_string())),
+        Mal::String(s) => Some(MalKey::String(s.to_string())),
+        _ => None,
+    }
+}
+
 #[derive(Debug)]
 pub struct EnvStruct {
     pub data: RefCell<HashMap<String, Mal>>,

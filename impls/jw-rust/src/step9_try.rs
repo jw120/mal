@@ -159,6 +159,11 @@ fn EVAL(mut ast: Mal, mut env: Env) -> MalResult {
                     }
                 }
 
+                // try* special form without catch (just evaluate)
+                [Mal::Symbol(n), x] if n == "try*" => {
+                    ast = x.clone();
+                }
+
                 // eval as if it was a special form - continue with given ast and root environment
                 [Mal::Symbol(n), eval_ast] if n == "eval" => {
                     // We have to EVAL the argument as this is really a function call not a special form

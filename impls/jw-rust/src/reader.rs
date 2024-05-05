@@ -5,7 +5,7 @@ use regex::Regex;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use crate::types::{err, into_mal_hashmap, Mal, MalError, MalKey, MalResult};
+use crate::types::{err, into_key, into_mal_hashmap, Mal, MalError, MalKey, MalResult};
 
 // Top-level interface to reader. Returns Nil if input is empty or only comments
 pub fn read_str(s: &str) -> MalResult {
@@ -95,20 +95,12 @@ impl Reader<'_> {
                 let mut m: HashMap<MalKey, Mal> = HashMap::new();
                 loop {
                     match (ys_iter.next(), ys_iter.next()) {
-                        (Some(Mal::String(s)), Some(v)) => {
-                            m.insert(MalKey::String(s.to_string()), v.clone())
-                        }
-                        (Some(Mal::Keyword(s)), Some(v)) => {
-                            m.insert(MalKey::Keyword(s.to_string()), v.clone())
-                        }
-                        (Some(Mal::String(_)), None) => {
+                        (Some(key), Some(value)) => match into_key(key) {
+                            Some(k) => m.insert(k, value.clone()),
+                            None => return err("Bad key type in hash-map"),
+                        },
+                        (Some(_), None) => {
                             return Ok(into_mal_hashmap(m));
-                        }
-                        (Some(Mal::Keyword(_)), None) => {
-                            return Ok(into_mal_hashmap(m));
-                        }
-                        (Some(_bad_key), _) => {
-                            return err("Bad key type in hash-map");
                         }
                         _ => return Ok(into_mal_hashmap(m)),
                     };
