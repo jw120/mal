@@ -3,7 +3,11 @@
 
 use std::collections::HashMap;
 use std::fs;
+use std::io;
+use std::io::Write; // needed for flush()
 use std::ops;
+use std::rc::Rc;
+use std::time;
 
 use crate::env;
 use crate::printer;
@@ -69,6 +73,16 @@ pub fn get_builtins() -> (Vec<(&'static str, Mal)>, Vec<&'static str>) {
             ("contains?", into_mal_fn(contains)),
             ("keys", into_mal_fn(keys)),
             ("vals", into_mal_fn(vals)),
+            ("readline", into_mal_fn(readline)),
+            ("time-ms", into_mal_fn(time_ms)),
+            ("meta", into_mal_fn(meta)),
+            ("with-meta", into_mal_fn(with_meta)),
+            ("fn?", into_mal_fn(is_fn)),
+            ("macro?", into_mal_fn(is_macro)),
+            ("string?", into_mal_fn(is_string)),
+            ("number?", into_mal_fn(is_number)),
+            ("seq", into_mal_fn(seq)),
+            ("conj", into_mal_fn(conj)),
         ],
         vec![
             "(def! not (fn* (a) 
@@ -81,6 +95,7 @@ pub fn get_builtins() -> (Vec<(&'static str, Mal)>, Vec<&'static str>) {
                                             (nth xs 1) 
                                             (throw \"odd number of forms to cond\")) 
                     (cons 'cond (rest (rest xs)))))))",
+            "(def! *host-language* (symbol \"jw-rust\"))",
         ],
     )
 }
@@ -440,6 +455,31 @@ fn apply(args: &[Mal]) -> MalResult {
     }
 }
 
+fn readline(args: &[Mal]) -> MalResult {
+    if let [Mal::String(s)] = args {
+        let mut input = String::new();
+        print!("{s}");
+        io::stdout().flush().expect("Unable to flush stdout");
+        match io::stdin().read_line(&mut input) {
+            Ok(_bytes_read) => {
+                if input.ends_with('\n') {
+                    input.pop();
+                    if input.ends_with('\r') {
+                        input.pop();
+                    }
+                }
+                Ok(Mal::String(input))
+            }
+            Err(e) => {
+                let msg = format!("readline error ({e})");
+                err(&msg)
+            }
+        }
+    } else {
+        err("readline takes a string")
+    }
+}
+
 // Step 9 functions
 
 // symbol: takes a string and returns a new symbol with the string as its name.
@@ -576,7 +616,8 @@ fn dissoc(args: &[Mal]) -> MalResult {
     }
 }
 
-// get: takes a hash-map and a key and returns the value of looking up that key in the hash-map. If the key is not found in the hash-map then nil is returned.
+// get: takes a hash-map and a key and returns the value of looking up that key in the hash-map. If the key is not
+// found in the hash-map then nil is returned.
 fn get(args: &[Mal]) -> MalResult {
     let lookup = match args {
         [Mal::HashMap(m, _meta), key] => into_key(key).and_then(|k| m.get(&k)),
@@ -619,6 +660,201 @@ fn vals(args: &[Mal]) -> MalResult {
         Ok(into_mal_seq(true, ys))
     } else {
         err("vals takes a hash-map")
+    }
+}
+
+// Step A functions
+
+// meta: this takes a single mal function/list/vector/hash-map argument and returns the value of the metadata attribute.
+
+fn meta(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::Function(_f, meta)] => Ok(meta.as_ref().clone()),
+        [Mal::Closure {
+            eval: _,
+            params: _,
+            ast: _,
+            env: _,
+            is_macro: _,
+            meta,
+        }] => Ok(meta.as_ref().clone()),
+        [Mal::Seq(_, _, meta)] => Ok(meta.as_ref().clone()),
+        [Mal::HashMap(_, meta)] => Ok(meta.as_ref().clone()),
+        _ => err("meta takes a function, sequence or hash-map"),
+    }
+}
+
+// with-meta: this function takes two arguments. The first argument is a mal function/list/vector/hash-map and
+// the second argument is another mal value/type to set as metadata. A copy of the mal function is returned
+// that has its meta attribute set to the second argument. Note that it is important that the environment and
+// macro attribute of mal function are retained when it is copied.
+
+fn with_meta(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::Function(f, _old_meta), new_meta] => Ok(Mal::Function(*f, Rc::new(new_meta.clone()))),
+        [Mal::Closure {
+            eval,
+            params,
+            ast,
+            env,
+            is_macro,
+            meta: _,
+        }, new_meta] => Ok(Mal::Closure {
+            eval: *eval,
+            params: params.clone(),
+            ast: ast.clone(),
+            env: env.clone(),
+            is_macro: *is_macro,
+            meta: Rc::new(new_meta.clone()),
+        }),
+        [Mal::Seq(is_list, xs, _old_meta), new_meta] => {
+            Ok(Mal::Seq(*is_list, xs.clone(), Rc::new(new_meta.clone())))
+        }
+        [Mal::HashMap(m, _old_meta), new_meta] => {
+            Ok(Mal::HashMap(m.clone(), Rc::new(new_meta.clone())))
+        }
+        _ => err("meta takes a function, sequence or hash-map and a new meta value"),
+    }
+}
+
+// time-ms: takes no arguments and returns the number of milliseconds since epoch (00:00:00 UTC January 1,
+// 1970), or, if not possible, since another point in time (time-ms is usually used relatively to measure time durations).
+
+fn time_ms(args: &[Mal]) -> MalResult {
+    if !args.is_empty() {
+        return err("time-ms takes no arguments");
+    }
+
+    match time::SystemTime::now().duration_since(time::UNIX_EPOCH) {
+        Ok(d) => match i64::try_from(d.as_millis()) {
+            Ok(i) => Ok(Mal::Int(i)),
+            Err(e) => {
+                let msg = format!("Error in time-ms conversion ({e})");
+                err(&msg)
+            }
+        },
+        Err(e) => {
+            let msg = format!("Error in time-ms ({e})");
+            err(&msg)
+        }
+    }
+}
+
+// conj: takes a collection and one or more elements as arguments and returns a new collection which
+// includes the original collection and the new elements. If the collection is a list, a new list is
+// returned with the elements inserted at the start of the given list in opposite order; if the collection
+// is a vector, a new vector is returned with the elements added to the end of the given vector.
+
+fn conj(args: &[Mal]) -> MalResult {
+    if let [Mal::Seq(is_list, xs, _meta), rest @ ..] = args {
+        if !rest.is_empty() {
+            return Ok(into_mal_seq(
+                *is_list,
+                if *is_list {
+                    let mut ys: Vec<Mal> = rest.iter().cloned().rev().collect();
+                    ys.extend_from_slice(xs);
+                    ys
+                } else {
+                    let mut ys: Vec<Mal> = xs.to_vec();
+                    ys.extend_from_slice(rest);
+                    ys
+                },
+            ));
+        }
+    }
+    err("conj takes a sequence and one or more elements")
+}
+
+// string?: returns true if the parameter is a string.
+
+fn is_string(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::String(_)] => Ok(Mal::Bool(true)),
+        [_] => Ok(Mal::Bool(false)),
+        _ => err("string? takes one argument"),
+    }
+}
+
+// number?: returns true if the parameter is a number.
+
+fn is_number(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::Int(_)] => Ok(Mal::Bool(true)),
+        [_] => Ok(Mal::Bool(false)),
+        _ => err("number? takes one argument"),
+    }
+}
+
+// fn?: returns true if the parameter is a function (internal or user-defined).
+
+fn is_fn(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::Function(_, _)
+        | Mal::Closure {
+            eval: _,
+            params: _,
+            env: _,
+            is_macro: false,
+            ast: _,
+            meta: _,
+        }] => Ok(Mal::Bool(true)),
+        [_] => Ok(Mal::Bool(false)),
+        _ => err("fn? takes one argument"),
+    }
+}
+
+// macro?: returns true if the parameter is a macro.
+
+fn is_macro(args: &[Mal]) -> MalResult {
+    match args {
+        [Mal::Closure {
+            eval: _,
+            params: _,
+            env: _,
+            is_macro: true,
+            ast: _,
+            meta: _,
+        }] => Ok(Mal::Bool(true)),
+        [_] => Ok(Mal::Bool(false)),
+        _ => err("macro? takes one argument"),
+    }
+}
+
+// seq: takes a list, vector, string, or nil. If an empty list, empty vector, or empty string ("") is
+// passed in then nil is returned. Otherwise, a list is returned unchanged, a vector is converted into
+// a list, and a string is converted to a list that containing the original string split into single character strings.
+
+fn seq(args: &[Mal]) -> MalResult {
+    if let [arg] = args {
+        match arg {
+            Mal::Seq(true, xs, _meta) => {
+                if xs.is_empty() {
+                    Ok(Mal::Nil)
+                } else {
+                    Ok(arg.clone())
+                }
+            }
+            Mal::Seq(false, xs, _meta) => {
+                if xs.is_empty() {
+                    Ok(Mal::Nil)
+                } else {
+                    Ok(into_mal_seq(true, xs.to_vec()))
+                }
+            }
+            Mal::String(s) => {
+                if s.is_empty() {
+                    Ok(Mal::Nil)
+                } else {
+                    let ys: Vec<Mal> = s.chars().map(|c| Mal::String(c.to_string())).collect();
+                    Ok(into_mal_seq(true, ys))
+                }
+            }
+            Mal::Nil => Ok(Mal::Nil),
+
+            _ => err("seq takes a list, vector, string or nil"),
+        }
+    } else {
+        err("seq takes one argument")
     }
 }
 
