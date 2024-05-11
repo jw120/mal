@@ -4,12 +4,15 @@
 * using devbox (single environment for all jw languages at top-level)
 * TODO
   * test my old implementations
+  * set up jw-c, jw-swift  with devbox
   * Fix Syntax warning in python testing code
 
 * Working (`make "test^IMPL"` and `make MAL_IMPL=IMPL "test^mal"`) (showing `make "perf^IMPL"` numbers)
   * python (3ms, 9ms, 4266/10s)
+  * jw-c (0ms, 2ms, 32211/10s)
   * jw-python (5ms, 19ms, 1862/10s)
   * jw-rust (2ms, 13ms, 5287/10s)
+  * jw-swift (3ms, 10ms, 3633/10s)
 
 * Rust notes
   * eval as a special form not a bound function (with hack to find outermost environment) - borrowed from supplied rust implementation
